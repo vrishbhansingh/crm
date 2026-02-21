@@ -1,0 +1,23 @@
+<IfModule mod_rewrite.c>
+    <IfModule mod_negotiation.c>
+                Options -MultiViews -Indexes
+    </IfModule>
+   RewriteEngine on
+
+       RewriteCond %{REQUEST_FILENAME} !-d
+       RewriteCond %{REQUEST_FILENAME} !-f
+       RewriteRule ^ index.php [L]
+       RewriteRule ^(?:application|modules|system)\b.* index.php/$0 [L]
+
+       RewriteCond %{HTTP:Authorization} .
+       RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+       <Files .env>
+           order allow,deny
+           Deny from all
+       </Files>
+
+
+
+
+</IfModule>
