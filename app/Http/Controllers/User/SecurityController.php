@@ -19,20 +19,12 @@ class SecurityController extends Controller
     function update_security_pass(Request $request)
     {
         $request->validate([
-            'current_password' => 'required',
             'new_password'     => 'required|min:6',
             'confirm_password' => 'required|min:6',
         ]);
         $user_id = Auth::guard('user')->user()->id;
 
         $user = UserList::findOrFail($user_id);
-
-        if (!Hash::check($request->current_password, $user->password)) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Current password is incorrect'
-            ]);
-        }
 
         // ❌ new & confirm mismatch (backend safety)
         if ($request->new_password !== $request->confirm_password) {

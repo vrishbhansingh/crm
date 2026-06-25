@@ -251,23 +251,6 @@
             </a>
         </li>
 
-        <li class="mb-1 sidebar-dropdown">
-            <a href="javascript:void(0)" class="nav-link dropdown-toggle-custom">
-                <i class="fa fa-briefcase"></i>
-                <span>Settings</span>
-                <i class="fa fa-angle-down dropdown-arrow"></i>
-            </a>
-            <ul class="sidebar-submenu">
-                <li class="mb-1">
-                    <a class="nav-link {{ request()->routeIs('user.security') ? 'active' : '' }}"
-                        href="{{ route('user.security') }}">
-                        <i class="fa fa-home"></i>
-                        <span>Security</span>
-                    </a>
-                </li>
-            </ul>
-        </li>
-
         <li class="mt-2">
             <form method="post" action="{{ route('user.logout') }}">
                 @csrf

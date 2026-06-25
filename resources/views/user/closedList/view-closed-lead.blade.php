@@ -19,105 +19,351 @@
             width: 235px !important;
         }
 
-        .lead-card {
-            background: #fff;
-            border-radius: 16px;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
-            padding: 24px;
+        .content-wrapper {
+            background: #f4f6fb;
         }
 
+        /* ---------- PAGE HEADER ---------- */
         .crm-page-header {
             background: #ffffff;
-            border-radius: 14px;
+            border-radius: 16px;
             padding: 22px 28px;
-            margin-bottom: 24px;
-            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+            margin-bottom: 22px;
+            box-shadow: 0 6px 20px rgba(15, 23, 42, 0.05);
             display: flex;
             align-items: center;
             justify-content: space-between;
+            gap: 16px;
         }
 
         .page-title {
             font-size: 22px;
             font-weight: 700;
-            color: #1f2937;
+            color: #0f172a;
+            margin: 0;
         }
 
         .page-subtitle {
             font-size: 13px;
-            color: #6b7280;
+            color: #64748b;
+            margin: 4px 0 0;
         }
 
-        /* ---------- VERTICAL LEAD GRID ---------- */
+        .btn-back {
+            border: 1px solid #e2e8f0;
+            background: #fff;
+            color: #475569;
+            font-weight: 600;
+            font-size: 13px;
+            padding: 8px 16px;
+            border-radius: 10px;
+            transition: all .2s ease;
+            white-space: nowrap;
+        }
 
-        .lead-info-vertical {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
+        .btn-back:hover {
+            background: #f1f5f9;
+            color: #1e293b;
+        }
+
+        /* ---------- LEAD HERO ---------- */
+        .lead-hero {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            flex-wrap: wrap;
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 24px 28px;
+            box-shadow: 0 6px 20px rgba(15, 23, 42, 0.05);
+            margin-bottom: 22px;
+        }
+
+        .lead-hero-left {
+            display: flex;
+            align-items: center;
             gap: 18px;
-            margin-bottom: 30px;
         }
 
-        .lead-info-box {
-            background: #f9fafb;
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            padding: 14px 16px;
+        .lead-avatar {
+            width: 64px;
+            height: 64px;
+            min-width: 64px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #2563eb, #4f46e5);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 700;
+            box-shadow: 0 8px 18px rgba(37, 99, 235, 0.25);
         }
 
-        .lead-info-label {
+        .lead-hero-name {
+            font-size: 22px;
+            font-weight: 700;
+            color: #0f172a;
+            line-height: 1.2;
+        }
+
+        .lead-hero-company {
+            font-size: 14px;
+            color: #64748b;
+            margin-top: 4px;
+        }
+
+        .lead-hero-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+
+        /* ---------- BADGES ---------- */
+        .badge-pill-soft {
+            padding: 6px 14px;
+            border-radius: 999px;
             font-size: 12px;
             font-weight: 600;
-            color: #6b7280;
-            text-transform: uppercase;
-            margin-bottom: 4px;
+            display: inline-block;
+            line-height: 1.4;
         }
 
-        .lead-info-value {
-            font-size: 15px;
-            font-weight: 600;
-            color: #111827;
+        .badge-green {
+            background: #e7f7ee;
+            color: #1f9254;
         }
 
-        @media(max-width: 991px) {
-            .lead-info-vertical {
-                grid-template-columns: repeat(2, 1fr);
-            }
+        .badge-red {
+            background: #fdecec;
+            color: #d64545;
         }
 
-        @media(max-width: 575px) {
-            .lead-info-vertical {
-                grid-template-columns: 1fr;
-            }
+        .badge-amber {
+            background: #fef3e2;
+            color: #c77700;
         }
 
-        /* ---------- CALL OUTCOME ---------- */
+        .badge-blue {
+            background: #e8effd;
+            color: #2563eb;
+        }
 
-        .call-outcome-card {
+        .badge-gray {
+            background: #eef1f5;
+            color: #64748b;
+        }
+
+        /* ---------- DETAIL SECTIONS ---------- */
+        .detail-section {
             background: #ffffff;
-            border-radius: 14px;
-            margin-top: 24px;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+            border-radius: 16px;
+            box-shadow: 0 6px 20px rgba(15, 23, 42, 0.05);
+            margin-bottom: 20px;
+            overflow: hidden;
         }
 
-        .call-outcome-header {
-            padding: 14px 22px;
+        .detail-section-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 24px;
+            border-bottom: 1px solid #eef1f5;
+        }
+
+        .detail-section-icon {
+            width: 38px;
+            height: 38px;
+            min-width: 38px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .detail-section-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .detail-section-body {
+            padding: 22px 24px;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 22px 28px;
+        }
+
+        .detail-item .detail-label {
+            font-size: 11px;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+            color: #94a3b8;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .detail-item .detail-value {
             font-size: 15px;
             font-weight: 600;
-            color: #111827;
-            border-bottom: 1px solid #e5e7eb;
-            background: #f9fafb;
-            border-radius: 14px 14px 0 0;
+            color: #1e293b;
+            word-break: break-word;
         }
 
-        .call-outcome-body {
-            padding: 22px;
+        /* icon color themes */
+        .icon-blue   { background: #e8effd; color: #2563eb; }
+        .icon-indigo { background: #eceafe; color: #6366f1; }
+        .icon-teal   { background: #e3f6f3; color: #0d9488; }
+        .icon-amber  { background: #fef3e2; color: #d97706; }
+        .icon-green  { background: #e7f7ee; color: #1f9254; }
+        .icon-gray   { background: #eef1f5; color: #64748b; }
+
+        /* ---------- ACTION BUTTON ---------- */
+        .btn-quotation {
+            background: linear-gradient(135deg, #2563eb, #4f46e5);
+            border: none;
+            color: #fff;
+            font-weight: 600;
+            font-size: 14px;
+            padding: 11px 22px;
+            border-radius: 12px;
+            box-shadow: 0 8px 18px rgba(37, 99, 235, 0.25);
+            transition: transform .2s ease, box-shadow .2s ease;
+        }
+
+        .btn-quotation:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px rgba(37, 99, 235, 0.32);
+            color: #fff;
+        }
+
+        @media (max-width: 991px) {
+            .detail-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @media (max-width: 575px) {
+            .detail-grid { grid-template-columns: 1fr; }
+            .lead-hero-badges { justify-content: flex-start; }
         }
 
         @media (min-width: 1025px) {
-            #quickCallCard {
-                display: none !important;
-            }
+            #quickCallCard { display: none !important; }
         }
+
+        /* ---------- QUOTATION MODAL ---------- */
+        .quotation-modal {
+            border: none;
+            border-radius: 18px;
+            box-shadow: 0 30px 60px rgba(15, 23, 42, 0.25);
+            overflow: hidden;
+        }
+
+        .quotation-modal .modal-header {
+            padding: 22px 24px 6px;
+        }
+
+        .quotation-modal .modal-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .quotation-modal .modal-body { padding: 18px 24px; }
+        .quotation-modal .modal-footer { padding: 8px 24px 22px; }
+
+        .quote-options { display: grid; gap: 12px; }
+
+        .quote-option {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 16px;
+            border: 1.5px solid #e5e7eb;
+            border-radius: 14px;
+            cursor: pointer;
+            background: #fff;
+            transition: all .2s ease;
+        }
+
+        .quote-option:hover { border-color: #c7d2fe; background: #f8faff; }
+
+        .quote-option.selected {
+            border-color: #2563eb;
+            background: linear-gradient(135deg, #eff4ff, #f5f3ff);
+            box-shadow: 0 6px 16px rgba(37, 99, 235, .15);
+        }
+
+        .quote-option-icon {
+            width: 42px;
+            height: 42px;
+            min-width: 42px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: #fff;
+        }
+
+        .qi-quick    { background: linear-gradient(135deg, #06b6d4, #0ea5e9); }
+        .qi-standard { background: linear-gradient(135deg, #6366f1, #4f46e5); }
+        .qi-final    { background: linear-gradient(135deg, #10b981, #059669); }
+
+        .quote-option-text { display: flex; flex-direction: column; }
+        .quote-option-text .t { font-size: 14px; font-weight: 700; color: #1e293b; }
+        .quote-option-text .s { font-size: 12px; color: #64748b; }
+
+        .quote-option-check {
+            margin-left: auto;
+            color: #2563eb;
+            font-size: 18px;
+            opacity: 0;
+            transition: opacity .2s;
+        }
+
+        .quote-option.selected .quote-option-check { opacity: 1; }
+
+        .quotation-hint {
+            margin-top: 16px;
+            font-size: 12px;
+            color: #475569;
+            background: #f1f5f9;
+            border-radius: 10px;
+            padding: 10px 12px;
+        }
+
+        .quotation-hint i { color: #2563eb; margin-right: 4px; }
+
+        .btn-quote-continue {
+            background: linear-gradient(135deg, #2563eb, #4f46e5);
+            border: none;
+            color: #fff;
+            font-weight: 600;
+            font-size: 14px;
+            padding: 10px 24px;
+            border-radius: 10px;
+            transition: box-shadow .2s ease;
+        }
+
+        .btn-quote-continue:hover { color: #fff; box-shadow: 0 8px 18px rgba(37, 99, 235, .3); }
+
+        .btn-quote-cancel {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            color: #475569;
+            font-weight: 600;
+            font-size: 14px;
+            padding: 10px 20px;
+            border-radius: 10px;
+        }
+
+        .btn-quote-cancel:hover { background: #f1f5f9; }
     </style>
 </head>
 
@@ -140,26 +386,18 @@
                         <p class="page-subtitle">View complete information and interaction status of the selected lead</p>
                     </div>
 
-                    <a href="{{ route('user.closed_lead_list') }}" class="btn btn-light btn-sm">
-                        ← Back to Closed Leads
+                    <a href="{{ route('user.closed_lead_list') }}" class="btn-back">
+                        <i class="fa fa-arrow-left mr-1"></i> Back to Closed Leads
                     </a>
                 </div>
 
-                <!-- LEAD CARD -->
-                <div class="lead-card">
+                <!-- LEAD CONTENT (AJAX) -->
+                <div id="leadDetailContainer"></div>
 
-                    <!-- LEAD INFO -->
-                    <div class="lead-info-vertical" id="leadMainRow">
-                        <!-- AJAX DATA -->
-                    </div>
-
-                    <div class="d-flex justify-content-end">
-                        <button class="btn btn-primary btn-sm" id="openQuotationBtn">
-                            <i class="fa fa-file-text-o"></i> Send Quotation
-                        </button>
-                    </div>
-
-
+                <div class="d-flex justify-content-end mb-4">
+                    <button class="btn btn-quotation" id="openQuotationBtn">
+                        <i class="fa fa-file-text-o mr-1"></i> Send Quotation
+                    </button>
                 </div>
 
                 @include('user.include.footer')
@@ -171,35 +409,51 @@
 
 
     <div class="modal fade" id="quotationModal" tabindex="-1">
-        <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content quotation-modal">
 
                 <!-- HEADER -->
-                <div class="modal-header border-0 pb-0">
+                <div class="modal-header border-0">
                     <div>
                         <h5 class="modal-title mb-1">Create Quotation</h5>
-                        <small class="text-muted">
-                            Select the quotation format you want to send
-                        </small>
+                        <small class="text-muted">Choose a quotation format to send to the client</small>
                     </div>
                     <button type="button" class="close" data-dismiss="modal">&times;</button>
                 </div>
 
                 <!-- BODY -->
-                <div class="modal-body pt-3">
+                <div class="modal-body">
 
-                    <div class="form-group">
-                        <label class="modal-label">
-                            Quotation Type
-                        </label>
+                    <div class="quote-options">
+                        <div class="quote-option" data-value="quick">
+                            <span class="quote-option-icon qi-quick"><i class="fa fa-bolt"></i></span>
+                            <span class="quote-option-text">
+                                <span class="t">Quick Quote</span>
+                                <span class="s">Initial estimate</span>
+                            </span>
+                            <i class="fa fa-check-circle quote-option-check"></i>
+                        </div>
 
-                        <select class="form-control quotation-select" id="quotation_template">
-                            <option value="">-- Select Template --</option>
-                            <option value="quick">Quick Quote (Initial Estimate)</option>
-                            <option value="standard">Standard Quote (Detailed)</option>
-                            <option value="final">Final Quote / Proforma</option>
-                        </select>
+                        <div class="quote-option" data-value="standard">
+                            <span class="quote-option-icon qi-standard"><i class="fa fa-file-text-o"></i></span>
+                            <span class="quote-option-text">
+                                <span class="t">Standard Quote</span>
+                                <span class="s">Detailed breakdown</span>
+                            </span>
+                            <i class="fa fa-check-circle quote-option-check"></i>
+                        </div>
+
+                        <div class="quote-option" data-value="final">
+                            <span class="quote-option-icon qi-final"><i class="fa fa-check-square-o"></i></span>
+                            <span class="quote-option-text">
+                                <span class="t">Final Quote / Proforma</span>
+                                <span class="s">Ready to invoice</span>
+                            </span>
+                            <i class="fa fa-check-circle quote-option-check"></i>
+                        </div>
                     </div>
+
+                    <input type="hidden" id="quotation_template" value="">
 
                     <!-- INFO NOTE -->
                     <div class="quotation-hint">
@@ -210,15 +464,13 @@
                 </div>
 
                 <!-- FOOTER -->
-                <div class="modal-footer border-0 pt-0">
-                    <button type="button" class="btn btn-light btn-sm" data-dismiss="modal">
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn-quote-cancel" data-dismiss="modal">
                         Cancel
                     </button>
 
-                    <button type="button"
-                        class="btn btn-primary btn-sm px-4"
-                        onclick="openQuotationView()">
-                        Continue
+                    <button type="button" class="btn-quote-continue" onclick="openQuotationView()">
+                        Continue <i class="fa fa-arrow-right ml-1"></i>
                     </button>
                 </div>
 
@@ -262,144 +514,100 @@
                         leadid = response.lead.id;
                         const lead = response.lead;
 
-                        $('#leadMainRow').html(`
-                                <!-- BASIC INFO -->
-                                <div class="lead-info-box">
-                                    <div class="lead-info-label">Name</div>
-                                    <div class="lead-info-value">${lead.name ?? '-'}</div>
-                                </div>
+                        const val = v => (v === null || v === undefined || v === '') ? '-' : v;
+                        const cap = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : '-';
+                        const money = v => v ? '₹ ' + Number(v).toLocaleString('en-IN') : '-';
 
-                                <div class="lead-info-box">
-                                    <div class="lead-info-label">Company</div>
-                                    <div class="lead-info-value">${lead.company_name ?? '-'}</div>
-                                </div>
+                        const pill = (value, kind) => {
+                            const v = (value ?? '').toString().toLowerCase();
+                            let cls = 'badge-gray';
+                            if (kind === 'priority')
+                                cls = v === 'high' ? 'badge-red' : v === 'medium' ? 'badge-amber' : v === 'low' ? 'badge-green' : 'badge-gray';
+                            else if (kind === 'final')
+                                cls = v === 'won' ? 'badge-green' : v === 'lost' ? 'badge-red' : 'badge-gray';
+                            else if (kind === 'leadstatus')
+                                cls = v === 'converted' ? 'badge-green' : ['new', 'contacted', 'interested', 'follow_up'].includes(v) ? 'badge-blue' : 'badge-gray';
+                            else if (kind === 'converted')
+                                cls = (v === 'yes' || v === '1' || v === 'true') ? 'badge-green' : 'badge-gray';
+                            return `<span class="badge-pill-soft ${cls}">${formatCallStatus(value.toString())}</span>`;
+                        };
 
-                                <div class="lead-info-box">
-                                    <div class="lead-info-label">Email</div>
-                                    <div class="lead-info-value">${lead.email ?? '-'}</div>
-                                </div>
+                        const field = (label, value) =>
+                            `<div class="detail-item">
+                                <div class="detail-label">${label}</div>
+                                <div class="detail-value">${value}</div>
+                            </div>`;
 
-                                <div class="lead-info-box">
-                                    <div class="lead-info-label">Phone</div>
-                                    <div class="lead-info-value">${lead.phone ?? '-'}</div>
+                        const section = (icon, iconCls, title, items) =>
+                            `<div class="detail-section">
+                                <div class="detail-section-header">
+                                    <span class="detail-section-icon ${iconCls}"><i class="fa ${icon}"></i></span>
+                                    <span class="detail-section-title">${title}</span>
                                 </div>
+                                <div class="detail-section-body"><div class="detail-grid">${items}</div></div>
+                            </div>`;
 
-                                <div class="lead-info-box">
-                                    <div class="lead-info-label">Alternate Phone</div>
-                                    <div class="lead-info-value">${lead.alternate_phone ?? '-'}</div>
-                                </div>
+                        const initials = (lead.name || '?').trim().split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase() || '?';
+                        const location = [lead.city, lead.state, lead.country].filter(Boolean).join(', ') || '-';
 
-                                <div class="lead-info-box">
-                                    <div class="lead-info-label">GST No</div>
-                                    <div class="lead-info-value">${lead.gst_no ?? '-'}</div>
-                                </div>
-
-                                <div class="lead-info-box">
-                                    <div class="lead-info-label">Location</div>
-                                    <div class="lead-info-value">
-                                        ${lead.city ?? '-'}, ${lead.state ?? '-'}, ${lead.country ?? '-'}
+                        const hero = `
+                            <div class="lead-hero">
+                                <div class="lead-hero-left">
+                                    <div class="lead-avatar">${initials}</div>
+                                    <div>
+                                        <div class="lead-hero-name">${val(lead.name)}</div>
+                                        <div class="lead-hero-company"><i class="fa fa-building-o mr-1"></i>${val(lead.company_name)}</div>
                                     </div>
                                 </div>
-
-                                <!-- LEAD DETAILS -->
-                                <div class="lead-info-box">
-                                    <div class="lead-info-label">Lead Type</div>
-                                    <div class="lead-info-value">${capitalizeFirstLetter(lead.lead_type)}</div>
+                                <div class="lead-hero-badges">
+                                    ${lead.lead_status ? pill(lead.lead_status, 'leadstatus') : ''}
+                                    ${lead.priority ? pill(lead.priority, 'priority') : ''}
+                                    ${lead.final_status ? pill(lead.final_status, 'final') : ''}
                                 </div>
+                            </div>`;
 
-                                <div class="lead-info-box">
-                                    <div class="lead-info-label">Lead Source</div>
-                                    <div class="lead-info-value">${capitalizeFirstLetter(lead.lead_source)}</div>
-                                </div>
+                        const contact = section('fa-address-card-o', 'icon-blue', 'Contact Information',
+                            field('Email', val(lead.email)) +
+                            field('Phone', val(lead.phone)) +
+                            field('Alternate Phone', val(lead.alternate_phone)) +
+                            field('GST No', val(lead.gst_no)) +
+                            field('Location', location)
+                        );
 
-                                <div class="lead-info-box">
-                                    <div class="lead-info-label">Lead Status</div>
-                                    <div class="lead-info-value">${capitalizeFirstLetter(lead.lead_status)}</div>
-                                </div>
+                        const details = section('fa-info-circle', 'icon-indigo', 'Lead Details',
+                            field('Lead Type', cap(lead.lead_type)) +
+                            field('Lead Source', cap(lead.lead_source)) +
+                            field('Lead Status', lead.lead_status ? pill(lead.lead_status, 'leadstatus') : '-') +
+                            field('Final Status', lead.final_status ? pill(lead.final_status, 'final') : '-') +
+                            field('Priority', lead.priority ? pill(lead.priority, 'priority') : '-')
+                        );
 
-                                <div class="lead-info-box">
-                                    <div class="lead-info-label">Final Status</div>
-                                    <div class="lead-info-value">${lead.final_status ?? '-'}</div>
-                                </div>
+                        const product = section('fa-cube', 'icon-teal', 'Product & Requirement',
+                            field('Product', val(lead.product)) +
+                            field('Service', val(lead.service)) +
+                            field('Budget', money(lead.budget)) +
+                            field('Requirement', val(lead.requirement))
+                        );
 
-                                <div class="lead-info-box">
-                                    <div class="lead-info-label">Priority</div>
-                                    <div class="lead-info-value">${capitalizeFirstLetter(lead.priority)}</div>
-                                </div>
+                        const followup = section('fa-calendar', 'icon-amber', 'Follow Up',
+                            field('Follow Up Date', val(lead.follow_up_date)) +
+                            field('Follow Up Time', val(lead.follow_up_time)) +
+                            field('Follow Up Note', val(lead.follow_up_note))
+                        );
 
-                                <!-- PRODUCT / SERVICE -->
-                                <div class="lead-info-box">
-                                    <div class="lead-info-label">Product</div>
-                                    <div class="lead-info-value">${lead.product ?? '-'}</div>
-                                </div>
+                        const conversion = section('fa-check-circle', 'icon-green', 'Conversion',
+                            field('Converted', lead.is_converted ? pill(lead.is_converted, 'converted') : '-') +
+                            field('Converted At', val(lead.converted_at)) +
+                            field('Conversion Value', money(lead.conversion_value))
+                        );
 
-                                <div class="lead-info-box">
-                                    <div class="lead-info-label">Service</div>
-                                    <div class="lead-info-value">${lead.service ?? '-'}</div>
-                                </div>
+                        const internal = section('fa-sticky-note-o', 'icon-gray', 'Notes & Internal',
+                            field('Remarks', val(lead.remarks)) +
+                            field('Internal Note', val(lead.internal_note)) +
+                            field('Last Contacted At', val(lead.last_contacted_at))
+                        );
 
-                                <div class="lead-info-box">
-                                    <div class="lead-info-label">Budget</div>
-                                    <div class="lead-info-value">
-                                        ${lead.budget ? '₹ ' + lead.budget : '-'}
-                                    </div>
-                                </div>
-
-                                <div class="lead-info-box">
-                                    <div class="lead-info-label">Requirement</div>
-                                    <div class="lead-info-value">${lead.requirement ?? '-'}</div>
-                                </div>
-
-                                <!-- FOLLOW UP -->
-                                <div class="lead-info-box">
-                                    <div class="lead-info-label">Follow Up Date</div>
-                                    <div class="lead-info-value">${lead.follow_up_date ?? '-'}</div>
-                                </div>
-
-                                <div class="lead-info-box">
-                                    <div class="lead-info-label">Follow Up Time</div>
-                                    <div class="lead-info-value">${lead.follow_up_time ?? '-'}</div>
-                                </div>
-
-                                <div class="lead-info-box">
-                                    <div class="lead-info-label">Follow Up Note</div>
-                                    <div class="lead-info-value">${lead.follow_up_note ?? '-'}</div>
-                                </div>
-
-                                <!-- CONVERSION -->
-                                <div class="lead-info-box">
-                                    <div class="lead-info-label">Converted</div>
-                                    <div class="lead-info-value">${lead.is_converted ?? '-'}</div>
-                                </div>
-
-                                <div class="lead-info-box">
-                                    <div class="lead-info-label">Converted At</div>
-                                    <div class="lead-info-value">${lead.converted_at ?? '-'}</div>
-                                </div>
-
-                                <div class="lead-info-box">
-                                    <div class="lead-info-label">Conversion Value</div>
-                                    <div class="lead-info-value">
-                                        ${lead.conversion_value ? '₹ ' + lead.conversion_value : '-'}
-                                    </div>
-                                </div>
-
-                                <!-- INTERNAL -->
-                                <div class="lead-info-box">
-                                    <div class="lead-info-label">Remarks</div>
-                                    <div class="lead-info-value">${lead.remarks ?? '-'}</div>
-                                </div>
-
-                                <div class="lead-info-box">
-                                    <div class="lead-info-label">Internal Note</div>
-                                    <div class="lead-info-value">${lead.internal_note ?? '-'}</div>
-                                </div>
-
-                                <div class="lead-info-box">
-                                    <div class="lead-info-label">Last Contacted At</div>
-                                    <div class="lead-info-value">${lead.last_contacted_at ?? '-'}</div>
-                                </div>
-                            `);
+                        $('#leadDetailContainer').html(hero + contact + details + product + followup + conversion + internal);
 
 
                         /* ✅ QUICK CALL (MOBILE ONLY) */
@@ -511,10 +719,18 @@
         });
 
 
-        // Open modal
+        // Open modal (reset previous selection)
         $(document).on('click', '#openQuotationBtn', function() {
             $('#quotation_template').val('');
+            $('.quote-option').removeClass('selected');
             $('#quotationModal').modal('show');
+        });
+
+        // Select a quotation template card
+        $(document).on('click', '.quote-option', function() {
+            $('.quote-option').removeClass('selected');
+            $(this).addClass('selected');
+            $('#quotation_template').val($(this).data('value'));
         });
 
 

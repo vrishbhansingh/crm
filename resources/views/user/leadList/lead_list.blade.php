@@ -427,16 +427,8 @@
 
 
                         // 🔒 Privacy logic
-                        const isFirstLead = index === 0;
-
-                        const phone = isFirstLead ?
-                            lead.phone :
-                            maskPhone(lead.phone);
-
-
-                        const email = isFirstLead ?
-                            lead.email :
-                            maskEmail(lead.email);
+                        const phone = lead.phone;
+                        const email = lead.email;
 
 
                         html += `
@@ -469,18 +461,7 @@
                         <td class="text-center">${capitalizeFirst(lead.priority) ?? '-'}</td>
                         <td class="text-center">${lead.follow_up_date ?? '-'}</td>
                         <td class="action-cell">
-                               ${isFirstLead
-                                    ? lead.action
-                                    : lead.action
-                                        .replace(
-                                            /class="action-btn view"/g,
-                                            'class="action-btn view action-locked"'
-                                        )
-                                        .replace(
-                                            /href="[^"]*"/g,
-                                            'href="javascript:void(0)"'
-                                        )
-                                }
+                               ${lead.action}
                         </td>
                     </tr>
                 `;
@@ -578,21 +559,6 @@
 
 
 
-        function maskPhone(phone) {
-            if (!phone) return '-';
-            return phone.substring(0, 3) + 'XXXXXXX';
-        }
-
-        function maskEmail(email) {
-            if (!email) return '-';
-            const parts = email.split('@');
-            return parts[0].charAt(0) + '****@' + parts[1];
-        }
-
-        $(document).on('click', '.action-locked', function(e) {
-            e.preventDefault();
-            toastr.error('User can view only one unlocked lead at a time');
-        });
     </script>
 
 </body>

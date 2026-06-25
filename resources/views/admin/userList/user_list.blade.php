@@ -363,6 +363,7 @@
                     <div class="user-header-right">
                         <a href="javascript:void(0)"
                             class="btn btn-light btn-sm add-user-btn"
+                            style="display:none;"
                             data-toggle="modal"
                             data-target="#addUserModal">
                             <i class="fa fa-plus mr-1"></i> Add User
@@ -449,11 +450,7 @@
                             <div class="form-group col-md-6">
                                 <label>Role</label>
                                 <select name="role" class="form-control">
-                                    <option value="">Select role</option>
-                                    <option value="team_leader">Team Leader</option>
-                                    <option value="manager">Manager</option>
-                                    <option value="caller">Caller</option>
-                                    <option value="senior_caller">Senior Caller</option>
+                                    <option value="agent">Agent</option>
                                 </select>
                             </div>
                         </div>
@@ -577,10 +574,7 @@
                             <div class="form-group col-md-6">
                                 <label>Role</label>
                                 <select name="role" id="edit_role" class="form-control">
-                                    <option value="team_leader">Team Leader</option>
-                                    <option value="manager">Manager</option>
-                                    <option value="caller">Caller</option>
-                                    <option value="senior_caller">Senior Caller</option>
+                                    <option value="agent">Agent</option>
                                 </select>
                             </div>
                         </div>
@@ -739,13 +733,7 @@
 
                                  <td class="text-center">
                                     <span class="role-badge">
-                                        ${
-                                            item.role === 'team_leader' ? 'Team Leader' :
-                                            item.role === 'manager' ? 'Manager' :
-                                            item.role === 'caller' ? 'Caller' :
-                                            item.role === 'senior_caller' ? 'Senior Caller' :
-                                            item.role
-                                        }
+                                        ${item.role === 'agent' ? 'Agent' : item.role}
                                     </span>
                                 </td>
                                  <td class="text-center">
@@ -771,6 +759,14 @@
                         tbody = `<tr><td colspan="10" class="text-center">No customer data found</td></tr>`;
                     }
                     $('#userTable tbody').html(tbody);
+
+                    // Only one user allowed: hide "Add User" once a user exists.
+                    let userCount = (response && Array.isArray(response.data)) ? response.data.length : 0;
+                    if (userCount >= 1) {
+                        $('.add-user-btn').hide();
+                    } else {
+                        $('.add-user-btn').show();
+                    }
 
                 },
 

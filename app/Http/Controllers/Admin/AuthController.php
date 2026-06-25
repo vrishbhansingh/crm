@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Admin;
 use App\Models\User;
 use App\Models\UserList;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
@@ -26,9 +28,15 @@ class AuthController extends Controller
 
         if (Auth::guard('admin')->attempt($credentials)) {
             $user = Auth::guard('admin')->user();
-
             if ($user->status === 'Active') {
                 $request->session()->regenerate();
+
+                // Single-device login: issue a fresh token and invalidate other sessions.
+                $token = Str::random(60);
+                $admin = Admin::find($user->id);
+                $admin->session_token = $token;
+                $admin->save();
+                $request->session()->put('session_token_admin', $token);
 
                 return response()->json([
                     'status' => true,

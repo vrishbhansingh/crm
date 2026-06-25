@@ -212,11 +212,6 @@
                                 @csrf
 
                                 <div class="floating-group">
-                                    <input type="password" name="current_password" placeholder=" " required>
-                                    <label>Current Password</label>
-                                </div>
-
-                                <div class="floating-group">
                                     <input type="password" name="new_password" placeholder=" " required>
                                     <label>New Password</label>
                                 </div>

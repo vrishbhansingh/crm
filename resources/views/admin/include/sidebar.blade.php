@@ -228,7 +228,7 @@
                 <span>User List</span>
             </a>
         </li>
-        <li class="mb-1 sidebar-dropdown {{ request()->routeIs('admin.company_details','admin.security_settings') ? 'open' : '' }}">
+        <li class="mb-1 sidebar-dropdown {{ request()->routeIs('admin.company_details') ? 'open' : '' }}">
             <a href="javascript:void(0)" class="nav-link dropdown-left">
                 <i class="fa fa-cog"></i>
                 <span>Settings</span>
@@ -241,13 +241,6 @@
                         href="{{ route('admin.company_details') }}">
                         <i class="fa fa-building"></i>
                         Company Details
-                    </a>
-                </li>
-
-                <li>
-                    <a class="nav-link {{ request()->routeIs('admin.security') ? 'active' : '' }}" href="{{ route('admin.security') }}">
-                        <i class="fa fa-shield"></i>
-                        Security
                     </a>
                 </li>
             </ul>

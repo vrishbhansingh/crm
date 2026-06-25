@@ -169,19 +169,29 @@ class OrderController extends Controller
         $sl_no = 1;
 
         foreach ($orders as $order) {
+            $payments = \App\Models\PaymentDetails::where('order_id', $order->id)
+                ->orderBy('payment_date', 'asc')
+                ->get(['payment_mode', 'payment_date', 'paid_amount']);
+
             $data[] = [
                 'sl_no' => $sl_no++,
                 'order_number'   => $order->order_number,
                 'invoice_date'   => $order->invoice_date,
                 'invoice_id'     => $order->invoice_id,
-                'user_name'        => $order->user_name,
-                'project_name'     => $order->project_name,
+                'user_name'      => $order->user_name,
+                'project_name'   => $order->project_name,
+                'sub_total'      => $order->sub_total,
+                'discount'       => $order->discount,
+                'gst'            => $order->gst,
+                'net_amount'     => $order->net_amount,
                 'total_amount'   => $order->total_amount,
                 'paid_amount'    => $order->paid_amount,
                 'due_amount'     => $order->due_amount,
                 'currency'       => $order->currency,
+                'payment_terms'  => $order->payment_terms,
                 'payment_status' => $order->payment_status,
                 'order_status'   => $order->order_status,
+                'payments'       => $payments,
             ];
         }
         if ($data) {

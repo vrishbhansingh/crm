@@ -288,8 +288,7 @@
 
       <!-- Dropdown -->
       <div class="crm-dropdown" id="profileDropdown">
-        <a href="#"><i class="fa fa-user"></i> Profile</a>
-        <a href="#"><i class="fa fa-cog"></i> Settings</a>
+        <a href="{{ route('admin.security') }}"><i class="fa fa-shield"></i> Security</a>
         <form method="post" action="{{ route('admin.logout') }}">
           @csrf
           <button class="logout-btn">

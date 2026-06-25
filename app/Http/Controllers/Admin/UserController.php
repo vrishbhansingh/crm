@@ -25,19 +25,11 @@ class UserController extends Controller
             // $editUrl = route('admin.edit_customer_details', $item->id);
             $action = "
                 <div class='action-stack'>
-                    <button 
+                    <button
                         class='btn btn-sm btn-success action-status editbtn'
                         data-id='{$key->id}' data-name='{$key->name}' data-email='{$key->email}' data-phone='{$key->phone}' data-role='{$key->role}' data-backup='{$key->backup}'
-                        data-status='{$key->status}'> 
+                        data-status='{$key->status}'>
                         <i class='fa fa-check-circle'></i> Edit
-                    </button>
-
-                    <button 
-                        class='btn btn-sm btn-danger action-delete delete_data'
-                        data-id='{$key->id}'
-                        data-toggle='modal'
-                        data-target='#delete-modal'>
-                        <i class='fa fa-trash'></i> Delete
                     </button>
                 </div>";
             $data[] = [
@@ -57,6 +49,14 @@ class UserController extends Controller
     }
     public function add_user(Request $request)
     {
+        // Restrict to a single user for now.
+        if (UserList::count() >= 1) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Only one user is allowed.',
+            ], 422);
+        }
+
         $rules = [
         'name' => [
             'required',

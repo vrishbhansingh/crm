@@ -9,6 +9,7 @@ use App\Models\UserList;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Str;
 
 class LoginController extends Controller
 {
@@ -32,11 +33,15 @@ class LoginController extends Controller
             if ($user->status === 'Active') {
                 $request->session()->regenerate();
 
+                // Single-device login: issue a fresh token and invalidate other sessions.
+                $token = Str::random(60);
                 $check  = User::where('id', Auth::guard('user')->user()->id)->first();
                 if ($check) {
                     $check->last_login = now();
+                    $check->session_token = $token;
                     $check->update();
                 }
+                $request->session()->put('session_token_user', $token);
 
                 return response()->json([
                     'status' => true,
@@ -122,6 +127,10 @@ class LoginController extends Controller
         Auth::guard('user')->loginUsingId($user->id);
 
         $request->session()->regenerate();
+
+        // Match the user's current single-session token so impersonation
+        // passes the single-device check without logging the real user out.
+        $request->session()->put('session_token_user', $user->session_token);
 
         // Update last login (optional)
         $user->last_login = now();
