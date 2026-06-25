@@ -8,6 +8,7 @@ use App\Models\UserAttendance;
 use App\Models\UserList;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
 
@@ -26,60 +27,84 @@ class LoginController extends Controller
             'email' => 'required',
             'password' => 'required',
         ]);
-        $credentials = $request->only('email', 'password');
 
-        if (Auth::guard('user')->attempt($credentials)) {
-            $user = Auth::guard('user')->user();
-            if ($user->status === 'Active') {
-                $request->session()->regenerate();
+        // Only ever authenticate against the FIRST user row — never a second,
+        // even if extra rows were added directly in the database.
+        $user = User::orderBy('id', 'asc')->first();
 
-                // Single-device login: issue a fresh token and invalidate other sessions.
-                $token = Str::random(60);
-                $check  = User::where('id', Auth::guard('user')->user()->id)->first();
-                if ($check) {
-                    $check->last_login = now();
-                    $check->session_token = $token;
-                    $check->update();
-                }
-                $request->session()->put('session_token_user', $token);
-
-                return response()->json([
-                    'status' => true,
-                    'message' => 'Login successful',
-                ]);
-            }
-            else{
-                return response()->json([
-                'status' => false,
-                'message' => 'Your account has been blocked by the administrator.',
-            ]);
-            }
-        } else {
+        if (!$user || $user->email !== $request->email || !Hash::check($request->password, $user->password)) {
             return response()->json([
                 'status' => false,
                 'message' => 'Invalid Credentials',
             ]);
         }
+
+        if ($user->status !== 'Active') {
+            return response()->json([
+                'status' => false,
+                'message' => 'Your account has been blocked by the administrator.',
+            ]);
+        }
+
+        Auth::guard('user')->login($user);
+        $request->session()->regenerate();
+
+        // Single-device login: issue a fresh token and invalidate other sessions.
+        $token = Str::random(60);
+        $user->last_login = now();
+        $user->session_token = $token;
+        $user->save();
+        $request->session()->put('session_token_user', $token);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Login successful',
+        ]);
     }
 
     function logout(Request $request)
     {
         if (Auth::guard('user')->check()) {
+            // Stamp check-out on the latest attendance that hasn't been closed yet.
+            $open = UserAttendance::where('user_id', Auth::guard('user')->id())
+                ->whereNull('check_out')
+                ->orderBy('id', 'desc')
+                ->first();
+            if ($open) {
+                $open->check_out = \Carbon\Carbon::now('Asia/Kolkata')->format('Y-m-d H:i:s');
+                $open->save();
+            }
+
+            // Log out ONLY the user guard — do NOT invalidate the whole session,
+            // or it would also log out the admin guard (they share one session).
             Auth::guard('user')->logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
+            $request->session()->forget('session_token_user');
         }
 
         return redirect()->route('user.login');
     }
     function user_attend(Request $request)
     {
-        $user_id = $request->user_id;
-        $attendance_datetime = $request->attendance_datetime;
+        $userId = Auth::guard('user')->id();
+        $today  = \Carbon\Carbon::now('Asia/Kolkata')->toDateString();
+
+        // Only once per day — if already marked today, don't create a duplicate.
+        $already = UserAttendance::where('user_id', $userId)
+            ->whereDate('date', $today)
+            ->exists();
+        if ($already) {
+            return response()->json([
+                'status' => true,
+                'message' => 'Attendance already marked for today',
+            ]);
+        }
+
         $user_attendence = new UserAttendance();
-        $user_attendence->user_id = $user_id;
-        $user_attendence->date = $attendance_datetime;
+        $user_attendence->user_id = $userId;
+        // Use server time (IST) so the date is consistent with the "marked today" check.
+        $user_attendence->date = \Carbon\Carbon::now('Asia/Kolkata')->format('Y-m-d H:i:s');
         $result = $user_attendence->save();
+
         if ($result) {
             return response()->json([
                 'status' => true,

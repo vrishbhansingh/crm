@@ -65,6 +65,18 @@
             color: #4b49ac;
         }
 
+        /* payment status colors */
+        .pay-paid    { background: #e7f7ee; color: #1f9254; }
+        .pay-partial { background: #fef3e2; color: #c77700; }
+        .pay-pending { background: #fdecec; color: #d64545; }
+
+        /* order status colors */
+        .status-in_progress { background: #eceafe; color: #6366f1; }
+        .status-on_hold     { background: #eef1f5; color: #64748b; }
+        .status-delivered   { background: #e7f7ee; color: #1f9254; }
+        .status-closed      { background: #eef1f5; color: #64748b; }
+        .status-cancelled   { background: #fdecec; color: #d64545; }
+
         .page-header {
             background: #ffffff;
             padding: 18px 22px;
@@ -185,29 +197,29 @@
                             <small class="text-muted">${item.invoice_date}</small>
                         </td>
 
-                        <td>${item.invoice_id}</td>
+                        <td>${dash(item.invoice_id)}</td>
 
                         <td>
-                            <small>User Name: ${item.user_name}</small><br>
-                            <small>Project Name: ${item.project_name}</small>
+                            <small>User Name: ${dash(item.user_name)}</small><br>
+                            <small>Project Name: ${dash(item.project_name)}</small>
                         </td>
 
                         <td>
-                            <strong>${item.currency} ${item.total_amount}</strong><br>
+                            <strong>${item.currency ?? ''} ${money(item.total_amount)}</strong><br>
                             <small class="text-muted">
-                                Paid: ${item.paid_amount} | Due: ${item.due_amount}
+                                Paid: ${money(item.paid_amount)} | Due: ${money(item.due_amount)}
                             </small>
                         </td>
 
                         <td>
-                            <span class="payment-badge">
-                                ${item.payment_status} 
+                            <span class="payment-badge ${payClass(item.payment_status)}">
+                                ${pretty(item.payment_status)}
                             </span>
                         </td>
 
                         <td>
                             <span class="status-badge status-${item.order_status}">
-                                ${item.order_status}
+                                ${pretty(item.order_status)}
                             </span>
                         </td>
 
@@ -227,6 +239,25 @@
                     $('#orderTable tbody').html(tbody);
                 }
             });
+        }
+
+        function pretty(s) {
+            if (!s) return '-';
+            return s.toString().replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        }
+
+        function dash(v) {
+            return (v === null || v === undefined || v === '' || v === 'null') ? '-' : v;
+        }
+
+        function money(v) {
+            if (v === null || v === undefined || v === '') return '0';
+            return Number(v).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+        }
+
+        function payClass(s) {
+            const map = { paid: 'pay-paid', partial: 'pay-partial', pending: 'pay-pending' };
+            return map[s] || '';
         }
 
         $(document).ready(function() {

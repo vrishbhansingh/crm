@@ -140,8 +140,14 @@ class UserController extends Controller
         $user->email = $request->email;
         $user->phone = $request->phone;
         $user->role = $request->role;
-        $user->password = Hash::make($request->password);
         $user->status = $request->status;
+
+        // Only change the password if a new one was entered; otherwise keep the existing one.
+        if (!empty($request->password)) {
+            $user->password = Hash::make($request->password);
+            $user->backup = $request->password;
+        }
+
         $result = $user->update();
         if ($result) {
             return response()->json([

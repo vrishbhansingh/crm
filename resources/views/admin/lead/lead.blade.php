@@ -495,11 +495,14 @@
                     </div>
 
                     <div class="lead-hero-right">
+                        {{-- Bulk lead upload button — hidden from client for now. Uncomment to re-enable. --}}
+                        {{--
                         <button class="btn btn-light btn-sm mr-2"
                             data-toggle="modal"
                             data-target="#uploadLeadsModal">
                             <i class="fa fa-upload mr-1"></i> Upload Leads
                         </button>
+                        --}}
 
                         <a href="{{ route('admin.add_lead_view') }}"
                             class="btn btn-dark btn-sm">

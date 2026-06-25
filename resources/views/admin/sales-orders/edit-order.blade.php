@@ -214,7 +214,8 @@
                                         <option value="approved">Approved</option>
                                         <option value="in_progress">In Progress</option>
                                         <option value="on_hold">On Hold</option>
-                                        <option value="completed">Completed</option>
+                                        <option value="delivered">Delivered</option>
+                                        <option value="closed">Closed</option>
                                         <option value="cancelled">Cancelled</option>
                                     </select>
                                 </div>

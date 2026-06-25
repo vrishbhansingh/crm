@@ -582,7 +582,8 @@
                         <div class="form-row">
                             <div class="form-group col-md-6">
                                 <label>Password</label>
-                                <input type="text" name="password" id="edit_password" class="form-control">
+                                <input type="password" name="password" id="edit_password" class="form-control" placeholder="Enter new password" autocomplete="new-password" readonly onfocus="this.removeAttribute('readonly')">
+                                <small class="text-muted">Leave empty to keep the current password.</small>
                             </div>
 
                             <div class="form-group col-md-6">
@@ -721,8 +722,7 @@
                             <tr>
                                 <td class="text-center">${item.sl_no}</td>
 
-                                <td class="text-center" style="cursor:pointer;" id="userCell"
-                                data-id="${item.id}" data-status="${item.status}">
+                                <td class="text-center">
                                     <strong>${item.name}</strong><br>
                                     <small class="text-muted">${item.email}</small>
                                 </td>
@@ -868,7 +868,6 @@
                 let phone = $(this).data('phone');
                 let role = $(this).data('role');
                 let status = $(this).data('status');
-                let password = $(this).data('backup');
 
 
                 // set values into edit modal
@@ -878,7 +877,7 @@
                 $('#edit_phone').val(phone);
                 $('#edit_role').val(role);
                 $('#edit_status').val(status);
-                $('#edit_password').val(password);
+                $('#edit_password').val('');
 
                 // open bootstrap modal
                 $('#editUserModal').modal('show');
@@ -941,28 +940,6 @@
             })
         })
 
-        $(document).on('click', '#userCell', function() {
-            const id = $(this).data('id');
-
-            $.ajax({
-                url: '{{route("admin.user_login_through_admin")}}',
-                type: 'POST',
-                data: {
-                    _token: $('meta[name="csrf-token"]').attr('content'),
-                    id: id,
-                },
-                success: function(response) {
-                    if (response.status) {
-                        setTimeout(() => {}, 1000);
-                        window.open("{{ route('user.dashboard') }}", "_blank");
-                        window.location.reload();
-                    }
-                },
-                error: function(err) {
-                    toastr.error('Something went wrong');
-                }
-            })
-        });
     </script>
 
 </body>

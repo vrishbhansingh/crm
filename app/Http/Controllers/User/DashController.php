@@ -24,10 +24,11 @@ class DashController extends Controller
     function getAttendence()
     {
         $user = Auth::guard('user')->user();
-        $loginDate = Carbon::parse($user->last_login)->toDateString(); // 2026-01-17
+        // Check against today's date in IST — the same timezone attendance is saved in.
+        $today = Carbon::now('Asia/Kolkata')->toDateString();
 
         $attendanceMarked = UserAttendance::where('user_id', $user->id)
-            ->whereDate('date', $loginDate)
+            ->whereDate('date', $today)
             ->exists();
         return response()->json([
             'success' => true,

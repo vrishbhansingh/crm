@@ -120,12 +120,10 @@ class OrderController extends Controller
 
         $order = Order::findOrFail($request->id);
 
+        // NOTE: invoice_id, lead_id, project_id, user_id are NOT edited on this
+        // form — leave them untouched so an update can't wipe them to null.
         $order->order_number   = $request->order_number;
         $order->invoice_date   = $request->invoice_date;
-        $order->invoice_id     = $request->invoice_id;
-        $order->lead_id        = $request->lead_id;
-        $order->project_id     = $request->project_id;
-        $order->user_id        = $request->user_id;
 
         $order->sub_total      = $request->sub_total;
         $order->discount       = $request->discount;

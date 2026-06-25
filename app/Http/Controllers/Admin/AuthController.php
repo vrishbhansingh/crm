@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\UserList;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 class AuthController extends Controller
@@ -24,46 +25,47 @@ class AuthController extends Controller
             'username' => 'required',
             'password' => 'required',
         ]);
-        $credentials = $request->only('username', 'password');
 
-        if (Auth::guard('admin')->attempt($credentials)) {
-            $user = Auth::guard('admin')->user();
-            if ($user->status === 'Active') {
-                $request->session()->regenerate();
+        // Only ever authenticate against the FIRST admin row — never a second,
+        // even if extra rows were added directly in the database.
+        $admin = Admin::orderBy('id', 'asc')->first();
 
-                // Single-device login: issue a fresh token and invalidate other sessions.
-                $token = Str::random(60);
-                $admin = Admin::find($user->id);
-                $admin->session_token = $token;
-                $admin->save();
-                $request->session()->put('session_token_admin', $token);
-
-                return response()->json([
-                    'status' => true,
-                    'message' => 'Login successful',
-                    'location' => url('admin/dashboard/'),
-                ]);
-            } else {
-                Auth::guard('admin')->logout();
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Something went wrong',
-                ]);
-            }
-        } else {
-
+        if (!$admin || $admin->username !== $request->username || !Hash::check($request->password, $admin->password)) {
             return response()->json([
                 'status' => false,
                 'message' => 'Invalid Credentials',
             ]);
         }
+
+        if ($admin->status !== 'Active') {
+            return response()->json([
+                'status' => false,
+                'message' => 'Something went wrong',
+            ]);
+        }
+
+        Auth::guard('admin')->login($admin);
+        $request->session()->regenerate();
+
+        // Single-device login: issue a fresh token and invalidate other sessions.
+        $token = Str::random(60);
+        $admin->session_token = $token;
+        $admin->save();
+        $request->session()->put('session_token_admin', $token);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Login successful',
+            'location' => url('admin/dashboard/'),
+        ]);
     }
     public function logout(Request $request)
     {
         if (Auth::guard('admin')->check()) {
+            // Log out ONLY the admin guard — do NOT invalidate the whole session,
+            // or it would also log out the user guard (they share one session).
             Auth::guard('admin')->logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
+            $request->session()->forget('session_token_admin');
         }
 
         return redirect()->route('admin.login');

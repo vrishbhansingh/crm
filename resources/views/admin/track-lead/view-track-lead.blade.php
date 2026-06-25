@@ -113,9 +113,14 @@
                         </p>
                     </div>
 
-                    <button class="btn btn-light btn-sm" id="refreshLeads">
-                        <i class="fa fa-refresh"></i> Refresh
-                    </button>
+                    <div class="d-flex" style="gap:10px;">
+                        <a href="{{ route('admin.track_lead') }}" class="btn btn-light btn-sm">
+                            <i class="fa fa-arrow-left"></i> Back
+                        </a>
+                        <button class="btn btn-light btn-sm" id="refreshLeads">
+                            <i class="fa fa-refresh"></i> Refresh
+                        </button>
+                    </div>
                 </div>
 
                 <!-- TABLE -->

@@ -273,14 +273,6 @@
     <!-- RIGHT -->
     <div class="crm-right">
 
-      <div class="crm-icon-btn">
-        <i class="fa fa-bell"></i>
-      </div>
-
-      <div class="crm-icon-btn">
-        <i class="fa fa-cog"></i>
-      </div>
-
       <div class="crm-profile" id="profileToggle">
         <img src="{{ asset('images/user_1.png') }}">
         <span>Admin</span>

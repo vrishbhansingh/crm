@@ -80,7 +80,11 @@
             display: grid;
             grid-template-columns: 1.4fr 1fr;
             gap: 22px;
+            align-items: start;
         }
+
+        /* prevent grid blowout: let columns shrink instead of overflowing */
+        .layout-2col > * { min-width: 0; }
 
         @media (max-width: 992px) {
             .layout-2col { grid-template-columns: 1fr; }
@@ -115,9 +119,36 @@
         .b-gray   { background: #eef1f5; color: #64748b; }
 
         /* ===== PAYMENT PROGRESS ===== */
-        .pay-amounts { display: flex; justify-content: space-between; margin-bottom: 12px; }
-        .pay-amounts .big { font-size: 22px; font-weight: 800; color: #0f172a; }
-        .pay-amounts .lbl { font-size: 12px; color: #64748b; }
+        .pay-amounts {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        .pay-amounts .col-r { text-align: right; }
+        .pay-amounts .lbl {
+            font-size: 11px;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+            font-weight: 600;
+            color: #94a3b8;
+            margin-bottom: 6px;
+        }
+        .pay-amounts .pp-amount {
+            font-size: 20px;
+            font-weight: 700;
+            color: #0f172a;
+            line-height: 1.2;
+            white-space: nowrap;
+        }
+        .pay-amounts .pp-amount .rupee {
+            font-weight: 500;
+            font-size: .72em;
+            color: #94a3b8;
+            margin-right: 3px;
+            vertical-align: 1px;
+        }
         .progress-track {
             height: 12px;
             border-radius: 999px;
@@ -214,12 +245,9 @@
                         <div class="sub" id="orderSubTitle">Loading order details...</div>
                     </div>
                     <div class="hero-actions no-print">
-                        <a class="hero-btn hero-btn-light" href="{{ route('admin.sales_orders') }}">
+                        <a class="hero-btn hero-btn-white" href="{{ route('admin.sales_orders') }}">
                             <i class="fa fa-arrow-left"></i> Back
                         </a>
-                        <button class="hero-btn hero-btn-white" onclick="window.print()">
-                            <i class="fa fa-print"></i> Print
-                        </button>
                     </div>
                 </div>
 
@@ -268,12 +296,12 @@
                         <div class="card-title"><i class="fa fa-credit-card"></i> Payment Progress</div>
                         <div class="pay-amounts">
                             <div>
-                                <div class="big" id="paidBig">0</div>
                                 <div class="lbl">Paid</div>
+                                <div class="pp-amount" id="paidBig">0</div>
                             </div>
-                            <div style="text-align:right;">
-                                <div class="big" id="totalBig">0</div>
+                            <div class="col-r">
                                 <div class="lbl">Total</div>
+                                <div class="pp-amount" id="totalBig">0</div>
                             </div>
                         </div>
                         <div class="progress-track">
@@ -354,6 +382,13 @@
             return sym(cur) + n.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
         }
 
+        // Big amounts: render the currency symbol as a light, separated prefix
+        // (avoids the heavy ₹ "blob" look next to the bold digits).
+        function moneyBig(cur, v) {
+            const n = Number(v || 0).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+            return '<span class="rupee">' + (cur || '') + '</span> ' + n;
+        }
+
         function orderBadge(status) {
             const map = {
                 new: 'b-amber', approved: 'b-blue', in_progress: 'b-indigo',
@@ -415,8 +450,8 @@
                     const total = Number(o.total_amount || 0);
                     const paid = Number(o.paid_amount || 0);
                     const pct = total > 0 ? Math.min(100, Math.round((paid / total) * 100)) : 0;
-                    $('#paidBig').text(money(cur, paid));
-                    $('#totalBig').text(money(cur, total));
+                    $('#paidBig').html(moneyBig(cur, paid));
+                    $('#totalBig').html(moneyBig(cur, total));
                     $('#progressFill').css('width', pct + '%');
                     $('#paidPercent').text(pct + '% paid');
                     $('#dueChip').text('Due: ' + money(cur, o.due_amount));

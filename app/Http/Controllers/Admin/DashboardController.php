@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Lead;
+use App\Models\UserAttendance;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
@@ -36,6 +37,29 @@ class DashboardController extends Controller
             'hotLead' => $hotLead,
             'facebook' => $facebookLead,
             'webLead' => $webLead,
+        ]);
+    }
+
+    public function getAttendance()
+    {
+        // Latest attendance row per user (check-in = date, plus check_out if logged out).
+        $latestIds = UserAttendance::selectRaw('MAX(id) as id')
+            ->groupBy('user_id')
+            ->pluck('id');
+
+        $records = UserAttendance::join('user_list', 'user_list.id', '=', 'user_attendance.user_id')
+            ->whereIn('user_attendance.id', $latestIds)
+            ->orderBy('user_attendance.date', 'desc')
+            ->get([
+                'user_list.name',
+                'user_attendance.user_id',
+                'user_attendance.date as check_in',
+                'user_attendance.check_out',
+            ]);
+
+        return response()->json([
+            'status' => true,
+            'data' => $records,
         ]);
     }
 }

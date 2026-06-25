@@ -33,6 +33,7 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('admin.logout');
 Route::middleware('admin_middle')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'dashboard'])->name('admin.dashboard');
     Route::get('/get-dashboard-data', [DashboardController::class, 'getDashboardData'])->name('admin.getDashboardData');
+    Route::get('/get-attendance', [DashboardController::class, 'getAttendance'])->name('admin.getAttendance');
 
 
     route::get('/user-profile', [UserController::class, 'user_profile'])->name('admin.user_profile');

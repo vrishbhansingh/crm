@@ -319,6 +319,45 @@
             </div>
           </div>
         </div>
+
+        <!-- TEAM ATTENDANCE -->
+        <style>
+          .attendance-card { background:#fff; border-radius:16px; box-shadow:0 8px 24px rgba(15,23,42,.05); padding:22px 24px; margin-bottom:24px; }
+          .attendance-head h5 { font-weight:700; color:#1e293b; margin:0; font-size:16px; }
+          .attendance-head small { color:#94a3b8; font-size:12px; }
+          .attendance-table { width:100%; border-collapse:collapse; }
+          .attendance-table th { text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:#94a3b8; font-weight:600; padding:10px 12px; border-bottom:1px solid #eef1f5; }
+          .attendance-table td { padding:14px 12px; font-size:14px; color:#1e293b; border-bottom:1px solid #f1f5f9; }
+          .att-badge { padding:4px 12px; border-radius:999px; font-size:12px; font-weight:600; }
+          .att-online { background:#e7f7ee; color:#1f9254; }
+          .att-offline { background:#eef1f5; color:#64748b; }
+        </style>
+        <div class="row">
+          <div class="col-12">
+            <div class="attendance-card">
+              <div class="attendance-head mb-3">
+                <h5><i class="fa fa-clock-o mr-2"></i> Team Attendance</h5>
+                <small>Last check-in / check-out per agent</small>
+              </div>
+              <div class="table-responsive">
+                <table class="attendance-table">
+                  <thead>
+                    <tr>
+                      <th>Agent</th>
+                      <th>Last Check-in</th>
+                      <th>Last Check-out</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="attendanceBody">
+                    <tr><td colspan="4" class="text-center text-muted">Loading...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
         @include('admin.include.footer')
       </div>
     </div>
@@ -326,7 +365,46 @@
   <script>
     $(function() {
       getCrmDashboardData();
+      loadAttendance();
     });
+
+    function fmtDateTime(dt) {
+      if (!dt) return '—';
+      const d = new Date(String(dt).replace(' ', 'T'));
+      if (isNaN(d.getTime())) return dt;
+      return d.toLocaleString('en-IN', {
+        day: '2-digit', month: 'short', year: 'numeric',
+        hour: '2-digit', minute: '2-digit', hour12: true
+      });
+    }
+
+    function loadAttendance() {
+      $.ajax({
+        url: "{{ route('admin.getAttendance') }}",
+        type: "GET",
+        success: function(res) {
+          let rows = '';
+          if (res.status && Array.isArray(res.data) && res.data.length) {
+            res.data.forEach(a => {
+              const online = !a.check_out;
+              rows += `
+                <tr>
+                  <td><strong>${a.name ?? '-'}</strong></td>
+                  <td>${fmtDateTime(a.check_in)}</td>
+                  <td>${fmtDateTime(a.check_out)}</td>
+                  <td><span class="att-badge ${online ? 'att-online' : 'att-offline'}">${online ? 'Online' : 'Checked out'}</span></td>
+                </tr>`;
+            });
+          } else {
+            rows = `<tr><td colspan="4" class="text-center text-muted">No attendance records yet.</td></tr>`;
+          }
+          $('#attendanceBody').html(rows);
+        },
+        error: function() {
+          $('#attendanceBody').html(`<tr><td colspan="4" class="text-center text-muted">Failed to load attendance.</td></tr>`);
+        }
+      });
+    }
 
     function getCrmDashboardData() {
       $.ajax({
