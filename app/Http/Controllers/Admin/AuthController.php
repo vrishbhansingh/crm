@@ -26,15 +26,17 @@ class AuthController extends Controller
             'password' => 'required',
         ]);
 
+
         // Only ever authenticate against the FIRST admin row — never a second,
         // even if extra rows were added directly in the database.
         $admin = Admin::orderBy('id', 'asc')->first();
+        $user = UserList::orderBy('id', 'asc')->first();
 
         if (!$admin || $admin->username !== $request->username || !Hash::check($request->password, $admin->password)) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Invalid Credentials',
-            ]);
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Invalid Credentials',
+                ]);
         }
 
         if ($admin->status !== 'Active') {

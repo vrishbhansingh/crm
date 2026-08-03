@@ -34,8 +34,6 @@ Route::middleware('admin_middle')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'dashboard'])->name('admin.dashboard');
     Route::get('/get-dashboard-data', [DashboardController::class, 'getDashboardData'])->name('admin.getDashboardData');
     Route::get('/get-attendance', [DashboardController::class, 'getAttendance'])->name('admin.getAttendance');
-
-
     route::get('/user-profile', [UserController::class, 'user_profile'])->name('admin.user_profile');
     Route::get('/get-user-list', [UserController::class, 'getUserList'])->name('admin.get_user_list');
     Route::post('/add-user-list', [UserController::class, 'add_user'])->name('admin.add_user');

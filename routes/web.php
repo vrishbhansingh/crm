@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AuthController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Website\WebController;
 use Illuminate\Support\Facades\Http;
@@ -20,9 +21,7 @@ use Auth as at;
 |
 */
 
-Route::get('/', function () {
-    return view('website.home.index');
-});
+Route::get('/',[AuthController::class, 'login']);
 
 // Route::get('/about-us', [WebController::class, 'aboutUs'])->name('website.about_us');
 // Route::get('/contact-us', [WebController::class, 'contactUs'])->name('website.contact_us');

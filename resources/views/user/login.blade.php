@@ -190,7 +190,7 @@
 
             <form method="POST" id="userLogin">
                 @csrf
-
+                
                 <div class="field">
                     <label>Email</label>
                     <input type="email" name="email" id="email" placeholder="Enter your email">

@@ -197,7 +197,7 @@
   <div class="auth-wrapper">
     <div class="auth-card">
 
-      <img src="https://techwebmantra.com/crm/public/images/logo.svg" class="logo" alt="Logo">
+      <img src="{{ config('app.url') }}public/images/logo.svg" class="logo" alt="Logo">
 
       <h2 class="auth-title">Admin Panel</h2>
       <p class="auth-subtitle">Sign in to manage your system</p>
