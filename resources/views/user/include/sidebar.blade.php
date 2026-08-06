@@ -217,6 +217,7 @@
                 <span>Profile</span>
             </a>
         </li>
+        @can('leads.view')
         <li class="mb-1 sidebar-dropdown">
             <a href="javascript:void(0)" class="nav-link dropdown-toggle-custom">
                 <i class="fa fa-briefcase"></i>
@@ -242,7 +243,9 @@
                 </li>
             </ul>
         </li>
+        @endcan
 
+        @can('orders.view')
          <li class="mb-1">
             <a class="nav-link {{ request()->routeIs('user.order_management') ? 'active' : '' }}"
                 href="{{ route('user.order_management') }}">
@@ -250,6 +253,7 @@
                 <span>Order Management</span>
             </a>
         </li>
+        @endcan
 
         <li class="mt-2">
             <form method="post" action="{{ route('user.logout') }}">

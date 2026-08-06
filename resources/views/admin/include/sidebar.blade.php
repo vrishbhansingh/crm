@@ -192,6 +192,7 @@
             </a>
         </li>
 
+        @can('leads.view')
         <li class="mb-1">
             <a class="nav-link {{ request()->routeIs('admin.lead') ? 'active' : '' }}"
                 href="{{ route('admin.lead') }}">
@@ -199,6 +200,8 @@
                 <span>Leads</span>
             </a>
         </li>
+        @endcan
+        @can('orders.view')
         <li class="mb-1">
             <a class="nav-link {{ request()->routeIs('admin.sales_orders') ? 'active' : '' }}"
                 href="{{ route('admin.sales_orders') }}">
@@ -213,6 +216,8 @@
                 <span>Projects Details</span>
             </a>
         </li>
+        @endcan
+        @can('leads.view')
         <li class="mb-1">
             <a class="nav-link {{ request()->routeIs('admin.track_lead') ? 'active' : '' }}"
                 href="{{ route('admin.track_lead') }}">
@@ -220,7 +225,9 @@
                 <span>Track Lead</span>
             </a>
         </li>
+        @endcan
 
+        @can('users.view')
         <li class="mb-1">
             <a class="nav-link {{ request()->routeIs('admin.user_profile') ? 'active' : '' }}"
                 href="{{ route('admin.user_profile') }}">
@@ -228,6 +235,8 @@
                 <span>User List</span>
             </a>
         </li>
+        @endcan
+        @canany(['company.view', 'masters.view'])
         <li class="mb-1 sidebar-dropdown {{ request()->routeIs('admin.company_details') ? 'open' : '' }}">
             <a href="javascript:void(0)" class="nav-link dropdown-left">
                 <i class="fa fa-cog"></i>
@@ -236,6 +245,7 @@
             </a>
 
             <ul class="sidebar-submenu">
+                @can('company.view')
                 <li>
                     <a class="nav-link {{ request()->routeIs('admin.company_details') ? 'active' : '' }}"
                         href="{{ route('admin.company_details') }}">
@@ -243,6 +253,7 @@
                         Company Details
                     </a>
                 </li>
+                @endcan
                 @can('masters.view')
                 <li>
                     <a class="nav-link {{ request()->routeIs('admin.master_data.index') ? 'active' : '' }}"
@@ -254,7 +265,9 @@
                 @endcan
             </ul>
         </li>
+        @endcanany
 
+        @can('contacts.view')
         <li class="mb-1">
             <a class="nav-link {{ request()->routeIs('admin.customer_contact') ? 'active' : '' }}"
                 href="{{ route('admin.customer_contact') }}">
@@ -262,6 +275,7 @@
                 <span>Contacts</span>
             </a>
         </li>
+        @endcan
 
         <li class="mt-2">
             <form method="post" action="{{ route('admin.logout') }}">
