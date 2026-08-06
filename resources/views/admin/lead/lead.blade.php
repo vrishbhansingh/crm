@@ -648,14 +648,7 @@
                     <input type="hidden" id="status_lead_id">
 
                     <label class="mb-1">Select Status</label>
-                    <select id="new_lead_status" class="form-control">
-                        <option value="new">New</option>
-                        <option value="contacted">Contacted</option>
-                        <option value="interested">Interested</option>
-                        <option value="follow_up">Follow Up</option>
-                        <option value="not_interested">Not Interested</option>
-                        <option value="converted">Converted</option>
-                        <option value="closed">Closed</option>
+                    <select id="new_lead_status" class="form-control" data-master-type="lead_status">
                     </select>
                 </div>
 
@@ -1038,8 +1031,24 @@
             });
         }
 
+        // Populates every <select data-master-type="..."> from the Master Data
+        // lookup endpoint instead of hardcoded <option> lists (Phase 2).
+        function loadMasterDropdowns() {
+            $('select[data-master-type]').each(function() {
+                const $select = $(this);
+                const type = $select.data('master-type');
+
+                $.get("{{ url('admin/master-data/lookup') }}/" + type, function(response) {
+                    response.data.forEach(function(option) {
+                        $select.append(`<option value="${option.code}">${option.label}</option>`);
+                    });
+                });
+            });
+        }
+
         $(document).ready(function() {
             loadLeadList();
+            loadMasterDropdowns();
         });
         $(document).on('click', '.toggle-row', function() {
 

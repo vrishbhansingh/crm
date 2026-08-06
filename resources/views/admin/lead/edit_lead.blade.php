@@ -149,38 +149,14 @@
                             <input type="text" id="id" name="id" hidden>
                             <div class="form-group col-md-6">
                                 <label>Lead Type</label>
-                                <select name="lead_type" id="lead_type" class="form-control">
-                                    <option value="inquiry">Inquiry</option>
-                                    <option value="cold">Cold</option>
-                                    <option value="warm">Warm</option>
-                                    <option value="hot">Hot</option>
-                                    <option value="existing_customer">Existing Customer</option>
+                                <select name="lead_type" id="lead_type" class="form-control" data-master-type="lead_type">
                                 </select>
                             </div>
 
                             <div class="form-group col-md-6">
                                 <label>Lead Source</label>
-                                <select name="lead_source" id="lead_source" class="form-control">
+                                <select name="lead_source" id="lead_source" class="form-control" data-master-type="lead_source">
                                     <option value="">-- Select Lead Source --</option>
-
-                                    <!-- Digital -->
-                                    <option value="website">Website</option>
-                                    <option value="facebook_ads">Facebook Ads</option>
-                                    <option value="google_ads">Google Ads</option>
-                                    <option value="linkedin">LinkedIn</option>
-                                    <option value="email">Email</option>
-
-                                    <!-- Direct -->
-                                    <option value="cold_call">Cold Call</option>
-                                    <option value="referral">Referral</option>
-                                    <option value="partner">Partner</option>
-
-                                    <!-- Customer -->
-                                    <option value="existing_customer">Existing Customer</option>
-                                    <option value="inquiry">Inquiry</option>
-
-                                    <!-- Catch-all -->
-                                    <option value="other">Other</option>
                                 </select>
                             </div>
                         </div>
@@ -270,10 +246,7 @@
 
                             <div class="form-group col-md-6">
                                 <label>Priority</label>
-                                <select name="priority" id="priority" class="form-control">
-                                    <option value="high">High</option>
-                                    <option value="medium">Medium</option>
-                                    <option value="low">Low</option>
+                                <select name="priority" id="priority" class="form-control" data-master-type="lead_priority">
                                 </select>
                             </div>
                         </div>
@@ -282,14 +255,7 @@
                         <div class="form-row">
                             <div class="form-group col-md-6">
                                 <label>Lead Status</label>
-                                <select name="lead_status" id="lead_status" class="form-control">
-                                    <option value="new">New</option>
-                                    <option value="contacted">Contacted</option>
-                                    <option value="follow_up">Follow Up</option>
-                                    <option value="interested">Interested</option>
-                                    <option value="not_interested">Not Interested</option>
-                                    <option value="converted">Converted</option>
-                                    <option value="closed">Closed</option>
+                                <select name="lead_status" id="lead_status" class="form-control" data-master-type="lead_status">
                                 </select>
                             </div>
 
@@ -469,10 +435,35 @@
             return urlParts[urlParts.length - 1]; // last part
         }
 
+        // Populates every <select data-master-type="..."> from the Master Data
+        // lookup endpoint instead of hardcoded <option> lists (Phase 2). Returns
+        // a combined promise so callers can wait for all options to exist
+        // before selecting a saved value on them.
+        function loadMasterDropdowns() {
+            const requests = $('select[data-master-type]').map(function() {
+                const $select = $(this);
+                const type = $select.data('master-type');
+
+                return $.get("{{ url('admin/master-data/lookup') }}/" + type, function(response) {
+                    response.data.forEach(function(option) {
+                        $select.append(`<option value="${option.code}">${option.label}</option>`);
+                    });
+                });
+            }).get();
+
+            return $.when.apply($, requests);
+        }
+
 
         $(document).ready(function() {
             let id = getIdFromUrl();
 
+            loadMasterDropdowns().then(function() {
+                fetchLeadData(id);
+            });
+        });
+
+        function fetchLeadData(id) {
             $.ajax({
                 url: '{{ route("admin.get_edit_lead_data") }}',
                 type: 'GET',
@@ -545,7 +536,7 @@
                     toastr.error(err.message);
                 }
             });
-        });
+        }
 
 
 

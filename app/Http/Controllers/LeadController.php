@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\CustomerContact;
 use App\Models\Lead;
+use App\Models\MasterValue;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Facades\Excel;
@@ -173,12 +175,14 @@ class LeadController extends Controller
             // ================= BASIC =================
             'lead_type' => [
                 'required',
+                Rule::in(MasterValue::options('lead_type')->pluck('code')),
             ],
 
             'lead_source' => [
                 'required',
                 'string',
-                'max:255'
+                'max:255',
+                Rule::in(MasterValue::options('lead_source')->pluck('code')),
             ],
             'company_name' => [
                 'required',
@@ -255,11 +259,12 @@ class LeadController extends Controller
             // ================= STATUS =================
             'lead_status' => [
                 'required',
+                Rule::in(MasterValue::options('lead_status')->pluck('code')),
             ],
 
             'priority' => [
                 'required',
-                'in:high,medium,low'
+                Rule::in(MasterValue::options('lead_priority')->pluck('code')),
             ],
 
             'status_reason' => [

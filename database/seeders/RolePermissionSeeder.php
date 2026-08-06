@@ -18,7 +18,7 @@ class RolePermissionSeeder extends Seeder
     private const GUARD = 'web';
 
     private array $modules = [
-        'leads', 'orders', 'contacts', 'users', 'roles', 'company', 'attendance',
+        'leads', 'orders', 'contacts', 'users', 'roles', 'company', 'attendance', 'masters',
     ];
 
     private array $actions = [

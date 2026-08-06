@@ -10,7 +10,9 @@ use App\Http\Controllers\admin\ProjectDetailsController;
 use App\Http\Controllers\admin\SecurityController;
 use App\Http\Controllers\admin\TrackLeadController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\MasterDataController;
 use App\Http\Controllers\LeadController;
+use App\Http\Controllers\MasterValueLookupController;
 
 /*
 |--------------------------------------------------------------------------
@@ -39,6 +41,30 @@ Route::middleware('admin_middle')->group(function () {
 
     Route::get('/security', [SecurityController::class, 'security'])->name('admin.security');
     Route::post('/update-password', [SecurityController::class, 'update_pass'])->name('admin.update_pass');
+
+    // Read-only dropdown data — any authenticated role can look these up
+    // (needed to fill out forms); managing the values themselves is
+    // permission-gated below.
+    Route::get('/master-data/lookup/{type}', [MasterValueLookupController::class, 'options'])->name('admin.master_data.lookup');
+});
+
+Route::middleware(['admin_middle', 'permission:masters.view'])->group(function () {
+    Route::get('/master-data', [MasterDataController::class, 'index'])->name('admin.master_data.index');
+    Route::get('/master-data/types', [MasterDataController::class, 'getTypes'])->name('admin.master_data.types');
+    Route::get('/master-data/values', [MasterDataController::class, 'getValues'])->name('admin.master_data.values');
+});
+
+Route::middleware(['admin_middle', 'permission:masters.create'])->group(function () {
+    Route::post('/master-data/values', [MasterDataController::class, 'store'])->name('admin.master_data.values.store');
+});
+
+Route::middleware(['admin_middle', 'permission:masters.edit'])->group(function () {
+    Route::put('/master-data/values/{id}', [MasterDataController::class, 'update'])->name('admin.master_data.values.update');
+    Route::post('/master-data/values/{id}/toggle-status', [MasterDataController::class, 'toggleStatus'])->name('admin.master_data.values.toggle');
+});
+
+Route::middleware(['admin_middle', 'permission:masters.delete'])->group(function () {
+    Route::delete('/master-data/values/{id}', [MasterDataController::class, 'destroy'])->name('admin.master_data.values.destroy');
 });
 
 Route::middleware(['admin_middle', 'permission:users.view'])->group(function () {

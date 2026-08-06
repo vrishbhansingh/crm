@@ -243,6 +243,15 @@
                         Company Details
                     </a>
                 </li>
+                @can('masters.view')
+                <li>
+                    <a class="nav-link {{ request()->routeIs('admin.master_data.index') ? 'active' : '' }}"
+                        href="{{ route('admin.master_data.index') }}">
+                        <i class="fa fa-list-alt"></i>
+                        Master Data
+                    </a>
+                </li>
+                @endcan
             </ul>
         </li>
 
