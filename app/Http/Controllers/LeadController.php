@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\CustomerContact;
 use App\Models\Lead;
+use App\Models\LeadActivity;
 use App\Models\MasterValue;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
@@ -40,15 +42,21 @@ class LeadController extends Controller
         $sl_no = 1;
         foreach ($leads as $lead) {
             $editUrl = route('admin.edit_lead_view', $lead->id);
+            $viewUrl = route('admin.lead.view', $lead->id);
             $action = "
                 <div class='action-stack'>
+                    <a href='{$viewUrl}'
+                        class='btn btn-sm btn-info action-status'>
+                        <i class='fa fa-eye'></i> View
+                    </a>
+
                     <a href='{$editUrl}'
                         class='btn btn-sm btn-success action-status editbtn'
-                        '> 
+                        '>
                         <i class='fa fa-check-circle'></i> Edit
                     </a>
 
-                    <button 
+                    <button
                         class='btn btn-sm btn-danger action-delete delete_data'
                         data-id='{$lead->id}'
                         data-toggle='modal'
@@ -152,8 +160,24 @@ class LeadController extends Controller
     public function updateLead(Request $request)
     {
         $lead = Lead::findOrFail($request->id);
+        $previousStatus = $lead->lead_status;
         $lead->lead_status = $request->lead_status;
+        if ($request->filled('status_reason')) {
+            $lead->status_reason = $request->status_reason;
+        }
         $result = $lead->update();
+
+        if ($result && $previousStatus !== $lead->lead_status) {
+            LeadActivity::create([
+                'tenant_id' => $lead->tenant_id,
+                'lead_id' => $lead->id,
+                'user_id' => Auth::guard('web')->id(),
+                'type' => $lead->lead_status === 'not_interested' ? 'lost' : 'status_changed',
+                'description' => "Status changed from \"{$previousStatus}\" to \"{$lead->lead_status}\""
+                    .($lead->status_reason ? " — {$lead->status_reason}" : ''),
+            ]);
+        }
+
         if ($result) {
             return response()->json([
                 'status' => true,
@@ -380,6 +404,12 @@ class LeadController extends Controller
         }
         $lead = new Lead();
         $lead->lead_number = $nextLeadNumber;
+        // A platform Super Admin has no tenant context (TenantContext::id()
+        // is null for them), so BelongsToTenant's creating hook can't infer
+        // one — without this, leads they create would get tenant_id=null and
+        // become invisible to the tenant's own sales team. Same fallback
+        // pattern as Admin\UserController::add_user.
+        $lead->tenant_id = Auth::guard('web')->user()->tenant_id ?? \App\Models\Tenant::first()?->id;
         $lead->lead_type = $request->lead_type;
         $lead->lead_source = $request->lead_source;
         $lead->company_name = $request->company_name;
@@ -401,9 +431,20 @@ class LeadController extends Controller
         $lead->follow_up_time = $request->follow_up_time;
         $lead->follow_up_note = $request->follow_up_note;
         $lead->requirement = $request->requirement;
-        $lead->assigned_to = $request->assigned_to;
-        $lead->assigned_by = $request->assigned_by;
-        $lead->assigned_at = $request->assigned_at;
+
+        // Auto-assignment: if nobody was explicitly picked, hand the lead to
+        // whichever active sales-role user in this tenant currently has the
+        // fewest assigned leads, instead of leaving it unassigned.
+        $wasAutoAssigned = false;
+        $assignedTo = $request->assigned_to;
+        if (empty($assignedTo)) {
+            $assignedTo = $this->leastLoadedSalesUserId($lead->tenant_id);
+            $wasAutoAssigned = (bool) $assignedTo;
+        }
+
+        $lead->assigned_to = $assignedTo;
+        $lead->assigned_by = $request->assigned_by ?: Auth::guard('web')->id();
+        $lead->assigned_at = $assignedTo ? ($request->assigned_at ?: now()) : null;
         $lead->last_contacted_at = $request->last_contacted_at;
         $lead->last_contacted_by = $request->last_contacted_by;
         $lead->is_converted = $request->is_converted;
@@ -412,6 +453,26 @@ class LeadController extends Controller
         $lead->remarks = $request->remarks;
         $lead->internal_note = $request->internal_note;
         $result = $lead->save();
+
+        LeadActivity::create([
+            'tenant_id' => $lead->tenant_id,
+            'lead_id' => $lead->id,
+            'user_id' => Auth::guard('web')->id(),
+            'type' => 'created',
+            'description' => 'Lead created',
+        ]);
+
+        if ($assignedTo) {
+            LeadActivity::create([
+                'tenant_id' => $lead->tenant_id,
+                'lead_id' => $lead->id,
+                'user_id' => Auth::guard('web')->id(),
+                'type' => 'assigned',
+                'description' => $wasAutoAssigned
+                    ? 'Auto-assigned to '.optional(User::find($assignedTo))->name
+                    : 'Assigned to '.optional(User::find($assignedTo))->name,
+            ]);
+        }
 
         $customer_contact_detials = new CustomerContact();
 
@@ -437,6 +498,28 @@ class LeadController extends Controller
                 'message' => 'Something went wrong'
             ]);
         }
+    }
+
+    /**
+     * The current tenant's active Sales Executive/Sales Manager with the
+     * fewest currently-assigned active leads, for auto-assignment on create.
+     * Returns null if there's nobody eligible (e.g. a brand-new tenant).
+     */
+    private function leastLoadedSalesUserId(?int $tenantId): ?int
+    {
+        if ($tenantId === null) {
+            return null;
+        }
+
+        $candidate = User::query()
+            ->where('tenant_id', $tenantId)
+            ->where('status', 'Active')
+            ->whereHas('roles', fn ($q) => $q->whereIn('name', ['Sales Executive', 'Sales Manager']))
+            ->withCount(['leads' => fn ($q) => $q->where('status', 'Active')])
+            ->orderBy('leads_count')
+            ->first();
+
+        return $candidate?->id;
     }
 
     public function get_edit_lead_data(Request $request)
@@ -507,6 +590,8 @@ class LeadController extends Controller
     public function edit_lead_data(Request $request)
     {
         $lead = Lead::findOrFail($request->id);
+        $previousStatus = $lead->lead_status;
+        $previousAssignee = $lead->assigned_to;
 
         $lead->lead_type       = $request->lead_type;
         $lead->lead_source     = $request->lead_source;
@@ -562,6 +647,28 @@ class LeadController extends Controller
 
         // ================= SAVE =================
         $result =  $lead->update();
+
+        if ($result) {
+            if ($previousStatus !== $lead->lead_status) {
+                LeadActivity::create([
+                    'tenant_id' => $lead->tenant_id,
+                    'lead_id' => $lead->id,
+                    'user_id' => Auth::guard('web')->id(),
+                    'type' => 'status_changed',
+                    'description' => "Status changed from \"{$previousStatus}\" to \"{$lead->lead_status}\"",
+                ]);
+            }
+
+            if ($previousAssignee != $lead->assigned_to && $lead->assigned_to) {
+                LeadActivity::create([
+                    'tenant_id' => $lead->tenant_id,
+                    'lead_id' => $lead->id,
+                    'user_id' => Auth::guard('web')->id(),
+                    'type' => 'assigned',
+                    'description' => 'Reassigned to '.optional(User::find($lead->assigned_to))->name,
+                ]);
+            }
+        }
 
         // ================= RESPONSE =================
         if ($result) {

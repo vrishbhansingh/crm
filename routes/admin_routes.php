@@ -11,6 +11,7 @@ use App\Http\Controllers\admin\SecurityController;
 use App\Http\Controllers\admin\TrackLeadController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\MasterDataController;
+use App\Http\Controllers\Admin\LeadDetailController;
 use App\Http\Controllers\LeadController;
 use App\Http\Controllers\MasterValueLookupController;
 
@@ -105,6 +106,17 @@ Route::middleware(['admin_middle', 'permission:leads.view'])->group(function () 
     Route::get('/get-track-lead', [TrackLeadController::class, 'get_track_leads'])->name('admin.get_track_leads');
     Route::get('/view-track-lead/{lead_id}', [TrackLeadController::class, 'view_track_leads'])->name('admin.view_track_leads');
     Route::get('/get-followups-details', [TrackLeadController::class, 'get_followups_detials'])->name('admin.get_followups_detials');
+
+    // Unified Lead Detail page (Phase 4) — notes/tags/attachments/timeline.
+    Route::post('/leads/check-duplicate', [LeadDetailController::class, 'checkDuplicate'])->name('admin.lead.check_duplicate');
+    Route::get('/leads/{id}', [LeadDetailController::class, 'show'])->name('admin.lead.view');
+    Route::get('/leads/{id}/detail', [LeadDetailController::class, 'detail'])->name('admin.lead.detail');
+    Route::get('/leads/{id}/timeline', [LeadDetailController::class, 'timeline'])->name('admin.lead.timeline');
+    Route::post('/leads/{id}/notes', [LeadDetailController::class, 'addNote'])->name('admin.lead.notes.store');
+    Route::post('/leads/{id}/tags', [LeadDetailController::class, 'addTag'])->name('admin.lead.tags.store');
+    Route::delete('/leads/{id}/tags/{tagId}', [LeadDetailController::class, 'removeTag'])->name('admin.lead.tags.destroy');
+    Route::post('/leads/{id}/attachments', [LeadDetailController::class, 'uploadAttachment'])->name('admin.lead.attachments.store');
+    Route::get('/attachments/{attachmentId}/download', [LeadDetailController::class, 'downloadAttachment'])->name('admin.lead.attachments.download');
 });
 
 Route::middleware(['admin_middle', 'permission:orders.view'])->group(function () {

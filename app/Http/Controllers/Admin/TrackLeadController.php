@@ -31,8 +31,10 @@ class TrackLeadController extends Controller
 
         foreach ($leads as $lead) {
 
+            // Points at the unified Lead Detail page (Phase 4) rather than the
+            // old follow-up-only view — kept below for direct-URL access only.
             $action = '
-            <a href="' . route('admin.view_track_leads', $lead->id) . '"
+            <a href="' . route('admin.lead.view', $lead->id) . '"
                class="action-btn view">
                 <i class="fa fa-eye"></i> View
             </a>

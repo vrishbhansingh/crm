@@ -311,6 +311,10 @@
                             </div>
                         </div>
 
+                        <div id="duplicateWarning" style="display:none;"
+                            class="alert alert-warning" role="alert">
+                        </div>
+
                         <!-- ================= LOCATION ================= -->
                         <div class="form-row">
                             <div class="form-group col-md-4">
@@ -642,6 +646,37 @@
             window.location.href = "{{ route('admin.lead') }}";
 
         }
+
+        // Non-blocking duplicate check (Phase 4) — warns, doesn't stop submission.
+        function checkDuplicate() {
+            const phone = $('#phone').val();
+            const email = $('#email').val();
+            const company_name = $('#company_name').val();
+
+            if (!phone && !email && !company_name) {
+                $('#duplicateWarning').hide();
+                return;
+            }
+
+            $.post("{{ route('admin.lead.check_duplicate') }}", {
+                phone,
+                email,
+                company_name
+            }, function(response) {
+                if (response.data && response.data.length) {
+                    let list = response.data.map(l =>
+                        `<a href="{{ url('admin/leads') }}/${l.id}" target="_blank">${l.name} (${l.phone ?? l.email ?? l.company_name})</a>`
+                    ).join(', ');
+                    $('#duplicateWarning')
+                        .html(`<i class="fa fa-exclamation-triangle"></i> Possible duplicate of: ${list}`)
+                        .show();
+                } else {
+                    $('#duplicateWarning').hide();
+                }
+            });
+        }
+
+        $(document).on('blur', '#phone, #email, #company_name', checkDuplicate);
 
         $(document).ready(function() {
             loadMasterDropdowns();

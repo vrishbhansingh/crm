@@ -119,6 +119,17 @@ class MasterDataSeeder extends Seeder
                 'card' => 'Card',
             ],
         ],
+        'lost_reason' => [
+            'name' => 'Lost Reason',
+            'values' => [
+                'budget' => 'Budget Constraints',
+                'no_response' => 'No Response',
+                'competitor' => 'Chose a Competitor',
+                'not_interested' => 'Not Interested',
+                'bad_timing' => 'Bad Timing',
+                'other' => 'Other',
+            ],
+        ],
     ];
 
     public function run(): void

@@ -650,6 +650,12 @@
                     <label class="mb-1">Select Status</label>
                     <select id="new_lead_status" class="form-control" data-master-type="lead_status">
                     </select>
+
+                    <div id="lostReasonWrap" style="display:none; margin-top:12px;">
+                        <label class="mb-1">Lost Reason</label>
+                        <select id="lost_reason" class="form-control" data-master-type="lost_reason">
+                        </select>
+                    </div>
                 </div>
 
                 <div class="modal-footer justify-content-center">
@@ -1124,14 +1130,26 @@
 
             $('#status_lead_id').val(leadId);
             $('#new_lead_status').val(currentStatus);
+            toggleLostReason();
 
             $('#changeLeadStatusModal').modal('show');
         });
+
+        function toggleLostReason() {
+            if ($('#new_lead_status').val() === 'not_interested') {
+                $('#lostReasonWrap').show();
+            } else {
+                $('#lostReasonWrap').hide();
+            }
+        }
+
+        $(document).on('change', '#new_lead_status', toggleLostReason);
 
         $('#saveLeadStatus').on('click', function() {
 
             let leadId = $('#status_lead_id').val();
             let newStatus = $('#new_lead_status').val();
+            let lostReason = $('#lostReasonWrap').is(':visible') ? $('#lost_reason').val() : null;
 
             $.ajax({
                 url: '{{ route("admin.update_lead_status") }}',
@@ -1139,7 +1157,8 @@
                 data: {
                     _token: $('meta[name="csrf-token"]').attr('content'),
                     id: leadId,
-                    lead_status: newStatus
+                    lead_status: newStatus,
+                    status_reason: lostReason
                 },
                 success: function(res) {
                     if (res.status) {
