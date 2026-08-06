@@ -1,14 +1,14 @@
 <style>
-    /* ============ SIDEBAR WRAPPER ============ */
     .sidebar {
         min-width: 260px;
         min-height: 100vh;
         background: linear-gradient(180deg, #0c7bfe, #01bdff);
         padding: 18px 12px;
         font-family: 'Poppins', sans-serif;
+        overflow-y: auto;
+        overscroll-behavior: contain;
     }
 
-    /* ============ PROFILE CARD ============ */
     .sidebar-profile {
         display: flex;
         align-items: center;
@@ -36,14 +36,12 @@
         color: #ffffff;
     }
 
-    /* ============ MENU ============ */
     .nav-sidebar-menu {
         list-style: none;
         padding: 0;
         margin: 0;
     }
 
-    /* NORMAL LINKS */
     .nav-sidebar-menu .nav-link {
         display: flex;
         align-items: center;
@@ -56,13 +54,11 @@
         transition: all 0.25s ease;
     }
 
-    /* HOVER */
     .nav-sidebar-menu .nav-link:hover {
         background: rgba(255, 255, 255, 0.07);
         color: #fff;
     }
 
-    /* ACTIVE = ONLY BUTTON STYLE */
     .nav-sidebar-menu .nav-link.active {
         background: linear-gradient(135deg, #1da1ff, #0a6cff);
         color: #ffffff;
@@ -72,17 +68,14 @@
             inset 0 0 0 1px rgba(255, 255, 255, 0.18);
     }
 
-    /* icon color also white */
     .nav-sidebar-menu .nav-link.active i {
         color: #ffffff;
     }
 
-    /* ICON */
     .nav-sidebar-menu i {
         font-size: 16px;
     }
 
-    /* ============ DROPDOWN ============ */
     .dropdown-left {
         display: flex;
         gap: 12px;
@@ -93,7 +86,6 @@
         transition: 0.3s;
     }
 
-    /* SUBMENU */
     .sidebar-submenu {
         list-style: none;
         padding-left: 16px;
@@ -106,7 +98,6 @@
         padding: 9px 14px;
     }
 
-    /* OPEN */
     .sidebar-dropdown.open .sidebar-submenu {
         display: block;
     }
@@ -115,7 +106,6 @@
         transform: rotate(180deg);
     }
 
-    /* ============ LOGOUT ============ */
     .logout-btn {
         width: 100%;
         border: none;
@@ -130,8 +120,6 @@
         cursor: pointer;
         transition: 0.25s ease;
     }
-
-
 
     .logout-btn:hover {
         background: rgba(255, 0, 0, 0.77);
@@ -151,7 +139,6 @@
         .sidebar {
             position: fixed;
             top: 64px;
-            /* header height */
             left: -260px;
             height: calc(100vh - 64px);
             transition: left 0.3s ease;
@@ -162,23 +149,17 @@
             left: 0;
         }
     }
-    
-
-    .sidebar {
-        overflow-y: auto;
-        /* ✅ ENABLE SCROLL */
-        overscroll-behavior: contain;
-    }
 </style>
 
 <nav class="sidebar" id="sidebar">
 
+    @php $me = Auth::guard('web')->user(); @endphp
+
     <div class="sidebar-profile">
-        <!-- <img src="{{ asset('images/profile_img.jpg') }}"> -->
-        <img src="https://techwebmantra.com/crm/public/images/user_1.png">
+        <img src="{{ asset('images/user_1.png') }}">
         <div class="profile-info">
-            <div class="name">Admin</div>
-            <div class="role" style="font-size:12px;">Active</div>
+            <div class="name">{{ $me->name }}</div>
+            <div class="role">{{ $me->getRoleNames()->first() }}</div>
         </div>
     </div>
 
@@ -201,31 +182,38 @@
             </a>
         </li>
         @endcan
+
         @can('orders.view')
         <li class="mb-1">
-            <a class="nav-link {{ request()->routeIs('admin.sales_orders') ? 'active' : '' }}"
-                href="{{ route('admin.sales_orders') }}">
+            <a class="nav-link {{ request()->routeIs(['admin.sales_orders', 'user.order_management']) ? 'active' : '' }}"
+                href="{{ $me->hasElevatedAccess() ? route('admin.sales_orders') : route('user.order_management') }}">
                 <i class="fa fa-shopping-cart"></i>
-                <span>Sales Orders</span>
-            </a>
-        </li>
-        <li class="mb-1">
-            <a class="nav-link {{ request()->routeIs('admin.project_details') ? 'active' : '' }}"
-                href="{{ route('admin.project_details') }}">
-                <i class="fa fa-check-circle"></i>
-                <span>Projects Details</span>
+                <span>Orders</span>
             </a>
         </li>
         @endcan
-        @can('leads.view')
-        <li class="mb-1">
-            <a class="nav-link {{ request()->routeIs('admin.track_lead') ? 'active' : '' }}"
-                href="{{ route('admin.track_lead') }}">
-                <i class="fa fa-tasks"></i>
-                <span>Track Lead</span>
-            </a>
-        </li>
-        @endcan
+
+        @if($me->hasElevatedAccess())
+            @can('orders.view')
+            <li class="mb-1">
+                <a class="nav-link {{ request()->routeIs('admin.project_details') ? 'active' : '' }}"
+                    href="{{ route('admin.project_details') }}">
+                    <i class="fa fa-check-circle"></i>
+                    <span>Projects Details</span>
+                </a>
+            </li>
+            @endcan
+
+            @can('leads.view')
+            <li class="mb-1">
+                <a class="nav-link {{ request()->routeIs('admin.track_lead') ? 'active' : '' }}"
+                    href="{{ route('admin.track_lead') }}">
+                    <i class="fa fa-tasks"></i>
+                    <span>Track Lead</span>
+                </a>
+            </li>
+            @endcan
+        @endif
 
         @can('users.view')
         <li class="mb-1">
@@ -236,8 +224,9 @@
             </a>
         </li>
         @endcan
+
         @canany(['company.view', 'masters.view'])
-        <li class="mb-1 sidebar-dropdown {{ request()->routeIs('admin.company_details') ? 'open' : '' }}">
+        <li class="mb-1 sidebar-dropdown {{ request()->routeIs(['admin.company_details', 'admin.master_data.*']) ? 'open' : '' }}">
             <a href="javascript:void(0)" class="nav-link dropdown-left">
                 <i class="fa fa-cog"></i>
                 <span>Settings</span>
@@ -256,7 +245,7 @@
                 @endcan
                 @can('masters.view')
                 <li>
-                    <a class="nav-link {{ request()->routeIs('admin.master_data.index') ? 'active' : '' }}"
+                    <a class="nav-link {{ request()->routeIs('admin.master_data.*') ? 'active' : '' }}"
                         href="{{ route('admin.master_data.index') }}">
                         <i class="fa fa-list-alt"></i>
                         Master Data
@@ -277,6 +266,14 @@
         </li>
         @endcan
 
+        <li class="mb-1">
+            <a class="nav-link {{ request()->routeIs('user.profile') ? 'active' : '' }}"
+                href="{{ route('user.profile') }}">
+                <i class="fa fa-user"></i>
+                <span>My Profile</span>
+            </a>
+        </li>
+
         <li class="mt-2">
             <form method="post" action="{{ route('admin.logout') }}">
                 @csrf
@@ -291,8 +288,6 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-
-        /* ===== MOBILE SIDEBAR TOGGLE (already yours) ===== */
         const toggleBtn = document.querySelector(".crm-toggle");
         const sidebar = document.getElementById("sidebar");
 
@@ -303,26 +298,17 @@
             });
         }
 
-        /* ===== SIDEBAR DROPDOWNS (MULTIPLE SUPPORT) ===== */
         document.querySelectorAll(".sidebar-dropdown > .nav-link").forEach(link => {
-
             link.addEventListener("click", function(e) {
                 e.preventDefault();
-
                 const parent = this.closest(".sidebar-dropdown");
-
-                /* Close other dropdowns (accordion behavior) */
                 document.querySelectorAll(".sidebar-dropdown.open").forEach(item => {
                     if (item !== parent) {
                         item.classList.remove("open");
                     }
                 });
-
-                /* Toggle current */
                 parent.classList.toggle("open");
             });
-
         });
-
     });
 </script>

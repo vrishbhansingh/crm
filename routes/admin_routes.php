@@ -4,15 +4,12 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\admin\CompanyController;
 use App\Http\Controllers\admin\CustomerContactController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\admin\OrderController;
 use App\Http\Controllers\admin\ProjectDetailsController;
 use App\Http\Controllers\admin\SecurityController;
 use App\Http\Controllers\admin\TrackLeadController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\MasterDataController;
-use App\Http\Controllers\Admin\LeadDetailController;
-use App\Http\Controllers\LeadController;
 use App\Http\Controllers\MasterValueLookupController;
 
 /*
@@ -35,11 +32,8 @@ Route::post('/login-submit', [AuthController::class, 'login_submit'])
 Route::post('/logout', [AuthController::class, 'logout'])->name('admin.logout');
 
 // Available to any authenticated user regardless of module permissions.
+// Dashboard now lives at the unified /dashboard route (routes/app.php).
 Route::middleware('admin_middle')->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'dashboard'])->name('admin.dashboard');
-    Route::get('/get-dashboard-data', [DashboardController::class, 'getDashboardData'])->name('admin.getDashboardData');
-    Route::get('/get-attendance', [DashboardController::class, 'getAttendance'])->name('admin.getAttendance');
-
     Route::get('/security', [SecurityController::class, 'security'])->name('admin.security');
     Route::post('/update-password', [SecurityController::class, 'update_pass'])->name('admin.update_pass');
 
@@ -71,6 +65,7 @@ Route::middleware(['admin_middle', 'permission:masters.delete'])->group(function
 Route::middleware(['admin_middle', 'permission:users.view'])->group(function () {
     route::get('/user-profile', [UserController::class, 'user_profile'])->name('admin.user_profile');
     Route::get('/get-user-list', [UserController::class, 'getUserList'])->name('admin.get_user_list');
+    Route::get('/get-roles', [UserController::class, 'getRoles'])->name('admin.get_roles');
     Route::post('/add-user-list', [UserController::class, 'add_user'])->name('admin.add_user');
     Route::post('/user/toggle-status', [UserController::class, 'toggleUserStatus'])
         ->name('admin.toggle_user_status');
@@ -82,41 +77,13 @@ Route::middleware(['admin_middle', 'permission:users.impersonate'])->group(funct
     Route::post('/user-login', [AuthController::class, 'impersonate'])->name('admin.user_login_through_admin');
 });
 
+// Leads moved to the unified /leads routes (routes/app.php). Track Lead
+// stays here — not part of this increment's merge.
 Route::middleware(['admin_middle', 'permission:leads.view'])->group(function () {
-    Route::get('/leads', [LeadController::class, 'lead'])->name('admin.lead');
-    Route::get('/getLeads', [LeadController::class, 'get_lead'])->name('admin.get_lead');
-    Route::get('/getAssignUsers', [LeadController::class, 'getAssignUsers'])->name('admin.getAssignUsers');
-    Route::post('/lead/toggle-status', [LeadController::class, 'toggleLeadStatus'])->name('admin.toggle_lead_status');
-    Route::post('/update-lead-status', [LeadController::class, 'updateLead'])->name('admin.update_lead_status');
-    Route::post('/update-assignLead', [LeadController::class, 'assignLead'])->name('admin.assignLead');
-    Route::post('/update-bulk-assignLead', [LeadController::class, 'bulkAssignLead'])->name('admin.bulkAssignLeads');
-
-    Route::get('/addLeadsPage', [LeadController::class, 'add_lead_view'])->name('admin.add_lead_view');
-    Route::post('/add-lead', [LeadController::class, 'add_lead'])->name('admin.add_lead');
-    Route::get('/editLeadsPage/{id}', [LeadController::class, 'edit_lead_view'])->name('admin.edit_lead_view');
-    route::post('/edit-lead-data', [LeadController::class, 'edit_lead_data'])->name('admin.edit_lead_data');
-    route::post('/leads-import', [LeadController::class, 'leads_import'])->name('admin.leads_import');
-
-    route::get('/get-edit-lead-data', [LeadController::class, 'get_edit_lead_data'])->name('admin.get_edit_lead_data');
-    route::post('/delete-lead-data', [LeadController::class, 'delete_lead_data'])->name('admin.delete_lead_data');
-
-    Route::get('/download/leads-format', [LeadController::class, 'downloadFormat'])->name('admin.leads.format.download');
-
     Route::get('/track-lead', [TrackLeadController::class, 'track_lead'])->name('admin.track_lead');
     Route::get('/get-track-lead', [TrackLeadController::class, 'get_track_leads'])->name('admin.get_track_leads');
     Route::get('/view-track-lead/{lead_id}', [TrackLeadController::class, 'view_track_leads'])->name('admin.view_track_leads');
     Route::get('/get-followups-details', [TrackLeadController::class, 'get_followups_detials'])->name('admin.get_followups_detials');
-
-    // Unified Lead Detail page (Phase 4) — notes/tags/attachments/timeline.
-    Route::post('/leads/check-duplicate', [LeadDetailController::class, 'checkDuplicate'])->name('admin.lead.check_duplicate');
-    Route::get('/leads/{id}', [LeadDetailController::class, 'show'])->name('admin.lead.view');
-    Route::get('/leads/{id}/detail', [LeadDetailController::class, 'detail'])->name('admin.lead.detail');
-    Route::get('/leads/{id}/timeline', [LeadDetailController::class, 'timeline'])->name('admin.lead.timeline');
-    Route::post('/leads/{id}/notes', [LeadDetailController::class, 'addNote'])->name('admin.lead.notes.store');
-    Route::post('/leads/{id}/tags', [LeadDetailController::class, 'addTag'])->name('admin.lead.tags.store');
-    Route::delete('/leads/{id}/tags/{tagId}', [LeadDetailController::class, 'removeTag'])->name('admin.lead.tags.destroy');
-    Route::post('/leads/{id}/attachments', [LeadDetailController::class, 'uploadAttachment'])->name('admin.lead.attachments.store');
-    Route::get('/attachments/{attachmentId}/download', [LeadDetailController::class, 'downloadAttachment'])->name('admin.lead.attachments.download');
 });
 
 Route::middleware(['admin_middle', 'permission:orders.view'])->group(function () {

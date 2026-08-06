@@ -473,10 +473,10 @@
 
 <body>
     <div class="container-scroller">
-        @include('admin.include.header')
+        @include('include.header')
 
         <div class="container-fluid page-body-wrapper">
-            @include('admin.include.sidebar')
+            @include('include.sidebar')
 
             <div class="content-wrapper">
 
@@ -504,7 +504,7 @@
                         </button>
                         --}}
 
-                        <a href="{{ route('admin.add_lead_view') }}"
+                        <a href="{{ route('leads.create') }}"
                             class="btn btn-dark btn-sm">
                             <i class="fa fa-plus mr-1"></i> Add Lead
                         </a>
@@ -560,7 +560,7 @@
                         </div>
                     </div>
                 </div>
-                @include('admin.include.footer')
+                @include('include.footer')
             </div>
         </div>
     </div>
@@ -679,7 +679,7 @@
                     <h5 class="modal-title">
                         <i class="fa fa-file-excel"></i> Upload Leads (Excel)
                     </h5>
-                    <a href="{{route('admin.leads.format.download')}}"
+                    <a href="{{route('leads.download_format')}}"
                         class="btn btn-info btn-sm" download>
                         <i class="fa fa-download"></i> Download Format
                     </a>
@@ -794,7 +794,7 @@
 
         function loadLeadList() {
             $.ajax({
-                url: '{{route("admin.get_lead")}}', // keep your existing route
+                url: '{{route("leads.data")}}', // keep your existing route
                 type: 'GET',
                 success: function(response) {
 
@@ -1095,7 +1095,7 @@
             if (!selectedUserId) return;
 
             $.ajax({
-                url: '{{ route("admin.toggle_lead_status") }}',
+                url: '{{ route("leads.toggle_status") }}',
                 type: 'POST',
                 data: {
                     _token: '{{ csrf_token() }}',
@@ -1152,7 +1152,7 @@
             let lostReason = $('#lostReasonWrap').is(':visible') ? $('#lost_reason').val() : null;
 
             $.ajax({
-                url: '{{ route("admin.update_lead_status") }}',
+                url: '{{ route("leads.update_status") }}',
                 type: 'POST',
                 data: {
                     _token: $('meta[name="csrf-token"]').attr('content'),
@@ -1182,7 +1182,7 @@
         $(document).on('click', '#confirmDeleteBtn', function(e) {
             e.preventDefault();
             $.ajax({
-                url: "{{route('admin.delete_lead_data')}}",
+                url: "{{route('leads.delete')}}",
                 data: {
                     _token: $('meta[name="csrf-token"]').attr('content'),
                     id: deleteId
@@ -1224,7 +1224,7 @@
             formData.append('_token', '{{ csrf_token() }}');
 
             $.ajax({
-                url: "{{ route('admin.leads_import') }}",
+                url: "{{ route('leads.import') }}",
                 type: "POST",
                 data: formData,
                 processData: false,
@@ -1255,7 +1255,7 @@
 
             $('#assignedUser').html('<option value="">Loading...</option>');
             $.ajax({
-                url: "{{ route('admin.getAssignUsers') }}",
+                url: "{{ route('leads.assignable_users') }}",
                 type: "GET",
                 success: function(res) {
                     let options = '<option value="">-- Select User --</option>';
@@ -1288,7 +1288,7 @@
             }
 
             $.ajax({
-                url: "{{ route('admin.assignLead') }}",
+                url: "{{ route('leads.assign') }}",
                 type: "POST",
                 data: {
                     _token: "{{ csrf_token() }}",
@@ -1346,7 +1346,7 @@
             }
 
             $.ajax({
-                url: "{{ route('admin.getAssignUsers') }}",
+                url: "{{ route('leads.assignable_users') }}",
                 type: "GET",
                 success: function(res) {
 
@@ -1377,7 +1377,7 @@
             });
 
             $.ajax({
-                url: "{{ route('admin.bulkAssignLeads') }}",
+                url: "{{ route('leads.bulk_assign') }}",
                 type: "POST",
                 data: {
                     _token: "{{ csrf_token() }}",

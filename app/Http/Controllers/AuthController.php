@@ -17,16 +17,10 @@ use Illuminate\Support\Str;
  */
 class AuthController extends Controller
 {
-    /**
-     * Roles that land on the admin-side dashboard after login. Everyone
-     * else lands on the user-side (field/agent) dashboard.
-     */
-    private const ADMIN_SIDE_ROLES = ['Super Admin', 'Company Admin', 'Manager'];
-
     public function login(Request $request)
     {
         if (Auth::guard('web')->check()) {
-            return redirect($this->dashboardUrlFor(Auth::guard('web')->user()));
+            return redirect()->route('dashboard');
         }
 
         $submitRoute = $request->is('admin/*') ? route('admin.login_submit') : route('user.login_submit');
@@ -73,7 +67,7 @@ class AuthController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Login successful',
-            'location' => $this->dashboardUrlFor($user),
+            'location' => route('dashboard'),
         ]);
     }
 
@@ -139,12 +133,5 @@ class AuthController extends Controller
             'status' => true,
             'message' => 'Logged in as user successfully',
         ]);
-    }
-
-    private function dashboardUrlFor(User $user): string
-    {
-        return $user->hasAnyRole(self::ADMIN_SIDE_ROLES)
-            ? route('admin.dashboard')
-            : route('user.dashboard');
     }
 }

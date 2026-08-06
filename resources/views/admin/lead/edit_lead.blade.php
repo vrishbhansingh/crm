@@ -125,10 +125,10 @@
 
 <body>
     <div class="container-scroller">
-        @include('admin.include.header')
+        @include('include.header')
 
         <div class="container-fluid page-body-wrapper">
-            @include('admin.include.sidebar')
+            @include('include.sidebar')
 
             <div class="content-wrapper">
                 <form id="editUserForm" method="post">
@@ -426,7 +426,7 @@
             setTimeout(function() {
 
             }, 500);
-            window.location.href = "{{ route('admin.lead') }}";
+            window.location.href = "{{ route('leads.index') }}";
 
         }
 
@@ -465,7 +465,7 @@
 
         function fetchLeadData(id) {
             $.ajax({
-                url: '{{ route("admin.get_edit_lead_data") }}',
+                url: '{{ route("leads.edit_data") }}',
                 type: 'GET',
                 data: {
                     id: id
@@ -545,7 +545,7 @@
             let form = this;
             let formData = new FormData(form);
             $.ajax({
-                url: '{{ route("admin.edit_lead_data") }}',
+                url: '{{ route("leads.update") }}',
                 type: 'POST',
                 data: formData,
                 processData: false,
@@ -555,7 +555,7 @@
                         toastr.success(response.message);
                         form.reset();
                         setTimeout(function() {
-                            window.location.href = "{{ route('admin.lead') }}";
+                            window.location.href = "{{ route('leads.index') }}";
                         }, 1000);
                     } else {
                         toastr.error(response.message);

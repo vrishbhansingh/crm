@@ -449,8 +449,7 @@
 
                             <div class="form-group col-md-6">
                                 <label>Role</label>
-                                <select name="role" class="form-control">
-                                    <option value="agent">Agent</option>
+                                <select name="role" class="form-control role-select">
                                 </select>
                             </div>
                         </div>
@@ -573,8 +572,7 @@
 
                             <div class="form-group col-md-6">
                                 <label>Role</label>
-                                <select name="role" id="edit_role" class="form-control">
-                                    <option value="agent">Agent</option>
+                                <select name="role" id="edit_role" class="form-control role-select">
                                 </select>
                             </div>
                         </div>
@@ -733,7 +731,7 @@
 
                                  <td class="text-center">
                                     <span class="role-badge">
-                                        ${item.role === 'agent' ? 'Agent' : item.role}
+                                        ${item.role ?? '-'}
                                     </span>
                                 </td>
                                  <td class="text-center">
@@ -775,8 +773,19 @@
                 }
             });
         }
+        function loadRoles() {
+            $.get("{{ route('admin.get_roles') }}", function(response) {
+                let options = '';
+                response.data.forEach(function(role) {
+                    options += `<option value="${role}">${role}</option>`;
+                });
+                $('.role-select').html(options);
+            });
+        }
+
         $(document).ready(function() {
             loadUserList();
+            loadRoles();
         });
 
 

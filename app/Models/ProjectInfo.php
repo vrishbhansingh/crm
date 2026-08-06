@@ -10,4 +10,15 @@ class ProjectInfo extends Model
 {
     use HasFactory, BelongsToTenant;
     protected $table = 'project_info';
+    protected $fillable = [
+        'tenant_id',
+        'project_name',
+        'tech_stack',
+        'expected_start_date',
+        'expected_delivery_date',
+        'actual_delivery_date',
+        'priority',
+        'description',
+        'status',
+    ];
 }

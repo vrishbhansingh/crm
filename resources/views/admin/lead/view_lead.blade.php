@@ -170,17 +170,17 @@
 
     <div class="container-scroller">
 
-        @include('admin.include.header')
+        @include('include.header')
 
         <div class="container-fluid page-body-wrapper">
 
-            @include('admin.include.sidebar')
+            @include('include.sidebar')
 
             <div class="content-wrapper">
 
                 <div class="crm-page-header d-flex justify-content-between align-items-center">
                     <div>
-                        <a href="{{ route('admin.lead') }}" class="text-muted" style="font-size:12px;">
+                        <a href="{{ route('leads.index') }}" class="text-muted" style="font-size:12px;">
                             <i class="fa fa-arrow-left"></i> Back to Leads
                         </a>
                         <h4 class="lead-title mt-1" id="leadName">Loading…</h4>
@@ -207,6 +207,51 @@
                                 <input type="text" id="newTagInput" class="form-control form-control-sm" placeholder="Add a tag and press Enter">
                             </div>
                         </div>
+
+                        @can('leads.edit')
+                        <div class="card-box">
+                            <h5><i class="fa fa-phone"></i> Log a Follow-up Call</h5>
+                            <form id="followUpForm">
+                                <div class="form-row">
+                                    <div class="form-group col-md-6">
+                                        <label>Call Status</label>
+                                        <select name="call_status" id="call_status" class="form-control form-control-sm">
+                                            <option value="call_connected">Call Connected</option>
+                                            <option value="not_reachable">Not Reachable</option>
+                                            <option value="switched_off">Switched Off</option>
+                                            <option value="busy">Busy</option>
+                                            <option value="wrong_number">Wrong Number</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group col-md-6">
+                                        <label>Lead Response</label>
+                                        <select name="lead_response" id="lead_response" class="form-control form-control-sm">
+                                            <option value="">-- Optional --</option>
+                                            <option value="interested">Interested</option>
+                                            <option value="callback">Callback</option>
+                                            <option value="not_interested">Not Interested</option>
+                                            <option value="meeting_scheduled">Meeting Scheduled</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group col-md-6">
+                                        <label>Next Follow-up Date</label>
+                                        <input type="date" name="followup_date" id="followup_date" class="form-control form-control-sm">
+                                    </div>
+                                    <div class="form-group col-md-6">
+                                        <label>Time</label>
+                                        <input type="time" name="followup_time" id="followup_time" class="form-control form-control-sm">
+                                    </div>
+                                    <div class="form-group col-md-12">
+                                        <label>Notes</label>
+                                        <textarea name="call_notes" id="call_notes" class="form-control form-control-sm" rows="2"></textarea>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-sm">
+                                    <i class="fa fa-save"></i> Save Follow-up
+                                </button>
+                            </form>
+                        </div>
+                        @endcan
 
                         <div class="card-box">
                             <h5><i class="fa fa-clock-o"></i> Timeline</h5>
@@ -249,14 +294,130 @@
                             <h5><i class="fa fa-trophy"></i> Conversion</h5>
                             <div id="conversionBody"></div>
                         </div>
+
+                        @can('orders.create')
+                        <div class="card-box" id="convertCard">
+                            <h5><i class="fa fa-shopping-cart"></i> Convert to Order</h5>
+                            <p class="text-muted" style="font-size:12.5px;">Create an order for this lead and mark it converted.</p>
+                            <button class="btn btn-success btn-sm btn-block" data-toggle="modal" data-target="#convertModal">
+                                <i class="fa fa-check"></i> Convert to Order
+                            </button>
+                        </div>
+                        @endcan
                     </div>
                 </div>
 
-                @include('admin.include.footer')
+                @include('include.footer')
 
             </div>
         </div>
     </div>
+
+    @can('orders.create')
+    <div class="modal fade" id="convertModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Convert Lead to Order</h5>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <form id="convertForm">
+                    <div class="modal-body">
+                        <h6 class="text-muted">Project</h6>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label>Project Name</label>
+                                <input type="text" name="project_name" class="form-control form-control-sm">
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label>Tech Stack</label>
+                                <input type="text" name="tech_stack" class="form-control form-control-sm">
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label>Expected Start</label>
+                                <input type="date" name="expected_start_date" class="form-control form-control-sm">
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label>Expected Delivery</label>
+                                <input type="date" name="expected_delivery_date" class="form-control form-control-sm">
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label>Priority</label>
+                                <select name="project_priority" class="form-control form-control-sm" data-master-type="project_priority"></select>
+                            </div>
+                            <div class="form-group col-md-12">
+                                <label>Description</label>
+                                <textarea name="project_description" class="form-control form-control-sm" rows="2"></textarea>
+                            </div>
+                        </div>
+
+                        <h6 class="text-muted mt-2">Order</h6>
+                        <div class="form-row">
+                            <div class="form-group col-md-4">
+                                <label>Sub Total</label>
+                                <input type="number" step="0.01" name="sub_total" class="form-control form-control-sm">
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label>Discount</label>
+                                <input type="number" step="0.01" name="discount" class="form-control form-control-sm" value="0">
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label>GST</label>
+                                <input type="number" step="0.01" name="gst" class="form-control form-control-sm" value="0">
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label>Total Amount</label>
+                                <input type="number" step="0.01" name="total_amount" class="form-control form-control-sm">
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label>Net Amount</label>
+                                <input type="number" step="0.01" name="net_amount" class="form-control form-control-sm">
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label>Due Amount</label>
+                                <input type="number" step="0.01" name="due_amount" class="form-control form-control-sm">
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label>Currency</label>
+                                <select name="currency" class="form-control form-control-sm" data-master-type="currency"></select>
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label>Payment Terms</label>
+                                <select name="payment_terms" class="form-control form-control-sm" data-master-type="payment_terms"></select>
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label>Order Status</label>
+                                <select name="order_status" class="form-control form-control-sm" data-master-type="order_status"></select>
+                            </div>
+                        </div>
+
+                        <h6 class="text-muted mt-2">Initial Payment (optional)</h6>
+                        <div class="form-row">
+                            <div class="form-group col-md-4">
+                                <label>Paid Amount</label>
+                                <input type="number" step="0.01" name="paid_amount" class="form-control form-control-sm" value="0">
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label>Payment Mode</label>
+                                <select name="payment_mode" class="form-control form-control-sm" data-master-type="payment_mode"></select>
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label>Payment Date</label>
+                                <input type="date" name="payment_date" class="form-control form-control-sm">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fa fa-check"></i> Place Order
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    @endcan
 
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="{{ asset('vendors/js/vendor.bundle.base.js') }}"></script>
@@ -279,7 +440,7 @@
         }
 
         function loadDetail() {
-            $.get("{{ url('admin/leads') }}/" + leadId + "/detail", function(response) {
+            $.get("{{ url('leads') }}/" + leadId + "/detail", function(response) {
                 const d = response.data;
                 $('#leadName').text(d.name || '(No name)');
                 $('#leadCompany').text(d.company_name || '');
@@ -356,7 +517,7 @@
         }
 
         function loadTimeline() {
-            $.get("{{ url('admin/leads') }}/" + leadId + "/timeline", function(response) {
+            $.get("{{ url('leads') }}/" + leadId + "/timeline", function(response) {
                 let html = '';
                 response.data.forEach(item => {
                     html += `
@@ -373,13 +534,13 @@
         }
 
         function loadAttachments() {
-            $.get("{{ url('admin/leads') }}/" + leadId + "/detail", function() {});
+            $.get("{{ url('leads') }}/" + leadId + "/detail", function() {});
         }
 
         $(document).on('click', '#addNoteBtn', function() {
             const body = $('#newNoteBody').val().trim();
             if (!body) return;
-            $.post("{{ url('admin/leads') }}/" + leadId + "/notes", { body }, function(response) {
+            $.post("{{ url('leads') }}/" + leadId + "/notes", { body }, function(response) {
                 if (response.status) {
                     $('#newNoteBody').val('');
                     toastr.success('Note added');
@@ -393,7 +554,7 @@
             e.preventDefault();
             const name = $(this).val().trim();
             if (!name) return;
-            $.post("{{ url('admin/leads') }}/" + leadId + "/tags", { name }, function(response) {
+            $.post("{{ url('leads') }}/" + leadId + "/tags", { name }, function(response) {
                 if (response.status) {
                     $('#newTagInput').val('');
                     toastr.success('Tag added');
@@ -406,7 +567,7 @@
         $(document).on('click', '.removeTagBtn', function() {
             const tagId = $(this).data('id');
             $.ajax({
-                url: "{{ url('admin/leads') }}/" + leadId + "/tags/" + tagId,
+                url: "{{ url('leads') }}/" + leadId + "/tags/" + tagId,
                 type: 'POST',
                 data: { _method: 'DELETE' },
                 success: function(response) {
@@ -419,13 +580,13 @@
         });
 
         function loadAttachmentList() {
-            $.get("{{ url('admin/leads') }}/" + leadId + "/timeline", function(response) {
+            $.get("{{ url('leads') }}/" + leadId + "/timeline", function(response) {
                 let html = '';
                 response.data.filter(i => i.kind === 'attachment').forEach(a => {
                     html += `
                         <div class="attachment-item">
                             <span><i class="fa fa-file-o"></i> ${a.description}</span>
-                            <a href="{{ url('admin/attachments') }}/${a.attachment_id}/download" class="btn btn-sm btn-outline-secondary">
+                            <a href="{{ url('attachments') }}/${a.attachment_id}/download" class="btn btn-sm btn-outline-secondary">
                                 <i class="fa fa-download"></i>
                             </a>
                         </div>`;
@@ -443,7 +604,7 @@
             formData.append('file', fileInput.files[0]);
 
             $.ajax({
-                url: "{{ url('admin/leads') }}/" + leadId + "/attachments",
+                url: "{{ url('leads') }}/" + leadId + "/attachments",
                 type: 'POST',
                 data: formData,
                 contentType: false,
@@ -462,10 +623,62 @@
             });
         });
 
+        // Populates every <select data-master-type="..."> in the Convert-to-Order
+        // modal from the Master Data lookup endpoint, same pattern used on the
+        // Leads list/add/edit pages.
+        function loadMasterDropdowns() {
+            $('select[data-master-type]').each(function() {
+                const $select = $(this);
+                const type = $select.data('master-type');
+
+                $.get("{{ url('admin/master-data/lookup') }}/" + type, function(response) {
+                    response.data.forEach(function(option) {
+                        $select.append(`<option value="${option.code}">${option.label}</option>`);
+                    });
+                });
+            });
+        }
+
+        $(document).on('submit', '#followUpForm', function(e) {
+            e.preventDefault();
+            const data = {};
+            $(this).serializeArray().forEach(f => data[f.name] = f.value);
+
+            $.post("{{ url('leads') }}/" + leadId + "/follow-up", data, function(response) {
+                if (response.status) {
+                    toastr.success(response.message);
+                    $('#followUpForm')[0].reset();
+                    loadTimeline();
+                }
+            }).fail(function(xhr) {
+                toastr.error(xhr.responseJSON?.message || 'Something went wrong');
+            });
+        });
+
+        $(document).on('submit', '#convertForm', function(e) {
+            e.preventDefault();
+            const data = {};
+            $(this).serializeArray().forEach(f => data[f.name] = f.value);
+
+            $.post("{{ url('leads') }}/" + leadId + "/convert-to-order", data, function(response) {
+                if (response.status) {
+                    toastr.success(response.message);
+                    $('#convertModal').modal('hide');
+                    loadDetail();
+                    loadTimeline();
+                } else {
+                    toastr.error(response.message);
+                }
+            }).fail(function(xhr) {
+                toastr.error(xhr.responseJSON?.message || 'Something went wrong');
+            });
+        });
+
         $(document).ready(function() {
             loadDetail();
             loadTimeline();
             loadAttachmentList();
+            loadMasterDropdowns();
         });
     </script>
 

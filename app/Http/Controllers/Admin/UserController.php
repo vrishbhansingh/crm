@@ -9,20 +9,32 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
+use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
     /**
-     * The existing "Add/Edit User" UI only ever offers a single "Agent" role
-     * option (unchanged in this phase — RBAC-aware role management UI is a
-     * later phase). Map that legacy value onto the real seeded role and back
-     * so the current view keeps working unmodified.
+     * Platform-level role, deliberately excluded from the ordinary Add/Edit
+     * User form — assigning it here would be an accidental privilege
+     * escalation path. (Unified interface increment 1 — this used to be
+     * moot since the form only ever offered a single hardcoded "Agent"
+     * option; now that every real role is selectable, this exclusion matters.)
      */
-    private const LEGACY_ROLE_MAP = ['agent' => 'Sales Executive'];
+    private const NON_ASSIGNABLE_ROLES = ['Super Admin'];
 
     public function user_profile()
     {
         return view('admin.userList.user_list');
+    }
+
+    public function getRoles()
+    {
+        $roles = Role::whereNotIn('name', self::NON_ASSIGNABLE_ROLES)
+            ->orderBy('name')
+            ->pluck('name');
+
+        return response()->json(['data' => $roles]);
     }
 
     public function getUserList()
@@ -43,13 +55,12 @@ class UserController extends Controller
         $sl_no = 1;
         foreach ($users as $user) {
             $roleName = $user->getRoleNames()->first();
-            $legacyRole = array_search($roleName, self::LEGACY_ROLE_MAP) ?: $roleName;
 
             $action = "
                 <div class='action-stack'>
                     <button
                         class='btn btn-sm btn-success action-status editbtn'
-                        data-id='{$user->id}' data-name='{$user->name}' data-email='{$user->email}' data-phone='{$user->phone}' data-role='{$legacyRole}' data-backup=''
+                        data-id='{$user->id}' data-name='{$user->name}' data-email='{$user->email}' data-phone='{$user->phone}' data-role='{$roleName}'
                         data-status='{$user->status}'>
                         <i class='fa fa-check-circle'></i> Edit
                     </button>
@@ -61,7 +72,7 @@ class UserController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'phone' => $user->phone,
-                'role' => $legacyRole,
+                'role' => $roleName,
                 'status' => $user->status,
                 'action' => $action,
             ];
@@ -74,11 +85,13 @@ class UserController extends Controller
 
     public function add_user(Request $request)
     {
+        $assignableRoles = Role::whereNotIn('name', self::NON_ASSIGNABLE_ROLES)->pluck('name');
+
         $rules = [
             'name' => ['required', 'string', 'max:100'],
             'email' => ['required', 'email', 'unique:users,email'],
             'phone' => ['required', 'digits_between:10,12'],
-            'role' => ['required', 'string'],
+            'role' => ['required', 'string', Rule::in($assignableRoles)],
             'status' => ['required', 'in:Active,Inactive'],
             'password' => ['required', 'string', 'min:8', 'max:20'],
         ];
@@ -104,8 +117,7 @@ class UserController extends Controller
         $user->password = Hash::make($request->password);
         $user->save();
 
-        $roleName = self::LEGACY_ROLE_MAP[$request->role] ?? $request->role;
-        $user->assignRole($roleName);
+        $user->assignRole($request->role);
 
         return response()->json([
             'status' => true,
@@ -124,6 +136,19 @@ class UserController extends Controller
 
     public function edit_user(Request $request)
     {
+        $assignableRoles = Role::whereNotIn('name', self::NON_ASSIGNABLE_ROLES)->pluck('name');
+
+        $validator = Validator::make($request->all(), [
+            'role' => ['required', 'string', Rule::in($assignableRoles)],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => $validator->errors()->first(),
+            ], 422);
+        }
+
         $user = User::findOrFail($request->id);
         $user->name = $request->name;
         $user->email = $request->email;
@@ -135,9 +160,7 @@ class UserController extends Controller
         }
 
         $user->update();
-
-        $roleName = self::LEGACY_ROLE_MAP[$request->role] ?? $request->role;
-        $user->syncRoles([$roleName]);
+        $user->syncRoles([$request->role]);
 
         return response()->json([
             'status' => true,

@@ -291,7 +291,7 @@
         });
 
         function toDashboard() {
-            window.location.href = "{{ route('user.dashboard') }}";
+            window.location.href = "{{ route('dashboard') }}";
         }
     </script>
 

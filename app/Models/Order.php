@@ -10,6 +10,27 @@ class Order extends Model
 {
     use HasFactory, BelongsToTenant;
     protected $table = 'orders';
+    protected $fillable = [
+        'tenant_id',
+        'order_number',
+        'lead_id',
+        'invoice_id',
+        'invoice_date',
+        'project_id',
+        'user_id',
+        'sub_total',
+        'discount',
+        'gst',
+        'total_amount',
+        'order_status',
+        'payment_terms',
+        'payment_status',
+        'currency',
+        'due_amount',
+        'net_amount',
+        'paid_amount',
+        'status',
+    ];
 
     public function lead()
     {

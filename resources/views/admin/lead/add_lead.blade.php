@@ -219,10 +219,10 @@
 
 <body>
     <div class="container-scroller">
-        @include('admin.include.header')
+        @include('include.header')
 
         <div class="container-fluid page-body-wrapper gradient-border-card">
-            @include('admin.include.sidebar')
+            @include('include.sidebar')
 
             <div class="content-wrapper ">
                 <form id="addUserForm" method="post">
@@ -617,7 +617,7 @@
             let form = this;
             let formData = new FormData(form);
             $.ajax({
-                url: '{{route("admin.add_lead")}}',
+                url: '{{route("leads.store")}}',
                 type: 'POST',
                 data: formData,
                 contentType: false,
@@ -627,7 +627,7 @@
                         toastr.success(response.message);
                     }, 1000);
                     form.reset();
-                    window.location.href = "{{ route('admin.lead') }}";
+                    window.location.href = "{{ route('leads.index') }}";
                 },
                 error: function(xhr) {
                     if (xhr.status === 422 && xhr.responseJSON) {
@@ -643,7 +643,7 @@
             setTimeout(function() {
 
             }, 500);
-            window.location.href = "{{ route('admin.lead') }}";
+            window.location.href = "{{ route('leads.index') }}";
 
         }
 
@@ -658,14 +658,14 @@
                 return;
             }
 
-            $.post("{{ route('admin.lead.check_duplicate') }}", {
+            $.post("{{ route('leads.check_duplicate') }}", {
                 phone,
                 email,
                 company_name
             }, function(response) {
                 if (response.data && response.data.length) {
                     let list = response.data.map(l =>
-                        `<a href="{{ url('admin/leads') }}/${l.id}" target="_blank">${l.name} (${l.phone ?? l.email ?? l.company_name})</a>`
+                        `<a href="{{ url('leads') }}/${l.id}" target="_blank">${l.name} (${l.phone ?? l.email ?? l.company_name})</a>`
                     ).join(', ');
                     $('#duplicateWarning')
                         .html(`<i class="fa fa-exclamation-triangle"></i> Possible duplicate of: ${list}`)

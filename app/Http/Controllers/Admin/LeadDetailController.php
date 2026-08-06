@@ -7,6 +7,9 @@ use App\Models\Lead;
 use App\Models\LeadActivity;
 use App\Models\LeadAttachment;
 use App\Models\Leadfollowup;
+use App\Models\Order;
+use App\Models\PaymentDetails;
+use App\Models\ProjectInfo;
 use App\Models\Tag;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -169,6 +172,115 @@ class LeadDetailController extends Controller
         $attachment = LeadAttachment::findOrFail($attachmentId);
 
         return Storage::disk('public')->download($attachment->stored_path, $attachment->original_name);
+    }
+
+    /**
+     * Log a follow-up call outcome — merged in from the old user-only
+     * `User\LeadListController::user_lead_call_update` (unified interface).
+     * Also mirrored into the LeadActivity timeline so it shows up alongside
+     * notes/status changes instead of only in the separate follow-up table.
+     */
+    public function storeFollowUp(Request $request, $id)
+    {
+        $request->validate([
+            'call_status' => 'nullable|string',
+            'lead_response' => 'nullable|string',
+            'followup_date' => 'nullable|date',
+            'followup_time' => 'nullable',
+            'call_notes' => 'nullable|string',
+        ]);
+
+        $lead = Lead::findOrFail($id);
+        $userId = Auth::guard('web')->id();
+
+        $followUp = Leadfollowup::create([
+            'tenant_id' => $lead->tenant_id,
+            'user_id' => $userId,
+            'lead_id' => $id,
+            'lead_response' => $request->lead_response,
+            'follow_up_date' => $request->followup_date,
+            'follow_up_time' => $request->followup_time,
+            'call_status' => $request->call_status,
+            'call_note' => $request->call_notes,
+        ]);
+
+        return response()->json(['status' => true, 'message' => 'Lead follow up saved', 'data' => $followUp]);
+    }
+
+    /**
+     * Convert a lead into an Order (+ ProjectInfo, + optional PaymentDetails)
+     * — merged in from the old user-only `order_success` (unified interface).
+     * Same number-generation/model logic, just relocated onto the one
+     * Lead Detail page everyone now shares.
+     */
+    public function convertToOrder(Request $request, $id)
+    {
+        $lead = Lead::findOrFail($id);
+        $userId = Auth::guard('web')->id();
+
+        $lastOrder = Order::orderBy('id', 'desc')->first();
+        $nextNumber = $lastOrder && $lastOrder->order_number
+            ? ((int) str_replace('ORD-', '', $lastOrder->order_number)) + 1
+            : 1;
+        $orderNumber = 'ORD-'.str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
+
+        $lastInvoice = Order::whereNotNull('invoice_id')->orderBy('id', 'desc')->first();
+        $nextInvoiceNumber = $lastInvoice && $lastInvoice->invoice_id
+            ? ((int) str_replace('INV-', '', $lastInvoice->invoice_id)) + 1
+            : 1;
+        $invoiceId = 'INV-'.str_pad($nextInvoiceNumber, 6, '0', STR_PAD_LEFT);
+
+        $project = ProjectInfo::create([
+            'tenant_id' => $lead->tenant_id,
+            'project_name' => $request->project_name,
+            'tech_stack' => $request->tech_stack,
+            'expected_start_date' => $request->expected_start_date,
+            'expected_delivery_date' => $request->expected_delivery_date,
+            'actual_delivery_date' => $request->actual_delivery_date,
+            'priority' => $request->project_priority,
+            'description' => $request->project_description,
+        ]);
+
+        $order = Order::create([
+            'tenant_id' => $lead->tenant_id,
+            'order_number' => $orderNumber,
+            'lead_id' => $id,
+            'user_id' => $userId,
+            'project_id' => $project->id,
+            'invoice_id' => $invoiceId,
+            'invoice_date' => now(),
+            'order_status' => $request->order_status ?? 'new',
+            'sub_total' => $request->sub_total,
+            'discount' => $request->discount ?? 0,
+            'gst' => $request->gst ?? 0,
+            'total_amount' => $request->total_amount,
+            'net_amount' => $request->net_amount,
+            'due_amount' => $request->due_amount,
+            'payment_terms' => $request->payment_terms,
+            'paid_amount' => $request->paid_amount ?? 0,
+            'payment_status' => $request->payment_status ?? 'pending',
+            'currency' => $request->currency,
+        ]);
+
+        if ($request->paid_amount > 0) {
+            PaymentDetails::create([
+                'tenant_id' => $lead->tenant_id,
+                'order_id' => $order->id,
+                'payment_mode' => $request->payment_mode,
+                'payment_date' => $request->payment_date,
+                'paid_amount' => $request->paid_amount,
+            ]);
+        }
+
+        LeadActivity::create([
+            'tenant_id' => $lead->tenant_id,
+            'lead_id' => $id,
+            'user_id' => $userId,
+            'type' => 'converted',
+            'description' => "Converted to order {$orderNumber}",
+        ]);
+
+        return response()->json(['status' => true, 'message' => 'Order placed successfully']);
     }
 
     public function checkDuplicate(Request $request)

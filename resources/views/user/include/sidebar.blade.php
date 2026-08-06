@@ -204,8 +204,8 @@
 
 
         <li class="mb-1">
-            <a class="nav-link {{ request()->routeIs('user.dashboard') ? 'active' : '' }}"
-                href="{{ route('user.dashboard') }}">
+            <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}"
+                href="{{ route('dashboard') }}">
                 <i class="fa fa-home"></i>
                 <span>Dashboard</span>
             </a>
@@ -218,30 +218,12 @@
             </a>
         </li>
         @can('leads.view')
-        <li class="mb-1 sidebar-dropdown">
-            <a href="javascript:void(0)" class="nav-link dropdown-toggle-custom">
+        <li class="mb-1">
+            <a class="nav-link {{ request()->routeIs('leads.*') ? 'active' : '' }}"
+                href="{{ route('leads.index') }}">
                 <i class="fa fa-briefcase"></i>
-                <span>Lead Management</span>
-                <i class="fa fa-angle-down dropdown-arrow"></i>
+                <span>Leads</span>
             </a>
-
-            <ul class="sidebar-submenu">
-                <li class="mb-1">
-                    <a class="nav-link {{ request()->routeIs('user.lead_list') ? 'active' : '' }}"
-                        href="{{ route('user.lead_list') }}">
-                        <i class="fa fa-address-book"></i>
-                        <span>Lead List</span>
-                    </a>
-                </li>
-
-                <li class="mb-1">
-                    <a class="nav-link {{ request()->routeIs('user.closed_lead_list') ? 'active' : '' }}"
-                        href="{{ route('user.closed_lead_list') }}">
-                        <i class="fa fa-lock"></i>
-                        <span>Closed Lead List</span>
-                    </a>
-                </li>
-            </ul>
         </li>
         @endcan
 

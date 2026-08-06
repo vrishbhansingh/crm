@@ -35,14 +35,29 @@ class LeadController extends Controller
     {
         return view('admin.lead.edit_lead');
     }
-    public function get_lead()
+    public function get_lead(Request $request)
     {
-        $leads = Lead::all();
+        $me = Auth::guard('web')->user();
+
+        // Elevated roles see every lead in the tenant; everyone else sees
+        // only leads assigned to them — unified interface data scoping.
+        $query = $me->hasElevatedAccess() ? Lead::query() : Lead::where('assigned_to', $me->id);
+
+        if ($request->status === 'closed') {
+            $query->where('lead_status', 'closed');
+        } elseif (! $me->hasElevatedAccess()) {
+            // Individual contributors default to their open leads (matches
+            // the old user.lead_list behavior); elevated roles see everything
+            // mixed together by default (matches the old admin.lead behavior).
+            $query->where('lead_status', '!=', 'closed');
+        }
+
+        $leads = $query->get();
         $data = [];
         $sl_no = 1;
         foreach ($leads as $lead) {
-            $editUrl = route('admin.edit_lead_view', $lead->id);
-            $viewUrl = route('admin.lead.view', $lead->id);
+            $editUrl = route('leads.edit', $lead->id);
+            $viewUrl = route('leads.show', $lead->id);
             $action = "
                 <div class='action-stack'>
                     <a href='{$viewUrl}'
@@ -806,12 +821,15 @@ class LeadController extends Controller
     }
     function getAssignUsers()
     {
-        $users = User::get();
-        if ($users) {
-            return response()->json([
-                'users' => $users
-            ]);
-        }
+        $tenantId = Auth::guard('web')->user()->tenant_id;
+
+        $users = User::where('status', 'Active')
+            ->when($tenantId !== null, fn ($q) => $q->where('tenant_id', $tenantId))
+            ->get();
+
+        return response()->json([
+            'users' => $users
+        ]);
     }
     function assignLead(Request $request)
     {

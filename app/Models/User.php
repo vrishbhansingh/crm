@@ -42,4 +42,14 @@ class User extends Authenticatable
     {
         return $this->hasMany(Lead::class, 'assigned_to');
     }
+
+    /**
+     * Manager-tier roles see all of their tenant's data (leads, dashboard
+     * widgets, ...); everyone else sees only records assigned to them.
+     * Drives the unified interface's per-page data scoping.
+     */
+    public function hasElevatedAccess(): bool
+    {
+        return $this->hasAnyRole(['Super Admin', 'Company Admin', 'Manager', 'Sales Manager']);
+    }
 }

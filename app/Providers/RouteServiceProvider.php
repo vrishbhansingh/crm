@@ -36,6 +36,12 @@ class RouteServiceProvider extends ServiceProvider
             Route::middleware('web')
                 ->group(base_path('routes/web.php'));
 
+            // Unified interface routes (no /admin or /user prefix) — every
+            // page reachable regardless of role, gated by permission instead
+            // of URL namespace.
+            Route::middleware('web')
+                ->group(base_path('routes/app.php'));
+
             Route::middleware('web')
                 ->prefix('admin')
                 ->group(base_path('routes/admin_routes.php'));
