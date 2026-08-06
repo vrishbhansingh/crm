@@ -195,8 +195,8 @@
         <!-- <img src="{{ asset('images/profile_img.jpg') }}"> -->
         <img src="https://techwebmantra.com/crm/public/images/user_1.png">
         <div class="profile-info">
-            <div class="name">{{ Auth::guard('user')->user()->name }}</div>
-            <div class="role" style="font-size:12px;">{{ ucfirst(str_replace('_',' ', Auth::guard('user')->user()->role)) }}</div>
+            <div class="name">{{ Auth::guard('web')->user()->name }}</div>
+            <div class="role" style="font-size:12px;">{{ Auth::guard('web')->user()->getRoleNames()->first() }}</div>
         </div>
     </div>
 

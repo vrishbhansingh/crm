@@ -3,10 +3,9 @@
 namespace App\Http\Controllers\admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Admin;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-
 
 class SecurityController extends Controller
 {
@@ -24,9 +23,9 @@ class SecurityController extends Controller
             'confirm_password' => 'required|min:6',
         ]);
 
-        $admin = Admin::first();
+        $user = Auth::guard('web')->user();
 
-        if (!Hash::check($request->current_password, $admin->password)) {
+        if (!Hash::check($request->current_password, $user->password)) {
             return response()->json([
                 'status' => false,
                 'message' => 'Current password is incorrect'
@@ -42,8 +41,8 @@ class SecurityController extends Controller
         }
 
         // ✅ Update password
-        $admin->password = Hash::make($request->new_password);
-        $admin->update();
+        $user->password = Hash::make($request->new_password);
+        $user->update();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 

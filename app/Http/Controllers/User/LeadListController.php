@@ -39,7 +39,7 @@ class LeadListController extends Controller
     }
     function get_lead_list()
     {
-        $user = Auth::guard('user')->user();
+        $user = Auth::guard('web')->user();
         $leads = Lead::where('assigned_to', $user->id)
             ->where('lead_status', '!=', 'closed')
             ->get();
@@ -96,7 +96,7 @@ class LeadListController extends Controller
 
     function user_lead_call_update(Request $request)
     {
-        $user_id = Auth::guard('user')->user()->id;
+        $user_id = Auth::guard('web')->user()->id;
         $id = $request->id;
         $lead_response = $request->lead_response ? $request->lead_response : null;
         $follow_up_date = $request->followup_date;
@@ -143,7 +143,7 @@ class LeadListController extends Controller
 
     function get_closed_lead_list()
     {
-        $user = Auth::guard('user')->user();
+        $user = Auth::guard('web')->user();
         $leads = Lead::where('assigned_to', $user->id)
             ->where('lead_status', '=', 'closed')
             ->get();
@@ -204,7 +204,7 @@ class LeadListController extends Controller
     {
         // Decode lead id
         $decodedId = $this->decodeBase64Id($request->lead_id);
-        $userId = Auth::guard('user')->user()->id;
+        $userId = Auth::guard('web')->user()->id;
         // 🔹 Generate Order Number
         $lastOrder = Order::orderBy('id', 'desc')->first();
 

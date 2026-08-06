@@ -395,7 +395,7 @@
                         <!-- SIGN -->
                         <div style="margin-top:30px;">
                             Regards,<br>
-                            <strong style="font-size:15px;">{{ Auth::guard('user')->user()->name }}</strong><br>
+                            <strong style="font-size:15px;">{{ Auth::guard('web')->user()->name }}</strong><br>
                             <span style="color:#6b7280;">{{ $company_details->company_name }}</span>
                         </div>
 

@@ -27,10 +27,10 @@ class OrderController extends Controller
     {
         $orders = Order::select(
             'orders.*',
-            'user_list.name as user_name',
+            'users.name as user_name',
             'project_info.project_name'
         )
-            ->leftJoin('user_list', 'user_list.id', '=', 'orders.user_id')
+            ->leftJoin('users', 'users.id', '=', 'orders.user_id')
             ->leftJoin('project_info', 'project_info.id', '=', 'orders.project_id')
             ->orderBy('orders.id', 'DESC')
             ->get();
@@ -156,10 +156,10 @@ class OrderController extends Controller
         $id = $request->id;
         $orders = Order::select(
             'orders.*',
-            'user_list.name as user_name',
+            'users.name as user_name',
             'project_info.project_name'
         )
-            ->leftJoin('user_list', 'user_list.id', '=', 'orders.user_id')
+            ->leftJoin('users', 'users.id', '=', 'orders.user_id')
             ->leftJoin('project_info', 'project_info.id', '=', 'orders.project_id')
             ->where('orders.id', $id)
             ->get();

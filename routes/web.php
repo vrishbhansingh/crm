@@ -1,14 +1,7 @@
 <?php
 
-use App\Http\Controllers\Admin\AuthController;
+use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Website\WebController;
-use Illuminate\Support\Facades\Http;
-use App\Models\Partner;
-use App\Models\SupportService;
-use App\Models\Banner;
-use App\Models\Contact;
-use Auth as at;
 
 /*
 |--------------------------------------------------------------------------

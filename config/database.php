@@ -57,7 +57,10 @@ return [
             'prefix' => '',
             'prefix_indexes' => true,
             'strict' => true,
-            'engine' => null,
+            // The WAMP MySQL server's global default_storage_engine is MyISAM
+            // (non-standard), which breaks utf8mb4 unique indexes on varchar(255)
+            // (MyISAM's 1000-byte key limit). Force InnoDB for all new tables.
+            'engine' => 'InnoDB',
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],

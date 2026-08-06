@@ -23,7 +23,7 @@ class DashController extends Controller
     }
     function getAttendence()
     {
-        $user = Auth::guard('user')->user();
+        $user = Auth::guard('web')->user();
         // Check against today's date in IST — the same timezone attendance is saved in.
         $today = Carbon::now('Asia/Kolkata')->toDateString();
 
@@ -39,7 +39,7 @@ class DashController extends Controller
     function dashboard_data()
     {
         $today = Carbon::now('Asia/Kolkata')->toDateString();
-        $userId =Auth::guard('user')->user()->id;
+        $userId =Auth::guard('web')->user()->id;
 
         $data = [];
 

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\user;
 
 use App\Http\Controllers\Controller;
-use App\Models\UserList;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -22,9 +22,9 @@ class SecurityController extends Controller
             'new_password'     => 'required|min:6',
             'confirm_password' => 'required|min:6',
         ]);
-        $user_id = Auth::guard('user')->user()->id;
+        $user_id = Auth::guard('web')->user()->id;
 
-        $user = UserList::findOrFail($user_id);
+        $user = User::findOrFail($user_id);
 
         // ❌ new & confirm mismatch (backend safety)
         if ($request->new_password !== $request->confirm_password) {
@@ -36,10 +36,9 @@ class SecurityController extends Controller
 
         // ✅ Update password
         $user->password = Hash::make($request->new_password);
-        $user->backup = $request->new_password;
         $user->update();
 
-        Auth::guard('user')->logout();
+        Auth::guard('web')->logout();
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();

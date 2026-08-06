@@ -259,7 +259,7 @@
 
 <body>
     @php
-    $lastLogin = Auth::guard('user')->user()->last_login;
+    $lastLogin = Auth::guard('web')->user()->last_login;
     @endphp
 
     <div class="container-scroller">

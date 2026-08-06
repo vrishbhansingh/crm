@@ -47,11 +47,11 @@ class DashboardController extends Controller
             ->groupBy('user_id')
             ->pluck('id');
 
-        $records = UserAttendance::join('user_list', 'user_list.id', '=', 'user_attendance.user_id')
+        $records = UserAttendance::join('users', 'users.id', '=', 'user_attendance.user_id')
             ->whereIn('user_attendance.id', $latestIds)
             ->orderBy('user_attendance.date', 'desc')
             ->get([
-                'user_list.name',
+                'users.name',
                 'user_attendance.user_id',
                 'user_attendance.date as check_in',
                 'user_attendance.check_out',

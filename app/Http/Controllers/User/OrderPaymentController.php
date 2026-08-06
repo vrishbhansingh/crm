@@ -25,7 +25,7 @@ class OrderPaymentController extends Controller
    
     public function get_order_payments()
     {
-        $user_id =  Auth::guard('user')->user()->id;
+        $user_id =  Auth::guard('web')->user()->id;
         $orders = Order::where('user_id', $user_id)
             ->get();
         $data = [];
@@ -71,7 +71,7 @@ class OrderPaymentController extends Controller
         $payments = PaymentDetails::join('orders', 'orders.id', '=', 'payment_details.order_id')
 
             // 🔥 Join user table
-            ->leftJoin('user_list', 'user_list.id', '=', 'orders.user_id')
+            ->leftJoin('users', 'users.id', '=', 'orders.user_id')
 
             // 🔥 Join project table
             ->leftJoin('project_info', 'project_info.id', '=', 'orders.project_id')
@@ -101,7 +101,7 @@ class OrderPaymentController extends Controller
                 'orders.net_amount',
 
                 // 🔥 Extra Joined Data
-                'user_list.name as user_name',
+                'users.name as user_name',
                 'project_info.project_name as project_name',
                 'leads.lead_number as lead_number'
             )

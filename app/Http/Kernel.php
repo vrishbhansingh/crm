@@ -65,8 +65,19 @@ class Kernel extends HttpKernel
         'signed' => \App\Http\Middleware\ValidateSignature::class,
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
-        'admin_middle' => \App\Http\Middleware\Admin::class,
+        // Both aliases now point at the same unified single-session guard
+        // (Phase 1) — kept as two names only so existing route files didn't
+        // need every ->middleware('admin_middle'/'user_middle') call renamed.
+        'admin_middle' => \App\Http\Middleware\EnsureSingleSession::class,
         'member_middle' => \App\Http\Middleware\Member::class,
-        'user_middle' => \App\Http\Middleware\User::class,
+        'user_middle' => \App\Http\Middleware\EnsureSingleSession::class,
+
+        // spatie/laravel-permission doesn't auto-register these for apps still
+        // using the classic Kernel (only for Laravel 11's bootstrap/app.php) —
+        // register them explicitly so `permission:module.action` route
+        // middleware resolves.
+        'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
+        'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
+        'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
     ];
 }

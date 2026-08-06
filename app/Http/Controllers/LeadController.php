@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CustomerContact;
 use App\Models\Lead;
-use App\Models\UserList;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -54,7 +54,7 @@ class LeadController extends Controller
                         <i class='fa fa-trash'></i> Delete
                     </button>
                 </div>";
-            $user = UserList::find($lead->assigned_to);
+            $user = User::find($lead->assigned_to);
 
             if ($user) {
                 $user_name = $user->name;
@@ -694,7 +694,7 @@ class LeadController extends Controller
     }
     function getAssignUsers()
     {
-        $users = UserList::get();
+        $users = User::get();
         if ($users) {
             return response()->json([
                 'users' => $users
@@ -722,12 +722,12 @@ class LeadController extends Controller
     function bulkAssignLead(Request $request)
     {
         $request->validate([
-            'user_id' => 'required|exists:user_list,id',
+            'user_id' => 'required|exists:users,id',
             'lead_ids' => 'required|array',
             'lead_ids.*' => 'exists:leads,id',
         ]);
 
-        $user = UserList::findOrFail($request->user_id);
+        $user = User::findOrFail($request->user_id);
 
         foreach ($request->lead_ids as $leadId) {
 

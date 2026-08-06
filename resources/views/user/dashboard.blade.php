@@ -758,7 +758,7 @@
     ================================ */
     $(document).on('click', '#confirmBtn', function() {
 
-      const userId = "{{ Auth::guard('user')->user()->id }}";
+      const userId = "{{ Auth::guard('web')->user()->id }}";
       const attendanceBtn = document.getElementById('attendanceBtn');
 
       const now = new Date();

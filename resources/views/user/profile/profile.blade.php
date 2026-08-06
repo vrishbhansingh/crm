@@ -167,7 +167,7 @@
 
 <body>
     @php
-    $lastLogin = Auth::guard('user')->user()->last_login;
+    $lastLogin = Auth::guard('web')->user()->last_login;
     @endphp
 
     <div class="container-scroller">
@@ -188,15 +188,15 @@
                         <img src="{{ asset('images/profile_img.jpg') }}" class="avatar">
 
                         <div class="user-name">
-                            {{ Auth::guard('user')->user()->name }}
+                            {{ Auth::guard('web')->user()->name }}
                         </div>
 
                         <div class="user-role">
-                            {{ ucfirst(str_replace('_',' ', Auth::guard('user')->user()->role)) }}
+                            {{ Auth::guard('web')->user()->getRoleNames()->first() }}
                         </div>
 
                         <div class="status-pill">
-                            {{ Auth::guard('user')->user()->status }}
+                            {{ Auth::guard('web')->user()->status }}
                         </div>
 
                         <div class="profile-actions">
@@ -214,22 +214,22 @@
                             <div class="data-grid">
                                 <div class="data-item">
                                     <span>Full Name</span>
-                                    <strong>{{ Auth::guard('user')->user()->name }}</strong>
+                                    <strong>{{ Auth::guard('web')->user()->name }}</strong>
                                 </div>
 
                                 <div class="data-item">
                                     <span>Email Address</span>
-                                    <strong>{{ Auth::guard('user')->user()->email }}</strong>
+                                    <strong>{{ Auth::guard('web')->user()->email }}</strong>
                                 </div>
 
                                 <div class="data-item">
                                     <span>Phone Number</span>
-                                    <strong>{{ Auth::guard('user')->user()->phone ?? 'Not added' }}</strong>
+                                    <strong>{{ Auth::guard('web')->user()->phone ?? 'Not added' }}</strong>
                                 </div>
 
                                 <div class="data-item">
                                     <span>Joined On</span>
-                                    <strong>{{ Auth::guard('user')->user()->created_at->format('d M Y') }}</strong>
+                                    <strong>{{ Auth::guard('web')->user()->created_at->format('d M Y') }}</strong>
                                 </div>
                             </div>
                         </div>
@@ -241,12 +241,12 @@
                             <div class="data-grid">
                                 <div class="data-item">
                                     <span>Username</span>
-                                    <strong>{{ Auth::guard('user')->user()->email }}</strong>
+                                    <strong>{{ Auth::guard('web')->user()->email }}</strong>
                                 </div>
 
                                 <div class="data-item">
                                     <span>Role</span>
-                                    <strong>{{ ucfirst(str_replace('_',' ', Auth::guard('user')->user()->role)) }}</strong>
+                                    <strong>{{ Auth::guard('web')->user()->getRoleNames()->first() }}</strong>
                                 </div>
                             </div>
                         </div>
@@ -264,7 +264,7 @@
                             </div>
                             <div class="activity d-none">
                                 <span>Last profile update</span>
-                                <time>{{ Auth::guard('user')->user()->updated_at->diffForHumans() }}</time>
+                                <time>{{ Auth::guard('web')->user()->updated_at->diffForHumans() }}</time>
                             </div>
                         </div>
 

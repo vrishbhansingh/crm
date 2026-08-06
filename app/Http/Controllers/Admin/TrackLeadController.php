@@ -77,9 +77,9 @@ class TrackLeadController extends Controller
             'lead_follow_up.call_note',
             'lead_follow_up.status',
             'lead_follow_up.created_at',
-            'user_list.name as user_name'
+            'users.name as user_name'
         )
-            ->leftJoin('user_list', 'user_list.id', '=', 'lead_follow_up.user_id')
+            ->leftJoin('users', 'users.id', '=', 'lead_follow_up.user_id')
             ->where('lead_follow_up.lead_id', $lead_id)
             ->orderBy('lead_follow_up.id', 'desc')
             ->get();

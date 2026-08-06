@@ -526,7 +526,7 @@
                         <!-- SIGNATURE -->
                         <div class="signature">
                             Regards,<br>
-                            <strong> {{ Auth::guard('user')->user()->name }}</strong><br>
+                            <strong> {{ Auth::guard('web')->user()->name }}</strong><br>
                             TechWebMantra
                         </div>
 
