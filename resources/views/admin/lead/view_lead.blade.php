@@ -295,12 +295,12 @@
                             <div id="conversionBody"></div>
                         </div>
 
-                        @can('orders.create')
+                        @can('deals.create')
                         <div class="card-box" id="convertCard">
-                            <h5><i class="fa fa-shopping-cart"></i> Convert to Order</h5>
-                            <p class="text-muted" style="font-size:12.5px;">Create an order for this lead and mark it converted.</p>
+                            <h5><i class="fa fa-briefcase"></i> Convert to Deal</h5>
+                            <p class="text-muted" style="font-size:12.5px;">Create a deal for this lead and start tracking it through the pipeline.</p>
                             <button class="btn btn-success btn-sm btn-block" data-toggle="modal" data-target="#convertModal">
-                                <i class="fa fa-check"></i> Convert to Order
+                                <i class="fa fa-check"></i> Convert to Deal
                             </button>
                         </div>
                         @endcan
@@ -313,104 +313,35 @@
         </div>
     </div>
 
-    @can('orders.create')
+    @can('deals.create')
     <div class="modal fade" id="convertModal" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Convert Lead to Order</h5>
+                    <h5 class="modal-title">Convert Lead to Deal</h5>
                     <button type="button" class="close" data-dismiss="modal">&times;</button>
                 </div>
                 <form id="convertForm">
                     <div class="modal-body">
-                        <h6 class="text-muted">Project</h6>
+                        <p class="text-muted" style="font-size:12.5px;">
+                            This creates a deal in the tenant's default pipeline, in its first open stage.
+                            An order is only created once the deal reaches a Won stage.
+                        </p>
                         <div class="form-row">
                             <div class="form-group col-md-6">
-                                <label>Project Name</label>
-                                <input type="text" name="project_name" class="form-control form-control-sm">
+                                <label>Amount</label>
+                                <input type="number" step="0.01" name="amount" class="form-control form-control-sm">
                             </div>
                             <div class="form-group col-md-6">
-                                <label>Tech Stack</label>
-                                <input type="text" name="tech_stack" class="form-control form-control-sm">
-                            </div>
-                            <div class="form-group col-md-4">
-                                <label>Expected Start</label>
-                                <input type="date" name="expected_start_date" class="form-control form-control-sm">
-                            </div>
-                            <div class="form-group col-md-4">
-                                <label>Expected Delivery</label>
-                                <input type="date" name="expected_delivery_date" class="form-control form-control-sm">
-                            </div>
-                            <div class="form-group col-md-4">
-                                <label>Priority</label>
-                                <select name="project_priority" class="form-control form-control-sm" data-master-type="project_priority"></select>
-                            </div>
-                            <div class="form-group col-md-12">
-                                <label>Description</label>
-                                <textarea name="project_description" class="form-control form-control-sm" rows="2"></textarea>
-                            </div>
-                        </div>
-
-                        <h6 class="text-muted mt-2">Order</h6>
-                        <div class="form-row">
-                            <div class="form-group col-md-4">
-                                <label>Sub Total</label>
-                                <input type="number" step="0.01" name="sub_total" class="form-control form-control-sm">
-                            </div>
-                            <div class="form-group col-md-4">
-                                <label>Discount</label>
-                                <input type="number" step="0.01" name="discount" class="form-control form-control-sm" value="0">
-                            </div>
-                            <div class="form-group col-md-4">
-                                <label>GST</label>
-                                <input type="number" step="0.01" name="gst" class="form-control form-control-sm" value="0">
-                            </div>
-                            <div class="form-group col-md-4">
-                                <label>Total Amount</label>
-                                <input type="number" step="0.01" name="total_amount" class="form-control form-control-sm">
-                            </div>
-                            <div class="form-group col-md-4">
-                                <label>Net Amount</label>
-                                <input type="number" step="0.01" name="net_amount" class="form-control form-control-sm">
-                            </div>
-                            <div class="form-group col-md-4">
-                                <label>Due Amount</label>
-                                <input type="number" step="0.01" name="due_amount" class="form-control form-control-sm">
-                            </div>
-                            <div class="form-group col-md-4">
                                 <label>Currency</label>
                                 <select name="currency" class="form-control form-control-sm" data-master-type="currency"></select>
-                            </div>
-                            <div class="form-group col-md-4">
-                                <label>Payment Terms</label>
-                                <select name="payment_terms" class="form-control form-control-sm" data-master-type="payment_terms"></select>
-                            </div>
-                            <div class="form-group col-md-4">
-                                <label>Order Status</label>
-                                <select name="order_status" class="form-control form-control-sm" data-master-type="order_status"></select>
-                            </div>
-                        </div>
-
-                        <h6 class="text-muted mt-2">Initial Payment (optional)</h6>
-                        <div class="form-row">
-                            <div class="form-group col-md-4">
-                                <label>Paid Amount</label>
-                                <input type="number" step="0.01" name="paid_amount" class="form-control form-control-sm" value="0">
-                            </div>
-                            <div class="form-group col-md-4">
-                                <label>Payment Mode</label>
-                                <select name="payment_mode" class="form-control form-control-sm" data-master-type="payment_mode"></select>
-                            </div>
-                            <div class="form-group col-md-4">
-                                <label>Payment Date</label>
-                                <input type="date" name="payment_date" class="form-control form-control-sm">
                             </div>
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-light" data-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn-success">
-                            <i class="fa fa-check"></i> Place Order
+                            <i class="fa fa-check"></i> Convert to Deal
                         </button>
                     </div>
                 </form>
@@ -481,13 +412,20 @@
                     renderTags([]);
                 }
 
-                if (d.is_converted === 'Yes' || d.order) {
+                if (d.is_converted === 'Yes' || d.deal || d.order) {
                     $('#conversionCard').show();
                     let body = `<div class="field-row"><span class="label">Converted</span><span class="value">${d.converted_at ?? 'Yes'}</span></div>`;
+                    if (d.deal) {
+                        body += `<div class="field-row"><span class="label">Deal</span><span class="value"><a href="{{ url('deals') }}/${d.deal.id}">${d.deal.name}</a></span></div>`;
+                    }
                     if (d.order) {
                         body += `<div class="field-row"><span class="label">Order</span><span class="value">${d.order.order_number}</span></div>`;
                     }
                     $('#conversionBody').html(body);
+
+                    if (d.deal) {
+                        $('#convertCard').hide();
+                    }
                 }
             });
         }
@@ -660,7 +598,7 @@
             const data = {};
             $(this).serializeArray().forEach(f => data[f.name] = f.value);
 
-            $.post("{{ url('leads') }}/" + leadId + "/convert-to-order", data, function(response) {
+            $.post("{{ url('leads') }}/" + leadId + "/convert-to-deal", data, function(response) {
                 if (response.status) {
                     toastr.success(response.message);
                     $('#convertModal').modal('hide');

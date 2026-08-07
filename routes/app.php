@@ -2,10 +2,14 @@
 
 use App\Http\Controllers\admin\CompanyController;
 use App\Http\Controllers\admin\CustomerContactController;
+use App\Http\Controllers\Admin\DealController;
+use App\Http\Controllers\Admin\DealDetailController;
 use App\Http\Controllers\Admin\LeadDetailController;
 use App\Http\Controllers\Admin\MasterDataController;
 use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\OrderDetailController;
+use App\Http\Controllers\Admin\PipelineController;
+use App\Http\Controllers\Admin\PipelineStageController;
 use App\Http\Controllers\Admin\ProjectDetailsController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\AuthController;
@@ -90,14 +94,72 @@ Route::middleware(['admin_middle', 'permission:leads.assign'])->group(function (
     Route::post('/leads/bulk-assign', [LeadController::class, 'bulkAssignLead'])->name('leads.bulk_assign');
 });
 
-Route::middleware(['admin_middle', 'permission:orders.create'])->group(function () {
-    Route::post('/leads/{id}/convert-to-order', [LeadDetailController::class, 'convertToOrder'])->name('leads.convert_to_order');
+Route::middleware(['admin_middle', 'permission:deals.create'])->group(function () {
+    Route::post('/leads/{id}/convert-to-deal', [LeadDetailController::class, 'convertToDeal'])->name('leads.convert_to_deal');
 });
 
 // Bare /leads/{id} last, constrained to digits so it can never shadow the
 // literal routes above (create, data, assignable-users, ...).
 Route::middleware(['admin_middle', 'permission:leads.view'])->group(function () {
     Route::get('/leads/{id}', [LeadDetailController::class, 'show'])->name('leads.show')->where('id', '[0-9]+');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Deals & Pipelines (Phase 5) — Lead -> Deal -> Order. Converting a lead now
+| creates a Deal (see leads.convert_to_deal above); an Order is only created
+| once a deal reaches a Won stage (DealController::moveStage). Data scope
+| (all tenant deals vs only-my-deals) is decided inside the controller via
+| hasElevatedAccess(), same as Leads/Orders.
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['admin_middle', 'permission:deals.view'])->group(function () {
+    Route::get('/deals', [DealController::class, 'index'])->name('deals.index');
+    Route::get('/deals/list', [DealController::class, 'listView'])->name('deals.list');
+    Route::get('/deals/data', [DealController::class, 'data'])->name('deals.data');
+    Route::get('/deals/board-data', [DealController::class, 'boardData'])->name('deals.board_data');
+});
+
+Route::middleware(['admin_middle', 'permission:deals.create'])->group(function () {
+    Route::get('/deals/create', [DealController::class, 'create'])->name('deals.create');
+    Route::post('/deals', [DealController::class, 'store'])->name('deals.store');
+});
+
+Route::middleware(['admin_middle', 'permission:deals.edit'])->group(function () {
+    Route::get('/deals/{id}/edit', [DealController::class, 'edit'])->name('deals.edit')->where('id', '[0-9]+');
+    Route::post('/deals/{id}', [DealController::class, 'update'])->name('deals.update')->where('id', '[0-9]+');
+    Route::post('/deals/{id}/move-stage', [DealController::class, 'moveStage'])->name('deals.move_stage')->where('id', '[0-9]+');
+});
+
+Route::middleware(['admin_middle', 'permission:deals.delete'])->group(function () {
+    Route::post('/deals/{id}/delete', [DealController::class, 'destroy'])->name('deals.destroy')->where('id', '[0-9]+');
+});
+
+Route::middleware(['admin_middle', 'permission:deals.assign'])->group(function () {
+    Route::post('/deals/assign', [DealController::class, 'assign'])->name('deals.assign');
+});
+
+Route::middleware(['admin_middle', 'permission:deals.manage-settings'])->group(function () {
+    Route::get('/pipelines', [PipelineController::class, 'index'])->name('pipelines.index');
+    Route::get('/pipelines/data', [PipelineController::class, 'data'])->name('pipelines.data');
+    Route::post('/pipelines', [PipelineController::class, 'store'])->name('pipelines.store');
+    Route::put('/pipelines/{id}', [PipelineController::class, 'update'])->name('pipelines.update');
+    Route::post('/pipelines/{id}/toggle-status', [PipelineController::class, 'toggleStatus'])->name('pipelines.toggle');
+    Route::delete('/pipelines/{id}', [PipelineController::class, 'destroy'])->name('pipelines.destroy');
+
+    Route::get('/pipelines/{id}/stages', [PipelineStageController::class, 'data'])->name('stages.data');
+    Route::post('/pipelines/{id}/stages', [PipelineStageController::class, 'store'])->name('stages.store');
+    Route::put('/stages/{id}', [PipelineStageController::class, 'update'])->name('stages.update');
+    Route::delete('/stages/{id}', [PipelineStageController::class, 'destroy'])->name('stages.destroy');
+});
+
+// Bare /deals/{id} last, constrained to digits so it can never shadow the
+// literal routes above (create, list, data, board-data, ...).
+Route::middleware(['admin_middle', 'permission:deals.view'])->group(function () {
+    Route::get('/deals/{id}', [DealDetailController::class, 'show'])->name('deals.show')->where('id', '[0-9]+');
+    Route::get('/deals/{id}/detail', [DealDetailController::class, 'detail'])->name('deals.detail')->where('id', '[0-9]+');
+    Route::get('/deals/{id}/timeline', [DealDetailController::class, 'timeline'])->name('deals.timeline')->where('id', '[0-9]+');
 });
 
 /*

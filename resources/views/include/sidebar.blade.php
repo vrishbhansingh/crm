@@ -183,6 +183,16 @@
         </li>
         @endcan
 
+        @can('deals.view')
+        <li class="mb-1">
+            <a class="nav-link {{ request()->routeIs('deals.*') ? 'active' : '' }}"
+                href="{{ route('deals.index') }}">
+                <i class="fa fa-briefcase"></i>
+                <span>Deals</span>
+            </a>
+        </li>
+        @endcan
+
         @can('orders.view')
         <li class="mb-1">
             <a class="nav-link {{ request()->routeIs('orders.*') ? 'active' : '' }}"
@@ -210,8 +220,8 @@
         </li>
         @endcan
 
-        @canany(['company.view', 'masters.view'])
-        <li class="mb-1 sidebar-dropdown {{ request()->routeIs(['company.*', 'master_data.*']) ? 'open' : '' }}">
+        @canany(['company.view', 'masters.view', 'deals.manage-settings'])
+        <li class="mb-1 sidebar-dropdown {{ request()->routeIs(['company.*', 'master_data.*', 'pipelines.*', 'stages.*']) ? 'open' : '' }}">
             <a href="javascript:void(0)" class="nav-link dropdown-left">
                 <i class="fa fa-cog"></i>
                 <span>Settings</span>
@@ -234,6 +244,15 @@
                         href="{{ route('master_data.index') }}">
                         <i class="fa fa-list-alt"></i>
                         Master Data
+                    </a>
+                </li>
+                @endcan
+                @can('deals.manage-settings')
+                <li>
+                    <a class="nav-link {{ request()->routeIs('pipelines.*') ? 'active' : '' }}"
+                        href="{{ route('pipelines.index') }}">
+                        <i class="fa fa-random"></i>
+                        Pipelines
                     </a>
                 </li>
                 @endcan

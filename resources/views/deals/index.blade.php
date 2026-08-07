@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>Deals | CRM Admin</title>
+
+    <link rel="stylesheet" href="{{ asset('vendors/css/vendor.bundle.base.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/vertical-layout-light/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
+
+    <style>
+        :root {
+            --primary: #2563eb;
+            --border: #e5e7eb;
+            --text-dark: #111827;
+            --text-muted: #6b7280;
+        }
+
+        .page-header {
+            background: #ffffff;
+            padding: 18px 22px;
+            border-radius: 14px;
+            margin-bottom: 18px;
+            box-shadow: 0 8px 22px rgba(0, 0, 0, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .page-header h4 {
+            font-weight: 700;
+            color: var(--text-dark);
+            margin: 0;
+        }
+
+        .page-header p {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin: 2px 0 0;
+        }
+
+        .board-toolbar {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .kanban-board {
+            display: flex;
+            gap: 14px;
+            overflow-x: auto;
+            padding-bottom: 12px;
+            align-items: flex-start;
+        }
+
+        .kanban-column {
+            min-width: 280px;
+            max-width: 280px;
+            background: #f5f7fb;
+            border-radius: 14px;
+            padding: 12px;
+            flex-shrink: 0;
+        }
+
+        .kanban-column-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 10px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            font-weight: 600;
+            font-size: 13px;
+            background: #eef2ff;
+            color: #3730a3;
+        }
+
+        .kanban-column-header.is-won {
+            background: #dcfce7;
+            color: #15803d;
+        }
+
+        .kanban-column-header.is-lost {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .kanban-column-count {
+            font-size: 11px;
+            background: rgba(255, 255, 255, 0.6);
+            padding: 1px 8px;
+            border-radius: 999px;
+        }
+
+        .kanban-cards {
+            min-height: 60px;
+        }
+
+        .kanban-card {
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+            border: 1px solid var(--border);
+            padding: 12px;
+            margin-bottom: 10px;
+            cursor: grab;
+            font-size: 12.5px;
+        }
+
+        .kanban-card:active {
+            cursor: grabbing;
+        }
+
+        .kanban-card.sortable-ghost {
+            opacity: 0.4;
+        }
+
+        .kanban-card .deal-name {
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .kanban-card .deal-amount {
+            color: #15803d;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .kanban-card .deal-meta {
+            color: var(--text-muted);
+            font-size: 11.5px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .lead-badge {
+            font-size: 10px;
+            background: #eef2ff;
+            color: var(--primary);
+            border-radius: 999px;
+            padding: 1px 7px;
+        }
+
+        .empty-column-msg {
+            font-size: 11.5px;
+            color: var(--text-muted);
+            text-align: center;
+            padding: 14px 4px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container-scroller">
+
+        @include('include.header')
+
+        <div class="container-fluid page-body-wrapper">
+
+            @include('include.sidebar')
+
+            <div class="content-wrapper">
+
+                <div class="page-header">
+                    <div>
+                        <h4>Deals</h4>
+                        <p>{{ Auth::guard('web')->user()->hasElevatedAccess() ? 'Every deal in the pipeline' : 'Your deals' }}</p>
+                    </div>
+                    <div class="board-toolbar">
+                        <select id="pipelineSwitcher" class="form-control form-control-sm" style="display:none;"></select>
+                        <a href="{{ route('deals.list') }}" class="btn btn-outline-secondary btn-sm">
+                            <i class="fa fa-table"></i> List View
+                        </a>
+                        @can('deals.create')
+                        <a href="{{ route('deals.create') }}" class="btn btn-primary btn-sm">
+                            <i class="fa fa-plus"></i> New Deal
+                        </a>
+                        @endcan
+                    </div>
+                </div>
+
+                <div class="kanban-board" id="kanbanBoard">
+                    <p class="text-muted">Loading pipeline…</p>
+                </div>
+
+                @include('include.footer')
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Lost Reason Modal -->
+    <div class="modal fade" id="lostReasonModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Why was this deal lost?</h5>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Lost Reason</label>
+                        <select id="lostReasonSelect" class="form-control"></select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-dismiss="modal" id="lostReasonCancel">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="lostReasonConfirm">Mark as Lost</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="{{ asset('vendors/js/vendor.bundle.base.js') }}"></script>
+    <script src="{{ asset('vendors/sortablejs/Sortable.min.js') }}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
+    <script>
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            }
+        });
+
+        let currentPipelineId = null;
+        let pendingMove = null; // { dealId, toStageId, cardEl, fromColumn }
+
+        function money(v) {
+            if (v === null || v === undefined || v === '') return '0';
+            return Number(v).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+        }
+
+        function dash(v) {
+            return (v === null || v === undefined || v === '') ? '-' : v;
+        }
+
+        function renderCard(deal) {
+            const leadBadge = deal.lead_id
+                ? `<a href="{{ url('leads') }}/${deal.lead_id}" class="lead-badge" title="Linked lead" onclick="event.stopPropagation();"><i class="fa fa-bullseye"></i> Lead</a>`
+                : '';
+
+            return `
+                <div class="kanban-card" draggable="true" data-deal-id="${deal.id}" onclick="window.location='{{ url('deals') }}/${deal.id}'">
+                    <div class="deal-name"><span>${deal.name}</span> ${leadBadge}</div>
+                    <div class="deal-amount">${deal.currency ?? ''} ${money(deal.amount)}</div>
+                    <div class="deal-meta">
+                        <span><i class="fa fa-user-o"></i> ${dash(deal.owner_name)}</span>
+                        <span><i class="fa fa-calendar-o"></i> ${dash(deal.expected_close_date)}</span>
+                    </div>
+                </div>`;
+        }
+
+        function renderBoard(data) {
+            currentPipelineId = data.pipeline_id;
+
+            // Pipeline switcher
+            if (data.pipelines && data.pipelines.length > 1) {
+                let options = '';
+                data.pipelines.forEach(p => {
+                    options += `<option value="${p.id}" ${p.id === data.pipeline_id ? 'selected' : ''}>${p.name}</option>`;
+                });
+                $('#pipelineSwitcher').html(options).show();
+            } else {
+                $('#pipelineSwitcher').hide();
+            }
+
+            let html = '';
+            data.stages.forEach(stage => {
+                let headerClass = '';
+                let headerStyle = '';
+                if (stage.is_won) headerClass = 'is-won';
+                if (stage.is_lost) headerClass = 'is-lost';
+                if (stage.color) headerStyle = `style="background:${stage.color}22;color:${stage.color};"`;
+
+                let cardsHtml = '';
+                stage.deals.forEach(deal => cardsHtml += renderCard(deal));
+                if (!stage.deals.length) {
+                    cardsHtml = '<div class="empty-column-msg">No deals</div>';
+                }
+
+                html += `
+                    <div class="kanban-column">
+                        <div class="kanban-column-header ${headerClass}" ${headerStyle}>
+                            <span>${stage.name}</span>
+                            <span class="kanban-column-count">${stage.deals.length}</span>
+                        </div>
+                        <div class="kanban-cards" id="stage-${stage.id}" data-stage-id="${stage.id}" data-is-won="${stage.is_won ? 1 : 0}" data-is-lost="${stage.is_lost ? 1 : 0}">
+                            ${cardsHtml}
+                        </div>
+                    </div>`;
+            });
+
+            $('#kanbanBoard').html(html);
+            initSortable();
+        }
+
+        function loadBoard(pipelineId) {
+            $.get("{{ route('deals.board_data') }}", pipelineId ? { pipeline_id: pipelineId } : {}, function(response) {
+                if (response.status) {
+                    renderBoard(response.data);
+                }
+            });
+        }
+
+        function initSortable() {
+            document.querySelectorAll('.kanban-cards').forEach(function(el) {
+                new Sortable(el, {
+                    group: 'deals',
+                    animation: 150,
+                    onEnd: function(evt) {
+                        const dealId = evt.item.getAttribute('data-deal-id');
+                        const toColumn = evt.to;
+                        const toStageId = toColumn.getAttribute('data-stage-id');
+                        const isLost = toColumn.getAttribute('data-is-lost') === '1';
+
+                        if (evt.from === evt.to && evt.oldIndex === evt.newIndex) {
+                            return;
+                        }
+
+                        if (isLost) {
+                            pendingMove = { dealId, toStageId, item: evt.item, from: evt.from, oldIndex: evt.oldIndex };
+                            loadLostReasons();
+                            $('#lostReasonModal').modal('show');
+                            return;
+                        }
+
+                        submitMove(dealId, toStageId, null);
+                    }
+                });
+            });
+        }
+
+        function loadLostReasons() {
+            $.get("{{ url('master-data/lookup') }}/lost_reason", function(response) {
+                let options = '<option value="">-- Select a reason --</option>';
+                response.data.forEach(o => options += `<option value="${o.id}">${o.label}</option>`);
+                $('#lostReasonSelect').html(options);
+            });
+        }
+
+        function submitMove(dealId, toStageId, lostReasonId) {
+            const payload = { to_stage_id: toStageId };
+            if (lostReasonId) payload.lost_reason_id = lostReasonId;
+
+            $.post("{{ url('deals') }}/" + dealId + "/move-stage", payload, function(response) {
+                if (response.status) {
+                    toastr.success(response.message);
+                    loadBoard(currentPipelineId);
+                }
+            }).fail(function(xhr) {
+                toastr.error(xhr.responseJSON?.message || 'Could not move this deal');
+                loadBoard(currentPipelineId);
+            });
+        }
+
+        $(document).on('click', '#lostReasonConfirm', function() {
+            const reasonId = $('#lostReasonSelect').val();
+            if (!reasonId) {
+                toastr.error('Please select a lost reason');
+                return;
+            }
+            $('#lostReasonModal').modal('hide');
+            submitMove(pendingMove.dealId, pendingMove.toStageId, reasonId);
+            pendingMove = null;
+        });
+
+        $('#lostReasonModal').on('hidden.bs.modal', function() {
+            if (pendingMove) {
+                // Cancelled — snap the board back to reality.
+                loadBoard(currentPipelineId);
+                pendingMove = null;
+            }
+        });
+
+        $(document).on('change', '#pipelineSwitcher', function() {
+            loadBoard($(this).val());
+        });
+
+        $(document).ready(function() {
+            loadBoard();
+        });
+    </script>
+
+</body>
+
+</html>

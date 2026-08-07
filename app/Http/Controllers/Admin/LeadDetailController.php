@@ -3,13 +3,13 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Deal;
+use App\Models\DealStageHistory;
 use App\Models\Lead;
 use App\Models\LeadActivity;
 use App\Models\LeadAttachment;
 use App\Models\Leadfollowup;
-use App\Models\Order;
-use App\Models\PaymentDetails;
-use App\Models\ProjectInfo;
+use App\Models\Pipeline;
 use App\Models\Tag;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -30,7 +30,7 @@ class LeadDetailController extends Controller
 
     public function detail($id)
     {
-        $lead = Lead::with(['customerContact', 'assignedUser', 'order', 'tags'])->findOrFail($id);
+        $lead = Lead::with(['customerContact', 'assignedUser', 'order', 'deal', 'tags'])->findOrFail($id);
 
         return response()->json(['status' => true, 'data' => $lead]);
     }
@@ -208,79 +208,62 @@ class LeadDetailController extends Controller
     }
 
     /**
-     * Convert a lead into an Order (+ ProjectInfo, + optional PaymentDetails)
-     * — merged in from the old user-only `order_success` (unified interface).
-     * Same number-generation/model logic, just relocated onto the one
-     * Lead Detail page everyone now shares.
+     * Convert a lead into a Deal (Phase 5) — replaces the old direct
+     * Lead -> Order conversion (`convertToOrder`). An Order is now only
+     * created once the deal reaches a Won stage (see
+     * Admin\DealController::moveStage/createOrderFromDeal). This is also
+     * where the real is_converted/converted_at/conversion_value bug is
+     * fixed: the old code created an Order but never set these fields on
+     * the Lead, even though the view inferred "converted" purely from
+     * order existing.
      */
-    public function convertToOrder(Request $request, $id)
+    public function convertToDeal(Request $request, $id)
     {
         $lead = Lead::findOrFail($id);
         $userId = Auth::guard('web')->id();
 
-        $lastOrder = Order::orderBy('id', 'desc')->first();
-        $nextNumber = $lastOrder && $lastOrder->order_number
-            ? ((int) str_replace('ORD-', '', $lastOrder->order_number)) + 1
-            : 1;
-        $orderNumber = 'ORD-'.str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
+        $pipeline = Pipeline::ensureDefaultForTenant($lead->tenant_id);
+        $firstOpenStage = $pipeline->stages()
+            ->where('is_won', false)
+            ->where('is_lost', false)
+            ->orderBy('sort_order')
+            ->firstOrFail();
 
-        $lastInvoice = Order::whereNotNull('invoice_id')->orderBy('id', 'desc')->first();
-        $nextInvoiceNumber = $lastInvoice && $lastInvoice->invoice_id
-            ? ((int) str_replace('INV-', '', $lastInvoice->invoice_id)) + 1
-            : 1;
-        $invoiceId = 'INV-'.str_pad($nextInvoiceNumber, 6, '0', STR_PAD_LEFT);
+        $amount = $lead->conversion_value ?? $request->amount ?? 0;
 
-        $project = ProjectInfo::create([
+        $deal = Deal::create([
             'tenant_id' => $lead->tenant_id,
-            'project_name' => $request->project_name,
-            'tech_stack' => $request->tech_stack,
-            'expected_start_date' => $request->expected_start_date,
-            'expected_delivery_date' => $request->expected_delivery_date,
-            'actual_delivery_date' => $request->actual_delivery_date,
-            'priority' => $request->project_priority,
-            'description' => $request->project_description,
-        ]);
-
-        $order = Order::create([
-            'tenant_id' => $lead->tenant_id,
-            'order_number' => $orderNumber,
-            'lead_id' => $id,
-            'user_id' => $userId,
-            'project_id' => $project->id,
-            'invoice_id' => $invoiceId,
-            'invoice_date' => now(),
-            'order_status' => $request->order_status ?? 'new',
-            'sub_total' => $request->sub_total,
-            'discount' => $request->discount ?? 0,
-            'gst' => $request->gst ?? 0,
-            'total_amount' => $request->total_amount,
-            'net_amount' => $request->net_amount,
-            'due_amount' => $request->due_amount,
-            'payment_terms' => $request->payment_terms,
-            'paid_amount' => $request->paid_amount ?? 0,
-            'payment_status' => $request->payment_status ?? 'pending',
+            'pipeline_id' => $pipeline->id,
+            'stage_id' => $firstOpenStage->id,
+            'lead_id' => $lead->id,
+            'owner_id' => $lead->assigned_to ?? $userId,
+            'created_by' => $userId,
+            'name' => trim(($lead->company_name ?: $lead->name).' - Deal'),
+            'amount' => $amount,
             'currency' => $request->currency,
         ]);
 
-        if ($request->paid_amount > 0) {
-            PaymentDetails::create([
-                'tenant_id' => $lead->tenant_id,
-                'order_id' => $order->id,
-                'payment_mode' => $request->payment_mode,
-                'payment_date' => $request->payment_date,
-                'paid_amount' => $request->paid_amount,
-            ]);
-        }
+        DealStageHistory::create([
+            'deal_id' => $deal->id,
+            'from_stage_id' => null,
+            'to_stage_id' => $firstOpenStage->id,
+            'changed_by' => $userId,
+        ]);
+
+        $lead->is_converted = 'Yes';
+        $lead->converted_at = now();
+        $lead->conversion_value = $amount;
+        $lead->save();
 
         LeadActivity::create([
             'tenant_id' => $lead->tenant_id,
             'lead_id' => $id,
             'user_id' => $userId,
             'type' => 'converted',
-            'description' => "Converted to order {$orderNumber}",
+            'description' => "Converted to deal \"{$deal->name}\"",
         ]);
 
-        return response()->json(['status' => true, 'message' => 'Order placed successfully']);
+        return response()->json(['status' => true, 'message' => 'Lead converted to deal successfully', 'deal_id' => $deal->id]);
     }
 
     public function checkDuplicate(Request $request)

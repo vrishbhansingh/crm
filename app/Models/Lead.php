@@ -86,6 +86,11 @@ class Lead extends Model
         return $this->hasOne(Order::class);
     }
 
+    public function deal(): HasOne
+    {
+        return $this->hasOne(Deal::class);
+    }
+
     /**
      * Named assignedUser (not assignedTo) — Eloquent snake_cases relation
      * names in JSON output, and "assigned_to" is already the raw FK column;

@@ -45,4 +45,9 @@ class Order extends Model
     {
         return $this->belongsTo(ProjectInfo::class, 'project_id');
     }
+
+    public function deal()
+    {
+        return $this->hasOne(Deal::class, 'order_id');
+    }
 }
