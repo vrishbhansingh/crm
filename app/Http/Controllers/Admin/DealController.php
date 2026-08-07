@@ -8,6 +8,7 @@ use App\Models\DealStageHistory;
 use App\Models\Lead;
 use App\Models\MasterValue;
 use App\Models\Order;
+use App\Models\PaymentDetails;
 use App\Models\Pipeline;
 use App\Models\PipelineStage;
 use App\Models\ProjectInfo;
@@ -247,6 +248,14 @@ class DealController extends Controller
             $request->validate(['lost_reason_id' => 'required|exists:master_values,id']);
         }
 
+        if ($toStage->is_won) {
+            $request->validate([
+                'paid_amount' => 'nullable|numeric|min:0',
+                'payment_mode' => 'nullable|string|max:50',
+                'payment_date' => 'nullable|date',
+            ]);
+        }
+
         DealStageHistory::create([
             'deal_id' => $deal->id,
             'from_stage_id' => $deal->stage_id,
@@ -257,7 +266,7 @@ class DealController extends Controller
         $deal->stage_id = $toStage->id;
 
         if ($toStage->is_won) {
-            $order = $this->createOrderFromDeal($deal);
+            $order = $this->createOrderFromDeal($deal, $request->only(['paid_amount', 'payment_mode', 'payment_date']));
             $deal->order_id = $order->id;
             $deal->status = 'won';
             $deal->closed_at = now();
@@ -283,11 +292,12 @@ class DealController extends Controller
      * Same order-number/invoice-id generation and Order/ProjectInfo field
      * mapping as the old LeadDetailController::convertToOrder, sourced from
      * the Deal (there's no order form at drag-and-drop time) instead of a
-     * request payload. No PaymentDetails row is created here — an initial
-     * payment can still be logged afterward via the existing Orders payment
-     * flow (orders.payments.store).
+     * request payload. An optional initial payment (captured by the
+     * move-to-Won modal) is recorded the same way convertToOrder used to —
+     * a PaymentDetails row plus the matching paid/due/status fields on the
+     * Order — rather than always leaving the order fully unpaid.
      */
-    private function createOrderFromDeal(Deal $deal): Order
+    private function createOrderFromDeal(Deal $deal, array $payment = []): Order
     {
         $lastOrder = Order::orderBy('id', 'desc')->first();
         $nextNumber = $lastOrder && $lastOrder->order_number
@@ -308,7 +318,12 @@ class DealController extends Controller
             'description' => $deal->notes,
         ]);
 
-        return Order::create([
+        $paidAmount = (float) ($payment['paid_amount'] ?? 0);
+        $paidAmount = min($paidAmount, (float) $deal->amount);
+        $dueAmount = max((float) $deal->amount - $paidAmount, 0);
+        $paymentStatus = $paidAmount <= 0 ? 'pending' : ($dueAmount <= 0 ? 'paid' : 'partial');
+
+        $order = Order::create([
             'tenant_id' => $deal->tenant_id,
             'order_number' => $orderNumber,
             'lead_id' => $deal->lead_id,
@@ -322,10 +337,22 @@ class DealController extends Controller
             'gst' => 0,
             'total_amount' => $deal->amount,
             'net_amount' => $deal->amount,
-            'due_amount' => $deal->amount,
-            'paid_amount' => 0,
-            'payment_status' => 'pending',
+            'due_amount' => $dueAmount,
+            'paid_amount' => $paidAmount,
+            'payment_status' => $paymentStatus,
             'currency' => $deal->currency,
         ]);
+
+        if ($paidAmount > 0) {
+            PaymentDetails::create([
+                'tenant_id' => $deal->tenant_id,
+                'order_id' => $order->id,
+                'payment_mode' => $payment['payment_mode'] ?? null,
+                'payment_date' => $payment['payment_date'] ?? now(),
+                'paid_amount' => $paidAmount,
+            ]);
+        }
+
+        return $order;
     }
 }

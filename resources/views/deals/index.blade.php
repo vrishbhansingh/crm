@@ -220,6 +220,37 @@
         </div>
     </div>
 
+    <!-- Won Payment Modal -->
+    <div class="modal fade" id="wonPaymentModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Deal won — record a payment?</h5>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted" style="font-size:12.5px;">This creates the order. Optionally record an initial payment now — you can always add more later from the order.</p>
+                    <div class="form-group">
+                        <label>Payment Amount <span class="text-muted">(optional)</span></label>
+                        <input type="number" min="0" step="0.01" id="wonPaidAmount" class="form-control" placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label>Payment Mode</label>
+                        <select id="wonPaymentMode" class="form-control"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Payment Date</label>
+                        <input type="date" id="wonPaymentDate" class="form-control">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-dismiss="modal" id="wonPaymentCancel">Cancel</button>
+                    <button type="button" class="btn btn-success" id="wonPaymentConfirm">Mark as Won</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="{{ asset('vendors/js/vendor.bundle.base.js') }}"></script>
     <script src="{{ asset('vendors/sortablejs/Sortable.min.js') }}"></script>
@@ -322,6 +353,7 @@
                         const toColumn = evt.to;
                         const toStageId = toColumn.getAttribute('data-stage-id');
                         const isLost = toColumn.getAttribute('data-is-lost') === '1';
+                        const isWon = toColumn.getAttribute('data-is-won') === '1';
 
                         if (evt.from === evt.to && evt.oldIndex === evt.newIndex) {
                             return;
@@ -334,7 +366,16 @@
                             return;
                         }
 
-                        submitMove(dealId, toStageId, null);
+                        if (isWon) {
+                            pendingMove = { dealId, toStageId, item: evt.item, from: evt.from, oldIndex: evt.oldIndex };
+                            loadPaymentModes();
+                            $('#wonPaidAmount').val('');
+                            $('#wonPaymentDate').val(new Date().toISOString().slice(0, 10));
+                            $('#wonPaymentModal').modal('show');
+                            return;
+                        }
+
+                        submitMove(dealId, toStageId, {});
                     }
                 });
             });
@@ -348,9 +389,16 @@
             });
         }
 
-        function submitMove(dealId, toStageId, lostReasonId) {
-            const payload = { to_stage_id: toStageId };
-            if (lostReasonId) payload.lost_reason_id = lostReasonId;
+        function loadPaymentModes() {
+            $.get("{{ url('master-data/lookup') }}/payment_mode", function(response) {
+                let options = '<option value="">-- Select a mode --</option>';
+                response.data.forEach(o => options += `<option value="${o.code}">${o.label}</option>`);
+                $('#wonPaymentMode').html(options);
+            });
+        }
+
+        function submitMove(dealId, toStageId, extra) {
+            const payload = Object.assign({ to_stage_id: toStageId }, extra || {});
 
             $.post("{{ url('deals') }}/" + dealId + "/move-stage", payload, function(response) {
                 if (response.status) {
@@ -370,11 +418,32 @@
                 return;
             }
             $('#lostReasonModal').modal('hide');
-            submitMove(pendingMove.dealId, pendingMove.toStageId, reasonId);
+            submitMove(pendingMove.dealId, pendingMove.toStageId, { lost_reason_id: reasonId });
             pendingMove = null;
         });
 
         $('#lostReasonModal').on('hidden.bs.modal', function() {
+            if (pendingMove) {
+                // Cancelled — snap the board back to reality.
+                loadBoard(currentPipelineId);
+                pendingMove = null;
+            }
+        });
+
+        $(document).on('click', '#wonPaymentConfirm', function() {
+            const paidAmount = $('#wonPaidAmount').val();
+            const payload = {};
+            if (paidAmount && Number(paidAmount) > 0) {
+                payload.paid_amount = paidAmount;
+                payload.payment_mode = $('#wonPaymentMode').val();
+                payload.payment_date = $('#wonPaymentDate').val();
+            }
+            $('#wonPaymentModal').modal('hide');
+            submitMove(pendingMove.dealId, pendingMove.toStageId, payload);
+            pendingMove = null;
+        });
+
+        $('#wonPaymentModal').on('hidden.bs.modal', function() {
             if (pendingMove) {
                 // Cancelled — snap the board back to reality.
                 loadBoard(currentPipelineId);

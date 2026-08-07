@@ -40,7 +40,17 @@ class Pipeline extends Model
      */
     public static function ensureDefaultForTenant(?int $tenantId): Pipeline
     {
-        $existing = static::where('tenant_id', $tenantId)->orderBy('sort_order')->first();
+        // Bypasses the BelongsToTenant global scope deliberately: $tenantId is
+        // already the definitive tenant to check (resolved by the caller),
+        // so this must not be additionally filtered by whatever
+        // TenantContext::id() happens to resolve to for the ambient request —
+        // the two should always agree, but this lookup is the one place a
+        // second "Sales Pipeline" would get silently created if they ever
+        // diverged, so it's made explicit rather than implicit.
+        $existing = static::withoutGlobalScope('tenant')
+            ->where('tenant_id', $tenantId)
+            ->orderBy('sort_order')
+            ->first();
 
         if ($existing) {
             return $existing;

@@ -163,7 +163,7 @@
                                     </div>
                                     <div class="form-group col-md-3">
                                         <label>Currency</label>
-                                        <select name="currency" id="edit_currency" class="form-control form-control-sm" data-master-type="currency"></select>
+                                        <select name="currency" id="edit_currency" class="form-control form-control-sm"></select>
                                     </div>
                                     <div class="form-group col-md-6">
                                         <label>Owner</label>
@@ -208,6 +208,12 @@
                                 <div id="lostReasonWrap" style="display:none;" class="mb-2">
                                     <label>Lost Reason</label>
                                     <select id="moveLostReason" class="form-control form-control-sm"></select>
+                                </div>
+                                <div id="wonPaymentWrap" style="display:none;" class="mb-2">
+                                    <label>Initial Payment <span class="text-muted">(optional)</span></label>
+                                    <input type="number" min="0" step="0.01" id="moveWonPaidAmount" class="form-control form-control-sm mb-2" placeholder="0.00">
+                                    <select id="moveWonPaymentMode" class="form-control form-control-sm mb-2"></select>
+                                    <input type="date" id="moveWonPaymentDate" class="form-control form-control-sm">
                                 </div>
                                 <button class="btn btn-primary btn-sm btn-block" id="moveStageBtn">
                                     <i class="fa fa-exchange"></i> Move Stage
@@ -310,8 +316,10 @@
                 if (d.order) {
                     $('#orderCard').show();
                     $('#orderCardBody').html(`
-                        <div class="field-row"><span class="label">Order</span><span class="value">${d.order.order_number}</span></div>
+                        <div class="field-row"><span class="label">Order</span><span class="value"><a href="{{ url('orders') }}/${d.order.id}">${d.order.order_number}</a></span></div>
                         <div class="field-row"><span class="label">Total</span><span class="value">${money(d.order.total_amount)}</span></div>
+                        <div class="field-row"><span class="label">Paid</span><span class="value">${money(d.order.paid_amount)}</span></div>
+                        <div class="field-row"><span class="label">Due</span><span class="value">${money(d.order.due_amount)}</span></div>
                     `);
                 }
 
@@ -326,14 +334,17 @@
             let options = '';
             d.pipeline.stages.forEach(s => {
                 if (s.id === d.stage_id) return;
-                options += `<option value="${s.id}" data-is-lost="${s.is_lost ? 1 : 0}">${s.name}</option>`;
+                options += `<option value="${s.id}" data-is-lost="${s.is_lost ? 1 : 0}" data-is-won="${s.is_won ? 1 : 0}">${s.name}</option>`;
             });
             $('#moveStageSelect').html(options);
-            toggleLostReasonWrap();
+            toggleStageExtras();
         }
 
-        function toggleLostReasonWrap() {
-            const isLost = $('#moveStageSelect option:selected').data('is-lost') === 1;
+        function toggleStageExtras() {
+            const selected = $('#moveStageSelect option:selected');
+            const isLost = selected.data('is-lost') === 1;
+            const isWon = selected.data('is-won') === 1;
+
             if (isLost) {
                 $('#lostReasonWrap').show();
                 $.get("{{ url('master-data/lookup') }}/lost_reason", function(response) {
@@ -344,9 +355,22 @@
             } else {
                 $('#lostReasonWrap').hide();
             }
+
+            if (isWon) {
+                $('#wonPaymentWrap').show();
+                $('#moveWonPaidAmount').val('');
+                $('#moveWonPaymentDate').val(new Date().toISOString().slice(0, 10));
+                $.get("{{ url('master-data/lookup') }}/payment_mode", function(response) {
+                    let options = '<option value="">-- Select a mode --</option>';
+                    response.data.forEach(o => options += `<option value="${o.code}">${o.label}</option>`);
+                    $('#moveWonPaymentMode').html(options);
+                });
+            } else {
+                $('#wonPaymentWrap').hide();
+            }
         }
 
-        $(document).on('change', '#moveStageSelect', toggleLostReasonWrap);
+        $(document).on('change', '#moveStageSelect', toggleStageExtras);
 
         $(document).on('click', '#moveStageBtn', function() {
             const toStageId = $('#moveStageSelect').val();
@@ -360,6 +384,15 @@
                     return;
                 }
                 payload.lost_reason_id = lostReasonId;
+            }
+
+            if ($('#wonPaymentWrap').is(':visible')) {
+                const paidAmount = $('#moveWonPaidAmount').val();
+                if (paidAmount && Number(paidAmount) > 0) {
+                    payload.paid_amount = paidAmount;
+                    payload.payment_mode = $('#moveWonPaymentMode').val();
+                    payload.payment_date = $('#moveWonPaymentDate').val();
+                }
             }
 
             $.post("{{ url('deals') }}/" + dealId + "/move-stage", payload, function(response) {
