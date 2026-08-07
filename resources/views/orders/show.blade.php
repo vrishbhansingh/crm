@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Order View | CRM</title>
+    <title>Order Detail | CRM</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="{{ asset('css/vertical-layout-light/style.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
 
     <style>
         body { background: #eef1f7; font-family: 'Inter', sans-serif; }
@@ -34,7 +35,7 @@
 
         .order-hero h2 { margin: 0; font-weight: 800; font-size: 26px; letter-spacing: .3px; }
         .order-hero .sub { font-size: 13px; opacity: .9; margin-top: 6px; }
-        .order-hero .hero-actions { display: flex; gap: 10px; }
+        .order-hero .hero-actions { display: flex; gap: 10px; flex-wrap: wrap; }
 
         .hero-btn {
             padding: 10px 18px;
@@ -71,9 +72,11 @@
             margin-bottom: 18px;
             display: flex;
             align-items: center;
+            justify-content: space-between;
             gap: 10px;
         }
 
+        .card-title .card-title-left { display: flex; align-items: center; gap: 10px; }
         .card-title i { color: #4f46e5; }
 
         .layout-2col {
@@ -83,7 +86,6 @@
             align-items: start;
         }
 
-        /* prevent grid blowout: let columns shrink instead of overflowing */
         .layout-2col > * { min-width: 0; }
 
         @media (max-width: 992px) {
@@ -216,6 +218,9 @@
         }
         .empty-row { text-align: center; color: #94a3b8; padding: 20px; font-size: 14px; }
 
+        /* ===== EDIT FORM ===== */
+        label { font-size: 12px; font-weight: 600; color: #6b7280; }
+
         /* ===== PRINT ===== */
         @media print {
             body { background: #fff; }
@@ -231,10 +236,10 @@
 <body>
 
     <div class="container-scroller">
-        @include('admin.include.header')
+        @include('include.header')
 
         <div class="container-fluid page-body-wrapper">
-            @include('admin.include.sidebar')
+            @include('include.sidebar')
 
             <div class="content-wrapper">
 
@@ -245,7 +250,10 @@
                         <div class="sub" id="orderSubTitle">Loading order details...</div>
                     </div>
                     <div class="hero-actions no-print">
-                        <a class="hero-btn hero-btn-white" href="{{ route('admin.sales_orders') }}">
+                        <a class="hero-btn hero-btn-light" href="#" id="invoiceBtn" style="display:none;">
+                            <i class="fa fa-print"></i> Print Invoice
+                        </a>
+                        <a class="hero-btn hero-btn-white" href="{{ route('orders.index') }}">
                             <i class="fa fa-arrow-left"></i> Back
                         </a>
                     </div>
@@ -300,7 +308,7 @@
                                 <div class="pp-amount" id="paidBig">0</div>
                             </div>
                             <div class="col-r">
-                                <div class="lbl">Total</div>
+                                <div class="lbl">Net</div>
                                 <div class="pp-amount" id="totalBig">0</div>
                             </div>
                         </div>
@@ -331,8 +339,8 @@
                             <td id="gst">-</td>
                         </tr>
                         <tr class="grand">
-                            <td>Total Amount</td>
-                            <td id="totalAmount">-</td>
+                            <td>Net Amount</td>
+                            <td id="netAmount">-</td>
                         </tr>
                         <tr class="divider">
                             <td>Paid</td>
@@ -345,9 +353,102 @@
                     </table>
                 </div>
 
-                <!-- PAYMENT HISTORY -->
+                @can('orders.edit')
+                <!-- EDIT ORDER (elevated / orders.edit only) -->
+                <div class="card-box no-print">
+                    <div class="card-title"><i class="fa fa-pencil"></i> Edit Order</div>
+
+                    <form id="edit_sales_order">
+                        @csrf
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label>Order Number</label>
+                                <input type="text" id="order_number" name="order_number" class="form-control">
+                            </div>
+
+                            <div class="col-md-6 form-group">
+                                <label>Invoice Date</label>
+                                <input type="date" id="invoice_date" name="invoice_date" class="form-control">
+                            </div>
+
+                            <div class="col-md-4 form-group">
+                                <label>Sub Total</label>
+                                <input type="number" step="0.01" id="edit_sub_total" name="sub_total" class="form-control">
+                            </div>
+
+                            <div class="col-md-4 form-group">
+                                <label>Discount</label>
+                                <input type="number" step="0.01" id="edit_discount" name="discount" class="form-control">
+                            </div>
+
+                            <div class="col-md-4 form-group">
+                                <label>GST (%)</label>
+                                <input type="number" id="edit_gst" name="gst" class="form-control">
+                            </div>
+
+                            <div class="col-md-4 form-group">
+                                <label>Total Amount</label>
+                                <input type="number" step="0.01" id="edit_total_amount" name="total_amount" class="form-control">
+                            </div>
+
+                            <div class="col-md-4 form-group">
+                                <label>Paid Amount</label>
+                                <input type="number" step="0.01" id="edit_paid_amount" name="paid_amount" class="form-control">
+                            </div>
+
+                            <div class="col-md-4 form-group">
+                                <label>Due Amount</label>
+                                <input type="number" step="0.01" id="edit_due_amount" name="due_amount" class="form-control">
+                            </div>
+
+                            <div class="col-md-4 form-group">
+                                <label>Order Status</label>
+                                <select id="order_status" name="order_status" class="form-control">
+                                    <option value="new">New</option>
+                                    <option value="approved">Approved</option>
+                                    <option value="in_progress">In Progress</option>
+                                    <option value="on_hold">On Hold</option>
+                                    <option value="delivered">Delivered</option>
+                                    <option value="closed">Closed</option>
+                                    <option value="cancelled">Cancelled</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-4 form-group">
+                                <label>Payment Status</label>
+                                <select id="payment_status" name="payment_status" class="form-control">
+                                    <option value="pending">Pending</option>
+                                    <option value="partial">Partial</option>
+                                    <option value="paid">Paid</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-4 form-group">
+                                <label>Currency</label>
+                                <select id="currency_edit" name="currency" class="form-control">
+                                    <option value="INR">INR</option>
+                                    <option value="EURO">EURO</option>
+                                    <option value="DOLLOR">DOLLOR</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="text-right mt-2">
+                            <button type="submit" class="btn btn-primary">Update Order</button>
+                        </div>
+                    </form>
+                </div>
+                @endcan
+
+                <!-- PAYMENT HISTORY + ADD PAYMENT -->
                 <div class="card-box">
-                    <div class="card-title"><i class="fa fa-history"></i> Payment History</div>
+                    <div class="card-title">
+                        <div class="card-title-left"><i class="fa fa-history"></i> Payment History</div>
+                        <button id="addPaymentBtn" class="btn btn-primary btn-sm no-print"
+                            data-toggle="modal" data-target="#addPaymentModal">
+                            <i class="fa fa-plus"></i> Add Payment
+                        </button>
+                    </div>
                     <table class="pay-table">
                         <thead>
                             <tr>
@@ -362,8 +463,87 @@
                     </table>
                 </div>
 
-                @include('admin.include.footer')
+                @include('include.footer')
 
+            </div>
+        </div>
+    </div>
+
+    <!-- ADD PAYMENT MODAL -->
+    <div class="modal fade" id="addPaymentModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content" style="border-radius:0.8rem;">
+
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">
+                        <i class="fa fa-credit-card"></i> Add New Payment
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" style="color:#fff;">
+                        &times;
+                    </button>
+                </div>
+
+                <div class="modal-body p-4">
+                    <div class="row mb-3">
+
+                        <div class="col-md-6">
+                            <div class="alert alert-light border">
+                                <small class="text-muted">Net Amount</small>
+                                <h5 class="mb-0 font-weight-bold text-dark" id="modal_net_amount">₹0.00</h5>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="alert alert-danger border">
+                                <small class="text-muted">Due Amount</small>
+                                <h5 class="mb-0 font-weight-bold" id="modal_due_amount">₹0.00</h5>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <form id="addPaymentForm" method="post">
+                        @csrf
+                        <input type="hidden" name="order_id" id="modalOrderId" value="{{ $orderId }}">
+
+                        <div class="form-group">
+                            <label class="font-weight-semibold">Payment Mode</label>
+                            <select class="form-control" name="payment_mode" required>
+                                <option value="">Select Payment Mode</option>
+                                <option value="cash">Cash</option>
+                                <option value="upi">UPI</option>
+                                <option value="bank_transfer">Bank Transfer</option>
+                                <option value="cheque">Cheque</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="font-weight-semibold">Payment Amount</label>
+                            <input type="number"
+                                class="form-control"
+                                name="paid_amount"
+                                id="paid_amount"
+                                placeholder="Enter Payment Amount"
+                                min="1"
+                                step="0.01"
+                                required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="font-weight-semibold">Payment Date</label>
+                            <input type="datetime-local"
+                                class="form-control"
+                                id="payment_date"
+                                name="payment_date"
+                                value="<?= date('Y-m-d\TH:i'); ?>">
+                        </div>
+
+                        <button type="submit" class="btn btn-success btn-block mt-3">
+                            <i class="fa fa-check"></i> Add Payment
+                        </button>
+                    </form>
+
+                </div>
             </div>
         </div>
     </div>
@@ -371,8 +551,10 @@
     <!-- JS -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="{{ asset('vendors/js/vendor.bundle.base.js') }}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
 
     <script>
+        const ORDER_ID = {{ (int) $orderId }};
         const CURRENCY_SYMBOL = { 'INR': '₹', 'EURO': '€', 'DOLLOR': '$' };
 
         function sym(cur) { return CURRENCY_SYMBOL[cur] || (cur ? cur + ' ' : ''); }
@@ -382,8 +564,6 @@
             return sym(cur) + n.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
         }
 
-        // Big amounts: render the currency symbol as a light, separated prefix
-        // (avoids the heavy ₹ "blob" look next to the bold digits).
         function moneyBig(cur, v) {
             const n = Number(v || 0).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
             return '<span class="rupee">' + (cur || '') + '</span> ' + n;
@@ -407,26 +587,22 @@
             return s.toString().replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
         }
 
-        $(document).ready(function() {
-
-            const id = window.location.search.replace('?', '');
-
+        function loadOrder() {
             $.ajax({
-                url: "{{ route('admin.get_view_sales_order_list') }}",
+                url: "{{ route('orders.payments.data', $orderId) }}",
                 type: "GET",
-                data: { id: id },
                 success: function(res) {
-                    if (!res || !res.data || !res.data.length) {
+                    if (!res || !res.order) {
                         $('#orderSubTitle').text('Order not found');
                         $('#paymentHistory').html('<tr><td colspan="3" class="empty-row">No data</td></tr>');
                         return;
                     }
 
-                    const o = res.data[0];
+                    const o = res.order;
                     const cur = o.currency;
 
                     $('#orderTitle').text(`Order #${o.order_number}`);
-                    $('#orderSubTitle').text(`Invoice ${o.invoice_id} • ${o.invoice_date}`);
+                    $('#orderSubTitle').text(`Invoice ${o.invoice_id ?? '-'} • ${o.invoice_date ?? '-'}`);
 
                     $('#customerName').text(o.user_name ?? '-');
                     $('#projectName').text(o.project_name ?? '-');
@@ -442,12 +618,12 @@
                     $('#subTotal').text(money(cur, o.sub_total));
                     $('#discount').text('- ' + money(cur, o.discount));
                     $('#gst').text((o.gst ?? 0) + '%');
-                    $('#totalAmount').text(money(cur, o.total_amount));
+                    $('#netAmount').text(money(cur, o.net_amount));
                     $('#paidAmount').text(money(cur, o.paid_amount));
                     $('#dueAmount').text(money(cur, o.due_amount));
 
                     // progress
-                    const total = Number(o.total_amount || 0);
+                    const total = Number(o.net_amount || 0);
                     const paid = Number(o.paid_amount || 0);
                     const pct = total > 0 ? Math.min(100, Math.round((paid / total) * 100)) : 0;
                     $('#paidBig').html(moneyBig(cur, paid));
@@ -456,8 +632,37 @@
                     $('#paidPercent').text(pct + '% paid');
                     $('#dueChip').text('Due: ' + money(cur, o.due_amount));
 
+                    // edit form (only rendered/prefillable when orders.edit gave us the fields)
+                    $('#order_number').val(o.order_number ?? '');
+                    $('#invoice_date').val(o.invoice_date ? o.invoice_date.substring(0, 10) : '');
+                    $('#edit_sub_total').val(o.sub_total ?? '');
+                    $('#edit_discount').val(o.discount ?? '');
+                    $('#edit_gst').val(o.gst ?? '');
+                    $('#edit_total_amount').val(o.total_amount ?? '');
+                    $('#edit_paid_amount').val(o.paid_amount ?? '');
+                    $('#edit_due_amount').val(o.due_amount ?? '');
+                    $('#order_status').val(o.order_status ?? '');
+                    $('#payment_status').val(o.payment_status ?? '');
+                    $('#currency_edit').val(o.currency ?? '');
+
+                    // add-payment modal
+                    $('#modal_net_amount').text(money(cur, o.net_amount));
+                    $('#modal_due_amount').text(money(cur, o.due_amount));
+
+                    // due <= 0: disable Add Payment, offer the invoice instead
+                    const due = Number(o.due_amount || 0);
+                    if (due <= 0) {
+                        $('#addPaymentBtn').prop('disabled', true).removeClass('btn-primary').addClass('btn-secondary')
+                            .attr('data-toggle', '').attr('data-target', '');
+                        $('#invoiceBtn').css('display', 'inline-flex');
+                    } else {
+                        $('#addPaymentBtn').prop('disabled', false).removeClass('btn-secondary').addClass('btn-primary')
+                            .attr('data-toggle', 'modal').attr('data-target', '#addPaymentModal');
+                        $('#invoiceBtn').css('display', 'none');
+                    }
+
                     // payment history
-                    const pays = o.payments || [];
+                    const pays = res.data || [];
                     if (!pays.length) {
                         $('#paymentHistory').html('<tr><td colspan="3" class="empty-row">No payments recorded yet.</td></tr>');
                     } else {
@@ -476,6 +681,81 @@
                 error: function() {
                     $('#orderSubTitle').text('Failed to load order');
                     $('#paymentHistory').html('<tr><td colspan="3" class="empty-row">Something went wrong.</td></tr>');
+                }
+            });
+        }
+
+        $(document).ready(function() {
+            loadOrder();
+
+            $('#invoiceBtn').attr('href', "{{ route('invoice.show', $orderId) }}");
+        });
+
+        $(document).on('submit', '#edit_sales_order', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+
+            $.ajax({
+                url: "{{ route('orders.update', $orderId) }}",
+                type: "POST",
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    if (response.status) {
+                        toastr.success(response.message ?? 'Order updated successfully');
+                        loadOrder();
+                    } else {
+                        toastr.error(response.message ?? 'Something went wrong');
+                    }
+                },
+                error: function(xhr) {
+                    if (xhr.responseJSON && xhr.responseJSON.errors) {
+                        $.each(xhr.responseJSON.errors, function(key, value) {
+                            toastr.error(value[0]);
+                        });
+                    } else {
+                        toastr.error('Server error occurred');
+                    }
+                }
+            });
+        });
+
+        $(document).on('submit', '#addPaymentForm', function(e) {
+            e.preventDefault();
+
+            let due_amount = document.getElementById('modal_due_amount').innerText.replace(/[^\d.]/g, '');
+            due_amount = parseFloat(due_amount);
+            let paid_amount = parseFloat(document.getElementById('paid_amount').value);
+
+            if (paid_amount > due_amount) {
+                toastr.error('Paid amount cannot be greater than the due amount');
+                return;
+            }
+
+            let form = $(this);
+
+            $.ajax({
+                url: "{{ route('orders.payments.store') }}",
+                type: "POST",
+                data: form.serialize(),
+                success: function(response) {
+                    if (response.status) {
+                        toastr.success(response.message || 'Payment added successfully');
+                        $('#addPaymentModal').modal('hide');
+                        form[0].reset();
+                        $('#modalOrderId').val(ORDER_ID);
+                        loadOrder();
+                    } else {
+                        toastr.error(response.message || 'Something went wrong');
+                    }
+                },
+                error: function(xhr) {
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        toastr.error(xhr.responseJSON.message);
+                    } else {
+                        toastr.error('Server error occurred');
+                    }
                 }
             });
         });

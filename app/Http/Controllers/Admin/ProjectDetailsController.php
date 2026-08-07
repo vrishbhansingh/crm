@@ -12,7 +12,7 @@ class ProjectDetailsController extends Controller
     //
     function project_details()
     {
-        return view('admin.Project-Details.project_details');
+        return view('projects.index');
     }
 
     public function get_project_details()

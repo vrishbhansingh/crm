@@ -341,9 +341,9 @@
 
 <body>
     <div class="container-scroller">
-        @include('admin.include.header')
+        @include('include.header')
         <div class="container-fluid page-body-wrapper">
-            @include('admin.include.sidebar')
+            @include('include.sidebar')
             <div class="content-wrapper">
 
                 <!-- Page Header -->
@@ -401,7 +401,7 @@
                         </div>
                     </div>
                 </div>
-                @include('admin.include.footer')
+                @include('include.footer')
             </div>
         </div>
     </div>
@@ -705,7 +705,7 @@
 
         function loadUserList() {
             $.ajax({
-                url: '{{route("admin.get_user_list")}}',
+                url: '{{route("users.data")}}',
                 type: 'Get',
                 success: function(response) {
                     let tbody = '';
@@ -774,7 +774,7 @@
             });
         }
         function loadRoles() {
-            $.get("{{ route('admin.get_roles') }}", function(response) {
+            $.get("{{ route('users.roles') }}", function(response) {
                 let options = '';
                 response.data.forEach(function(role) {
                     options += `<option value="${role}">${role}</option>`;
@@ -796,7 +796,7 @@
             let formData = new FormData(form);
 
             $.ajax({
-                url: '{{ route("admin.add_user") }}',
+                url: '{{ route("users.store") }}',
                 type: 'POST',
                 data: formData,
                 contentType: false,
@@ -844,7 +844,7 @@
             let edit_status_value = $('#edit_status_modal').val();
 
             $.ajax({
-                url: '{{ route("admin.toggle_user_status") }}',
+                url: '{{ route("users.toggle_status") }}',
                 type: 'POST',
                 data: {
                     _token: '{{ csrf_token() }}',
@@ -898,7 +898,7 @@
             let form = this;
             let formData = new FormData(this);
             $.ajax({
-                url: "{{route('admin.edit_user')}}",
+                url: "{{route('users.update')}}",
                 data: formData,
                 type: "POST",
                 contentType: false,
@@ -929,7 +929,7 @@
         $(document).on('click', '#confirmDeleteBtn', function(e) {
             e.preventDefault();
             $.ajax({
-                url: "{{route('admin.delete_user')}}",
+                url: "{{route('users.destroy')}}",
                 data: {
                     _token: $('meta[name="csrf-token"]').attr('content'),
                     id: deleteId

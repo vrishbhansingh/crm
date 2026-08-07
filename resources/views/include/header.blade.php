@@ -203,8 +203,8 @@
       </div>
 
       <div class="crm-dropdown" id="profileDropdown">
-        <a href="{{ route('user.profile') }}"><i class="fa fa-user"></i> Profile</a>
-        <a href="{{ Auth::guard('web')->user()->hasElevatedAccess() ? route('admin.security') : route('user.security') }}">
+        <a href="{{ route('profile.show') }}"><i class="fa fa-user"></i> Profile</a>
+        <a href="{{ route('security.show') }}">
           <i class="fa fa-shield"></i> Security
         </a>
         <form method="post" action="{{ route('admin.logout') }}">

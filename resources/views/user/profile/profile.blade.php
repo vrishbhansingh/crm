@@ -171,10 +171,10 @@
     @endphp
 
     <div class="container-scroller">
-        @include('user.include.header')
+        @include('include.header')
 
         <div class="container-fluid page-body-wrapper">
-            @include('user.include.sidebar')
+            @include('include.sidebar')
 
             <div class="content-wrapper">
 
@@ -271,7 +271,7 @@
                     </div>
                 </div>
 
-                @include('user.include.footer')
+                @include('include.footer')
             </div>
         </div>
     </div>

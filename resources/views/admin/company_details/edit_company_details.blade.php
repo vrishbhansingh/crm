@@ -99,10 +99,10 @@
 <body>
 
     <div class="container-scroller">
-        @include('admin.include.header')
+        @include('include.header')
 
         <div class="container-fluid page-body-wrapper">
-            @include('admin.include.sidebar')
+            @include('include.sidebar')
 
             <div class="content-wrapper">
 
@@ -279,7 +279,7 @@
                     </div>
                 </form>
 
-                @include('admin.include.footer')
+                @include('include.footer')
             </div>
         </div>
     </div>
@@ -334,7 +334,7 @@
             e.preventDefault();
             let formData = new FormData(this);
             $.ajax({
-                url: '{{route("admin.edit_com_details")}}',
+                url: '{{route("company.update")}}',
                 type: 'POST',
                 data: formData,
                 processData: false,
@@ -342,7 +342,7 @@
                 success: function(response) {
                     if (response.status) {
                         toastr.success(response.message);
-                        window.location.href = "{{route('admin.company_details')}}";
+                        window.location.href = "{{route('company.show')}}";
                     } else {
                         toastr.error(response.message);
                     }

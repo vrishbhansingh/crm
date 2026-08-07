@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Orders | CRM Admin</title>
+    <title>Orders | CRM</title>
 
     <!-- Core CSS -->
     <link rel="stylesheet" href="{{ asset('vendors/css/vendor.bundle.base.css') }}">
@@ -118,19 +118,19 @@
 
     <div class="container-scroller">
 
-        @include('admin.include.header')
+        @include('include.header')
 
         <div class="container-fluid page-body-wrapper">
 
-            @include('admin.include.sidebar')
+            @include('include.sidebar')
 
             <div class="content-wrapper">
 
                 <!-- Page Header -->
                 <div class="page-header">
                     <div>
-                        <h4>Order List</h4>
-                        <p>Manage all customer orders</p>
+                        <h4>Orders</h4>
+                        <p>{{ Auth::guard('web')->user()->hasElevatedAccess() ? 'Manage all customer orders' : 'Your orders' }}</p>
                     </div>
                 </div>
 
@@ -161,7 +161,7 @@
                     </div>
                 </div>
 
-                @include('admin.include.footer')
+                @include('include.footer')
 
             </div>
         </div>
@@ -178,7 +178,7 @@
     <script>
         function loadOrderList() {
             $.ajax({
-                url: "{{ route('admin.get_order_list') }}",
+                url: "{{ route('orders.data') }}",
                 type: "GET",
                 success: function(response) {
 

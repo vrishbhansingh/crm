@@ -185,40 +185,25 @@
 
         @can('orders.view')
         <li class="mb-1">
-            <a class="nav-link {{ request()->routeIs(['admin.sales_orders', 'user.order_management']) ? 'active' : '' }}"
-                href="{{ $me->hasElevatedAccess() ? route('admin.sales_orders') : route('user.order_management') }}">
+            <a class="nav-link {{ request()->routeIs('orders.*') ? 'active' : '' }}"
+                href="{{ route('orders.index') }}">
                 <i class="fa fa-shopping-cart"></i>
                 <span>Orders</span>
             </a>
         </li>
+        <li class="mb-1">
+            <a class="nav-link {{ request()->routeIs('projects.*') ? 'active' : '' }}"
+                href="{{ route('projects.index') }}">
+                <i class="fa fa-check-circle"></i>
+                <span>Projects Details</span>
+            </a>
+        </li>
         @endcan
-
-        @if($me->hasElevatedAccess())
-            @can('orders.view')
-            <li class="mb-1">
-                <a class="nav-link {{ request()->routeIs('admin.project_details') ? 'active' : '' }}"
-                    href="{{ route('admin.project_details') }}">
-                    <i class="fa fa-check-circle"></i>
-                    <span>Projects Details</span>
-                </a>
-            </li>
-            @endcan
-
-            @can('leads.view')
-            <li class="mb-1">
-                <a class="nav-link {{ request()->routeIs('admin.track_lead') ? 'active' : '' }}"
-                    href="{{ route('admin.track_lead') }}">
-                    <i class="fa fa-tasks"></i>
-                    <span>Track Lead</span>
-                </a>
-            </li>
-            @endcan
-        @endif
 
         @can('users.view')
         <li class="mb-1">
-            <a class="nav-link {{ request()->routeIs('admin.user_profile') ? 'active' : '' }}"
-                href="{{ route('admin.user_profile') }}">
+            <a class="nav-link {{ request()->routeIs('users.*') ? 'active' : '' }}"
+                href="{{ route('users.index') }}">
                 <i class="fa fa-users"></i>
                 <span>User List</span>
             </a>
@@ -226,7 +211,7 @@
         @endcan
 
         @canany(['company.view', 'masters.view'])
-        <li class="mb-1 sidebar-dropdown {{ request()->routeIs(['admin.company_details', 'admin.master_data.*']) ? 'open' : '' }}">
+        <li class="mb-1 sidebar-dropdown {{ request()->routeIs(['company.*', 'master_data.*']) ? 'open' : '' }}">
             <a href="javascript:void(0)" class="nav-link dropdown-left">
                 <i class="fa fa-cog"></i>
                 <span>Settings</span>
@@ -236,8 +221,8 @@
             <ul class="sidebar-submenu">
                 @can('company.view')
                 <li>
-                    <a class="nav-link {{ request()->routeIs('admin.company_details') ? 'active' : '' }}"
-                        href="{{ route('admin.company_details') }}">
+                    <a class="nav-link {{ request()->routeIs('company.*') ? 'active' : '' }}"
+                        href="{{ route('company.show') }}">
                         <i class="fa fa-building"></i>
                         Company Details
                     </a>
@@ -245,8 +230,8 @@
                 @endcan
                 @can('masters.view')
                 <li>
-                    <a class="nav-link {{ request()->routeIs('admin.master_data.*') ? 'active' : '' }}"
-                        href="{{ route('admin.master_data.index') }}">
+                    <a class="nav-link {{ request()->routeIs('master_data.*') ? 'active' : '' }}"
+                        href="{{ route('master_data.index') }}">
                         <i class="fa fa-list-alt"></i>
                         Master Data
                     </a>
@@ -258,8 +243,8 @@
 
         @can('contacts.view')
         <li class="mb-1">
-            <a class="nav-link {{ request()->routeIs('admin.customer_contact') ? 'active' : '' }}"
-                href="{{ route('admin.customer_contact') }}">
+            <a class="nav-link {{ request()->routeIs('contacts.*') ? 'active' : '' }}"
+                href="{{ route('contacts.index') }}">
                 <i class="fa fa-address-book"></i>
                 <span>Contacts</span>
             </a>
@@ -267,8 +252,8 @@
         @endcan
 
         <li class="mb-1">
-            <a class="nav-link {{ request()->routeIs('user.profile') ? 'active' : '' }}"
-                href="{{ route('user.profile') }}">
+            <a class="nav-link {{ request()->routeIs('profile.show') ? 'active' : '' }}"
+                href="{{ route('profile.show') }}">
                 <i class="fa fa-user"></i>
                 <span>My Profile</span>
             </a>

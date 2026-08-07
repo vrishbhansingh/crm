@@ -1,8 +1,21 @@
 <?php
 
+use App\Http\Controllers\admin\CompanyController;
+use App\Http\Controllers\admin\CustomerContactController;
 use App\Http\Controllers\Admin\LeadDetailController;
+use App\Http\Controllers\Admin\MasterDataController;
+use App\Http\Controllers\Admin\OrderController;
+use App\Http\Controllers\Admin\OrderDetailController;
+use App\Http\Controllers\Admin\ProjectDetailsController;
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LeadController;
+use App\Http\Controllers\MasterValueLookupController;
+use App\Http\Controllers\SecurityController;
+use App\Http\Controllers\User\InvoiceController;
+use App\Http\Controllers\User\ProfileController;
+use App\Http\Controllers\User\QuotationController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -85,4 +98,104 @@ Route::middleware(['admin_middle', 'permission:orders.create'])->group(function 
 // literal routes above (create, data, assignable-users, ...).
 Route::middleware(['admin_middle', 'permission:leads.view'])->group(function () {
     Route::get('/leads/{id}', [LeadDetailController::class, 'show'])->name('leads.show')->where('id', '[0-9]+');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Unified interface, increment 2 — everything else that was still split
+| across /admin/... and /user/.... Security/Profile have no admin/user
+| behavioral split (Security's old user-side version even skipped the
+| current-password check — fixed by merging into one controller everyone
+| goes through); Company Details/Master Data/Contacts/Users never had a
+| user-side version at all, just an /admin/ prefix to drop.
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware('admin_middle')->group(function () {
+    Route::get('/security', [SecurityController::class, 'show'])->name('security.show');
+    Route::post('/security', [SecurityController::class, 'update'])->name('security.update');
+    Route::get('/profile', [ProfileController::class, 'profile'])->name('profile.show');
+
+    Route::get('/master-data/lookup/{type}', [MasterValueLookupController::class, 'options'])->name('master_data.lookup');
+});
+
+Route::middleware(['admin_middle', 'permission:company.view'])->group(function () {
+    Route::get('/company-details', [CompanyController::class, 'company_details'])->name('company.show');
+    Route::get('/company-details/edit', [CompanyController::class, 'edit_company_details_page'])->name('company.edit');
+    Route::post('/company-details', [CompanyController::class, 'edit_com_details'])->name('company.update');
+});
+
+Route::middleware(['admin_middle', 'permission:masters.view'])->group(function () {
+    Route::get('/master-data', [MasterDataController::class, 'index'])->name('master_data.index');
+    Route::get('/master-data/types', [MasterDataController::class, 'getTypes'])->name('master_data.types');
+    Route::get('/master-data/values', [MasterDataController::class, 'getValues'])->name('master_data.values');
+});
+
+Route::middleware(['admin_middle', 'permission:masters.create'])->group(function () {
+    Route::post('/master-data/values', [MasterDataController::class, 'store'])->name('master_data.values.store');
+});
+
+Route::middleware(['admin_middle', 'permission:masters.edit'])->group(function () {
+    Route::put('/master-data/values/{id}', [MasterDataController::class, 'update'])->name('master_data.values.update');
+    Route::post('/master-data/values/{id}/toggle-status', [MasterDataController::class, 'toggleStatus'])->name('master_data.values.toggle');
+});
+
+Route::middleware(['admin_middle', 'permission:masters.delete'])->group(function () {
+    Route::delete('/master-data/values/{id}', [MasterDataController::class, 'destroy'])->name('master_data.values.destroy');
+});
+
+Route::middleware(['admin_middle', 'permission:contacts.view'])->group(function () {
+    Route::get('/contacts', [CustomerContactController::class, 'customer_contact_details'])->name('contacts.index');
+    Route::get('/contacts/data', [CustomerContactController::class, 'get_customer_contacts'])->name('contacts.data');
+});
+
+Route::middleware(['admin_middle', 'permission:users.view'])->group(function () {
+    Route::get('/users', [UserController::class, 'user_profile'])->name('users.index');
+    Route::get('/users/data', [UserController::class, 'getUserList'])->name('users.data');
+    Route::get('/users/roles', [UserController::class, 'getRoles'])->name('users.roles');
+    Route::post('/users', [UserController::class, 'add_user'])->name('users.store');
+    Route::post('/users/toggle-status', [UserController::class, 'toggleUserStatus'])->name('users.toggle_status');
+    Route::post('/users/update', [UserController::class, 'edit_user'])->name('users.update');
+    Route::post('/users/delete', [UserController::class, 'delete_user'])->name('users.destroy');
+});
+
+Route::middleware(['admin_middle', 'permission:users.impersonate'])->group(function () {
+    Route::post('/users/impersonate', [AuthController::class, 'impersonate'])->name('users.impersonate');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Unified Orders (increment 2, Group B) — replaces Admin\OrderController's
+| /admin/sales-orders* + /admin/*-order-list* routes and
+| User\OrderPaymentController's /user/order-management* + /user/order/*
+| routes. Data scope (all tenant orders vs only-my-orders) is decided
+| inside the controller via hasElevatedAccess(), same as Leads. The detail
+| page merges the old edit-order (elevated/orders.edit only, gated by
+| @can in the view) and payment_management (payment history + add-payment
+| form, anyone with orders.view) pages into one.
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['admin_middle', 'permission:orders.view'])->group(function () {
+    Route::get('/orders', [OrderController::class, 'sales_orders'])->name('orders.index');
+    Route::get('/orders/data', [OrderController::class, 'get_order_list'])->name('orders.data');
+
+    Route::get('/orders/{id}/payments', [OrderDetailController::class, 'paymentsData'])->name('orders.payments.data')->where('id', '[0-9]+');
+    Route::post('/orders/payments', [OrderDetailController::class, 'paymentsStore'])->name('orders.payments.store');
+
+    Route::get('/orders/{id}', [OrderDetailController::class, 'show'])->name('orders.show')->where('id', '[0-9]+');
+
+    Route::get('/projects', [ProjectDetailsController::class, 'project_details'])->name('projects.index');
+    Route::get('/projects/data', [ProjectDetailsController::class, 'get_project_details'])->name('projects.data');
+
+    Route::get('/quotation/template-1/{id}', [QuotationController::class, 'quotation_template_1'])->name('quotation.template1');
+    Route::get('/quotation/template-2/{id}', [QuotationController::class, 'quotation_template_2'])->name('quotation.template2');
+    Route::get('/quotation/template-3/{id}', [QuotationController::class, 'quotation_template_3'])->name('quotation.template3');
+
+    Route::get('/orders/{id}/invoice', [InvoiceController::class, 'invoice'])->name('invoice.show')->where('id', '[0-9]+');
+});
+
+Route::middleware(['admin_middle', 'permission:orders.edit'])->group(function () {
+    Route::post('/orders/{id}', [OrderDetailController::class, 'update'])->name('orders.update')->where('id', '[0-9]+');
+    Route::post('/projects/update', [ProjectDetailsController::class, 'update_project_details'])->name('projects.update');
 });

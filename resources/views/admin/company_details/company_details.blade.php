@@ -174,10 +174,10 @@
 <body>
 
     <div class="container-scroller">
-        @include('admin.include.header')
+        @include('include.header')
 
         <div class="container-fluid page-body-wrapper">
-            @include('admin.include.sidebar')
+            @include('include.sidebar')
 
             <div class="content-wrapper">
 
@@ -210,7 +210,7 @@
                         </div>
 
                         <div class="company-actions">
-                            <a href="{{route('admin.edit_company_details_page')}}" class="primary">Edit Company Details</a>
+                            <a href="{{route('company.edit')}}" class="primary">Edit Company Details</a>
                         </div>
                     </div>
 
@@ -297,7 +297,7 @@
                     </div>
                 </div>
 
-                @include('admin.include.footer')
+                @include('include.footer')
             </div>
         </div>
     </div>

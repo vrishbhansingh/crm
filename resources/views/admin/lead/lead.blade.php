@@ -1044,7 +1044,7 @@
                 const $select = $(this);
                 const type = $select.data('master-type');
 
-                $.get("{{ url('admin/master-data/lookup') }}/" + type, function(response) {
+                $.get("{{ url('master-data/lookup') }}/" + type, function(response) {
                     response.data.forEach(function(option) {
                         $select.append(`<option value="${option.code}">${option.label}</option>`);
                     });

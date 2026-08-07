@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Closed Projects | CRM Admin</title>
+    <title>Project Details | CRM</title>
 
     <!-- Core CSS -->
     <link rel="stylesheet" href="{{ asset('vendors/css/vendor.bundle.base.css') }}">
@@ -158,7 +158,7 @@
     padding: 0;
     transition: all 0.2s ease-in-out;
         }
-        
+
     </style>
 </head>
 
@@ -166,19 +166,19 @@
 
     <div class="container-scroller">
 
-        @include('admin.include.header')
+        @include('include.header')
 
         <div class="container-fluid page-body-wrapper">
 
-            @include('admin.include.sidebar')
+            @include('include.sidebar')
 
             <div class="content-wrapper">
 
                 <!-- Page Header -->
                 <div class="page-header">
                     <div>
-                        <h4>Closed Projects</h4>
-                        <p>List of projects converted from customers</p>
+                        <h4>Project Details</h4>
+                        <p>Projects created from converted leads</p>
                     </div>
                 </div>
 
@@ -196,7 +196,9 @@
                                             <th>Timeline</th>
                                             <th>Priority</th>
                                             <th>Description</th>
+                                            @can('orders.edit')
                                             <th>Action</th>
+                                            @endcan
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -208,14 +210,13 @@
                     </div>
                 </div>
 
-                @include('admin.include.footer')
+                @include('include.footer')
 
             </div>
         </div>
     </div>
 
-
-
+    @can('orders.edit')
     <div class="modal fade" id="editProjectModal" tabindex="-1">
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
@@ -284,6 +285,7 @@
             </div>
         </div>
     </div>
+    @endcan
 
     <!-- Core JS -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
@@ -298,7 +300,7 @@
     <script>
         function loadProjectList() {
             $.ajax({
-                url: "{{ route('admin.get_project_details') }}",
+                url: "{{ route('projects.data') }}",
                 type: "GET",
                 success: function(response) {
 
@@ -344,9 +346,11 @@
                             </small>
                         </td>
 
+                        @can('orders.edit')
                         <td>
                             ${item.action}
                         </td>
+                        @endcan
                     </tr>`;
                         });
 
@@ -386,7 +390,7 @@
             e.preventDefault();
             let formData = new FormData(this);
             $.ajax({
-                url: "{{ route('admin.update_project_details') }}",
+                url: "{{ route('projects.update') }}",
                 type: "POST",
                 data: formData,
                 processData: false,

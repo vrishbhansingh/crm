@@ -128,11 +128,11 @@
 
     <div class="container-scroller">
 
-        @include('admin.include.header')
+        @include('include.header')
 
         <div class="container-fluid page-body-wrapper">
 
-            @include('admin.include.sidebar')
+            @include('include.sidebar')
 
             <div class="content-wrapper">
 
@@ -182,7 +182,7 @@
                     </div>
                 </div>
 
-                @include('admin.include.footer')
+                @include('include.footer')
 
             </div>
         </div>
@@ -240,7 +240,7 @@
         let activeTypeId = null;
 
         function loadTypes() {
-            $.get("{{ route('admin.master_data.types') }}", function(response) {
+            $.get("{{ route('master_data.types') }}", function(response) {
                 let html = '';
                 response.data.forEach((type) => {
                     html += `<button type="button" class="type-btn" data-id="${type.id}" data-name="${type.name}">${type.name}</button>`;
@@ -254,7 +254,7 @@
         }
 
         function loadValues(typeId) {
-            $.get("{{ route('admin.master_data.values') }}", {
+            $.get("{{ route('master_data.values') }}", {
                 type_id: typeId
             }, function(response) {
                 let rows = '';
@@ -326,8 +326,8 @@
             };
 
             const url = id ?
-                "{{ url('admin/master-data/values') }}/" + id :
-                "{{ route('admin.master_data.values.store') }}";
+                "{{ url('master-data/values') }}/" + id :
+                "{{ route('master_data.values.store') }}";
 
             $.ajax({
                 url: url,
@@ -353,7 +353,7 @@
 
         $(document).on('click', '.toggleStatusBtn', function() {
             const id = $(this).data('id');
-            $.post("{{ url('admin/master-data/values') }}/" + id + "/toggle-status", {}, function(response) {
+            $.post("{{ url('master-data/values') }}/" + id + "/toggle-status", {}, function(response) {
                 if (response.status) {
                     toastr.success('Status updated');
                     loadValues(activeTypeId);
@@ -369,7 +369,7 @@
             }
             const id = $(this).data('id');
             $.ajax({
-                url: "{{ url('admin/master-data/values') }}/" + id,
+                url: "{{ url('master-data/values') }}/" + id,
                 type: 'POST',
                 data: {
                     _method: 'DELETE'

@@ -249,11 +249,11 @@
 
     <div class="container-scroller">
 
-        @include('admin.include.header')
+        @include('include.header')
 
         <div class="container-fluid page-body-wrapper">
 
-            @include('admin.include.sidebar')
+            @include('include.sidebar')
 
             <div class="content-wrapper">
 
@@ -297,7 +297,7 @@
                     </div>
                 </div>
 
-                @include('admin.include.footer')
+                @include('include.footer')
 
             </div>
         </div>
@@ -312,7 +312,7 @@
     <script>
         function loadCustomerContacts() {
             $.ajax({
-                url: "{{ route('admin.get_customer_contacts') }}",
+                url: "{{ route('contacts.data') }}",
                 type: "GET",
                 success: function(response) {
 
