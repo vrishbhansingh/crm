@@ -51,12 +51,26 @@
     gap: 18px;
   }
 
+  .tenant-context-select {
+    width: 210px;
+    height: 36px;
+    border: 1px solid #dbe3f0;
+    border-radius: 8px;
+    background: #fff;
+    padding: 0 10px;
+    color: #374151;
+    font-size: 12px;
+  }
+
   .crm-profile {
     display: flex;
     align-items: center;
     gap: 10px;
     cursor: pointer;
   }
+
+  .notification-link { position: relative; color:#475569; font-size:19px; }
+  .notification-count { position:absolute; top:-8px; right:-10px; min-width:17px; height:17px; border-radius:10px; background:#ef4444; color:#fff; font-size:10px; line-height:17px; text-align:center; }
 
   .crm-profile img {
     width: 36px;
@@ -194,6 +208,24 @@
     </div>
 
     <div class="crm-right">
+      @can('platform.manage-tenants')
+        <form method="post" action="{{ route('tenants.switch') }}">
+          @csrf
+          <select name="tenant_id" class="tenant-context-select" onchange="this.form.submit()" aria-label="Active tenant context">
+            <option value="">All tenants (read-only)</option>
+            @foreach(\App\Models\Tenant::where('status', 'Active')->orderBy('name')->get(['id', 'name']) as $tenantOption)
+              <option value="{{ $tenantOption->id }}" @selected((int) session('tenant_context_id') === $tenantOption->id)>
+                {{ $tenantOption->name }}
+              </option>
+            @endforeach
+          </select>
+        </form>
+      @endcan
+      <a class="notification-link" href="{{ route('notifications.index') }}" title="Notifications">
+        <i class="fa fa-bell-o"></i>
+        @php $unreadNotificationCount = Auth::guard('web')->user()->unreadNotifications()->count(); @endphp
+        @if($unreadNotificationCount)<span class="notification-count">{{ $unreadNotificationCount > 99 ? '99+' : $unreadNotificationCount }}</span>@endif
+      </a>
       <div class="crm-profile" id="profileToggle">
         <img src="{{ asset('images/user_1.png') }}">
         <div class="crm-profile-text">
@@ -206,6 +238,9 @@
         <a href="{{ route('profile.show') }}"><i class="fa fa-user"></i> Profile</a>
         <a href="{{ route('security.show') }}">
           <i class="fa fa-shield"></i> Security
+        </a>
+        <a href="{{ route('api_tokens.index') }}">
+          <i class="fa fa-key"></i> API Tokens
         </a>
         <form method="post" action="{{ route('admin.logout') }}">
           @csrf

@@ -574,6 +574,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
     <script src="{{ asset('vendors/js/vendor.bundle.base.js') }}"></script>
     <script>
+        const esc = value => $('<div>').text(value ?? '').html();
         // Populates every <select data-master-type="..."> from the Master Data
         // lookup endpoint instead of hardcoded <option> lists (Phase 2).
         function loadMasterDropdowns() {
@@ -584,7 +585,7 @@
 
                 $.get("{{ url('master-data/lookup') }}/" + type, function(response) {
                     response.data.forEach(function(option) {
-                        $select.append(`<option value="${option.code}">${option.label}</option>`);
+                        $select.append(`<option value="${esc(option.code)}">${esc(option.label)}</option>`);
                     });
                     if (!keepFirstOption && $select.data('selected')) {
                         $select.val($select.data('selected'));
@@ -665,7 +666,7 @@
             }, function(response) {
                 if (response.data && response.data.length) {
                     let list = response.data.map(l =>
-                        `<a href="{{ url('leads') }}/${l.id}" target="_blank">${l.name} (${l.phone ?? l.email ?? l.company_name})</a>`
+                        `<a href="{{ url('leads') }}/${l.id}" target="_blank">${esc(l.name)} (${esc(l.phone ?? l.email ?? l.company_name)})</a>`
                     ).join(', ');
                     $('#duplicateWarning')
                         .html(`<i class="fa fa-exclamation-triangle"></i> Possible duplicate of: ${list}`)

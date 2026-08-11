@@ -444,10 +444,12 @@
                 <div class="card-box">
                     <div class="card-title">
                         <div class="card-title-left"><i class="fa fa-history"></i> Payment History</div>
+                        @can('orders.edit')
                         <button id="addPaymentBtn" class="btn btn-primary btn-sm no-print"
                             data-toggle="modal" data-target="#addPaymentModal">
                             <i class="fa fa-plus"></i> Add Payment
                         </button>
+                        @endcan
                     </div>
                     <table class="pay-table">
                         <thead>
@@ -469,6 +471,7 @@
         </div>
     </div>
 
+    @can('orders.edit')
     <!-- ADD PAYMENT MODAL -->
     <div class="modal fade" id="addPaymentModal" tabindex="-1" role="dialog">
         <div class="modal-dialog modal-dialog-centered" role="document">
@@ -547,6 +550,7 @@
             </div>
         </div>
     </div>
+    @endcan
 
     <!-- JS -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
@@ -555,6 +559,7 @@
 
     <script>
         const ORDER_ID = {{ (int) $orderId }};
+        const esc = value => $('<div>').text(value ?? '').html();
         const CURRENCY_SYMBOL = { 'INR': '₹', 'EURO': '€', 'DOLLOR': '$' };
 
         function sym(cur) { return CURRENCY_SYMBOL[cur] || (cur ? cur + ' ' : ''); }
@@ -566,7 +571,7 @@
 
         function moneyBig(cur, v) {
             const n = Number(v || 0).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
-            return '<span class="rupee">' + (cur || '') + '</span> ' + n;
+            return '<span class="rupee">' + esc(cur || '') + '</span> ' + n;
         }
 
         function orderBadge(status) {
@@ -670,8 +675,8 @@
                         pays.forEach(p => {
                             rows += `
                                 <tr>
-                                    <td>${p.payment_date ?? '-'}</td>
-                                    <td><span class="pay-mode">${pretty(p.payment_mode)}</span></td>
+                                    <td>${esc(p.payment_date ?? '-')}</td>
+                                    <td><span class="pay-mode">${esc(pretty(p.payment_mode))}</span></td>
                                     <td>${money(cur, p.paid_amount)}</td>
                                 </tr>`;
                         });

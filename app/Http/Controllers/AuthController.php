@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\UserAttendance;
+use App\Support\TenantContext;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -20,7 +21,7 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         if (Auth::guard('web')->check()) {
-            return redirect()->route('dashboard');
+            return redirect()->route(Auth::guard('web')->user()->hasRole('Super Admin') ? 'platform.dashboard' : 'dashboard');
         }
 
         $submitRoute = $request->is('admin/*') ? route('admin.login_submit') : route('user.login_submit');
@@ -53,6 +54,20 @@ class AuthController extends Controller
             ]);
         }
 
+        if ($user->tenant_id !== null && $user->tenant?->approval_status === 'pending') {
+            return response()->json([
+                'status' => false,
+                'message' => 'Your company signup is awaiting Super Admin approval.',
+            ]);
+        }
+
+        if ($user->tenant_id !== null && ($user->tenant?->approval_status !== 'approved' || $user->tenant?->status !== 'Active')) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Your organization workspace is inactive. Contact the platform administrator.',
+            ]);
+        }
+
         Auth::guard('web')->login($user);
         $request->session()->regenerate();
 
@@ -63,11 +78,12 @@ class AuthController extends Controller
         $user->last_login = now();
         $user->save();
         $request->session()->put('session_token', $token);
+        $request->session()->forget('tenant_context_id');
 
         return response()->json([
             'status' => true,
             'message' => 'Login successful',
-            'location' => route('dashboard'),
+            'location' => route($user->hasRole('Super Admin') ? 'platform.dashboard' : 'dashboard'),
         ]);
     }
 
@@ -105,13 +121,22 @@ class AuthController extends Controller
      */
     public function impersonate(Request $request)
     {
-        $target = User::find($request->id);
+        $request->validate(['id' => 'required|integer']);
+        $actingUser = Auth::guard('web')->user();
+        $query = User::query();
+
+        if (($tenantId = TenantContext::id()) !== null) {
+            $query->where('tenant_id', $tenantId);
+        }
+
+        $target = $query->find($request->integer('id'));
 
         if (! $target) {
-            return response()->json([
-                'status' => false,
-                'message' => 'User not found',
-            ]);
+            abort(404, 'User not found.');
+        }
+
+        if ($target->hasRole('Super Admin') && ! $actingUser->hasRole('Super Admin')) {
+            abort(403, 'Only a Super Admin may impersonate another Super Admin.');
         }
 
         session([
@@ -121,6 +146,7 @@ class AuthController extends Controller
 
         Auth::guard('web')->loginUsingId($target->id);
         $request->session()->regenerate();
+        $request->session()->forget('tenant_context_id');
 
         // Match the target's current single-session token so impersonation
         // passes the single-device check without logging the real user out.

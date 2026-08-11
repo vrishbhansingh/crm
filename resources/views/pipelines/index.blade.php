@@ -280,26 +280,28 @@
         });
 
         let activePipelineId = null;
+        const esc = value => $('<div>').text(value ?? '').html();
+        const safeColor = value => /^#[0-9a-f]{3,8}$/i.test(value || '') ? value : '#64748b';
 
         function loadPipelines() {
             $.get("{{ route('pipelines.data') }}", function(response) {
                 let html = '';
                 response.data.forEach((p) => {
                     html += `
-                        <div class="pipeline-item" data-id="${p.id}" data-name="${p.name}" data-sort="${p.sort_order}" data-default="${p.is_default ? 1 : 0}">
+                        <div class="pipeline-item" data-id="${p.id}" data-name="${esc(p.name)}" data-sort="${p.sort_order}" data-default="${p.is_default ? 1 : 0}">
                             <span>
-                                ${p.name}
+                                ${esc(p.name)}
                                 ${p.is_default ? '<span class="status-pill default">Default</span>' : ''}
                                 ${!p.is_active ? '<span class="status-pill inactive">Inactive</span>' : ''}
                             </span>
                             <span>
-                                <button class="btn btn-sm btn-outline-primary editPipelineBtn" data-id="${p.id}" data-name="${p.name}" data-sort="${p.sort_order}" data-default="${p.is_default ? 1 : 0}" onclick="event.stopPropagation();">
+                                <button class="btn btn-sm btn-outline-primary editPipelineBtn" data-id="${p.id}" data-name="${esc(p.name)}" data-sort="${p.sort_order}" data-default="${p.is_default ? 1 : 0}">
                                     <i class="fa fa-pencil"></i>
                                 </button>
-                                <button class="btn btn-sm btn-outline-secondary togglePipelineBtn" data-id="${p.id}" onclick="event.stopPropagation();">
+                                <button class="btn btn-sm btn-outline-secondary togglePipelineBtn" data-id="${p.id}">
                                     <i class="fa fa-power-off"></i>
                                 </button>
-                                <button class="btn btn-sm btn-outline-danger deletePipelineBtn" data-id="${p.id}" data-deals="${p.deals_count}" onclick="event.stopPropagation();">
+                                <button class="btn btn-sm btn-outline-danger deletePipelineBtn" data-id="${p.id}" data-deals="${p.deals_count}">
                                     <i class="fa fa-trash"></i>
                                 </button>
                             </span>
@@ -326,7 +328,7 @@
             $.get("{{ url('pipelines') }}/" + pipelineId + "/stages", function(response) {
                 let rows = '';
                 response.data.forEach((s, i) => {
-                    const colorDot = s.color ? `<span class="color-dot" style="background:${s.color}"></span>${s.color}` : '-';
+                    const colorDot = s.color ? `<span class="color-dot" style="background:${safeColor(s.color)}"></span>${esc(s.color)}` : '-';
                     let flags = '';
                     if (s.is_won) flags += '<span class="status-pill is-won">Won</span> ';
                     if (s.is_lost) flags += '<span class="status-pill is-lost">Lost</span> ';
@@ -335,14 +337,14 @@
                     rows += `
                         <tr>
                             <td>${i + 1}</td>
-                            <td>${s.name}</td>
+                            <td>${esc(s.name)}</td>
                             <td>${s.sort_order}</td>
                             <td>${flags}</td>
                             <td>${colorDot}</td>
                             <td>
                                 <button class="btn btn-sm btn-outline-primary editStageBtn"
-                                    data-id="${s.id}" data-name="${s.name}" data-sort="${s.sort_order}"
-                                    data-probability="${s.probability ?? ''}" data-color="${s.color ?? ''}"
+                                    data-id="${s.id}" data-name="${esc(s.name)}" data-sort="${s.sort_order}"
+                                    data-probability="${s.probability ?? ''}" data-color="${esc(s.color ?? '')}"
                                     data-won="${s.is_won ? 1 : 0}" data-lost="${s.is_lost ? 1 : 0}">
                                     <i class="fa fa-pencil"></i>
                                 </button>
@@ -356,7 +358,10 @@
             });
         }
 
-        $(document).on('click', '.pipeline-item', function() {
+        $(document).on('click', '.pipeline-item', function(e) {
+            if ($(e.target).closest('button').length) {
+                return; // let the row's own action buttons (edit/toggle/delete) handle their own click
+            }
             selectPipeline($(this).data('id'), $(this).data('name'));
         });
 

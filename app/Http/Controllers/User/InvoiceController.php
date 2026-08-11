@@ -5,7 +5,7 @@ namespace App\Http\Controllers\user;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\PaymentDetails;
-use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class InvoiceController extends Controller
 {
@@ -14,9 +14,14 @@ class InvoiceController extends Controller
     {
 
         // Get order with lead & user
-        $order = Order::with(['lead', 'user', 'project'])
-            ->where('id', $id)
-            ->firstOrFail();
+        $user = Auth::guard('web')->user();
+        $query = Order::with(['lead', 'user', 'project']);
+
+        if (! $user->hasElevatedAccess() && ! $user->hasAnyRole(['Finance', 'Support'])) {
+            $query->where('user_id', $user->id);
+        }
+
+        $order = $query->findOrFail($id);
 
         $payments = PaymentDetails::where('order_id', $id)
             ->orderBy('payment_date', 'asc')

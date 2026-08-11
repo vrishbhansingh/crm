@@ -14,11 +14,18 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 class Lead extends Model
 {
     use HasFactory, BelongsToTenant;
+
     protected $table = 'leads';
+
     protected $fillable = [
         'tenant_id',
+        'company_id',
+        'contact_id',
+        'lead_number',
         'lead_type',
         'lead_source',
+        'company_name',
+        'gst_no',
         'name',
         'phone',
         'alternate_phone',
@@ -26,7 +33,7 @@ class Lead extends Model
         'city',
         'state',
         'country',
-        'products',
+        'product',
         'service',
         'budget',
         'requirement',
@@ -45,6 +52,7 @@ class Lead extends Model
         'conversion_value',
         'status_reason',
         'last_contacted_at',
+        'last_contacted_by',
         'status',
         'score',
     ];
@@ -56,9 +64,19 @@ class Lead extends Model
         });
     }
 
-    public function customerContact(): HasOne
+    public function customerContact(): BelongsTo
     {
-        return $this->hasOne(CustomerContact::class);
+        return $this->belongsTo(Contact::class, 'contact_id');
+    }
+
+    public function company(): BelongsTo
+    {
+        return $this->belongsTo(Company::class);
+    }
+
+    public function contact(): BelongsTo
+    {
+        return $this->belongsTo(Contact::class);
     }
 
     public function activities(): HasMany

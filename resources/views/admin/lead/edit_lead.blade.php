@@ -403,6 +403,7 @@
 
 
     <script>
+        const esc = value => $('<div>').text(value ?? '').html();
         function showToast(message, type = 'success') {
             toastr.options = {
                 "closeButton": true,
@@ -431,8 +432,10 @@
         }
 
         function getIdFromUrl() {
-            const urlParts = window.location.pathname.split('/');
-            return urlParts[urlParts.length - 1]; // last part
+            // URL shape is /leads/{id}/edit — the id is the second-to-last
+            // segment, not the last (that's always the literal "edit").
+            const urlParts = window.location.pathname.split('/').filter(Boolean);
+            return urlParts[urlParts.length - 2];
         }
 
         // Populates every <select data-master-type="..."> from the Master Data
@@ -446,7 +449,7 @@
 
                 return $.get("{{ url('master-data/lookup') }}/" + type, function(response) {
                     response.data.forEach(function(option) {
-                        $select.append(`<option value="${option.code}">${option.label}</option>`);
+                        $select.append(`<option value="${esc(option.code)}">${esc(option.label)}</option>`);
                     });
                 });
             }).get();

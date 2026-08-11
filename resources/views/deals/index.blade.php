@@ -20,13 +20,32 @@
             --text-muted: #6b7280;
         }
 
+        /* Only the Kanban board itself should ever scroll sideways — never
+           the page. Without this, the board's unconstrained flex children
+           (5 fixed-width columns) can widen its container past the
+           viewport, silently pushing the page-header's buttons off-screen
+           and making the whole page require horizontal scroll to reach
+           them, instead of just the board scrolling internally. */
+        html, body {
+            overflow-x: hidden;
+        }
+
         .page-header {
             background: #ffffff;
             padding: 18px 22px;
             border-radius: 14px;
             margin-bottom: 18px;
             box-shadow: 0 8px 22px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Title and toolbar each get their own row instead of sharing one
+           flex line — that's what let the toolbar's contents get squeezed
+           and clipped when the pipeline switcher had extra options. Two
+           stacked rows can never fight each other for horizontal space. */
+        .page-header-top {
             display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
             justify-content: space-between;
             align-items: center;
         }
@@ -45,12 +64,24 @@
 
         .board-toolbar {
             display: flex;
+            flex-wrap: wrap;
             gap: 10px;
             align-items: center;
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid var(--border);
+        }
+
+        #pipelineSwitcher {
+            width: auto;
+            min-width: 160px;
+            max-width: 260px;
         }
 
         .kanban-board {
             display: flex;
+            width: 100%;
+            max-width: 100%;
             gap: 14px;
             overflow-x: auto;
             padding-bottom: 12px;
@@ -58,12 +89,17 @@
         }
 
         .kanban-column {
-            min-width: 280px;
-            max-width: 280px;
+            /* Grows to fill the board when there's room for every stage
+               (the common case — 5 stages easily fit a normal screen),
+               shrinks down to 220px before the board falls back to its own
+               horizontal scroll, and never grows past 320px so a 2-stage
+               pipeline doesn't stretch into absurdly wide columns. */
+            flex: 1 1 240px;
+            min-width: 220px;
+            max-width: 320px;
             background: #f5f7fb;
             border-radius: 14px;
             padding: 12px;
-            flex-shrink: 0;
         }
 
         .kanban-column-header {
@@ -155,6 +191,33 @@
             text-align: center;
             padding: 14px 4px;
         }
+
+        .empty-pipeline-state {
+            width: 100%;
+            background: #fff;
+            border: 1px dashed var(--border);
+            border-radius: 14px;
+            padding: 48px 24px;
+            text-align: center;
+        }
+
+        .empty-pipeline-state i {
+            font-size: 32px;
+            color: var(--primary);
+            margin-bottom: 12px;
+        }
+
+        .empty-pipeline-state h5 {
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 6px;
+        }
+
+        .empty-pipeline-state p {
+            color: var(--text-muted);
+            font-size: 13px;
+            margin-bottom: 16px;
+        }
     </style>
 </head>
 
@@ -171,12 +234,11 @@
             <div class="content-wrapper">
 
                 <div class="page-header">
-                    <div>
-                        <h4>Deals</h4>
-                        <p>{{ Auth::guard('web')->user()->hasElevatedAccess() ? 'Every deal in the pipeline' : 'Your deals' }}</p>
-                    </div>
-                    <div class="board-toolbar">
-                        <select id="pipelineSwitcher" class="form-control form-control-sm" style="display:none;"></select>
+                    <div class="page-header-top">
+                        <div>
+                            <h4>Deals</h4>
+                            <p>{{ Auth::guard('web')->user()->hasElevatedAccess() ? 'Every deal in the pipeline' : 'Your deals' }}</p>
+                        </div>
                         <a href="{{ route('deals.list') }}" class="btn btn-outline-secondary btn-sm">
                             <i class="fa fa-table"></i> List View
                         </a>
@@ -185,6 +247,10 @@
                             <i class="fa fa-plus"></i> New Deal
                         </a>
                         @endcan
+                    </div>
+                    <div class="board-toolbar" id="boardToolbar" style="display:none;">
+                        <label class="mb-0 mr-1" style="font-size:12px;color:var(--text-muted);">Pipeline:</label>
+                        <select id="pipelineSwitcher" class="form-control form-control-sm"></select>
                     </div>
                 </div>
 
@@ -265,11 +331,15 @@
 
         let currentPipelineId = null;
         let pendingMove = null; // { dealId, toStageId, cardEl, fromColumn }
+        const canManagePipelines = {{ Auth::guard('web')->user()->can('deals.manage-settings') ? 'true' : 'false' }};
 
         function money(v) {
             if (v === null || v === undefined || v === '') return '0';
             return Number(v).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
         }
+
+        const esc = value => $('<div>').text(value ?? '').html();
+        const safeColor = value => /^#[0-9a-f]{3,8}$/i.test(value || '') ? value : '#64748b';
 
         function dash(v) {
             return (v === null || v === undefined || v === '') ? '-' : v;
@@ -282,8 +352,8 @@
 
             return `
                 <div class="kanban-card" draggable="true" data-deal-id="${deal.id}" onclick="window.location='{{ url('deals') }}/${deal.id}'">
-                    <div class="deal-name"><span>${deal.name}</span> ${leadBadge}</div>
-                    <div class="deal-amount">${deal.currency ?? ''} ${money(deal.amount)}</div>
+                    <div class="deal-name"><span>${esc(deal.name)}</span> ${leadBadge}</div>
+                    <div class="deal-amount">${esc(deal.currency ?? '')} ${money(deal.amount)}</div>
                     <div class="deal-meta">
                         <span><i class="fa fa-user-o"></i> ${dash(deal.owner_name)}</span>
                         <span><i class="fa fa-calendar-o"></i> ${dash(deal.expected_close_date)}</span>
@@ -294,15 +364,30 @@
         function renderBoard(data) {
             currentPipelineId = data.pipeline_id;
 
-            // Pipeline switcher
+            if (!data.pipeline_id) {
+                $('#boardToolbar').hide();
+                $('#kanbanBoard').html(`
+                    <div class="empty-pipeline-state">
+                        <i class="fa fa-random"></i>
+                        <h5>No pipeline yet</h5>
+                        <p>Deals are tracked through a pipeline's stages — create one to get started.</p>
+                        ${canManagePipelines
+                            ? `<a href="{{ route('pipelines.index') }}" class="btn btn-primary btn-sm"><i class="fa fa-plus"></i> Create a Pipeline</a>`
+                            : `<p class="text-muted" style="font-size:12px;">Ask an admin to set up a pipeline in Settings.</p>`}
+                    </div>`);
+                return;
+            }
+
+            // Pipeline switcher — only shown when there's an actual choice to make
             if (data.pipelines && data.pipelines.length > 1) {
                 let options = '';
                 data.pipelines.forEach(p => {
-                    options += `<option value="${p.id}" ${p.id === data.pipeline_id ? 'selected' : ''}>${p.name}</option>`;
+                    options += `<option value="${p.id}" ${p.id === data.pipeline_id ? 'selected' : ''}>${esc(p.name)}</option>`;
                 });
-                $('#pipelineSwitcher').html(options).show();
+                $('#pipelineSwitcher').html(options);
+                $('#boardToolbar').show();
             } else {
-                $('#pipelineSwitcher').hide();
+                $('#boardToolbar').hide();
             }
 
             let html = '';
@@ -311,7 +396,10 @@
                 let headerStyle = '';
                 if (stage.is_won) headerClass = 'is-won';
                 if (stage.is_lost) headerClass = 'is-lost';
-                if (stage.color) headerStyle = `style="background:${stage.color}22;color:${stage.color};"`;
+                if (stage.color) {
+                    const color = safeColor(stage.color);
+                    headerStyle = `style="background:${color}22;color:${color};"`;
+                }
 
                 let cardsHtml = '';
                 stage.deals.forEach(deal => cardsHtml += renderCard(deal));
@@ -322,7 +410,7 @@
                 html += `
                     <div class="kanban-column">
                         <div class="kanban-column-header ${headerClass}" ${headerStyle}>
-                            <span>${stage.name}</span>
+                            <span>${esc(stage.name)}</span>
                             <span class="kanban-column-count">${stage.deals.length}</span>
                         </div>
                         <div class="kanban-cards" id="stage-${stage.id}" data-stage-id="${stage.id}" data-is-won="${stage.is_won ? 1 : 0}" data-is-lost="${stage.is_lost ? 1 : 0}">
@@ -339,6 +427,13 @@
             $.get("{{ route('deals.board_data') }}", pipelineId ? { pipeline_id: pipelineId } : {}, function(response) {
                 if (response.status) {
                     renderBoard(response.data);
+                }
+            }).fail(function() {
+                // The requested pipeline no longer exists (e.g. deleted in
+                // another tab) — fall back to whatever pipeline is actually
+                // still there instead of leaving the board frozen on stale data.
+                if (pipelineId) {
+                    loadBoard();
                 }
             });
         }
@@ -384,7 +479,7 @@
         function loadLostReasons() {
             $.get("{{ url('master-data/lookup') }}/lost_reason", function(response) {
                 let options = '<option value="">-- Select a reason --</option>';
-                response.data.forEach(o => options += `<option value="${o.id}">${o.label}</option>`);
+                response.data.forEach(o => options += `<option value="${o.id}">${esc(o.label)}</option>`);
                 $('#lostReasonSelect').html(options);
             });
         }
@@ -392,7 +487,7 @@
         function loadPaymentModes() {
             $.get("{{ url('master-data/lookup') }}/payment_mode", function(response) {
                 let options = '<option value="">-- Select a mode --</option>';
-                response.data.forEach(o => options += `<option value="${o.code}">${o.label}</option>`);
+                response.data.forEach(o => options += `<option value="${esc(o.code)}">${esc(o.label)}</option>`);
                 $('#wonPaymentMode').html(options);
             });
         }
@@ -456,7 +551,8 @@
         });
 
         $(document).ready(function() {
-            loadBoard();
+            const requestedPipelineId = new URLSearchParams(window.location.search).get('pipeline_id');
+            loadBoard(requestedPipelineId);
         });
     </script>
 

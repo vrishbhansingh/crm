@@ -324,9 +324,13 @@
                 <form id="convertForm">
                     <div class="modal-body">
                         <p class="text-muted" style="font-size:12.5px;">
-                            This creates a deal in the tenant's default pipeline, in its first open stage.
+                            This creates a deal in the chosen pipeline's first open stage.
                             An order is only created once the deal reaches a Won stage.
                         </p>
+                        <div class="form-group">
+                            <label>Pipeline</label>
+                            <select name="pipeline_id" id="convertPipelineSelect" class="form-control form-control-sm"></select>
+                        </div>
                         <div class="form-row">
                             <div class="form-group col-md-6">
                                 <label>Amount</label>
@@ -356,6 +360,7 @@
 
     <script>
         const leadId = {{ (int) $leadId }};
+        const esc = value => $('<div>').text(value ?? '').html();
 
         $.ajaxSetup({
             headers: {
@@ -378,29 +383,29 @@
 
                 const band = scoreBand(d.score);
                 $('#leadBadges').html(`
-                    <span class="badge-pill">${d.lead_type ?? '-'}</span>
-                    <span class="badge-pill">${d.lead_source ?? '-'}</span>
-                    <span class="badge-pill">${d.lead_status ?? '-'}</span>
-                    <span class="badge-pill">${d.priority ?? '-'}</span>
-                    <span class="badge-pill ${band.cls}">${band.label}</span>
+                    <span class="badge-pill">${esc(d.lead_type ?? '-')}</span>
+                    <span class="badge-pill">${esc(d.lead_source ?? '-')}</span>
+                    <span class="badge-pill">${esc(d.lead_status ?? '-')}</span>
+                    <span class="badge-pill">${esc(d.priority ?? '-')}</span>
+                    <span class="badge-pill ${band.cls}">${esc(band.label)}</span>
                 `);
 
                 $('#leadInfoCard').html(`
-                    <div class="field-row"><span class="label">Phone</span><span class="value">${d.phone ?? '-'}</span></div>
-                    <div class="field-row"><span class="label">Email</span><span class="value">${d.email ?? '-'}</span></div>
-                    <div class="field-row"><span class="label">Budget</span><span class="value">${d.budget ?? '-'}</span></div>
-                    <div class="field-row"><span class="label">Assigned To</span><span class="value">${d.assigned_user ? d.assigned_user.name : 'Unassigned'}</span></div>
-                    <div class="field-row"><span class="label">Follow-up</span><span class="value">${d.follow_up_date ?? '-'} ${d.follow_up_time ?? ''}</span></div>
-                    <div class="field-row"><span class="label">City / State</span><span class="value">${d.city ?? '-'} / ${d.state ?? '-'}</span></div>
+                    <div class="field-row"><span class="label">Phone</span><span class="value">${esc(d.phone ?? '-')}</span></div>
+                    <div class="field-row"><span class="label">Email</span><span class="value">${esc(d.email ?? '-')}</span></div>
+                    <div class="field-row"><span class="label">Budget</span><span class="value">${esc(d.budget ?? '-')}</span></div>
+                    <div class="field-row"><span class="label">Assigned To</span><span class="value">${esc(d.assigned_user ? d.assigned_user.name : 'Unassigned')}</span></div>
+                    <div class="field-row"><span class="label">Follow-up</span><span class="value">${esc(d.follow_up_date ?? '-')} ${esc(d.follow_up_time ?? '')}</span></div>
+                    <div class="field-row"><span class="label">City / State</span><span class="value">${esc(d.city ?? '-')} / ${esc(d.state ?? '-')}</span></div>
                 `);
 
                 if (d.customer_contact) {
                     const c = d.customer_contact;
                     $('#contactCard').html(`
-                        <div class="field-row"><span class="label">Name</span><span class="value">${c.name ?? '-'}</span></div>
-                        <div class="field-row"><span class="label">Phone</span><span class="value">${c.phone ?? '-'}</span></div>
-                        <div class="field-row"><span class="label">Email</span><span class="value">${c.email ?? '-'}</span></div>
-                        <div class="field-row"><span class="label">Designation</span><span class="value">${c.designation ?? '-'}</span></div>
+                        <div class="field-row"><span class="label">Name</span><span class="value">${esc(c.name ?? '-')}</span></div>
+                        <div class="field-row"><span class="label">Phone</span><span class="value">${esc(c.phone ?? '-')}</span></div>
+                        <div class="field-row"><span class="label">Email</span><span class="value">${esc(c.email ?? '-')}</span></div>
+                        <div class="field-row"><span class="label">Designation</span><span class="value">${esc(c.designation ?? '-')}</span></div>
                     `);
                 } else {
                     $('#contactCard').html('<p class="text-muted">No contact on file.</p>');
@@ -414,12 +419,12 @@
 
                 if (d.is_converted === 'Yes' || d.deal || d.order) {
                     $('#conversionCard').show();
-                    let body = `<div class="field-row"><span class="label">Converted</span><span class="value">${d.converted_at ?? 'Yes'}</span></div>`;
+                    let body = `<div class="field-row"><span class="label">Converted</span><span class="value">${esc(d.converted_at ?? 'Yes')}</span></div>`;
                     if (d.deal) {
-                        body += `<div class="field-row"><span class="label">Deal</span><span class="value"><a href="{{ url('deals') }}/${d.deal.id}">${d.deal.name}</a></span></div>`;
+                        body += `<div class="field-row"><span class="label">Deal</span><span class="value"><a href="{{ url('deals') }}/${d.deal.id}">${esc(d.deal.name)}</a></span></div>`;
                     }
                     if (d.order) {
-                        body += `<div class="field-row"><span class="label">Order</span><span class="value">${d.order.order_number}</span></div>`;
+                        body += `<div class="field-row"><span class="label">Order</span><span class="value">${esc(d.order.order_number)}</span></div>`;
                     }
                     $('#conversionBody').html(body);
 
@@ -433,7 +438,7 @@
         function renderTags(tags) {
             let html = '';
             tags.forEach(tag => {
-                html += `<span class="tag-chip">${tag.name} <button class="removeTagBtn" data-id="${tag.id}">&times;</button></span>`;
+                html += `<span class="tag-chip">${esc(tag.name)} <button class="removeTagBtn" data-id="${tag.id}">&times;</button></span>`;
             });
             $('#tagList').html(html || '<span class="text-muted" style="font-size:12px;">No tags yet.</span>');
         }
@@ -462,8 +467,8 @@
                         <div class="timeline-item">
                             <div class="timeline-icon"><i class="fa ${timelineIcon(item.type)}"></i></div>
                             <div>
-                                <div class="timeline-desc">${item.description ?? ''}</div>
-                                <div class="timeline-meta">${item.user_name ?? ''} ${item.user_name ? '·' : ''} ${item.created_at}</div>
+                                <div class="timeline-desc">${esc(item.description ?? '')}</div>
+                                <div class="timeline-meta">${esc(item.user_name ?? '')} ${item.user_name ? '·' : ''} ${esc(item.created_at)}</div>
                             </div>
                         </div>`;
                 });
@@ -523,7 +528,7 @@
                 response.data.filter(i => i.kind === 'attachment').forEach(a => {
                     html += `
                         <div class="attachment-item">
-                            <span><i class="fa fa-file-o"></i> ${a.description}</span>
+                            <span><i class="fa fa-file-o"></i> ${esc(a.description)}</span>
                             <a href="{{ url('attachments') }}/${a.attachment_id}/download" class="btn btn-sm btn-outline-secondary">
                                 <i class="fa fa-download"></i>
                             </a>
@@ -571,7 +576,7 @@
 
                 $.get("{{ url('master-data/lookup') }}/" + type, function(response) {
                     response.data.forEach(function(option) {
-                        $select.append(`<option value="${option.code}">${option.label}</option>`);
+                        $select.append(`<option value="${esc(option.code)}">${esc(option.label)}</option>`);
                     });
                 });
             });
@@ -590,6 +595,17 @@
                 }
             }).fail(function(xhr) {
                 toastr.error(xhr.responseJSON?.message || 'Something went wrong');
+            });
+        });
+
+        $('#convertModal').on('show.bs.modal', function() {
+            $('#convertPipelineSelect').html('<option value="">Loading…</option>');
+            $.get("{{ route('deals.pipeline_options') }}", function(response) {
+                let options = '';
+                response.data.forEach(p => {
+                    options += `<option value="${p.id}" ${p.id === response.default_id ? 'selected' : ''}>${esc(p.name)}${p.is_default ? ' (default)' : ''}</option>`;
+                });
+                $('#convertPipelineSelect').html(options);
             });
         });
 

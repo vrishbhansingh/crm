@@ -13,8 +13,10 @@ use App\Models\Pipeline;
 use App\Models\PipelineStage;
 use App\Models\ProjectInfo;
 use App\Models\User;
+use App\Support\TenantContext;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 /**
@@ -29,16 +31,29 @@ class DealController extends Controller
 {
     public function index()
     {
-        Pipeline::ensureDefaultForTenant(Auth::guard('web')->user()->tenant_id);
-
         return view('deals.index');
     }
 
     public function listView()
     {
-        Pipeline::ensureDefaultForTenant(Auth::guard('web')->user()->tenant_id);
-
         return view('deals.list');
+    }
+
+    /**
+     * Lightweight pipeline lookup for pickers outside the Deals module
+     * itself (e.g. the Convert-to-Deal modal on the Lead Detail page) —
+     * gated by deals.view rather than deals.manage-settings since anyone
+     * who can create a deal needs to be able to pick which pipeline it
+     * goes into, not just pipeline administrators.
+     */
+    public function pipelineOptions()
+    {
+        $tenantId = TenantContext::id();
+        $pipeline = Pipeline::ensureDefaultForTenant($tenantId);
+
+        $pipelines = Pipeline::where('is_active', true)->orderBy('sort_order')->get(['id', 'name', 'is_default']);
+
+        return response()->json(['data' => $pipelines, 'default_id' => $pipeline->id]);
     }
 
     public function data(Request $request)
@@ -46,7 +61,11 @@ class DealController extends Controller
         $me = Auth::guard('web')->user();
         $query = $me->hasElevatedAccess() ? Deal::query() : Deal::where('owner_id', $me->id);
 
-        $deals = $query->with(['stage', 'owner:id,name', 'lead:id,name'])->orderBy('id', 'desc')->get();
+        if ($request->filled('pipeline_id')) {
+            $query->where('pipeline_id', $request->pipeline_id);
+        }
+
+        $deals = $query->with(['stage', 'pipeline:id,name', 'owner:id,name', 'lead:id,name'])->orderBy('id', 'desc')->get();
 
         $data = [];
         $sl_no = 1;
@@ -62,6 +81,8 @@ class DealController extends Controller
                 'currency' => $deal->currency,
                 'stage_name' => $deal->stage->name ?? '-',
                 'stage_color' => $deal->stage->color ?? null,
+                'pipeline_id' => $deal->pipeline_id,
+                'pipeline_name' => $deal->pipeline->name ?? '-',
                 'owner_name' => $deal->owner->name ?? null,
                 'lead_id' => $deal->lead_id,
                 'lead_name' => $deal->lead->name ?? null,
@@ -77,11 +98,24 @@ class DealController extends Controller
     public function boardData(Request $request)
     {
         $me = Auth::guard('web')->user();
-        $tenantId = $me->tenant_id;
 
+        // Deliberately does NOT auto-provision a pipeline here — this is a
+        // passive page view, and silently recreating a "Sales Pipeline"
+        // every time someone opens the board would make a deliberate
+        // pipeline deletion look like it never took effect. Auto-creation
+        // only happens where a real action needs a destination pipeline to
+        // proceed (LeadDetailController::convertToDeal, pipelineOptions()).
         $pipeline = $request->filled('pipeline_id')
             ? Pipeline::findOrFail($request->pipeline_id)
-            : Pipeline::ensureDefaultForTenant($tenantId);
+            : Pipeline::where('is_active', true)->orderBy('sort_order')->first();
+
+        if (! $pipeline) {
+            return response()->json([
+                'status' => true,
+                'data' => ['pipeline_id' => null, 'pipelines' => [], 'stages' => []],
+            ]);
+        }
+
         $pipeline->load('stages');
 
         $query = $me->hasElevatedAccess() ? Deal::query() : Deal::where('owner_id', $me->id);
@@ -123,8 +157,7 @@ class DealController extends Controller
 
     public function create()
     {
-        $tenantId = Auth::guard('web')->user()->tenant_id;
-        Pipeline::ensureDefaultForTenant($tenantId);
+        $tenantId = TenantContext::id();
 
         $pipelines = Pipeline::with('stages')->where('is_active', true)->orderBy('sort_order')->get();
         $users = User::where('status', 'Active')->when($tenantId !== null, fn ($q) => $q->where('tenant_id', $tenantId))->get(['id', 'name']);
@@ -138,43 +171,54 @@ class DealController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'pipeline_id' => 'required|exists:pipelines,id',
-            'stage_id' => ['required', Rule::exists('pipeline_stages', 'id')->where('pipeline_id', $request->pipeline_id)],
-            'amount' => 'nullable|numeric',
+            'pipeline_id' => 'required|integer',
+            'stage_id' => 'required|integer',
+            'amount' => 'nullable|numeric|min:0',
             'currency' => 'nullable|string|max:10',
-            'owner_id' => 'nullable|exists:users,id',
-            'lead_id' => 'nullable|exists:leads,id',
+            'owner_id' => 'nullable|integer',
+            'lead_id' => 'nullable|integer',
             'expected_close_date' => 'nullable|date',
             'notes' => 'nullable|string',
         ]);
 
-        $deal = Deal::create([
-            'pipeline_id' => $request->pipeline_id,
-            'stage_id' => $request->stage_id,
-            'lead_id' => $request->lead_id,
-            'owner_id' => $request->owner_id,
-            'created_by' => Auth::guard('web')->id(),
-            'name' => $request->name,
-            'amount' => $request->amount ?? 0,
-            'currency' => $request->currency,
-            'expected_close_date' => $request->expected_close_date,
-            'notes' => $request->notes,
-        ]);
+        $pipeline = Pipeline::findOrFail($request->pipeline_id);
+        $this->validateDealRelationships($request, $pipeline->tenant_id, $pipeline->id);
 
-        DealStageHistory::create([
-            'deal_id' => $deal->id,
-            'from_stage_id' => null,
-            'to_stage_id' => $deal->stage_id,
-            'changed_by' => Auth::guard('web')->id(),
-        ]);
+        $deal = DB::transaction(function () use ($request, $pipeline) {
+            $lead = $request->lead_id ? Lead::findOrFail($request->lead_id) : null;
+            $deal = Deal::create([
+                'tenant_id' => $pipeline->tenant_id,
+                'pipeline_id' => $pipeline->id,
+                'stage_id' => $request->stage_id,
+                'lead_id' => $request->lead_id,
+                'company_id' => $lead?->company_id,
+                'contact_id' => $lead?->contact_id,
+                'owner_id' => $request->owner_id,
+                'created_by' => Auth::guard('web')->id(),
+                'name' => $request->name,
+                'amount' => $request->amount ?? 0,
+                'currency' => $request->currency,
+                'expected_close_date' => $request->expected_close_date,
+                'notes' => $request->notes,
+            ]);
+
+            DealStageHistory::create([
+                'deal_id' => $deal->id,
+                'from_stage_id' => null,
+                'to_stage_id' => $deal->stage_id,
+                'changed_by' => Auth::guard('web')->id(),
+            ]);
+
+            return $deal;
+        });
 
         return response()->json(['status' => true, 'message' => 'Deal created successfully', 'id' => $deal->id]);
     }
 
     public function edit($id)
     {
-        $deal = Deal::findOrFail($id);
-        $tenantId = Auth::guard('web')->user()->tenant_id;
+        $deal = $this->findEditableDeal($id);
+        $tenantId = TenantContext::id();
 
         $pipelines = Pipeline::with('stages')->where('is_active', true)->orderBy('sort_order')->get();
         $users = User::where('status', 'Active')->when($tenantId !== null, fn ($q) => $q->where('tenant_id', $tenantId))->get(['id', 'name']);
@@ -186,17 +230,28 @@ class DealController extends Controller
 
     public function update(Request $request, $id)
     {
-        $deal = Deal::findOrFail($id);
+        $deal = $this->findEditableDeal($id);
 
         $request->validate([
             'name' => 'required|string|max:255',
-            'amount' => 'nullable|numeric',
+            'amount' => 'nullable|numeric|min:0',
             'currency' => 'nullable|string|max:10',
-            'owner_id' => 'nullable|exists:users,id',
-            'lead_id' => 'nullable|exists:leads,id',
+            'owner_id' => 'nullable|integer',
+            'lead_id' => 'nullable|integer',
             'expected_close_date' => 'nullable|date',
             'notes' => 'nullable|string',
         ]);
+
+        $this->validateDealRelationships($request, $deal->tenant_id);
+
+        if ($request->filled('lead_id')) {
+            $lead = Lead::findOrFail($request->lead_id);
+            $deal->company_id = $lead->company_id;
+            $deal->contact_id = $lead->contact_id;
+        } elseif ($request->has('lead_id')) {
+            $deal->company_id = null;
+            $deal->contact_id = null;
+        }
 
         $deal->fill($request->only(['name', 'amount', 'currency', 'owner_id', 'lead_id', 'expected_close_date', 'notes']));
         $deal->save();
@@ -215,11 +270,14 @@ class DealController extends Controller
     public function assign(Request $request)
     {
         $request->validate([
-            'deal_id' => 'required|exists:deals,id',
-            'owner_id' => 'required|exists:users,id',
+            'deal_id' => 'required|integer',
+            'owner_id' => 'required|integer',
         ]);
 
         $deal = Deal::findOrFail($request->deal_id);
+        $request->validate([
+            'owner_id' => $this->tenantExistsRule('users', $deal->tenant_id),
+        ]);
         $deal->owner_id = $request->owner_id;
         $deal->save();
 
@@ -236,7 +294,7 @@ class DealController extends Controller
      */
     public function moveStage(Request $request, $id)
     {
-        $deal = Deal::findOrFail($id);
+        $deal = $this->findEditableDeal($id);
 
         $request->validate([
             'to_stage_id' => ['required', Rule::exists('pipeline_stages', 'id')->where('pipeline_id', $deal->pipeline_id)],
@@ -244,8 +302,25 @@ class DealController extends Controller
 
         $toStage = PipelineStage::findOrFail($request->to_stage_id);
 
+        if ($deal->order_id) {
+            return response()->json([
+                'status' => false,
+                'message' => 'This deal already created an order and can no longer be moved.',
+            ], 422);
+        }
+
         if ($toStage->is_lost) {
-            $request->validate(['lost_reason_id' => 'required|exists:master_values,id']);
+            $request->validate([
+                'lost_reason_id' => [
+                    'required',
+                    Rule::exists('master_values', 'id')->where(function ($query) use ($deal) {
+                        $query->whereNull('tenant_id');
+                        if ($deal->tenant_id !== null) {
+                            $query->orWhere('tenant_id', $deal->tenant_id);
+                        }
+                    }),
+                ],
+            ]);
         }
 
         if ($toStage->is_won) {
@@ -256,34 +331,36 @@ class DealController extends Controller
             ]);
         }
 
-        DealStageHistory::create([
-            'deal_id' => $deal->id,
-            'from_stage_id' => $deal->stage_id,
-            'to_stage_id' => $toStage->id,
-            'changed_by' => Auth::guard('web')->id(),
-        ]);
+        DB::transaction(function () use ($deal, $toStage, $request) {
+            DealStageHistory::create([
+                'deal_id' => $deal->id,
+                'from_stage_id' => $deal->stage_id,
+                'to_stage_id' => $toStage->id,
+                'changed_by' => Auth::guard('web')->id(),
+            ]);
 
-        $deal->stage_id = $toStage->id;
+            $deal->stage_id = $toStage->id;
 
-        if ($toStage->is_won) {
-            $order = $this->createOrderFromDeal($deal, $request->only(['paid_amount', 'payment_mode', 'payment_date']));
-            $deal->order_id = $order->id;
-            $deal->status = 'won';
-            $deal->closed_at = now();
-            $deal->lost_reason_id = null;
-        } elseif ($toStage->is_lost) {
-            $deal->status = 'lost';
-            $deal->closed_at = now();
-            $deal->lost_reason_id = $request->lost_reason_id;
-        } else {
-            // Normal open stage — clear any closed-state fields left over
-            // from moving backward out of a Won/Lost stage.
-            $deal->status = 'open';
-            $deal->closed_at = null;
-            $deal->lost_reason_id = null;
-        }
+            if ($toStage->is_won) {
+                $order = $this->createOrderFromDeal($deal, $request->only(['paid_amount', 'payment_mode', 'payment_date']));
+                $deal->order_id = $order->id;
+                $deal->status = 'won';
+                $deal->closed_at = now();
+                $deal->lost_reason_id = null;
+            } elseif ($toStage->is_lost) {
+                $deal->status = 'lost';
+                $deal->closed_at = now();
+                $deal->lost_reason_id = $request->lost_reason_id;
+            } else {
+                // Normal open stage — clear any closed-state fields left over
+                // from moving backward out of a Won/Lost stage.
+                $deal->status = 'open';
+                $deal->closed_at = null;
+                $deal->lost_reason_id = null;
+            }
 
-        $deal->save();
+            $deal->save();
+        });
 
         return response()->json(['status' => true, 'message' => 'Deal stage updated', 'data' => $deal->fresh(['stage', 'order'])]);
     }
@@ -299,13 +376,13 @@ class DealController extends Controller
      */
     private function createOrderFromDeal(Deal $deal, array $payment = []): Order
     {
-        $lastOrder = Order::orderBy('id', 'desc')->first();
+        $lastOrder = Order::withoutGlobalScope('tenant')->lockForUpdate()->orderBy('id', 'desc')->first();
         $nextNumber = $lastOrder && $lastOrder->order_number
             ? ((int) str_replace('ORD-', '', $lastOrder->order_number)) + 1
             : 1;
         $orderNumber = 'ORD-'.str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
 
-        $lastInvoice = Order::whereNotNull('invoice_id')->orderBy('id', 'desc')->first();
+        $lastInvoice = Order::withoutGlobalScope('tenant')->whereNotNull('invoice_id')->lockForUpdate()->orderBy('id', 'desc')->first();
         $nextInvoiceNumber = $lastInvoice && $lastInvoice->invoice_id
             ? ((int) str_replace('INV-', '', $lastInvoice->invoice_id)) + 1
             : 1;
@@ -354,5 +431,45 @@ class DealController extends Controller
         }
 
         return $order;
+    }
+
+    private function findEditableDeal(int $id): Deal
+    {
+        $user = Auth::guard('web')->user();
+        $query = Deal::query();
+
+        if (! $user->hasElevatedAccess()) {
+            $query->where('owner_id', $user->id);
+        }
+
+        return $query->findOrFail($id);
+    }
+
+    private function validateDealRelationships(Request $request, ?int $tenantId, int $pipelineId = null): void
+    {
+        $rules = [
+            'owner_id' => ['nullable', $this->tenantExistsRule('users', $tenantId)],
+            'lead_id' => ['nullable', $this->tenantExistsRule('leads', $tenantId)],
+        ];
+
+        if ($pipelineId !== null) {
+            $rules['stage_id'] = [
+                'required',
+                Rule::exists('pipeline_stages', 'id')
+                    ->where('pipeline_id', $pipelineId)
+                    ->where(fn ($query) => $tenantId === null
+                        ? $query->whereNull('tenant_id')
+                        : $query->where('tenant_id', $tenantId)),
+            ];
+        }
+
+        $request->validate($rules);
+    }
+
+    private function tenantExistsRule(string $table, ?int $tenantId)
+    {
+        return Rule::exists($table, 'id')->where(fn ($query) => $tenantId === null
+            ? $query->whereNull('tenant_id')
+            : $query->where('tenant_id', $tenantId));
     }
 }

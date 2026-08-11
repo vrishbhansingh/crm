@@ -25,7 +25,19 @@ class TenantContext
             return self::$override;
         }
 
-        return Auth::guard('web')->user()?->tenant_id;
+        $user = Auth::guard('web')->user() ?? request()->user();
+
+        if (! $user) {
+            return null;
+        }
+
+        if ($user->tenant_id !== null) {
+            return (int) $user->tenant_id;
+        }
+
+        $selectedTenant = session('tenant_context_id');
+
+        return $selectedTenant !== null ? (int) $selectedTenant : null;
     }
 
     /**
@@ -39,5 +51,17 @@ class TenantContext
     public static function clear(): void
     {
         self::$override = null;
+    }
+
+    public static function run(int $tenantId, callable $callback): mixed
+    {
+        $previous = self::$override;
+        self::$override = $tenantId;
+
+        try {
+            return $callback();
+        } finally {
+            self::$override = $previous;
+        }
     }
 }

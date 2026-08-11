@@ -21,6 +21,7 @@ class Kernel extends HttpKernel
         \Illuminate\Foundation\Http\Middleware\ValidatePostSize::class,
         \App\Http\Middleware\TrimStrings::class,
         \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
+        \App\Http\Middleware\SecurityHeaders::class,
     ];
 
     /**
@@ -71,6 +72,7 @@ class Kernel extends HttpKernel
         'admin_middle' => \App\Http\Middleware\EnsureSingleSession::class,
         'member_middle' => \App\Http\Middleware\Member::class,
         'user_middle' => \App\Http\Middleware\EnsureSingleSession::class,
+        'tenant.database' => \App\Http\Middleware\ActivateTenantDatabase::class,
 
         // spatie/laravel-permission doesn't auto-register these for apps still
         // using the classic Kernel (only for Laravel 11's bootstrap/app.php) —

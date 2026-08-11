@@ -3,12 +3,15 @@
 namespace App\Models;
 
 use App\Support\TenantContext;
+use App\Models\Concerns\UsesTenantConnection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Collection;
 
 class MasterValue extends Model
 {
+    use UsesTenantConnection;
+
     protected $fillable = [
         'master_type_id',
         'tenant_id',

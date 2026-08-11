@@ -361,13 +361,14 @@
                     </div>
 
                     <div class="user-header-right">
+                        @can('users.create')
                         <a href="javascript:void(0)"
                             class="btn btn-light btn-sm add-user-btn"
-                            style="display:none;"
                             data-toggle="modal"
                             data-target="#addUserModal">
                             <i class="fa fa-plus mr-1"></i> Add User
                         </a>
+                        @endcan
                     </div>
 
                 </div>
@@ -703,6 +704,8 @@
             }
         }
 
+        const esc = value => $('<div>').text(value ?? '').html();
+
         function loadUserList() {
             $.ajax({
                 url: '{{route("users.data")}}',
@@ -721,26 +724,26 @@
                                 <td class="text-center">${item.sl_no}</td>
 
                                 <td class="text-center">
-                                    <strong>${item.name}</strong><br>
-                                    <small class="text-muted">${item.email}</small>
+                                    <strong>${esc(item.name)}</strong><br>
+                                    <small class="text-muted">${esc(item.email)}</small>
                                 </td>
 
                                 <td class="text-center">
-                                    <small>${item.phone}</small>
+                                    <small>${esc(item.phone)}</small>
                                 </td>
 
                                  <td class="text-center">
                                     <span class="role-badge">
-                                        ${item.role ?? '-'}
+                                        ${esc(item.role ?? '-')}
                                     </span>
                                 </td>
                                  <td class="text-center">
                                     <span 
                                         class="status-badge ${statusClass}"
                                         data-id="${item.id}"
-                                        data-status="${item.status}">
+                                        data-status="${esc(item.status)}">
                                         <span class="status-dot"></span>
-                                        ${item.status}
+                                        ${esc(item.status)}
                                     </span>
                                 </td>
 
@@ -757,14 +760,6 @@
                         tbody = `<tr><td colspan="10" class="text-center">No customer data found</td></tr>`;
                     }
                     $('#userTable tbody').html(tbody);
-
-                    // Only one user allowed: hide "Add User" once a user exists.
-                    let userCount = (response && Array.isArray(response.data)) ? response.data.length : 0;
-                    if (userCount >= 1) {
-                        $('.add-user-btn').hide();
-                    } else {
-                        $('.add-user-btn').show();
-                    }
 
                 },
 

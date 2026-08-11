@@ -5,11 +5,14 @@ namespace App\Models;
 use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class ProjectInfo extends Model
 {
     use HasFactory, BelongsToTenant;
+
     protected $table = 'project_info';
+
     protected $fillable = [
         'tenant_id',
         'project_name',
@@ -21,4 +24,9 @@ class ProjectInfo extends Model
         'description',
         'status',
     ];
+
+    public function order(): HasOne
+    {
+        return $this->hasOne(Order::class, 'project_id');
+    }
 }

@@ -89,6 +89,9 @@ class DashboardController extends Controller
 
     public function attendanceTeam()
     {
+        $user = Auth::guard('web')->user();
+        abort_unless($user->hasElevatedAccess() || $user->hasRole('HR'), 403);
+
         $latestIds = UserAttendance::selectRaw('MAX(id) as id')
             ->groupBy('user_id')
             ->pluck('id');

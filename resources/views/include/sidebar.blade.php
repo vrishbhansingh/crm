@@ -186,7 +186,7 @@
         @can('deals.view')
         <li class="mb-1">
             <a class="nav-link {{ request()->routeIs('deals.*') ? 'active' : '' }}"
-                href="{{ route('deals.index') }}">
+                href="{{ route('deals.list') }}">
                 <i class="fa fa-briefcase"></i>
                 <span>Deals</span>
             </a>
@@ -210,6 +210,24 @@
         </li>
         @endcan
 
+        @can('tasks.view')
+        <li class="mb-1">
+            <a class="nav-link {{ request()->routeIs('tasks.*') ? 'active' : '' }}"
+                href="{{ route('tasks.index') }}">
+                <i class="fa fa-check-square-o"></i>
+                <span>Tasks & Reminders</span>
+            </a>
+        </li>
+        @endcan
+
+        @can('reports.view')
+        <li class="mb-1">
+            <a class="nav-link {{ request()->routeIs('reports.*') ? 'active' : '' }}" href="{{ route('reports.index') }}">
+                <i class="fa fa-line-chart"></i><span>Reports & Analytics</span>
+            </a>
+        </li>
+        @endcan
+
         @can('users.view')
         <li class="mb-1">
             <a class="nav-link {{ request()->routeIs('users.*') ? 'active' : '' }}"
@@ -220,8 +238,18 @@
         </li>
         @endcan
 
-        @canany(['company.view', 'masters.view', 'deals.manage-settings'])
-        <li class="mb-1 sidebar-dropdown {{ request()->routeIs(['company.*', 'master_data.*', 'pipelines.*', 'stages.*']) ? 'open' : '' }}">
+        @can('platform.manage-tenants')
+        <li class="mb-1">
+            <a class="nav-link {{ request()->routeIs('tenants.*') ? 'active' : '' }}"
+                href="{{ route('tenants.index') }}">
+                <i class="fa fa-sitemap"></i>
+                <span>Tenant Management</span>
+            </a>
+        </li>
+        @endcan
+
+        @canany(['company.view', 'masters.view', 'deals.manage-settings', 'audit.view'])
+        <li class="mb-1 sidebar-dropdown {{ request()->routeIs(['company.*', 'master_data.*', 'pipelines.*', 'stages.*', 'audit.*']) ? 'open' : '' }}">
             <a href="javascript:void(0)" class="nav-link dropdown-left">
                 <i class="fa fa-cog"></i>
                 <span>Settings</span>
@@ -256,9 +284,28 @@
                     </a>
                 </li>
                 @endcan
+                @can('audit.view')
+                <li>
+                    <a class="nav-link {{ request()->routeIs('audit.*') ? 'active' : '' }}"
+                        href="{{ route('audit.index') }}">
+                        <i class="fa fa-history"></i>
+                        Audit Log
+                    </a>
+                </li>
+                @endcan
             </ul>
         </li>
         @endcanany
+
+        @can('companies.view')
+        <li class="mb-1">
+            <a class="nav-link {{ request()->routeIs('companies.*') ? 'active' : '' }}"
+                href="{{ route('companies.index') }}">
+                <i class="fa fa-building-o"></i>
+                <span>Companies</span>
+            </a>
+        </li>
+        @endcan
 
         @can('contacts.view')
         <li class="mb-1">

@@ -13,6 +13,7 @@ use App\Models\Pipeline;
 use App\Models\Tag;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 /**
@@ -25,19 +26,22 @@ class LeadDetailController extends Controller
 {
     public function show($id)
     {
+        $this->findVisibleLead($id);
+
         return view('admin.lead.view_lead', ['leadId' => $id]);
     }
 
     public function detail($id)
     {
-        $lead = Lead::with(['customerContact', 'assignedUser', 'order', 'deal', 'tags'])->findOrFail($id);
+        $lead = $this->findVisibleLead($id);
+        $lead->load(['customerContact', 'company', 'assignedUser', 'order', 'deal', 'tags']);
 
         return response()->json(['status' => true, 'data' => $lead]);
     }
 
     public function timeline($id)
     {
-        Lead::findOrFail($id);
+        $this->findVisibleLead($id);
 
         $activities = LeadActivity::with('user:id,name')
             ->where('lead_id', $id)
@@ -83,7 +87,7 @@ class LeadDetailController extends Controller
     {
         $request->validate(['body' => 'required|string|max:2000']);
 
-        $lead = Lead::findOrFail($id);
+        $lead = $this->findEditableLead($id);
 
         LeadActivity::create([
             'tenant_id' => $lead->tenant_id,
@@ -100,7 +104,7 @@ class LeadDetailController extends Controller
     {
         $request->validate(['name' => 'required|string|max:50']);
 
-        $lead = Lead::findOrFail($id);
+        $lead = $this->findEditableLead($id);
 
         // Use the lead's own tenant, not the acting user's — a platform
         // Super Admin (tenant_id null) has no tenant of their own, but the
@@ -127,8 +131,8 @@ class LeadDetailController extends Controller
 
     public function removeTag($id, $tagId)
     {
-        $lead = Lead::findOrFail($id);
-        $tag = Tag::findOrFail($tagId);
+        $lead = $this->findEditableLead($id);
+        $tag = Tag::where('tenant_id', $lead->tenant_id)->findOrFail($tagId);
 
         $lead->tags()->detach($tagId);
 
@@ -146,13 +150,13 @@ class LeadDetailController extends Controller
     public function uploadAttachment(Request $request, $id)
     {
         $request->validate([
-            'file' => 'required|file|max:10240',
+            'file' => 'required|file|max:10240|mimes:pdf,jpg,jpeg,png,webp,doc,docx,xls,xlsx,csv,txt',
         ]);
 
-        $lead = Lead::findOrFail($id);
+        $lead = $this->findEditableLead($id);
         $file = $request->file('file');
 
-        $storedPath = $file->store('lead-attachments/'.$id, 'public');
+        $storedPath = $file->store('lead-attachments/'.$lead->tenant_id.'/'.$id, 'local');
 
         $attachment = LeadAttachment::create([
             'tenant_id' => $lead->tenant_id,
@@ -161,7 +165,7 @@ class LeadDetailController extends Controller
             'original_name' => $file->getClientOriginalName(),
             'stored_path' => $storedPath,
             'size' => $file->getSize(),
-            'mime_type' => $file->getClientMimeType(),
+            'mime_type' => $file->getMimeType(),
         ]);
 
         return response()->json(['status' => true, 'data' => $attachment]);
@@ -170,6 +174,15 @@ class LeadDetailController extends Controller
     public function downloadAttachment($attachmentId)
     {
         $attachment = LeadAttachment::findOrFail($attachmentId);
+        $this->findVisibleLead($attachment->lead_id);
+
+        if (Storage::disk('local')->exists($attachment->stored_path)) {
+            return Storage::disk('local')->download($attachment->stored_path, $attachment->original_name);
+        }
+
+        // Compatibility for attachments created before private storage was
+        // introduced. New uploads are never written to the public disk.
+        abort_unless(Storage::disk('public')->exists($attachment->stored_path), 404);
 
         return Storage::disk('public')->download($attachment->stored_path, $attachment->original_name);
     }
@@ -190,7 +203,7 @@ class LeadDetailController extends Controller
             'call_notes' => 'nullable|string',
         ]);
 
-        $lead = Lead::findOrFail($id);
+        $lead = $this->findEditableLead($id);
         $userId = Auth::guard('web')->id();
 
         $followUp = Leadfollowup::create([
@@ -219,49 +232,77 @@ class LeadDetailController extends Controller
      */
     public function convertToDeal(Request $request, $id)
     {
-        $lead = Lead::findOrFail($id);
-        $userId = Auth::guard('web')->id();
-
-        $pipeline = Pipeline::ensureDefaultForTenant($lead->tenant_id);
-        $firstOpenStage = $pipeline->stages()
-            ->where('is_won', false)
-            ->where('is_lost', false)
-            ->orderBy('sort_order')
-            ->firstOrFail();
-
-        $amount = $lead->conversion_value ?? $request->amount ?? 0;
-
-        $deal = Deal::create([
-            'tenant_id' => $lead->tenant_id,
-            'pipeline_id' => $pipeline->id,
-            'stage_id' => $firstOpenStage->id,
-            'lead_id' => $lead->id,
-            'owner_id' => $lead->assigned_to ?? $userId,
-            'created_by' => $userId,
-            'name' => trim(($lead->company_name ?: $lead->name).' - Deal'),
-            'amount' => $amount,
-            'currency' => $request->currency,
+        $request->validate([
+            'pipeline_id' => 'nullable|integer',
+            'amount' => 'nullable|numeric|min:0',
+            'currency' => 'nullable|string|max:10',
         ]);
 
-        DealStageHistory::create([
-            'deal_id' => $deal->id,
-            'from_stage_id' => null,
-            'to_stage_id' => $firstOpenStage->id,
-            'changed_by' => $userId,
-        ]);
+        $user = Auth::guard('web')->user();
 
-        $lead->is_converted = 'Yes';
-        $lead->converted_at = now();
-        $lead->conversion_value = $amount;
-        $lead->save();
+        $deal = DB::transaction(function () use ($request, $id, $user) {
+            $leadQuery = Lead::query();
+            if (! $user->hasElevatedAccess()) {
+                $leadQuery->where('assigned_to', $user->id);
+            }
 
-        LeadActivity::create([
-            'tenant_id' => $lead->tenant_id,
-            'lead_id' => $id,
-            'user_id' => $userId,
-            'type' => 'converted',
-            'description' => "Converted to deal \"{$deal->name}\"",
-        ]);
+            $lead = $leadQuery->lockForUpdate()->findOrFail($id);
+            $existingDeal = $lead->deal()->first();
+
+            if ($existingDeal) {
+                abort(409, 'This lead has already been converted to a deal.');
+            }
+
+            $pipeline = $request->filled('pipeline_id')
+                ? Pipeline::withoutGlobalScope('tenant')
+                    ->where('tenant_id', $lead->tenant_id)
+                    ->findOrFail($request->pipeline_id)
+                : Pipeline::ensureDefaultForTenant($lead->tenant_id);
+
+            $firstOpenStage = $pipeline->stages()
+                ->where('is_won', false)
+                ->where('is_lost', false)
+                ->orderBy('sort_order')
+                ->firstOrFail();
+
+            $amount = $lead->conversion_value ?? $request->amount ?? 0;
+
+            $deal = Deal::create([
+                'tenant_id' => $lead->tenant_id,
+                'pipeline_id' => $pipeline->id,
+                'stage_id' => $firstOpenStage->id,
+                'lead_id' => $lead->id,
+                'company_id' => $lead->company_id,
+                'contact_id' => $lead->contact_id,
+                'owner_id' => $lead->assigned_to ?? $user->id,
+                'created_by' => $user->id,
+                'name' => trim(($lead->company_name ?: $lead->name).' - Deal'),
+                'amount' => $amount,
+                'currency' => $request->currency,
+            ]);
+
+            DealStageHistory::create([
+                'deal_id' => $deal->id,
+                'from_stage_id' => null,
+                'to_stage_id' => $firstOpenStage->id,
+                'changed_by' => $user->id,
+            ]);
+
+            $lead->is_converted = 'Yes';
+            $lead->converted_at = now();
+            $lead->conversion_value = $amount;
+            $lead->save();
+
+            LeadActivity::create([
+                'tenant_id' => $lead->tenant_id,
+                'lead_id' => $id,
+                'user_id' => $user->id,
+                'type' => 'converted',
+                'description' => "Converted to deal \"{$deal->name}\"",
+            ]);
+
+            return $deal;
+        });
 
         return response()->json(['status' => true, 'message' => 'Lead converted to deal successfully', 'deal_id' => $deal->id]);
     }
@@ -295,5 +336,29 @@ class LeadDetailController extends Controller
             ->get(['id', 'name', 'phone', 'email', 'company_name', 'lead_status']);
 
         return response()->json(['status' => true, 'data' => $matches]);
+    }
+
+    private function findVisibleLead(int $id): Lead
+    {
+        $user = Auth::guard('web')->user();
+        $query = Lead::query();
+
+        if (! $user->hasElevatedAccess() && ! $user->hasAnyRole(['Finance', 'Support'])) {
+            $query->where('assigned_to', $user->id);
+        }
+
+        return $query->findOrFail($id);
+    }
+
+    private function findEditableLead(int $id): Lead
+    {
+        $user = Auth::guard('web')->user();
+        $query = Lead::query();
+
+        if (! $user->hasElevatedAccess()) {
+            $query->where('assigned_to', $user->id);
+        }
+
+        return $query->findOrFail($id);
     }
 }

@@ -18,7 +18,7 @@ class RolePermissionSeeder extends Seeder
     private const GUARD = 'web';
 
     private array $modules = [
-        'leads', 'orders', 'contacts', 'users', 'roles', 'company', 'attendance', 'masters', 'deals',
+        'leads', 'orders', 'companies', 'contacts', 'tasks', 'reports', 'audit', 'users', 'roles', 'company', 'attendance', 'masters', 'deals',
     ];
 
     private array $actions = [
@@ -73,29 +73,31 @@ class RolePermissionSeeder extends Seeder
             'Company Admin' => $allExceptPlatform,
 
             'Manager' => array_merge(
-                $this->perms(['leads', 'orders', 'contacts', 'attendance', 'deals'], ['view', 'create', 'edit', 'assign', 'approve', 'reject', 'export']),
+                $this->perms(['leads', 'orders', 'companies', 'contacts', 'tasks', 'attendance', 'deals'], ['view', 'create', 'edit', 'assign', 'approve', 'reject', 'export']),
                 $this->perms(['users'], ['view']),
+                $this->perms(['audit', 'reports'], ['view']),
                 $this->perms(['deals'], ['manage-settings'])
             ),
 
             'Sales Manager' => array_merge(
                 $this->perms(['leads'], ['view', 'create', 'edit', 'assign', 'import', 'export']),
                 $this->perms(['orders'], ['view', 'create', 'edit', 'approve']),
-                $this->perms(['contacts'], ['view', 'create', 'edit']),
-                $this->perms(['deals'], ['view', 'create', 'edit', 'assign', 'export'])
+                $this->perms(['companies', 'contacts', 'tasks'], ['view', 'create', 'edit']),
+                $this->perms(['deals'], ['view', 'create', 'edit', 'assign', 'export']),
+                $this->perms(['reports'], ['view'])
             ),
 
             'Sales Executive' => array_merge(
                 $this->perms(['leads'], ['view', 'create', 'edit']),
                 $this->perms(['orders'], ['view', 'create']),
-                $this->perms(['contacts'], ['view', 'create', 'edit']),
+                $this->perms(['companies', 'contacts', 'tasks'], ['view', 'create', 'edit']),
                 $this->perms(['attendance'], ['view', 'create']),
                 $this->perms(['deals'], ['view', 'create', 'edit'])
             ),
 
             'Marketing' => array_merge(
                 $this->perms(['leads'], ['view', 'create', 'import', 'export']),
-                $this->perms(['contacts'], ['view'])
+                $this->perms(['companies', 'contacts'], ['view'])
             ),
 
             'HR' => array_merge(
@@ -105,20 +107,23 @@ class RolePermissionSeeder extends Seeder
 
             'Support' => array_merge(
                 $this->perms(['leads'], ['view']),
+                $this->perms(['companies'], ['view']),
                 $this->perms(['contacts'], ['view', 'edit']),
                 $this->perms(['orders'], ['view']),
-                $this->perms(['deals'], ['view'])
+                $this->perms(['deals'], ['view']),
+                $this->perms(['tasks'], ['view', 'create', 'edit'])
             ),
 
             'Finance' => array_merge(
                 $this->perms(['orders'], ['view', 'edit', 'approve', 'export']),
                 $this->perms(['leads'], ['view']),
-                $this->perms(['deals'], ['view'])
+                $this->perms(['deals', 'reports'], ['view'])
             ),
 
             'Employee' => array_merge(
                 $this->perms(['attendance'], ['view', 'create']),
-                $this->perms(['leads'], ['view'])
+                $this->perms(['leads'], ['view']),
+                $this->perms(['tasks'], ['view', 'create', 'edit'])
             ),
         ];
     }

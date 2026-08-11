@@ -128,7 +128,7 @@
 
                 <div class="crm-page-header d-flex justify-content-between align-items-center">
                     <div>
-                        <a href="{{ route('deals.index') }}" class="text-muted" style="font-size:12px;">
+                        <a href="{{ route('deals.list') }}" class="text-muted" style="font-size:12px;">
                             <i class="fa fa-arrow-left"></i> Back to Deals
                         </a>
                         <h4 class="deal-title mt-1" id="dealName">Loading…</h4>
@@ -270,6 +270,8 @@
             return Number(v).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
         }
 
+        const esc = value => $('<div>').text(value ?? '').html();
+
         function dash(v) {
             return (v === null || v === undefined || v === '') ? '-' : v;
         }
@@ -284,15 +286,19 @@
                 currentDeal = d;
 
                 $('#dealName').text(d.name);
-                $('#dealBadges').html(`<span class="badge-pill ${statusBadgeClass(d.status)}">${d.status.toUpperCase()}</span>`);
+                $('#dealBadges').html(`<span class="badge-pill ${statusBadgeClass(d.status)}">${esc((d.status || '').toUpperCase())}</span>`);
+
+                const pipelineLink = d.pipeline
+                    ? '<a href="' + "{{ url('deals') }}" + '?pipeline_id=' + d.pipeline.id + '">' + esc(d.pipeline.name) + '</a>'
+                    : '-';
 
                 $('#dealInfoView').html(`
-                    <div class="field-row"><span class="label">Amount</span><span class="value">${d.currency ?? ''} ${money(d.amount)}</span></div>
-                    <div class="field-row"><span class="label">Owner</span><span class="value">${d.owner ? d.owner.name : 'Unassigned'}</span></div>
-                    <div class="field-row"><span class="label">Pipeline</span><span class="value">${d.pipeline ? d.pipeline.name : '-'}</span></div>
-                    <div class="field-row"><span class="label">Expected Close Date</span><span class="value">${dash(d.expected_close_date)}</span></div>
-                    <div class="field-row"><span class="label">Created By</span><span class="value">${d.created_by ? d.created_by.name : '-'}</span></div>
-                    ${d.status === 'lost' && d.lost_reason ? `<div class="field-row"><span class="label">Lost Reason</span><span class="value">${d.lost_reason.label}</span></div>` : ''}
+                    <div class="field-row"><span class="label">Amount</span><span class="value">${esc(d.currency ?? '')} ${money(d.amount)}</span></div>
+                    <div class="field-row"><span class="label">Owner</span><span class="value">${esc(d.owner ? d.owner.name : 'Unassigned')}</span></div>
+                    <div class="field-row"><span class="label">Pipeline</span><span class="value">${pipelineLink}</span></div>
+                    <div class="field-row"><span class="label">Expected Close Date</span><span class="value">${esc(dash(d.expected_close_date))}</span></div>
+                    <div class="field-row"><span class="label">Created By</span><span class="value">${esc(d.created_by ? d.created_by.name : '-')}</span></div>
+                    ${d.status === 'lost' && d.lost_reason ? `<div class="field-row"><span class="label">Lost Reason</span><span class="value">${esc(d.lost_reason.label)}</span></div>` : ''}
                 `);
 
                 $('#edit_name').val(d.name);
@@ -305,9 +311,9 @@
                 if (d.lead) {
                     $('#leadCard').show();
                     $('#leadCardBody').html(`
-                        <div class="field-row"><span class="label">Name</span><span class="value"><a href="{{ url('leads') }}/${d.lead.id}">${d.lead.name}</a></span></div>
-                        <div class="field-row"><span class="label">Phone</span><span class="value">${dash(d.lead.phone)}</span></div>
-                        <div class="field-row"><span class="label">Email</span><span class="value">${dash(d.lead.email)}</span></div>
+                        <div class="field-row"><span class="label">Name</span><span class="value"><a href="{{ url('leads') }}/${d.lead.id}">${esc(d.lead.name)}</a></span></div>
+                        <div class="field-row"><span class="label">Phone</span><span class="value">${esc(dash(d.lead.phone))}</span></div>
+                        <div class="field-row"><span class="label">Email</span><span class="value">${esc(dash(d.lead.email))}</span></div>
                     `);
                 } else {
                     $('#leadCard').hide();
@@ -316,7 +322,7 @@
                 if (d.order) {
                     $('#orderCard').show();
                     $('#orderCardBody').html(`
-                        <div class="field-row"><span class="label">Order</span><span class="value"><a href="{{ url('orders') }}/${d.order.id}">${d.order.order_number}</a></span></div>
+                        <div class="field-row"><span class="label">Order</span><span class="value"><a href="{{ url('orders') }}/${d.order.id}">${esc(d.order.order_number)}</a></span></div>
                         <div class="field-row"><span class="label">Total</span><span class="value">${money(d.order.total_amount)}</span></div>
                         <div class="field-row"><span class="label">Paid</span><span class="value">${money(d.order.paid_amount)}</span></div>
                         <div class="field-row"><span class="label">Due</span><span class="value">${money(d.order.due_amount)}</span></div>
@@ -334,7 +340,7 @@
             let options = '';
             d.pipeline.stages.forEach(s => {
                 if (s.id === d.stage_id) return;
-                options += `<option value="${s.id}" data-is-lost="${s.is_lost ? 1 : 0}" data-is-won="${s.is_won ? 1 : 0}">${s.name}</option>`;
+                options += `<option value="${s.id}" data-is-lost="${s.is_lost ? 1 : 0}" data-is-won="${s.is_won ? 1 : 0}">${esc(s.name)}</option>`;
             });
             $('#moveStageSelect').html(options);
             toggleStageExtras();
@@ -349,7 +355,7 @@
                 $('#lostReasonWrap').show();
                 $.get("{{ url('master-data/lookup') }}/lost_reason", function(response) {
                     let options = '<option value="">-- Select a reason --</option>';
-                    response.data.forEach(o => options += `<option value="${o.id}">${o.label}</option>`);
+                    response.data.forEach(o => options += `<option value="${o.id}">${esc(o.label)}</option>`);
                     $('#moveLostReason').html(options);
                 });
             } else {
@@ -362,7 +368,7 @@
                 $('#moveWonPaymentDate').val(new Date().toISOString().slice(0, 10));
                 $.get("{{ url('master-data/lookup') }}/payment_mode", function(response) {
                     let options = '<option value="">-- Select a mode --</option>';
-                    response.data.forEach(o => options += `<option value="${o.code}">${o.label}</option>`);
+                    response.data.forEach(o => options += `<option value="${esc(o.code)}">${esc(o.label)}</option>`);
                     $('#moveWonPaymentMode').html(options);
                 });
             } else {
@@ -409,13 +415,13 @@
         function loadEditDropdowns(d) {
             $.get("{{ route('leads.assignable_users') }}", function(response) {
                 let options = '<option value="">-- Unassigned --</option>';
-                response.users.forEach(u => options += `<option value="${u.id}" ${u.id === d.owner_id ? 'selected' : ''}>${u.name}</option>`);
+                response.users.forEach(u => options += `<option value="${u.id}" ${u.id === d.owner_id ? 'selected' : ''}>${esc(u.name)}</option>`);
                 $('#edit_owner_id').html(options);
             });
 
             $.get("{{ url('master-data/lookup') }}/currency", function(response) {
                 let options = '<option value="">-- Select --</option>';
-                response.data.forEach(o => options += `<option value="${o.code}" ${o.code === d.currency ? 'selected' : ''}>${o.label}</option>`);
+                response.data.forEach(o => options += `<option value="${esc(o.code)}" ${o.code === d.currency ? 'selected' : ''}>${esc(o.label)}</option>`);
                 $('#edit_currency').html(options);
             });
         }
@@ -434,8 +440,8 @@
                         <div class="timeline-item">
                             <div class="timeline-icon"><i class="fa fa-exchange"></i></div>
                             <div>
-                                <div class="timeline-desc">${timelineDescription(item)}</div>
-                                <div class="timeline-meta">${item.changed_by ? item.changed_by.name : 'System'} · ${item.created_at}</div>
+                                <div class="timeline-desc">${esc(timelineDescription(item))}</div>
+                                <div class="timeline-meta">${esc(item.changed_by ? item.changed_by.name : 'System')} · ${esc(item.created_at)}</div>
                             </div>
                         </div>`;
                 });
@@ -498,7 +504,7 @@
                 success: function(response) {
                     if (response.status) {
                         toastr.success(response.message);
-                        setTimeout(() => window.location = "{{ route('deals.index') }}", 600);
+                        setTimeout(() => window.location = "{{ route('deals.list') }}", 600);
                     }
                 },
                 error: function(xhr) {

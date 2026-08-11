@@ -11,12 +11,16 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Deal extends Model
 {
     use HasFactory, BelongsToTenant;
+
     protected $table = 'deals';
+
     protected $fillable = [
         'tenant_id',
         'pipeline_id',
         'stage_id',
         'lead_id',
+        'company_id',
+        'contact_id',
         'order_id',
         'owner_id',
         'lost_reason_id',
@@ -33,6 +37,16 @@ class Deal extends Model
     public function lead(): BelongsTo
     {
         return $this->belongsTo(Lead::class);
+    }
+
+    public function company(): BelongsTo
+    {
+        return $this->belongsTo(Company::class);
+    }
+
+    public function contact(): BelongsTo
+    {
+        return $this->belongsTo(Contact::class);
     }
 
     public function pipeline(): BelongsTo

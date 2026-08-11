@@ -1,7 +1,9 @@
 <?php
 
+use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\admin\CompanyController;
-use App\Http\Controllers\admin\CustomerContactController;
+use App\Http\Controllers\Admin\ContactController;
+use App\Http\Controllers\Admin\CrmCompanyController;
 use App\Http\Controllers\Admin\DealController;
 use App\Http\Controllers\Admin\DealDetailController;
 use App\Http\Controllers\Admin\LeadDetailController;
@@ -11,11 +13,17 @@ use App\Http\Controllers\Admin\OrderDetailController;
 use App\Http\Controllers\Admin\PipelineController;
 use App\Http\Controllers\Admin\PipelineStageController;
 use App\Http\Controllers\Admin\ProjectDetailsController;
+use App\Http\Controllers\Admin\PlatformDashboardController;
+use App\Http\Controllers\Admin\ReportController;
+use App\Http\Controllers\Admin\TaskController;
+use App\Http\Controllers\Admin\TenantController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\ApiTokenController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LeadController;
 use App\Http\Controllers\MasterValueLookupController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\SecurityController;
 use App\Http\Controllers\User\InvoiceController;
 use App\Http\Controllers\User\ProfileController;
@@ -44,6 +52,46 @@ Route::middleware('admin_middle')->group(function () {
     Route::post('/dashboard/attendance/check-in', [DashboardController::class, 'checkIn'])->name('dashboard.attendance.checkin');
 });
 
+Route::middleware(['admin_middle', 'permission:platform.manage-tenants'])->group(function () {
+    Route::get('/platform', [PlatformDashboardController::class, 'index'])->name('platform.dashboard');
+    Route::get('/platform/tenants', [TenantController::class, 'index'])->name('tenants.index');
+    Route::post('/platform/tenants', [TenantController::class, 'store'])->name('tenants.store');
+    Route::put('/platform/tenants/{tenant}', [TenantController::class, 'update'])->name('tenants.update')->whereNumber('tenant');
+    Route::delete('/platform/tenants/{tenant}', [TenantController::class, 'destroy'])->name('tenants.destroy')->whereNumber('tenant');
+    Route::post('/platform/tenant-context', [TenantController::class, 'switch'])->name('tenants.switch');
+    Route::post('/platform/tenants/{tenant}/approve', [TenantController::class, 'approve'])->name('tenants.approve')->whereNumber('tenant');
+    Route::post('/platform/tenants/{tenant}/reject', [TenantController::class, 'reject'])->name('tenants.reject')->whereNumber('tenant');
+});
+
+Route::middleware(['admin_middle', 'permission:tasks.view'])->group(function () {
+    Route::get('/tasks', [TaskController::class, 'index'])->name('tasks.index');
+    Route::get('/tasks/data', [TaskController::class, 'data'])->name('tasks.data');
+    Route::get('/tasks/related-options/{type}', [TaskController::class, 'relatedOptions'])->name('tasks.related_options');
+});
+
+Route::middleware(['admin_middle', 'permission:tasks.create'])->group(function () {
+    Route::post('/tasks', [TaskController::class, 'store'])->name('tasks.store');
+});
+
+Route::middleware(['admin_middle', 'permission:tasks.edit'])->group(function () {
+    Route::put('/tasks/{id}', [TaskController::class, 'update'])->name('tasks.update')->whereNumber('id');
+    Route::post('/tasks/{id}/complete', [TaskController::class, 'complete'])->name('tasks.complete')->whereNumber('id');
+});
+
+Route::middleware(['admin_middle', 'permission:tasks.delete'])->group(function () {
+    Route::delete('/tasks/{id}', [TaskController::class, 'destroy'])->name('tasks.destroy')->whereNumber('id');
+});
+
+Route::middleware(['admin_middle', 'permission:audit.view'])->group(function () {
+    Route::get('/audit-log', [AuditLogController::class, 'index'])->name('audit.index');
+    Route::get('/audit-log/data', [AuditLogController::class, 'data'])->name('audit.data');
+});
+
+Route::middleware(['admin_middle', 'permission:reports.view'])->group(function () {
+    Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+    Route::get('/reports/data', [ReportController::class, 'data'])->name('reports.data');
+});
+
 /*
 |--------------------------------------------------------------------------
 | Unified Leads (increment 1) — replaces Admin\LeadController's /admin/leads*
@@ -57,32 +105,33 @@ Route::middleware(['admin_middle', 'permission:leads.view'])->group(function () 
     Route::get('/leads', [LeadController::class, 'lead'])->name('leads.index');
     Route::get('/leads/data', [LeadController::class, 'get_lead'])->name('leads.data');
     Route::get('/leads/assignable-users', [LeadController::class, 'getAssignUsers'])->name('leads.assignable_users');
-    Route::get('/leads/edit-data', [LeadController::class, 'get_edit_lead_data'])->name('leads.edit_data');
-    Route::get('/leads/download-format', [LeadController::class, 'downloadFormat'])->name('leads.download_format');
-
-    Route::post('/leads/toggle-status', [LeadController::class, 'toggleLeadStatus'])->name('leads.toggle_status');
-    Route::post('/leads/update-status', [LeadController::class, 'updateLead'])->name('leads.update_status');
-
-    Route::post('/leads/check-duplicate', [LeadDetailController::class, 'checkDuplicate'])->name('leads.check_duplicate');
     Route::get('/leads/{id}/detail', [LeadDetailController::class, 'detail'])->name('leads.detail');
     Route::get('/leads/{id}/timeline', [LeadDetailController::class, 'timeline'])->name('leads.timeline');
-    Route::post('/leads/{id}/notes', [LeadDetailController::class, 'addNote'])->name('leads.notes.store');
-    Route::post('/leads/{id}/tags', [LeadDetailController::class, 'addTag'])->name('leads.tags.store');
-    Route::delete('/leads/{id}/tags/{tagId}', [LeadDetailController::class, 'removeTag'])->name('leads.tags.destroy');
-    Route::post('/leads/{id}/attachments', [LeadDetailController::class, 'uploadAttachment'])->name('leads.attachments.store');
     Route::get('/attachments/{attachmentId}/download', [LeadDetailController::class, 'downloadAttachment'])->name('leads.attachments.download');
-    Route::post('/leads/{id}/follow-up', [LeadDetailController::class, 'storeFollowUp'])->name('leads.follow_up.store');
 });
 
 Route::middleware(['admin_middle', 'permission:leads.create'])->group(function () {
     Route::get('/leads/create', [LeadController::class, 'add_lead_view'])->name('leads.create');
     Route::post('/leads', [LeadController::class, 'add_lead'])->name('leads.store');
+    Route::post('/leads/check-duplicate', [LeadDetailController::class, 'checkDuplicate'])->name('leads.check_duplicate');
+    Route::get('/leads/download-format', [LeadController::class, 'downloadFormat'])->name('leads.download_format');
+});
+
+Route::middleware(['admin_middle', 'permission:leads.import'])->group(function () {
     Route::post('/leads/import', [LeadController::class, 'leads_import'])->name('leads.import');
 });
 
 Route::middleware(['admin_middle', 'permission:leads.edit'])->group(function () {
     Route::get('/leads/{id}/edit', [LeadController::class, 'edit_lead_view'])->name('leads.edit');
+    Route::get('/leads/edit-data', [LeadController::class, 'get_edit_lead_data'])->name('leads.edit_data');
     Route::post('/leads/update', [LeadController::class, 'edit_lead_data'])->name('leads.update');
+    Route::post('/leads/toggle-status', [LeadController::class, 'toggleLeadStatus'])->name('leads.toggle_status');
+    Route::post('/leads/update-status', [LeadController::class, 'updateLead'])->name('leads.update_status');
+    Route::post('/leads/{id}/notes', [LeadDetailController::class, 'addNote'])->name('leads.notes.store');
+    Route::post('/leads/{id}/tags', [LeadDetailController::class, 'addTag'])->name('leads.tags.store');
+    Route::delete('/leads/{id}/tags/{tagId}', [LeadDetailController::class, 'removeTag'])->name('leads.tags.destroy');
+    Route::post('/leads/{id}/attachments', [LeadDetailController::class, 'uploadAttachment'])->name('leads.attachments.store');
+    Route::post('/leads/{id}/follow-up', [LeadDetailController::class, 'storeFollowUp'])->name('leads.follow_up.store');
 });
 
 Route::middleware(['admin_middle', 'permission:leads.delete'])->group(function () {
@@ -119,6 +168,7 @@ Route::middleware(['admin_middle', 'permission:deals.view'])->group(function () 
     Route::get('/deals/list', [DealController::class, 'listView'])->name('deals.list');
     Route::get('/deals/data', [DealController::class, 'data'])->name('deals.data');
     Route::get('/deals/board-data', [DealController::class, 'boardData'])->name('deals.board_data');
+    Route::get('/deals/pipeline-options', [DealController::class, 'pipelineOptions'])->name('deals.pipeline_options');
 });
 
 Route::middleware(['admin_middle', 'permission:deals.create'])->group(function () {
@@ -177,12 +227,22 @@ Route::middleware('admin_middle')->group(function () {
     Route::get('/security', [SecurityController::class, 'show'])->name('security.show');
     Route::post('/security', [SecurityController::class, 'update'])->name('security.update');
     Route::get('/profile', [ProfileController::class, 'profile'])->name('profile.show');
+    Route::get('/api-tokens', [ApiTokenController::class, 'index'])->name('api_tokens.index');
+    Route::post('/api-tokens', [ApiTokenController::class, 'store'])->name('api_tokens.store');
+    Route::delete('/api-tokens/{id}', [ApiTokenController::class, 'destroy'])->name('api_tokens.destroy')->whereNumber('id');
 
     Route::get('/master-data/lookup/{type}', [MasterValueLookupController::class, 'options'])->name('master_data.lookup');
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('/notifications/data', [NotificationController::class, 'data'])->name('notifications.data');
+    Route::post('/notifications/read-all', [NotificationController::class, 'readAll'])->name('notifications.read_all');
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'read'])->name('notifications.read');
 });
 
 Route::middleware(['admin_middle', 'permission:company.view'])->group(function () {
     Route::get('/company-details', [CompanyController::class, 'company_details'])->name('company.show');
+});
+
+Route::middleware(['admin_middle', 'permission:company.edit'])->group(function () {
     Route::get('/company-details/edit', [CompanyController::class, 'edit_company_details_page'])->name('company.edit');
     Route::post('/company-details', [CompanyController::class, 'edit_com_details'])->name('company.update');
 });
@@ -207,17 +267,58 @@ Route::middleware(['admin_middle', 'permission:masters.delete'])->group(function
 });
 
 Route::middleware(['admin_middle', 'permission:contacts.view'])->group(function () {
-    Route::get('/contacts', [CustomerContactController::class, 'customer_contact_details'])->name('contacts.index');
-    Route::get('/contacts/data', [CustomerContactController::class, 'get_customer_contacts'])->name('contacts.data');
+    Route::get('/contacts', [ContactController::class, 'index'])->name('contacts.index');
+    Route::get('/contacts/data', [ContactController::class, 'data'])->name('contacts.data');
+});
+
+Route::middleware(['admin_middle', 'permission:contacts.create'])->group(function () {
+    Route::post('/contacts', [ContactController::class, 'store'])->name('contacts.store');
+});
+
+Route::middleware(['admin_middle', 'permission:contacts.edit'])->group(function () {
+    Route::put('/contacts/{id}', [ContactController::class, 'update'])->name('contacts.update')->where('id', '[0-9]+');
+});
+
+Route::middleware(['admin_middle', 'permission:contacts.delete'])->group(function () {
+    Route::delete('/contacts/{id}', [ContactController::class, 'destroy'])->name('contacts.destroy')->where('id', '[0-9]+');
+});
+
+Route::middleware(['admin_middle', 'permission:companies.view'])->group(function () {
+    Route::get('/companies', [CrmCompanyController::class, 'index'])->name('companies.index');
+    Route::get('/companies/data', [CrmCompanyController::class, 'data'])->name('companies.data');
+    Route::get('/companies/options', [CrmCompanyController::class, 'options'])->name('companies.options');
+    Route::get('/companies/{id}/detail', [CrmCompanyController::class, 'detail'])->name('companies.detail')->where('id', '[0-9]+');
+    Route::get('/companies/{id}', [CrmCompanyController::class, 'show'])->name('companies.show')->where('id', '[0-9]+');
+});
+
+Route::middleware(['admin_middle', 'permission:companies.create'])->group(function () {
+    Route::post('/companies', [CrmCompanyController::class, 'store'])->name('companies.store');
+});
+
+Route::middleware(['admin_middle', 'permission:companies.edit'])->group(function () {
+    Route::put('/companies/{id}', [CrmCompanyController::class, 'update'])->name('companies.update')->where('id', '[0-9]+');
+});
+
+Route::middleware(['admin_middle', 'permission:companies.delete'])->group(function () {
+    Route::delete('/companies/{id}', [CrmCompanyController::class, 'destroy'])->name('companies.destroy')->where('id', '[0-9]+');
 });
 
 Route::middleware(['admin_middle', 'permission:users.view'])->group(function () {
     Route::get('/users', [UserController::class, 'user_profile'])->name('users.index');
     Route::get('/users/data', [UserController::class, 'getUserList'])->name('users.data');
     Route::get('/users/roles', [UserController::class, 'getRoles'])->name('users.roles');
+});
+
+Route::middleware(['admin_middle', 'permission:users.create'])->group(function () {
     Route::post('/users', [UserController::class, 'add_user'])->name('users.store');
+});
+
+Route::middleware(['admin_middle', 'permission:users.edit'])->group(function () {
     Route::post('/users/toggle-status', [UserController::class, 'toggleUserStatus'])->name('users.toggle_status');
     Route::post('/users/update', [UserController::class, 'edit_user'])->name('users.update');
+});
+
+Route::middleware(['admin_middle', 'permission:users.delete'])->group(function () {
     Route::post('/users/delete', [UserController::class, 'delete_user'])->name('users.destroy');
 });
 
@@ -243,7 +344,6 @@ Route::middleware(['admin_middle', 'permission:orders.view'])->group(function ()
     Route::get('/orders/data', [OrderController::class, 'get_order_list'])->name('orders.data');
 
     Route::get('/orders/{id}/payments', [OrderDetailController::class, 'paymentsData'])->name('orders.payments.data')->where('id', '[0-9]+');
-    Route::post('/orders/payments', [OrderDetailController::class, 'paymentsStore'])->name('orders.payments.store');
 
     Route::get('/orders/{id}', [OrderDetailController::class, 'show'])->name('orders.show')->where('id', '[0-9]+');
 
@@ -258,6 +358,7 @@ Route::middleware(['admin_middle', 'permission:orders.view'])->group(function ()
 });
 
 Route::middleware(['admin_middle', 'permission:orders.edit'])->group(function () {
+    Route::post('/orders/payments', [OrderDetailController::class, 'paymentsStore'])->name('orders.payments.store');
     Route::post('/orders/{id}', [OrderDetailController::class, 'update'])->name('orders.update')->where('id', '[0-9]+');
     Route::post('/projects/update', [ProjectDetailsController::class, 'update_project_details'])->name('projects.update');
 });

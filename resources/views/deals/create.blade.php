@@ -50,12 +50,24 @@
             <div class="content-wrapper">
 
                 <div class="page-header">
-                    <a href="{{ route('deals.index') }}" class="text-muted" style="font-size:12px;">
+                    <a href="{{ route('deals.list') }}" class="text-muted" style="font-size:12px;">
                         <i class="fa fa-arrow-left"></i> Back to Deals
                     </a>
                     <h4 class="mt-1">{{ isset($deal) ? 'Edit Deal' : 'New Deal' }}</h4>
                 </div>
 
+                @if (! isset($deal) && $pipelines->isEmpty())
+                <div class="card-box text-center py-5">
+                    <i class="fa fa-random" style="font-size:32px;color:#2563eb;margin-bottom:12px;"></i>
+                    <h5>No pipeline yet</h5>
+                    <p class="text-muted" style="font-size:13px;">A deal needs a pipeline to belong to — create one first.</p>
+                    @can('deals.manage-settings')
+                    <a href="{{ route('pipelines.index') }}" class="btn btn-primary btn-sm"><i class="fa fa-plus"></i> Create a Pipeline</a>
+                    @else
+                    <p class="text-muted" style="font-size:12px;">Ask an admin to set up a pipeline in Settings.</p>
+                    @endcan
+                </div>
+                @else
                 <div class="card-box">
                     <form id="dealForm">
                         <div class="form-row">
@@ -127,9 +139,10 @@
                         <button type="submit" class="btn btn-primary">
                             <i class="fa fa-save"></i> {{ isset($deal) ? 'Save Changes' : 'Create Deal' }}
                         </button>
-                        <a href="{{ route('deals.index') }}" class="btn btn-light">Cancel</a>
+                        <a href="{{ route('deals.list') }}" class="btn btn-light">Cancel</a>
                     </form>
                 </div>
+                @endif
 
                 @include('include.footer')
 

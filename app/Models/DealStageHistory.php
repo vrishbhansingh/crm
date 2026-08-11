@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\UsesTenantConnection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class DealStageHistory extends Model
 {
-    use HasFactory;
+    use HasFactory, UsesTenantConnection;
     protected $table = 'deal_stage_history';
     protected $fillable = [
         'deal_id',

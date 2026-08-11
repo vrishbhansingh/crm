@@ -176,6 +176,9 @@
     <script src="{{ asset('vendors/datatables.net-bs4/dataTables.bootstrap4.js') }}"></script>
 
     <script>
+        const esc = value => $('<div>').text(value ?? '').html();
+        const safeToken = value => /^[a-z0-9_-]+$/i.test(value || '') ? value : 'unknown';
+
         function loadOrderList() {
             $.ajax({
                 url: "{{ route('orders.data') }}",
@@ -193,19 +196,19 @@
                         <td>${item.sl_no}</td>
 
                         <td>
-                            <strong>${item.order_number}</strong><br>
-                            <small class="text-muted">${item.invoice_date}</small>
+                            <strong>${esc(item.order_number)}</strong><br>
+                            <small class="text-muted">${esc(item.invoice_date)}</small>
                         </td>
 
-                        <td>${dash(item.invoice_id)}</td>
+                        <td>${esc(dash(item.invoice_id))}</td>
 
                         <td>
-                            <small>User Name: ${dash(item.user_name)}</small><br>
-                            <small>Project Name: ${dash(item.project_name)}</small>
+                            <small>User Name: ${esc(dash(item.user_name))}</small><br>
+                            <small>Project Name: ${esc(dash(item.project_name))}</small>
                         </td>
 
                         <td>
-                            <strong>${item.currency ?? ''} ${money(item.total_amount)}</strong><br>
+                            <strong>${esc(item.currency ?? '')} ${money(item.total_amount)}</strong><br>
                             <small class="text-muted">
                                 Paid: ${money(item.paid_amount)} | Due: ${money(item.due_amount)}
                             </small>
@@ -213,13 +216,13 @@
 
                         <td>
                             <span class="payment-badge ${payClass(item.payment_status)}">
-                                ${pretty(item.payment_status)}
+                                ${esc(pretty(item.payment_status))}
                             </span>
                         </td>
 
                         <td>
-                            <span class="status-badge status-${item.order_status}">
-                                ${pretty(item.order_status)}
+                            <span class="status-badge status-${safeToken(item.order_status)}">
+                                ${esc(pretty(item.order_status))}
                             </span>
                         </td>
 

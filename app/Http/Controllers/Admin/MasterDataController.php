@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\MasterType;
 use App\Models\MasterValue;
+use App\Support\TenantContext;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -32,7 +33,7 @@ class MasterDataController extends Controller
     {
         $request->validate(['type_id' => 'required|exists:master_types,id']);
 
-        $tenantId = Auth::guard('web')->user()->tenant_id;
+        $tenantId = TenantContext::id();
 
         $values = MasterValue::where('master_type_id', $request->type_id)
             ->where(function ($query) use ($tenantId) {
@@ -58,7 +59,7 @@ class MasterDataController extends Controller
             'sort_order' => 'nullable|integer',
         ]);
 
-        $tenantId = Auth::guard('web')->user()->tenant_id;
+        $tenantId = TenantContext::id();
 
         $duplicate = MasterValue::where('master_type_id', $request->master_type_id)
             ->where('code', $request->code)
@@ -144,10 +145,10 @@ class MasterDataController extends Controller
 
     private function canManage(MasterValue $value): bool
     {
-        $tenantId = Auth::guard('web')->user()->tenant_id;
+        $tenantId = TenantContext::id();
 
         // Platform Super Admin (tenant_id null) manages everything, including
         // globals. A Company Admin only manages their own tenant's values.
-        return $tenantId === null || $value->tenant_id === $tenantId;
+        return Auth::guard('web')->user()->hasRole('Super Admin') || $value->tenant_id === $tenantId;
     }
 }

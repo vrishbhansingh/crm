@@ -68,6 +68,16 @@
             color: #555;
         }
 
+        .lead-name-link {
+            color: #1f2937;
+            text-decoration: none;
+        }
+
+        .lead-name-link:hover {
+            color: #4b49ac;
+            text-decoration: underline;
+        }
+
         .user-table tbody td:first-child {
             border-left: 1px solid #eef1f6;
             border-radius: 8px 0 0 8px;
@@ -532,6 +542,19 @@
                         <div class="card">
                             <div class="card-body">
 
+                                <ul class="nav nav-tabs mb-3" id="leadTabs">
+                                    <li class="nav-item">
+                                        <a class="nav-link active" href="javascript:void(0)" data-tab="active">
+                                            Active Leads <span class="badge badge-light" id="activeLeadCount">0</span>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="javascript:void(0)" data-tab="converted">
+                                            Converted Leads <span class="badge badge-light" id="convertedLeadCount">0</span>
+                                        </a>
+                                    </li>
+                                </ul>
+
                                 <div class="table-responsive user-table-wrapper">
                                     <table id="userTable" class="table user-table">
                                         <thead>
@@ -792,19 +815,42 @@
             return str.charAt(0).toUpperCase() + str.slice(1);
         }
 
+        const esc = value => $('<div>').text(value ?? '').html();
+
+        let allLeadsData = [];
+        let activeLeadTab = 'active';
+
         function loadLeadList() {
             $.ajax({
                 url: '{{route("leads.data")}}', // keep your existing route
                 type: 'GET',
                 success: function(response) {
+                    allLeadsData = (response && Array.isArray(response.data)) ? response.data : [];
 
-                    let tbody = '';
+                    $('#activeLeadCount').text(allLeadsData.filter(l => !l.deal_id).length);
+                    $('#convertedLeadCount').text(allLeadsData.filter(l => l.deal_id).length);
 
-                    if (response && Array.isArray(response.data) && response.data.length) {
-                        response.data.forEach(item => {
+                    renderLeadTab();
+                },
 
-                            tbody += `
-                            <tr>
+                error: function() {
+                    toastr.error('Something went wrong while loading leads');
+                }
+            });
+        }
+
+        function renderLeadTab() {
+            const filtered = allLeadsData.filter(item =>
+                activeLeadTab === 'converted' ? !!item.deal_id : !item.deal_id
+            );
+
+            let tbody = '';
+
+            if (filtered.length) {
+                filtered.forEach(item => {
+
+                    tbody += `
+                            <tr class="lead-row" data-lead-id="${item.id}" style="cursor:pointer;">
                                 <td class="text-center">
                                     <i class="fa fa-plus-circle text-success toggle-row"
                                     style="cursor:pointer;font-size:16px;"
@@ -827,20 +873,20 @@
                                 <!-- Lead Type -->
                                 <td class="text-center">
                                     <span class="role-badge">
-                                        ${formatLeadStatus(item.lead_type)}
+                                        ${esc(formatLeadStatus(item.lead_type))}
                                     </span>
                                 </td>
 
                                 <!-- Contact -->
                                 <td class="text-center">
-                                    <strong>${capitalizeFirst(item.name) ?? '-'}</strong><br>
-                                    <small class="text-muted">${item.phone ?? '-'}</small><br>
-                                    <small class="text-muted">${item.email ?? ''}</small>
+                                    <a href="{{ url('leads') }}/${item.id}" class="lead-name-link"><strong>${esc(capitalizeFirst(item.name) ?? '-')}</strong></a><br>
+                                    <small class="text-muted">${esc(item.phone ?? '-')}</small><br>
+                                    <small class="text-muted">${esc(item.email ?? '')}</small>
                                 </td>
 
                                 <!-- Lead Source -->
                                 <td class="text-center">
-                                    ${formatLeadStatus(item.lead_source) ?? '-'}
+                                    ${esc(formatLeadStatus(item.lead_source) ?? '-')}
                                 </td>
 
                              <td class="text-center">
@@ -856,14 +902,14 @@
                                         style="cursor:pointer;"
                                     >
                                         <span class="status-dot"></span>
-                                        ${formatLeadStatus(item.lead_status)}
+                                        ${esc(formatLeadStatus(item.lead_status))}
                                     </span>
                                 </td>
 
                                 <!-- Priority -->
                                 <td class="text-center">
                                     <span class="role-badge">
-                                        ${capitalizeFirst(item.priority) ?? '-'}
+                                        ${esc(capitalizeFirst(item.priority) ?? '-')}
                                     </span>
                                 </td>
 
@@ -871,7 +917,7 @@
                                 <td class="text-center">
                                     ${
                                         item.follow_up_date
-                                            ? `${item.follow_up_date}<br><small>${item.follow_up_time ?? ''}</small>`
+                                            ? `${esc(item.follow_up_date)}<br><small>${esc(item.follow_up_time ?? '')}</small>`
                                             : '-'
                                     }
                                 </td>
@@ -884,7 +930,7 @@
                                         data-assigned-id="${item.assigned_to_id ?? ''}"
                                         style="cursor:pointer;"
                                     >
-                                        ${item.assigned_to ?? 'null'}
+                                        ${esc(item.assigned_to ?? 'Unassigned')}
                                     </span>
                                 </td>
                                 <td class="text-center">
@@ -893,7 +939,7 @@
                                             data-id="${item.id}"
                                             data-status="${item.status}">
                                             <span class="status-dot"></span>
-                                            ${item.status}
+                                            ${esc(item.status)}
                                         </span>
                                     </td>
 
@@ -911,32 +957,32 @@
 
                                                 <div class="lead-highlight">
                                                     <div class="lead-expand-label">Alternate Phone</div>
-                                                    <div class="lead-expand-value">${item.alternate_phone ?? '-'}</div>
+                                                    <div class="lead-expand-value">${esc(item.alternate_phone ?? '-')}</div>
                                                 </div>
 
                                                 <div class="lead-highlight">
                                                     <div class="lead-expand-label">City</div>
-                                                    <div class="lead-expand-value">${item.city ?? '-'}</div>
+                                                    <div class="lead-expand-value">${esc(item.city ?? '-')}</div>
                                                 </div>
 
                                                 <div class="lead-highlight">
                                                     <div class="lead-expand-label">State</div>
-                                                    <div class="lead-expand-value">${item.state ?? '-'}</div>
+                                                    <div class="lead-expand-value">${esc(item.state ?? '-')}</div>
                                                 </div>
 
                                                 <div class="lead-highlight">
                                                     <div class="lead-expand-label">Country</div>
-                                                    <div class="lead-expand-value">${item.country ?? '-'}</div>
+                                                    <div class="lead-expand-value">${esc(item.country ?? '-')}</div>
                                                 </div>
 
                                                 <div class="lead-highlight">
                                                     <div class="lead-expand-label">Product</div>
-                                                    <div class="lead-expand-value">${item.product ?? '-'}</div>
+                                                    <div class="lead-expand-value">${esc(item.product ?? '-')}</div>
                                                 </div>
 
                                                 <div class="lead-highlight">
                                                     <div class="lead-expand-label">Service</div>
-                                                    <div class="lead-expand-value">${item.service ?? '-'}</div>
+                                                    <div class="lead-expand-value">${esc(item.service ?? '-')}</div>
                                                 </div>
 
                                                 <div class="lead-highlight">
@@ -951,7 +997,7 @@
 
                                                 <div class="lead-highlight">
                                                     <div class="lead-expand-label">Is Converted</div>
-                                                    <div class="lead-expand-value">${item.is_converted}</div>
+                                                    <div class="lead-expand-value">${item.deal_id ? 'Yes' : 'No'}</div>
                                                 </div>
 
                                                 <div class="lead-highlight">
@@ -961,7 +1007,7 @@
 
                                                 <div class="lead-highlight">
                                                     <div class="lead-expand-label">Status Reason</div>
-                                                    <div class="lead-expand-value">${item.status_reason ?? '-'}</div>
+                                                    <div class="lead-expand-value">${esc(item.status_reason ?? '-')}</div>
                                                 </div>
 
                                                 <div class="lead-highlight">
@@ -991,22 +1037,22 @@
 
                                                 <div class="lead-expand-full lead-highlight">
                                                     <div class="lead-expand-label">Follow Up Note</div>
-                                                    <div class="lead-expand-value">${item.follow_up_note ?? '-'}</div>
+                                                    <div class="lead-expand-value">${esc(item.follow_up_note ?? '-')}</div>
                                                 </div>
 
                                                 <div class="lead-expand-full lead-highlight">
                                                     <div class="lead-expand-label">Remarks</div>
-                                                    <div class="lead-expand-value">${item.remarks ?? '-'}</div>
+                                                    <div class="lead-expand-value">${esc(item.remarks ?? '-')}</div>
                                                 </div>
 
                                                 <div class="lead-expand-full lead-highlight">
                                                     <div class="lead-expand-label">Internal Note</div>
-                                                    <div class="lead-expand-value">${item.internal_note ?? '-'}</div>
+                                                    <div class="lead-expand-value">${esc(item.internal_note ?? '-')}</div>
                                                 </div>
 
                                                 <div class="lead-expand-full lead-highlight">
                                                     <div class="lead-expand-label">Requirement</div>
-                                                    <div class="lead-expand-value">${item.requirement ?? '-'}</div>
+                                                    <div class="lead-expand-value">${esc(item.requirement ?? '-')}</div>
                                                 </div>
 
                                             </div>
@@ -1016,26 +1062,27 @@
                                     </td>
                                 </tr>
                     `;
-                        });
+                });
 
-                    } else {
-                        tbody = `
+            } else {
+                tbody = `
                     <tr>
                         <td colspan="9" class="text-center text-muted">
-                            No lead data found
+                            ${activeLeadTab === 'converted' ? 'No converted leads yet' : 'No lead data found'}
                         </td>
                     </tr>
                 `;
-                    }
+            }
 
-                    $('#userTable tbody').html(tbody);
-                },
-
-                error: function() {
-                    toastr.error('Something went wrong while loading leads');
-                }
-            });
+            $('#userTable tbody').html(tbody);
         }
+
+        $(document).on('click', '#leadTabs [data-tab]', function() {
+            $('#leadTabs .nav-link').removeClass('active');
+            $(this).addClass('active');
+            activeLeadTab = $(this).data('tab');
+            renderLeadTab();
+        });
 
         // Populates every <select data-master-type="..."> from the Master Data
         // lookup endpoint instead of hardcoded <option> lists (Phase 2).
@@ -1046,7 +1093,7 @@
 
                 $.get("{{ url('master-data/lookup') }}/" + type, function(response) {
                     response.data.forEach(function(option) {
-                        $select.append(`<option value="${option.code}">${option.label}</option>`);
+                        $select.append(`<option value="${esc(option.code)}">${esc(option.label)}</option>`);
                     });
                 });
             });
@@ -1069,6 +1116,20 @@
                 row.slideDown();
                 $(this).removeClass('fa-plus-circle text-success')
                     .addClass('fa-minus-circle text-danger');
+            }
+        });
+
+        // Clicking anywhere on a lead's row opens its detail page — except
+        // when the click is on something interactive within the row
+        // (checkbox, expand icon, status pill, assign badge, action buttons),
+        // which each already handle their own click.
+        $(document).on('click', '#userTable tbody tr.lead-row', function(e) {
+            if ($(e.target).closest('a, button, input, .toggle-row, .status-badge, .role-status, .assign-user').length) {
+                return;
+            }
+            const id = $(this).data('lead-id');
+            if (id) {
+                window.location = "{{ url('leads') }}/" + id;
             }
         });
 
@@ -1263,7 +1324,7 @@
                     res.users.forEach(function(user) {
                         options += `
                     <option value="${user.id}">
-                        ${user.name}
+                        ${esc(user.name)}
                     </option>
                 `;
                     });
@@ -1353,7 +1414,7 @@
                     let options = '<option value="">-- Select User --</option>';
 
                     res.users.forEach(user => {
-                        options += `<option value="${user.id}">${user.name}</option>`;
+                        options += `<option value="${user.id}">${esc(user.name)}</option>`;
                     });
 
                     $('#bulkAssignedUser').html(options);

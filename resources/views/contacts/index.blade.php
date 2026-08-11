@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>Contacts | CRM</title>
+    <link rel="stylesheet" href="{{ asset('vendors/css/vendor.bundle.base.css') }}"><link rel="stylesheet" href="{{ asset('css/vertical-layout-light/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+    <style>
+        .crm-card,.crm-header{background:#fff;border:1px solid #e5e7eb;border-radius:14px;box-shadow:0 8px 24px rgba(15,23,42,.05)}.crm-header{padding:18px 22px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center}.crm-header h4{margin:0;font-weight:700}.crm-header p{font-size:12px;color:#64748b;margin:3px 0 0}.crm-card{padding:18px}.crm-table th{font-size:12px;background:#f1f5f9;border:0}.crm-table td{font-size:13px;vertical-align:middle}.contact-name{font-weight:700;color:#1d4ed8}.status-pill{padding:4px 9px;border-radius:999px;background:#ecfdf5;color:#047857;font-size:11px;text-transform:capitalize}.primary-star{color:#f59e0b}
+    </style>
+</head>
+<body><div class="container-scroller">@include('include.header')<div class="container-fluid page-body-wrapper">@include('include.sidebar')<div class="content-wrapper">
+    <div class="crm-header"><div><h4><i class="fa fa-address-book text-primary mr-2"></i>Contacts</h4><p>People connected to your companies, leads, and deals</p></div>@can('contacts.create')<button class="btn btn-primary btn-sm" id="newContactBtn"><i class="fa fa-plus"></i> New Contact</button>@endcan</div>
+    <div class="crm-card"><div class="table-responsive"><table class="table crm-table" id="contactsTable"><thead><tr><th>Contact</th><th>Company</th><th>Role</th><th>Location</th><th>Owner</th><th>CRM Links</th><th>Status</th><th>Actions</th></tr></thead><tbody><tr><td colspan="8" class="text-center text-muted">Loading contacts…</td></tr></tbody></table></div></div>
+    @include('include.footer')
+</div></div></div>
+
+<div class="modal fade" id="contactModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><form id="contactForm">
+    <div class="modal-header"><h5 class="modal-title">Contact</h5><button type="button" class="close" data-dismiss="modal">&times;</button></div>
+    <div class="modal-body"><input type="hidden" id="contactId"><div class="form-row">
+        <div class="form-group col-md-6"><label>Name *</label><input class="form-control" name="name" required></div>
+        <div class="form-group col-md-6"><label>Company</label><select class="form-control" name="company_id"><option value="">No company</option>@foreach($companies as $company)<option value="{{ $company->id }}">{{ $company->name }}</option>@endforeach</select></div>
+        <div class="form-group col-md-4"><label>Email</label><input type="email" class="form-control" name="email"></div><div class="form-group col-md-4"><label>Phone</label><input class="form-control" name="phone"></div><div class="form-group col-md-4"><label>Alternate Phone</label><input class="form-control" name="alternate_phone"></div>
+        <div class="form-group col-md-4"><label>Designation</label><input class="form-control" name="designation"></div><div class="form-group col-md-4"><label>Department</label><input class="form-control" name="department"></div><div class="form-group col-md-4"><label>Owner</label><select class="form-control" name="owner_id"><option value="">Unassigned</option>@foreach($owners as $owner)<option value="{{ $owner->id }}">{{ $owner->name }}</option>@endforeach</select></div>
+        <div class="form-group col-md-4"><label>City</label><input class="form-control" name="city"></div><div class="form-group col-md-4"><label>State</label><input class="form-control" name="state"></div><div class="form-group col-md-4"><label>Country</label><input class="form-control" name="country"></div>
+        <div class="form-group col-md-4"><label>Status</label><select class="form-control" name="status"><option value="active">Active</option><option value="inactive">Inactive</option></select></div><div class="form-group col-md-4"><label>Source</label><input class="form-control" name="source"></div><div class="form-group col-md-4 d-flex align-items-center"><div class="form-check mt-3"><input type="hidden" name="is_primary" value="0"><input class="form-check-input" type="checkbox" name="is_primary" value="1" id="isPrimary"><label class="form-check-label" for="isPrimary">Primary contact</label></div></div>
+        <div class="form-group col-12"><label>Notes</label><textarea class="form-control" name="notes" rows="2"></textarea></div>
+    </div></div><div class="modal-footer"><button type="button" class="btn btn-light" data-dismiss="modal">Cancel</button><button class="btn btn-primary">Save Contact</button></div>
+</form></div></div></div>
+
+<script src="{{ asset('vendors/js/vendor.bundle.base.js') }}"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+<script>
+    $.ajaxSetup({headers:{'X-CSRF-TOKEN':$('meta[name="csrf-token"]').attr('content')}});
+    const canEditContacts={{ Auth::guard('web')->user()->can('contacts.edit') ? 'true' : 'false' }}; const canDeleteContacts={{ Auth::guard('web')->user()->can('contacts.delete') ? 'true' : 'false' }}; let contactsById={}; const esc=v=>$('<div>').text(v??'').html();
+    function loadContacts(){ $.get("{{ route('contacts.data') }}",r=>{contactsById={};let html='';r.data.forEach(c=>{contactsById[c.id]=c;const actions=`${canEditContacts?`<button class="btn btn-sm btn-outline-primary edit-contact" data-id="${c.id}"><i class="fa fa-pencil"></i></button>`:''} ${canDeleteContacts?`<button class="btn btn-sm btn-outline-danger delete-contact" data-id="${c.id}"><i class="fa fa-trash"></i></button>`:''}`;html+=`<tr><td><span class="contact-name">${esc(c.name)}</span> ${c.is_primary?'<i class="fa fa-star primary-star" title="Primary"></i>':''}<br><small>${esc(c.phone||'-')} · ${esc(c.email||'')}</small></td><td>${c.company?`<a href="{{ url('companies') }}/${c.company.id}">${esc(c.company.name)}</a>`:'-'}</td><td>${esc(c.designation||'-')}<br><small>${esc(c.department||'')}</small></td><td>${esc([c.city,c.state].filter(Boolean).join(', ')||'-')}</td><td>${esc(c.owner?.name||'Unassigned')}</td><td>${c.leads_count} lead(s) · ${c.deals_count} deal(s)</td><td><span class="status-pill">${esc(c.status)}</span></td><td>${actions}</td></tr>`});$('#contactsTable tbody').html(html||'<tr><td colspan="8" class="text-center text-muted">No contacts found</td></tr>')}).fail(()=>toastr.error('Could not load contacts')); }
+    function openContact(c=null){$('#contactForm')[0].reset();$('#contactId').val(c?.id||'');if(c){Object.keys(c).forEach(k=>$(`#contactForm [name="${k}"]`).val(c[k]??''));$('#isPrimary').prop('checked',!!c.is_primary)}$('#contactModal').modal('show')}
+    $('#newContactBtn').on('click',()=>openContact());$(document).on('click','.edit-contact',function(){openContact(contactsById[$(this).data('id')])});
+    $('#contactForm').on('submit',function(e){e.preventDefault();const id=$('#contactId').val();$.ajax({url:id?"{{ url('contacts') }}/"+id:"{{ route('contacts.store') }}",type:id?'PUT':'POST',data:$(this).serialize()}).done(r=>{toastr.success(r.message);$('#contactModal').modal('hide');loadContacts()}).fail(x=>toastr.error(x.responseJSON?.message||Object.values(x.responseJSON?.errors||{})[0]?.[0]||'Could not save contact'))});
+    $(document).on('click','.delete-contact',function(){if(!confirm('Delete this contact?'))return;$.ajax({url:"{{ url('contacts') }}/"+$(this).data('id'),type:'DELETE'}).done(r=>{toastr.success(r.message);loadContacts()}).fail(x=>toastr.error(x.responseJSON?.message||'Could not delete contact'))});$(document).ready(loadContacts);
+</script></body></html>

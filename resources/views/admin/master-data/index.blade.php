@@ -238,12 +238,14 @@
         });
 
         let activeTypeId = null;
+        const esc = value => $('<div>').text(value ?? '').html();
+        const safeColor = value => /^#[0-9a-f]{3,8}$/i.test(value || '') ? value : '#64748b';
 
         function loadTypes() {
             $.get("{{ route('master_data.types') }}", function(response) {
                 let html = '';
                 response.data.forEach((type) => {
-                    html += `<button type="button" class="type-btn" data-id="${type.id}" data-name="${type.name}">${type.name}</button>`;
+                    html += `<button type="button" class="type-btn" data-id="${type.id}" data-name="${esc(type.name)}">${esc(type.name)}</button>`;
                 });
                 $('#typeList').html(html || '<p class="text-muted p-2">No master types found.</p>');
 
@@ -259,21 +261,21 @@
             }, function(response) {
                 let rows = '';
                 response.data.forEach((v, i) => {
-                    const colorDot = v.color ? `<span class="value-color-dot" style="background:${v.color}"></span>` : '';
+                    const colorDot = v.color ? `<span class="value-color-dot" style="background:${safeColor(v.color)}"></span>` : '';
                     const statusClass = v.is_active ? 'active' : 'inactive';
                     const statusLabel = v.is_active ? 'Active' : 'Inactive';
                     const scope = v.tenant_id ? 'This tenant' : 'Global default';
                     rows += `
                         <tr>
                             <td>${i + 1}</td>
-                            <td>${v.code}</td>
-                            <td>${colorDot}${v.label}</td>
+                            <td>${esc(v.code)}</td>
+                            <td>${colorDot}${esc(v.label)}</td>
                             <td><span class="status-pill ${statusClass}">${statusLabel}</span></td>
                             <td><small class="text-muted">${scope}</small></td>
                             <td>
                                 <button class="btn btn-sm btn-outline-primary editValueBtn"
-                                    data-id="${v.id}" data-code="${v.code}" data-label="${v.label}"
-                                    data-color="${v.color ?? ''}" data-sort="${v.sort_order}">
+                                    data-id="${v.id}" data-code="${esc(v.code)}" data-label="${esc(v.label)}"
+                                    data-color="${esc(v.color ?? '')}" data-sort="${v.sort_order}">
                                     <i class="fa fa-pencil"></i>
                                 </button>
                                 <button class="btn btn-sm btn-outline-secondary toggleStatusBtn" data-id="${v.id}">

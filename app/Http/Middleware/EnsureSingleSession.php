@@ -19,6 +19,15 @@ class EnsureSingleSession
         if (Auth::guard('web')->check()) {
             $user = Auth::guard('web')->user();
 
+            if ($user->tenant_id !== null && ($user->tenant?->approval_status !== 'approved' || $user->tenant?->status !== 'Active')) {
+                Auth::guard('web')->logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+
+                return redirect()->route('admin.login')
+                    ->with('error', 'Your organization workspace is inactive.');
+            }
+
             if ($user->session_token !== $request->session()->get('session_token')) {
                 Auth::guard('web')->logout();
                 $request->session()->invalidate();

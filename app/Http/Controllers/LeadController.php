@@ -2,22 +2,23 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\CustomerContact;
+use App\Models\Company;
+use App\Models\Contact;
 use App\Models\Lead;
 use App\Models\LeadActivity;
 use App\Models\MasterValue;
 use App\Models\User;
+use App\Services\LeadNumberService;
+use App\Support\TenantContext;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
-
-use Illuminate\Support\Collection;
-use Maatwebsite\Excel\Facades\Excel;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
-use Illuminate\Support\Facades\Storage;
+use Maatwebsite\Excel\Facades\Excel;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 
 class LeadController extends Controller
@@ -27,14 +28,17 @@ class LeadController extends Controller
     {
         return view('admin.lead.lead');
     }
+
     public function add_lead_view()
     {
         return view('admin.lead.add_lead');
     }
+
     public function edit_lead_view()
     {
         return view('admin.lead.edit_lead');
     }
+
     public function get_lead(Request $request)
     {
         $me = Auth::guard('web')->user();
@@ -52,25 +56,29 @@ class LeadController extends Controller
             $query->where('lead_status', '!=', 'closed');
         }
 
-        $leads = $query->get();
+        $leads = $query->with('deal:id,lead_id,name')->get();
         $data = [];
         $sl_no = 1;
         foreach ($leads as $lead) {
             $editUrl = route('leads.edit', $lead->id);
-            $viewUrl = route('leads.show', $lead->id);
+            $dealUrl = $lead->deal ? route('deals.show', $lead->deal->id) : null;
             $action = "
                 <div class='action-stack'>
-                    <a href='{$viewUrl}'
-                        class='btn btn-sm btn-info action-status'>
-                        <i class='fa fa-eye'></i> View
-                    </a>
-
                     <a href='{$editUrl}'
                         class='btn btn-sm btn-success action-status editbtn'
                         '>
                         <i class='fa fa-check-circle'></i> Edit
-                    </a>
+                    </a>";
 
+            if ($dealUrl) {
+                $action .= "
+                    <a href='{$dealUrl}'
+                        class='btn btn-sm btn-primary action-status'>
+                        <i class='fa fa-briefcase'></i> View Deal
+                    </a>";
+            }
+
+            $action .= "
                     <button
                         class='btn btn-sm btn-danger action-delete delete_data'
                         data-id='{$lead->id}'
@@ -90,91 +98,92 @@ class LeadController extends Controller
             $data[] = [
 
                 /* ================= BASIC ================= */
-                'sl_no'              => $lead->lead_number,
-                'id'                 => $lead->id,
+                'sl_no' => $lead->lead_number,
+                'id' => $lead->id,
 
                 /* ================= LEAD INFO ================= */
-                'lead_type'          => $lead->lead_type,
-                'lead_source'        => $lead->lead_source,
-                'company_name'       => $lead->company_name,
-                'gst_no'             => $lead->gst_no,
-                'name'               => $lead->name,
-                'phone'              => $lead->phone,
-                'alternate_phone'    => $lead->alternate_phone,
-                'email'              => $lead->email,
+                'lead_type' => $lead->lead_type,
+                'lead_source' => $lead->lead_source,
+                'company_name' => $lead->company_name,
+                'gst_no' => $lead->gst_no,
+                'name' => $lead->name,
+                'phone' => $lead->phone,
+                'alternate_phone' => $lead->alternate_phone,
+                'email' => $lead->email,
 
                 /* ================= LOCATION ================= */
-                'city'               => $lead->city,
-                'state'              => $lead->state,
-                'country'            => $lead->country,
+                'city' => $lead->city,
+                'state' => $lead->state,
+                'country' => $lead->country,
 
                 /* ================= PRODUCT / SERVICE ================= */
-                'product'            => $lead->product,
-                'service'            => $lead->service,
-                'budget'             => $lead->budget,
-                'requirement'        => $lead->requirement,
+                'product' => $lead->product,
+                'service' => $lead->service,
+                'budget' => $lead->budget,
+                'requirement' => $lead->requirement,
 
                 /* ================= STATUS & PRIORITY ================= */
-                'lead_status'        => $lead->lead_status,
-                'priority'           => $lead->priority,
-                'status_reason'      => $lead->status_reason,
+                'lead_status' => $lead->lead_status,
+                'priority' => $lead->priority,
+                'status_reason' => $lead->status_reason,
 
                 /* ================= FOLLOW UP ================= */
-                'follow_up_date'     => $lead->follow_up_date,
-                'follow_up_time'     => $lead->follow_up_time,
-                'follow_up_note'     => $lead->follow_up_note,
+                'follow_up_date' => $lead->follow_up_date,
+                'follow_up_time' => $lead->follow_up_time,
+                'follow_up_note' => $lead->follow_up_note,
 
                 /* ================= ASSIGNMENT ================= */
-                'assigned_to'        => $user_name,
-                'assigned_by'        => $lead->assigned_by,
-                'assigned_at'        => $lead->assigned_at,
+                'assigned_to' => $user_name,
+                'assigned_by' => $lead->assigned_by,
+                'assigned_at' => $lead->assigned_at,
 
                 /* ================= CONTACT TRACKING ================= */
-                'last_contacted_at'  => $lead->last_contacted_at,
-                'last_contacted_by'  => $lead->last_contacted_by,
+                'last_contacted_at' => $lead->last_contacted_at,
+                'last_contacted_by' => $lead->last_contacted_by,
 
                 /* ================= CONVERSION ================= */
-                'is_converted'       => $lead->is_converted,
-                'converted_at'       => $lead->converted_at,
-                'conversion_value'   => $lead->conversion_value,
+                'is_converted' => $lead->is_converted,
+                'converted_at' => $lead->converted_at,
+                'conversion_value' => $lead->conversion_value,
+                'deal_id' => $lead->deal->id ?? null,
 
                 /* ================= NOTES ================= */
-                'remarks'            => $lead->remarks,
-                'internal_note'      => $lead->internal_note,
+                'remarks' => $lead->remarks,
+                'internal_note' => $lead->internal_note,
 
                 /* ================= UI ================= */
-                'status'             => $lead->status,   // Active / Inactive (system)
-                'action'             => $action           // Edit / Delete / View buttons
+                'status' => $lead->status,   // Active / Inactive (system)
+                'action' => $action,           // Edit / Delete / View buttons
             ];
         }
-
-
 
         return response()->json([
             'data' => $data,
         ]);
     }
+
     public function toggleLeadStatus(Request $request)
     {
-        $lead = Lead::findOrFail($request->id);
+        $lead = $this->findEditableLead($request->integer('id'));
         $lead->status = $lead->status === 'Active' ? 'Inactive' : 'Active';
         $result = $lead->update();
 
         if ($result) {
             return response()->json([
                 'status' => true,
-                'message' => 'Status updated successfully'
+                'message' => 'Status updated successfully',
             ]);
         } else {
             return response()->json([
                 'status' => false,
-                'message' => 'Something went wrong'
+                'message' => 'Something went wrong',
             ]);
         }
     }
+
     public function updateLead(Request $request)
     {
-        $lead = Lead::findOrFail($request->id);
+        $lead = $this->findEditableLead($request->integer('id'));
         $previousStatus = $lead->lead_status;
         $lead->lead_status = $request->lead_status;
         if ($request->filled('status_reason')) {
@@ -196,18 +205,20 @@ class LeadController extends Controller
         if ($result) {
             return response()->json([
                 'status' => true,
-                'message' => 'Lead Status updated successfully'
+                'message' => 'Lead Status updated successfully',
             ]);
         } else {
             return response()->json([
                 'status' => false,
-                'message' => 'Something went wrong'
+                'message' => 'Something went wrong',
             ]);
         }
     }
 
     public function add_lead(Request $request)
     {
+        $tenantId = TenantContext::id();
+        abort_if($tenantId === null, 422, 'Select a tenant before creating a lead.');
 
         $rules = [
 
@@ -226,73 +237,73 @@ class LeadController extends Controller
             'company_name' => [
                 'required',
                 'string',
-                'max:255'
+                'max:255',
             ],
             'gst_no' => [
                 'required',
                 'string',
-                'max:255'
+                'max:255',
             ],
 
             'name' => [
                 'required',
                 'string',
-                'max:255'
+                'max:255',
             ],
 
             'phone' => [
                 'required',
                 'string',
-                'max:20'
+                'max:20',
             ],
 
             'email' => [
                 'nullable',
                 'email',
-                'max:255'
+                'max:255',
             ],
 
             // ================= LOCATION =================
             'city' => [
                 'nullable',
                 'string',
-                'max:255'
+                'max:255',
             ],
 
             'state' => [
                 'nullable',
                 'string',
-                'max:255'
+                'max:255',
             ],
 
             'country' => [
                 'nullable',
                 'string',
-                'max:255'
+                'max:255',
             ],
 
             // ================= PRODUCT / SERVICE =================
             'product' => [
                 'nullable',
                 'string',
-                'max:255'
+                'max:255',
             ],
 
             'service' => [
                 'nullable',
                 'string',
-                'max:255'
+                'max:255',
             ],
 
             'budget' => [
                 'nullable',
                 'numeric',
-                'min:0'
+                'min:0',
             ],
 
             'requirement' => [
                 'nullable',
-                'string'
+                'string',
             ],
 
             // ================= STATUS =================
@@ -309,39 +320,41 @@ class LeadController extends Controller
             'status_reason' => [
                 'nullable',
                 'string',
-                'max:255'
+                'max:255',
             ],
 
             // ================= FOLLOW UP =================
             'follow_up_date' => [
                 'nullable',
-                'date'
+                'date',
             ],
 
             'follow_up_time' => [
-                'nullable'
+                'nullable',
             ],
 
             'follow_up_note' => [
                 'nullable',
                 'string',
-                'max:255'
+                'max:255',
             ],
 
             // ================= ASSIGNMENT =================
             'assigned_to' => [
                 'nullable',
-                'integer'
+                'integer',
+                Rule::exists('users', 'id')->where('tenant_id', $tenantId),
             ],
 
             'assigned_by' => [
                 'nullable',
-                'integer'
+                'integer',
+                Rule::exists('users', 'id')->where('tenant_id', $tenantId),
             ],
 
             'assigned_at' => [
                 'nullable',
-                'date'
+                'date',
             ],
 
             // ================= CONTACT TRACKING =================
@@ -351,6 +364,8 @@ class LeadController extends Controller
 
             'last_contacted_by' => [
                 'nullable',
+                'integer',
+                Rule::exists('users', 'id')->where('tenant_id', $tenantId),
             ],
 
             // ================= CONVERSION =================
@@ -365,7 +380,7 @@ class LeadController extends Controller
             'conversion_value' => [
                 'nullable',
                 'numeric',
-                'min:0'
+                'min:0',
             ],
 
             // ================= NOTES =================
@@ -397,34 +412,23 @@ class LeadController extends Controller
                 'required',
             ],
 
-
-
         ];
-
 
         $validator = Validator::make($request->all(), $rules);
 
         if ($validator->fails()) {
             return response()->json([
-                'status'  => false,
-                'message' => $validator->errors()->first()
+                'status' => false,
+                'message' => $validator->errors()->first(),
             ], 422);
         }
-        $lastLead = Lead::orderBy('id', 'desc')->first();
-
-        if ($lastLead && $lastLead->lead_number) {
-            $nextLeadNumber = $lastLead->lead_number + 1;
-        } else {
-            $nextLeadNumber = 1; // starting number
-        }
         $lead = new Lead();
-        $lead->lead_number = $nextLeadNumber;
         // A platform Super Admin has no tenant context (TenantContext::id()
         // is null for them), so BelongsToTenant's creating hook can't infer
         // one — without this, leads they create would get tenant_id=null and
         // become invisible to the tenant's own sales team. Same fallback
         // pattern as Admin\UserController::add_user.
-        $lead->tenant_id = Auth::guard('web')->user()->tenant_id ?? \App\Models\Tenant::first()?->id;
+        $lead->tenant_id = $tenantId;
         $lead->lead_type = $request->lead_type;
         $lead->lead_source = $request->lead_source;
         $lead->company_name = $request->company_name;
@@ -433,7 +437,7 @@ class LeadController extends Controller
         $lead->phone = $request->phone;
         $lead->alternate_phone = $request->alternate_phone;
         $lead->email = $request->email;
-        $lead->city  = $request->city;
+        $lead->city = $request->city;
         $lead->state = $request->state;
         $lead->country = $request->country;
         $lead->product = $request->product;
@@ -462,12 +466,15 @@ class LeadController extends Controller
         $lead->assigned_at = $assignedTo ? ($request->assigned_at ?: now()) : null;
         $lead->last_contacted_at = $request->last_contacted_at;
         $lead->last_contacted_by = $request->last_contacted_by;
-        $lead->is_converted = $request->is_converted;
-        $lead->converted_at = $request->converted_at;
-        $lead->conversion_value = $request->conversion_value;
+        // Conversion state is controlled only by the lead-to-deal workflow.
+        // A newly entered lead must never arrive pre-converted from form data.
+        $lead->is_converted = 'No';
+        $lead->converted_at = null;
+        $lead->conversion_value = null;
         $lead->remarks = $request->remarks;
         $lead->internal_note = $request->internal_note;
-        $result = $lead->save();
+        LeadNumberService::saveNew($lead);
+        $result = true;
 
         LeadActivity::create([
             'tenant_id' => $lead->tenant_id,
@@ -489,28 +496,45 @@ class LeadController extends Controller
             ]);
         }
 
-        $customer_contact_detials = new CustomerContact();
+        $company = Company::firstOrCreate([
+            'tenant_id' => $lead->tenant_id,
+            'name' => $lead->company_name,
+        ], [
+            'owner_id' => $assignedTo,
+            'gst_number' => $lead->gst_no,
+            'city' => $lead->city,
+            'state' => $lead->state,
+            'country' => $lead->country,
+            'status' => 'prospect',
+        ]);
 
-        $customer_contact_detials->name = $request->customer_name;
-        $customer_contact_detials->phone = $request->customer_phone;
-        $customer_contact_detials->email = $request->customer_email;
-        $customer_contact_detials->designation = $request->designation;
-        $customer_contact_detials->budget = $request->customer_budget;
-        $customer_contact_detials->city = $request->customer_city;
-        $customer_contact_detials->lead_id = $lead->id;
+        $contact = Contact::create([
+            'tenant_id' => $lead->tenant_id,
+            'company_id' => $company->id,
+            'owner_id' => $assignedTo,
+            'name' => $request->customer_name,
+            'phone' => $request->customer_phone,
+            'email' => $request->customer_email,
+            'designation' => $request->designation,
+            'city' => $request->customer_city,
+            'is_primary' => true,
+            'source' => 'lead',
+            'status' => 'active',
+        ]);
 
-        $customerResult = $customer_contact_detials->save();
-
+        $lead->company_id = $company->id;
+        $lead->contact_id = $contact->id;
+        $customerResult = $lead->save();
 
         if ($result && $customerResult) {
             return response()->json([
                 'status' => true,
-                'message' => 'Lead added succuessfully'
+                'message' => 'Lead added succuessfully',
             ]);
         } else {
             return response()->json([
                 'status' => false,
-                'message' => 'Something went wrong'
+                'message' => 'Something went wrong',
             ]);
         }
     }
@@ -541,127 +565,153 @@ class LeadController extends Controller
     {
 
         // Validate request
-        if (!$request->id) {
+        if (! $request->id) {
             return response()->json([
-                'status'  => false,
-                'message' => 'Lead ID is required'
+                'status' => false,
+                'message' => 'Lead ID is required',
             ], 400);
         }
 
         // Fetch lead
-        $lead = Lead::findOrFail($request->id);
+        $lead = $this->findEditableLead($request->integer('id'));
 
         // Prepare response data (NOT missing a single field)
         $data = [
-            'id'                 => $lead->id,
-            'lead_type'          => $lead->lead_type,
-            'lead_source'        => $lead->lead_source,
-            'company_name'       => $lead->company_name,
-            'gst_no'               => $lead->gst_no,
-            'name'               => $lead->name,
-            'phone'              => $lead->phone,
-            'alternate_phone'    => $lead->alternate_phone,
-            'email'              => $lead->email,
+            'id' => $lead->id,
+            'lead_type' => $lead->lead_type,
+            'lead_source' => $lead->lead_source,
+            'company_name' => $lead->company_name,
+            'gst_no' => $lead->gst_no,
+            'name' => $lead->name,
+            'phone' => $lead->phone,
+            'alternate_phone' => $lead->alternate_phone,
+            'email' => $lead->email,
 
-            'city'               => $lead->city,
-            'state'              => $lead->state,
-            'country'            => $lead->country,
+            'city' => $lead->city,
+            'state' => $lead->state,
+            'country' => $lead->country,
 
-            'product'            => $lead->product,
-            'service'            => $lead->service,
-            'budget'             => $lead->budget,
-            'requirement'        => $lead->requirement,
+            'product' => $lead->product,
+            'service' => $lead->service,
+            'budget' => $lead->budget,
+            'requirement' => $lead->requirement,
 
-            'lead_status'        => $lead->lead_status,
-            'priority'           => $lead->priority,
-            'status_reason'      => $lead->status_reason,
-            'status'             => $lead->status,
+            'lead_status' => $lead->lead_status,
+            'priority' => $lead->priority,
+            'status_reason' => $lead->status_reason,
+            'status' => $lead->status,
 
-            'follow_up_date'     => $lead->follow_up_date,
-            'follow_up_time'     => $lead->follow_up_time,
-            'follow_up_note'     => $lead->follow_up_note,
+            'follow_up_date' => $lead->follow_up_date,
+            'follow_up_time' => $lead->follow_up_time,
+            'follow_up_note' => $lead->follow_up_note,
 
-            'assigned_to'        => $lead->assigned_to,
-            'assigned_by'        => $lead->assigned_by,
-            'assigned_at'        => $lead->assigned_at,
+            'assigned_to' => $lead->assigned_to,
+            'assigned_by' => $lead->assigned_by,
+            'assigned_at' => $lead->assigned_at,
 
-            'last_contacted_at'  => $lead->last_contacted_at,
-            'last_contacted_by'  => $lead->last_contacted_by,
+            'last_contacted_at' => $lead->last_contacted_at,
+            'last_contacted_by' => $lead->last_contacted_by,
 
-            'is_converted'       => $lead->is_converted,
-            'converted_at'       => $lead->converted_at,
-            'conversion_value'   => $lead->conversion_value,
+            'is_converted' => $lead->is_converted,
+            'converted_at' => $lead->converted_at,
+            'conversion_value' => $lead->conversion_value,
 
-            'remarks'            => $lead->remarks,
-            'internal_note'      => $lead->internal_note,
+            'remarks' => $lead->remarks,
+            'internal_note' => $lead->internal_note,
         ];
 
         return response()->json([
             'status' => true,
-            'data'   => $data
+            'data' => $data,
         ]);
     }
 
     public function edit_lead_data(Request $request)
     {
-        $lead = Lead::findOrFail($request->id);
+        $lead = $this->findEditableLead($request->integer('id'));
+        $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['nullable', 'email', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:50'],
+            'alternate_phone' => ['nullable', 'string', 'max:50'],
+            'company_name' => ['nullable', 'string', 'max:255'],
+            'budget' => ['nullable', 'numeric', 'min:0'],
+            'conversion_value' => ['nullable', 'numeric', 'min:0'],
+            'assigned_to' => ['nullable', Rule::exists('users', 'id')->where('tenant_id', $lead->tenant_id)],
+            'assigned_by' => ['nullable', Rule::exists('users', 'id')->where('tenant_id', $lead->tenant_id)],
+            'last_contacted_by' => ['nullable', Rule::exists('users', 'id')->where('tenant_id', $lead->tenant_id)],
+        ]);
         $previousStatus = $lead->lead_status;
         $previousAssignee = $lead->assigned_to;
 
-        $lead->lead_type       = $request->lead_type;
-        $lead->lead_source     = $request->lead_source;
+        $lead->lead_type = $request->lead_type;
+        $lead->lead_source = $request->lead_source;
 
         // ================Company Details ============
-        $lead->company_name            = $request->company_name;
-        $lead->gst_no            = $request->gst_no;
+        $lead->company_name = $request->company_name;
+        $lead->gst_no = $request->gst_no;
 
         // ================= CONTACT =================
-        $lead->name            = $request->name;
-        $lead->phone           = $request->phone;
+        $lead->name = $request->name;
+        $lead->phone = $request->phone;
         $lead->alternate_phone = $request->alternate_phone;
-        $lead->email           = $request->email;
+        $lead->email = $request->email;
 
         // ================= LOCATION =================
-        $lead->city            = $request->city;
-        $lead->state           = $request->state;
-        $lead->country         = $request->country;
+        $lead->city = $request->city;
+        $lead->state = $request->state;
+        $lead->country = $request->country;
 
         // ================= PRODUCT / SERVICE =================
-        $lead->product         = $request->product;
-        $lead->service         = $request->service;
-        $lead->budget          = $request->budget;
-        $lead->requirement     = $request->requirement;
+        $lead->product = $request->product;
+        $lead->service = $request->service;
+        $lead->budget = $request->budget;
+        $lead->requirement = $request->requirement;
 
         // ================= STATUS =================
-        $lead->lead_status     = $request->lead_status;
-        $lead->priority        = $request->priority;
-        $lead->status_reason   = $request->status_reason;
+        $lead->lead_status = $request->lead_status;
+        $lead->priority = $request->priority;
+        $lead->status_reason = $request->status_reason;
 
         // ================= FOLLOW UP =================
-        $lead->follow_up_date  = $request->follow_up_date;
-        $lead->follow_up_time  = $request->follow_up_time;
-        $lead->follow_up_note  = $request->follow_up_note;
+        $lead->follow_up_date = $request->follow_up_date;
+        $lead->follow_up_time = $request->follow_up_time;
+        $lead->follow_up_note = $request->follow_up_note;
 
         // ================= ASSIGNMENT =================
-        $lead->assigned_to     = $request->assigned_to;
-        $lead->assigned_by     = $request->assigned_by;
-        $lead->assigned_at     = $request->assigned_at;
+        $lead->assigned_to = $request->assigned_to;
+        $lead->assigned_by = $request->assigned_by;
+        $lead->assigned_at = $request->assigned_at;
 
         // ================= CONTACT TRACKING =================
         $lead->last_contacted_at = $request->last_contacted_at;
         $lead->last_contacted_by = $request->last_contacted_by;
 
-        // ================= CONVERSION =================
-        $lead->is_converted     = $request->is_converted;
-        $lead->converted_at     = $request->converted_at;
-        $lead->conversion_value = $request->conversion_value;
+        // Conversion fields are intentionally unchanged here. Only the
+        // transactional lead-to-deal workflow may change conversion state.
 
         // ================= NOTES =================
-        $lead->remarks         = $request->remarks;
-        $lead->internal_note   = $request->internal_note;
+        $lead->remarks = $request->remarks;
+        $lead->internal_note = $request->internal_note;
 
         // ================= SAVE =================
-        $result =  $lead->update();
+        $result = $lead->update();
+
+        if ($result && $lead->company_name) {
+            $company = Company::firstOrCreate([
+                'tenant_id' => $lead->tenant_id,
+                'name' => $lead->company_name,
+            ], [
+                'owner_id' => $lead->assigned_to,
+                'gst_number' => $lead->gst_no,
+                'city' => $lead->city,
+                'state' => $lead->state,
+                'country' => $lead->country,
+                'status' => 'prospect',
+            ]);
+            $lead->company_id = $company->id;
+            $lead->save();
+        }
 
         if ($result) {
             if ($previousStatus !== $lead->lead_status) {
@@ -688,69 +738,69 @@ class LeadController extends Controller
         // ================= RESPONSE =================
         if ($result) {
             return response()->json([
-                'status'  => true,
-                'message' => 'Lead updated successfully'
-            ]);
-        } else {
-            return response()->json([
-                'status'  => false,
-                'message' => 'Something went wrong'
-            ]);
-        }
-    }
-    public function delete_lead_data(Request $request)
-    {
-        $lead = Lead::findOrFail($request->id);
-        $result = $lead->delete();
-        if ($result) {
-            return response()->json([
                 'status' => true,
-                'message' => 'Lead deleted Successfully'
+                'message' => 'Lead updated successfully',
             ]);
         } else {
             return response()->json([
                 'status' => false,
-                'message' => 'Something went wrong'
+                'message' => 'Something went wrong',
             ]);
         }
     }
+
+    public function delete_lead_data(Request $request)
+    {
+        $lead = $this->findEditableLead($request->integer('id'));
+        $result = $lead->delete();
+        if ($result) {
+            return response()->json([
+                'status' => true,
+                'message' => 'Lead deleted Successfully',
+            ]);
+        } else {
+            return response()->json([
+                'status' => false,
+                'message' => 'Something went wrong',
+            ]);
+        }
+    }
+
     public function leads_import(Request $request)
     {
         $request->validate([
-            'file' => 'required|mimes:xlsx,xls'
+            'file' => 'required|mimes:xlsx,xls',
         ]);
 
-        Excel::import(new class implements ToCollection, WithHeadingRow {
+        $tenantId = TenantContext::id();
+        abort_if($tenantId === null, 422, 'Select a tenant before importing leads.');
+
+        Excel::import(new class($tenantId) implements ToCollection, WithHeadingRow
+        {
+            public function __construct(private readonly int $tenantId) {}
 
             public function collection(Collection $rows)
             {
                 foreach ($rows as $row) {
-                    $lastLead = Lead::orderBy('id', 'desc')->first();
-
-                    if ($lastLead && $lastLead->lead_number) {
-                        $nextLeadNumber = $lastLead->lead_number + 1;
-                    } else {
-                        $nextLeadNumber = 1; // starting number
-                    }
                     $lead = new Lead();
-                    $lead->lead_number         = $nextLeadNumber;
-                    $lead->lead_type           = $row['lead_type'] ?? 'inquiry';
-                    $lead->lead_source         = $row['lead_source'] ?? null;
-                    $lead->name                = $row['name'] ?? null;
-                    $lead->phone               = $row['phone'] ?? null;
-                    $lead->alternate_phone     = $row['alternate_phone'] ?? null;
-                    $lead->email               = $row['email'] ?? null;
-                    $lead->city                = $row['city'] ?? null;
-                    $lead->state               = $row['state'] ?? null;
-                    $lead->country             = $row['country'] ?? null;
-                    $lead->product             = $row['product'] ?? null;
-                    $lead->service             = $row['service'] ?? null;
-                    $lead->budget              = $row['budget'] ?? null;
-                    $lead->lead_status         = $row['lead_status'] ?? 'new';
-                    $lead->priority            = $row['priority'] ?? 'high';
-                    $lead->status_reason       = $row['status_reason'] ?? null;
+                    $lead->tenant_id = $this->tenantId;
+                    $lead->lead_type = $row['lead_type'] ?? 'inquiry';
+                    $lead->lead_source = $row['lead_source'] ?? null;
+                    $lead->name = $row['name'] ?? null;
+                    $lead->phone = $row['phone'] ?? null;
+                    $lead->alternate_phone = $row['alternate_phone'] ?? null;
+                    $lead->email = $row['email'] ?? null;
+                    $lead->city = $row['city'] ?? null;
+                    $lead->state = $row['state'] ?? null;
+                    $lead->country = $row['country'] ?? null;
+                    $lead->product = $row['product'] ?? null;
+                    $lead->service = $row['service'] ?? null;
+                    $lead->budget = $row['budget'] ?? null;
+                    $lead->lead_status = $row['lead_status'] ?? 'new';
+                    $lead->priority = $row['priority'] ?? 'high';
+                    $lead->status_reason = $row['status_reason'] ?? null;
 
-                    if (!empty($row['follow_up_date'])) {
+                    if (! empty($row['follow_up_date'])) {
 
                         if (is_numeric($row['follow_up_date'])) {
 
@@ -767,7 +817,7 @@ class LeadController extends Controller
                     }
 
                     // ===== TIME =====
-                    if (!empty($row['follow_up_time'])) {
+                    if (! empty($row['follow_up_time'])) {
 
                         if (is_numeric($row['follow_up_time'])) {
                             // Excel time comes as decimal (like 0.5 = 12:00 PM)
@@ -779,27 +829,36 @@ class LeadController extends Controller
                                 ->format('H:i:s');
                         }
                     }
-                    $lead->follow_up_note      = $row['follow_up_note'] ?? null;
-                    $lead->requirement         = $row['requirement'] ?? null;
-                    $lead->assigned_to         = $row['assigned_to'] ?? null;
-                    $lead->assigned_by         = $row['assigned_by'] ?? null;
-                    $lead->assigned_at         = $row['assigned_at'] ?? null;
-                    $lead->last_contacted_at   = $row['last_contacted_at'] ?? null;
-                    $lead->last_contacted_by   = $row['last_contacted_by'] ?? null;
-                    $lead->is_converted        = $row['is_converted'] ?? 'No';
-                    $lead->converted_at        = $row['converted_at'] ?? null;
-                    $lead->conversion_value    = $row['conversion_value'] ?? null;
-                    $lead->remarks             = $row['remarks'] ?? null;
-                    $lead->internal_note       = $row['internal_note'] ?? null;
-                    $lead->status              = $row['status'] ?? 'Active';
-                    $lead->save();
+                    $lead->follow_up_note = $row['follow_up_note'] ?? null;
+                    $lead->requirement = $row['requirement'] ?? null;
+                    $lead->assigned_to = $this->tenantUserId($row['assigned_to'] ?? null);
+                    $lead->assigned_by = $this->tenantUserId($row['assigned_by'] ?? null);
+                    $lead->assigned_at = $row['assigned_at'] ?? null;
+                    $lead->last_contacted_at = $row['last_contacted_at'] ?? null;
+                    $lead->last_contacted_by = $this->tenantUserId($row['last_contacted_by'] ?? null);
+                    $lead->is_converted = 'No';
+                    $lead->converted_at = null;
+                    $lead->conversion_value = null;
+                    $lead->remarks = $row['remarks'] ?? null;
+                    $lead->internal_note = $row['internal_note'] ?? null;
+                    $lead->status = $row['status'] ?? 'Active';
+                    LeadNumberService::saveNew($lead);
                 }
+            }
+
+            private function tenantUserId($id): ?int
+            {
+                if (! $id) {
+                    return null;
+                }
+
+                return User::where('tenant_id', $this->tenantId)->whereKey($id)->value('id');
             }
         }, $request->file('file'));
 
         return response()->json([
             'status' => true,
-            'message' => 'Leads imported successfully'
+            'message' => 'Leads imported successfully',
         ]);
     }
 
@@ -807,7 +866,7 @@ class LeadController extends Controller
     {
         $filePath = public_path('lead-format/lead_format.xlsx');
 
-        if (!file_exists($filePath)) {
+        if (! file_exists($filePath)) {
             abort(404, 'File not found');
         }
 
@@ -815,67 +874,82 @@ class LeadController extends Controller
             $filePath,
             'leads_upload_format.xlsx',
             [
-                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             ]
         );
     }
-    function getAssignUsers()
+
+    public function getAssignUsers()
     {
-        $tenantId = Auth::guard('web')->user()->tenant_id;
+        $tenantId = TenantContext::id();
 
         $users = User::where('status', 'Active')
             ->when($tenantId !== null, fn ($q) => $q->where('tenant_id', $tenantId))
             ->get();
 
         return response()->json([
-            'users' => $users
+            'users' => $users,
         ]);
     }
-    function assignLead(Request $request)
+
+    public function assignLead(Request $request)
     {
-        $user_lead = Lead::find($request->lead_id);
-        $user_lead->assigned_to = $request->user_id;
-        $result = $user_lead->update();
+        $request->validate(['lead_id' => 'required|integer', 'user_id' => 'required|integer']);
+        $lead = Lead::findOrFail($request->integer('lead_id'));
+        $user = User::where('tenant_id', $lead->tenant_id)->findOrFail($request->integer('user_id'));
+        $lead->assigned_to = $user->id;
+        $lead->assigned_by = Auth::guard('web')->id();
+        $lead->assigned_at = now();
+        $result = $lead->save();
         if ($result) {
             return response()->json([
                 'status' => true,
-                'message' => 'Assigned User Successfully'
+                'message' => 'Assigned User Successfully',
             ]);
         } else {
             return response()->json([
                 'status' => false,
-                'message' => 'Something went wrong'
+                'message' => 'Something went wrong',
             ]);
         }
     }
 
-    function bulkAssignLead(Request $request)
+    public function bulkAssignLead(Request $request)
     {
         $request->validate([
-            'user_id' => 'required|exists:users,id',
+            'user_id' => 'required|integer',
             'lead_ids' => 'required|array',
-            'lead_ids.*' => 'exists:leads,id',
+            'lead_ids.*' => 'integer',
         ]);
 
-        $user = User::findOrFail($request->user_id);
+        $leads = Lead::whereIn('id', $request->lead_ids)->get();
+        abort_if($leads->count() !== count(array_unique($request->lead_ids)), 422, 'One or more leads are invalid.');
+        $tenantIds = $leads->pluck('tenant_id')->unique();
+        abort_if($tenantIds->count() !== 1, 422, 'Leads from different tenants cannot be assigned together.');
+        $user = User::where('tenant_id', $tenantIds->first())->findOrFail($request->integer('user_id'));
 
-        foreach ($request->lead_ids as $leadId) {
-
-            $lead = Lead::find($leadId);
-
-            if ($lead) {
-                $lead->assigned_to = $user->id;
-                $lead->assigned_at = now();
-                // optional
-                // $lead->assigned_by = auth()->id();
-
-                $lead->save();
-            }
+        foreach ($leads as $lead) {
+            $lead->assigned_to = $user->id;
+            $lead->assigned_by = Auth::guard('web')->id();
+            $lead->assigned_at = now();
+            $lead->save();
         }
 
         return response()->json([
             'status' => true,
             'message' => 'Leads assigned successfully',
         ]);
+    }
+
+    private function findEditableLead(int $id): Lead
+    {
+        $user = Auth::guard('web')->user();
+        $query = Lead::query();
+
+        if (! $user->hasElevatedAccess()) {
+            $query->where('assigned_to', $user->id);
+        }
+
+        return $query->findOrFail($id);
     }
 }

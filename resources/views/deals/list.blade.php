@@ -84,6 +84,13 @@
                     </a>
                 </div>
 
+                <div id="pipelineFilterBanner" class="alert alert-info d-flex justify-content-between align-items-center" style="display:none;font-size:13px;">
+                    <span>Showing deals in pipeline: <strong id="pipelineFilterName"></strong></span>
+                    <a href="{{ route('deals.list') }}" class="btn btn-sm btn-outline-secondary">
+                        <i class="fa fa-times"></i> Clear filter
+                    </a>
+                </div>
+
                 <div class="row">
                     <div class="col-12">
                         <div class="order-table-wrapper">
@@ -94,6 +101,7 @@
                                             <th>#</th>
                                             <th>Deal</th>
                                             <th>Amount</th>
+                                            <th>Pipeline</th>
                                             <th>Stage</th>
                                             <th>Owner</th>
                                             <th>Lead</th>
@@ -137,34 +145,57 @@
             return Number(v).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
         }
 
+        const esc = value => $('<div>').text(value ?? '').html();
+        const safeToken = value => /^[a-z0-9_-]+$/i.test(value || '') ? value : 'unknown';
+
+        function getQueryParam(name) {
+            return new URLSearchParams(window.location.search).get(name);
+        }
+
         function loadDealList() {
+            const pipelineId = getQueryParam('pipeline_id');
+
             $.ajax({
                 url: "{{ route('deals.data') }}",
                 type: "GET",
+                data: pipelineId ? { pipeline_id: pipelineId } : {},
                 success: function(response) {
                     let tbody = '';
 
                     if (response.data && response.data.length > 0) {
+                        if (pipelineId) {
+                            $('#pipelineFilterName').text(response.data[0].pipeline_name);
+                            $('#pipelineFilterBanner').show();
+                        }
+
                         response.data.forEach((item) => {
                             const leadCell = item.lead_id
-                                ? `<a href="{{ url('leads') }}/${item.lead_id}">${dash(item.lead_name)}</a>`
+                                ? `<a href="{{ url('leads') }}/${item.lead_id}">${esc(dash(item.lead_name))}</a>`
+                                : '-';
+                            const pipelineCell = item.pipeline_id
+                                ? `<a href="{{ url('deals') }}?pipeline_id=${item.pipeline_id}">${esc(dash(item.pipeline_name))}</a>`
                                 : '-';
 
                             tbody += `
                     <tr>
                         <td>${item.sl_no}</td>
-                        <td><a href="{{ url('deals') }}/${item.id}"><strong>${item.name}</strong></a></td>
-                        <td>${item.currency ?? ''} ${money(item.amount)}</td>
-                        <td>${dash(item.stage_name)}</td>
-                        <td>${dash(item.owner_name)}</td>
+                        <td><a href="{{ url('deals') }}/${item.id}"><strong>${esc(item.name)}</strong></a></td>
+                        <td>${esc(item.currency ?? '')} ${money(item.amount)}</td>
+                        <td>${pipelineCell}</td>
+                        <td>${esc(dash(item.stage_name))}</td>
+                        <td>${esc(dash(item.owner_name))}</td>
                         <td>${leadCell}</td>
-                        <td>${dash(item.expected_close_date)}</td>
-                        <td><span class="status-badge status-${item.status}">${pretty(item.status)}</span></td>
+                        <td>${esc(dash(item.expected_close_date))}</td>
+                        <td><span class="status-badge status-${safeToken(item.status)}">${esc(pretty(item.status))}</span></td>
                         <td>${item.action}</td>
                     </tr>`;
                         });
                     } else {
-                        tbody = `<tr><td colspan="9">No deals found</td></tr>`;
+                        if (pipelineId) {
+                            $('#pipelineFilterBanner').show();
+                            $('#pipelineFilterName').text('this pipeline');
+                        }
+                        tbody = `<tr><td colspan="10">No deals found</td></tr>`;
                     }
 
                     $('#dealTable tbody').html(tbody);
