@@ -15,6 +15,15 @@ class ActivateTenantDatabase
     public function handle(Request $request, Closure $next)
     {
         $this->connections->deactivate();
+
+        if (config('tenancy.mode') === 'shared') {
+            return $next($request);
+        }
+
+        if ($request->user()?->hasRole('Super Admin')) {
+            return redirect()->route('superadmin.dashboard');
+        }
+
         $tenantId = TenantContext::id();
 
         abort_if($tenantId === null, 403, 'Select a company workspace before opening the CRM.');

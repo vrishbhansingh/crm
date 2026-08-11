@@ -51,17 +51,6 @@
     gap: 18px;
   }
 
-  .tenant-context-select {
-    width: 210px;
-    height: 36px;
-    border: 1px solid #dbe3f0;
-    border-radius: 8px;
-    background: #fff;
-    padding: 0 10px;
-    color: #374151;
-    font-size: 12px;
-  }
-
   .crm-profile {
     display: flex;
     align-items: center;
@@ -208,19 +197,9 @@
     </div>
 
     <div class="crm-right">
-      @can('platform.manage-tenants')
-        <form method="post" action="{{ route('tenants.switch') }}">
-          @csrf
-          <select name="tenant_id" class="tenant-context-select" onchange="this.form.submit()" aria-label="Active tenant context">
-            <option value="">All tenants (read-only)</option>
-            @foreach(\App\Models\Tenant::where('status', 'Active')->orderBy('name')->get(['id', 'name']) as $tenantOption)
-              <option value="{{ $tenantOption->id }}" @selected((int) session('tenant_context_id') === $tenantOption->id)>
-                {{ $tenantOption->name }}
-              </option>
-            @endforeach
-          </select>
-        </form>
-      @endcan
+      @if(session('impersonator_id'))
+        <form method="post" action="{{ route('superadmin.impersonation.stop') }}">@csrf<button class="btn btn-sm btn-warning">End support session</button></form>
+      @endif
       <a class="notification-link" href="{{ route('notifications.index') }}" title="Notifications">
         <i class="fa fa-bell-o"></i>
         @php $unreadNotificationCount = Auth::guard('web')->user()->unreadNotifications()->count(); @endphp

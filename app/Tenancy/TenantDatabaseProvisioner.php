@@ -33,6 +33,19 @@ class TenantDatabaseProvisioner
 
     public function provision(Tenant $tenant, bool $copyExistingData = false): Tenant
     {
+        if (config('tenancy.mode') === 'shared') {
+            $tenant->update([
+                'provision_status' => 'ready',
+                'schema_version' => self::SCHEMA_VERSION,
+                'provisioned_at' => now(),
+                'last_health_check_at' => now(),
+                'last_health_status' => 'shared-test-mode',
+                'provision_error' => null,
+            ]);
+
+            return $tenant->fresh();
+        }
+
         $master = config('tenancy.master_connection', 'mysql');
         $masterDatabase = DB::connection($master)->getDatabaseName();
         $databaseName = $tenant->database_name ?: $this->databaseName($tenant);
@@ -62,6 +75,9 @@ class TenantDatabaseProvisioner
             DB::connection('tenant')->statement(
                 'CREATE TABLE IF NOT EXISTS `tenant_schema_versions` (`version` INT UNSIGNED NOT NULL PRIMARY KEY, `applied_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP) ENGINE=InnoDB'
             );
+            DB::connection('tenant')->statement(
+                'CREATE TABLE IF NOT EXISTS `tenant_sequences` (`name` VARCHAR(80) NOT NULL PRIMARY KEY, `current_value` BIGINT UNSIGNED NOT NULL DEFAULT 0, `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP) ENGINE=InnoDB'
+            );
 
             if ($copyExistingData) {
                 $this->copyExistingTenantData($tenant, $masterDatabase, $databaseName, $master);
@@ -72,6 +88,10 @@ class TenantDatabaseProvisioner
             DB::connection('tenant')->table('tenant_schema_versions')->updateOrInsert(
                 ['version' => self::SCHEMA_VERSION],
                 ['applied_at' => now()]
+            );
+            DB::connection('tenant')->table('tenant_sequences')->updateOrInsert(
+                ['name' => 'lead_number'],
+                ['current_value' => (int) DB::connection('tenant')->table('leads')->max('lead_number')]
             );
 
             $tenant->update([

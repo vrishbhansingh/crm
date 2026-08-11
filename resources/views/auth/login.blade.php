@@ -204,6 +204,8 @@
         </button>
       </form>
 
+      <p style="text-align:center;margin-top:18px;font-size:14px">New company? <a href="{{ route('register') }}">Create a workspace</a></p>
+
       <div class="footer-text">
         &copy; {{ date('Y') }} {{ config('app.name', 'CRM') }}. All rights reserved.
       </div>

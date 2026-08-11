@@ -33,7 +33,7 @@ class EnsureSingleSession
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
 
-                $loginRoute = $request->is('admin/*') ? 'admin.login' : 'user.login';
+                $loginRoute = $request->is('superadmin/*') ? 'superadmin.login' : ($request->is('admin/*') ? 'admin.login' : 'user.login');
 
                 return redirect()->route($loginRoute)
                     ->with('error', 'You have been logged out because your account was used on another device.');
@@ -42,7 +42,7 @@ class EnsureSingleSession
             return $next($request);
         }
 
-        $loginRoute = $request->is('admin/*') ? 'admin.login' : 'user.login';
+        $loginRoute = $request->is('superadmin/*') ? 'superadmin.login' : ($request->is('admin/*') ? 'admin.login' : 'user.login');
 
         return redirect()->route($loginRoute);
     }

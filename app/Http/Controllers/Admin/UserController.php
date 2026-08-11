@@ -22,7 +22,7 @@ class UserController extends Controller
      * moot since the form only ever offered a single hardcoded "Agent"
      * option; now that every real role is selectable, this exclusion matters.)
      */
-    private const NON_ASSIGNABLE_ROLES = ['Super Admin'];
+    private const NON_ASSIGNABLE_ROLES = ['Super Admin', 'Company Admin'];
 
     public function user_profile()
     {

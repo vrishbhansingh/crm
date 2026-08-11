@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\Company;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
@@ -47,7 +46,7 @@ class TenantManagementTest extends TestCase
     {
         $slug = 'tenant-'.Str::lower(Str::random(10));
 
-        $this->post('/platform/tenants', [
+        $this->post('/superadmin/companies', [
             'name' => 'Provisioned Tenant',
             'slug' => $slug,
             'contact_email' => 'billing@example.test',
@@ -66,31 +65,16 @@ class TenantManagementTest extends TestCase
         $this->assertSame(25, $tenant->max_users);
     }
 
-    public function test_selected_tenant_context_isolates_platform_queries_and_writes(): void
+    public function test_super_admin_tenant_context_route_is_not_exposed(): void
     {
-        $first = $this->tenant('first');
-        $second = $this->tenant('second');
-        $firstCompany = Company::withoutGlobalScopes()->create(['tenant_id' => $first->id, 'name' => 'First Company', 'status' => 'prospect']);
-        $secondCompany = Company::withoutGlobalScopes()->create(['tenant_id' => $second->id, 'name' => 'Second Company', 'status' => 'prospect']);
-
-        $this->post('/platform/tenant-context', ['tenant_id' => $first->id])->assertRedirect('/dashboard');
-        $this->withSession(['tenant_context_id' => $first->id])
-            ->getJson('/companies/data')
-            ->assertOk()
-            ->assertJsonFragment(['id' => $firstCompany->id])
-            ->assertJsonMissing(['id' => $secondCompany->id]);
-
-        $this->withSession(['tenant_context_id' => $first->id])
-            ->postJson('/companies', ['name' => 'Context Company', 'status' => 'prospect'])
-            ->assertOk();
-        $this->assertDatabaseHas('companies', ['tenant_id' => $first->id, 'name' => 'Context Company']);
+        $this->post('/superadmin/company-context', ['tenant_id' => 1])->assertNotFound();
     }
 
-    public function test_platform_writes_require_a_selected_tenant(): void
+    public function test_super_admin_is_redirected_out_of_the_tenant_crm(): void
     {
-        $this->postJson('/companies', ['name' => 'Ambiguous Company', 'status' => 'prospect'])
-            ->assertUnprocessable();
-        $this->assertDatabaseMissing('companies', ['name' => 'Ambiguous Company']);
+        config(['tenancy.mode' => 'database']);
+
+        $this->get('/dashboard')->assertRedirect('/superadmin');
     }
 
     private function tenant(string $label): Tenant

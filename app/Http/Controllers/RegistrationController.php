@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Tenant;
 use App\Models\User;
+use App\Tenancy\TenantDatabaseProvisioner;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -17,7 +18,7 @@ class RegistrationController extends Controller
         return view('auth.register');
     }
 
-    public function store(Request $request)
+    public function store(Request $request, TenantDatabaseProvisioner $provisioner)
     {
         $data = $request->validate([
             'organization_name' => ['required', 'string', 'max:150'],
@@ -27,7 +28,7 @@ class RegistrationController extends Controller
             'password' => ['required', 'string', 'min:8', 'max:72', 'confirmed'],
         ]);
 
-        DB::transaction(function () use ($data) {
+        [$tenant, $admin] = DB::transaction(function () use ($data) {
             $tenant = Tenant::create([
                 'name' => $data['organization_name'],
                 'slug' => Str::slug($data['organization_name']).'-'.Str::lower(Str::random(8)),
@@ -53,7 +54,20 @@ class RegistrationController extends Controller
 
             Role::findOrCreate('Company Admin', 'web');
             $admin->assignRole('Company Admin');
+
+            $tenant->update(['admin_user_id' => $admin->id]);
+
+            return [$tenant, $admin];
         });
+
+        try {
+            $provisioner->provision($tenant);
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            return redirect()->route('register.success')
+                ->with('provision_warning', 'Your company was registered, but workspace setup needs administrator attention.');
+        }
 
         return redirect()->route('register.success');
     }

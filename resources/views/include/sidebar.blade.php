@@ -238,16 +238,6 @@
         </li>
         @endcan
 
-        @can('platform.manage-tenants')
-        <li class="mb-1">
-            <a class="nav-link {{ request()->routeIs('tenants.*') ? 'active' : '' }}"
-                href="{{ route('tenants.index') }}">
-                <i class="fa fa-sitemap"></i>
-                <span>Tenant Management</span>
-            </a>
-        </li>
-        @endcan
-
         @canany(['company.view', 'masters.view', 'deals.manage-settings', 'audit.view'])
         <li class="mb-1 sidebar-dropdown {{ request()->routeIs(['company.*', 'master_data.*', 'pipelines.*', 'stages.*', 'audit.*']) ? 'open' : '' }}">
             <a href="javascript:void(0)" class="nav-link dropdown-left">

@@ -184,7 +184,7 @@ class DealController extends Controller
         $pipeline = Pipeline::findOrFail($request->pipeline_id);
         $this->validateDealRelationships($request, $pipeline->tenant_id, $pipeline->id);
 
-        $deal = DB::transaction(function () use ($request, $pipeline) {
+        $deal = DB::connection($pipeline->getConnectionName())->transaction(function () use ($request, $pipeline) {
             $lead = $request->lead_id ? Lead::findOrFail($request->lead_id) : null;
             $deal = Deal::create([
                 'tenant_id' => $pipeline->tenant_id,
@@ -297,7 +297,7 @@ class DealController extends Controller
         $deal = $this->findEditableDeal($id);
 
         $request->validate([
-            'to_stage_id' => ['required', Rule::exists('pipeline_stages', 'id')->where('pipeline_id', $deal->pipeline_id)],
+            'to_stage_id' => ['required', Rule::exists((config('tenancy.mode') === 'database' ? 'tenant.' : '').'pipeline_stages', 'id')->where('pipeline_id', $deal->pipeline_id)],
         ]);
 
         $toStage = PipelineStage::findOrFail($request->to_stage_id);
@@ -313,7 +313,7 @@ class DealController extends Controller
             $request->validate([
                 'lost_reason_id' => [
                     'required',
-                    Rule::exists('master_values', 'id')->where(function ($query) use ($deal) {
+                    Rule::exists((config('tenancy.mode') === 'database' ? 'tenant.' : '').'master_values', 'id')->where(function ($query) use ($deal) {
                         $query->whereNull('tenant_id');
                         if ($deal->tenant_id !== null) {
                             $query->orWhere('tenant_id', $deal->tenant_id);
@@ -331,7 +331,7 @@ class DealController extends Controller
             ]);
         }
 
-        DB::transaction(function () use ($deal, $toStage, $request) {
+        DB::connection($deal->getConnectionName())->transaction(function () use ($deal, $toStage, $request) {
             DealStageHistory::create([
                 'deal_id' => $deal->id,
                 'from_stage_id' => $deal->stage_id,
@@ -455,7 +455,7 @@ class DealController extends Controller
         if ($pipelineId !== null) {
             $rules['stage_id'] = [
                 'required',
-                Rule::exists('pipeline_stages', 'id')
+                Rule::exists((config('tenancy.mode') === 'database' ? 'tenant.' : '').'pipeline_stages', 'id')
                     ->where('pipeline_id', $pipelineId)
                     ->where(fn ($query) => $tenantId === null
                         ? $query->whereNull('tenant_id')
@@ -468,7 +468,9 @@ class DealController extends Controller
 
     private function tenantExistsRule(string $table, ?int $tenantId)
     {
-        return Rule::exists($table, 'id')->where(fn ($query) => $tenantId === null
+        $connection = $table === 'users' || config('tenancy.mode') === 'shared' ? config('tenancy.master_connection', 'mysql') : 'tenant';
+
+        return Rule::exists($connection.'.'.$table, 'id')->where(fn ($query) => $tenantId === null
             ? $query->whereNull('tenant_id')
             : $query->where('tenant_id', $tenantId));
     }

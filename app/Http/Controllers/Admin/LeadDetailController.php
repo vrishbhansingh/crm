@@ -240,7 +240,7 @@ class LeadDetailController extends Controller
 
         $user = Auth::guard('web')->user();
 
-        $deal = DB::transaction(function () use ($request, $id, $user) {
+        $deal = DB::connection(app(\App\Tenancy\TenantConnectionManager::class)->connectionName())->transaction(function () use ($request, $id, $user) {
             $leadQuery = Lead::query();
             if (! $user->hasElevatedAccess()) {
                 $leadQuery->where('assigned_to', $user->id);

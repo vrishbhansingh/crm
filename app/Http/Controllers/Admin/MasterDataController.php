@@ -31,7 +31,7 @@ class MasterDataController extends Controller
 
     public function getValues(Request $request)
     {
-        $request->validate(['type_id' => 'required|exists:master_types,id']);
+        $request->validate(['type_id' => 'required|exists:'.(config('tenancy.mode') === 'database' ? 'tenant.' : '').'master_types,id']);
 
         $tenantId = TenantContext::id();
 
@@ -52,7 +52,7 @@ class MasterDataController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'master_type_id' => 'required|exists:master_types,id',
+            'master_type_id' => 'required|exists:'.(config('tenancy.mode') === 'database' ? 'tenant.' : '').'master_types,id',
             'code' => 'required|string|max:100',
             'label' => 'required|string|max:150',
             'color' => 'nullable|string|max:20',

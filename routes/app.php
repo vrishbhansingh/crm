@@ -13,10 +13,8 @@ use App\Http\Controllers\Admin\OrderDetailController;
 use App\Http\Controllers\Admin\PipelineController;
 use App\Http\Controllers\Admin\PipelineStageController;
 use App\Http\Controllers\Admin\ProjectDetailsController;
-use App\Http\Controllers\Admin\PlatformDashboardController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\TaskController;
-use App\Http\Controllers\Admin\TenantController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\ApiTokenController;
 use App\Http\Controllers\AuthController;
@@ -50,17 +48,6 @@ Route::middleware('admin_middle')->group(function () {
     Route::get('/dashboard/attendance/team', [DashboardController::class, 'attendanceTeam'])->name('dashboard.attendance.team');
     Route::get('/dashboard/attendance/status', [DashboardController::class, 'attendanceStatus'])->name('dashboard.attendance.status');
     Route::post('/dashboard/attendance/check-in', [DashboardController::class, 'checkIn'])->name('dashboard.attendance.checkin');
-});
-
-Route::middleware(['admin_middle', 'permission:platform.manage-tenants'])->group(function () {
-    Route::get('/platform', [PlatformDashboardController::class, 'index'])->name('platform.dashboard');
-    Route::get('/platform/tenants', [TenantController::class, 'index'])->name('tenants.index');
-    Route::post('/platform/tenants', [TenantController::class, 'store'])->name('tenants.store');
-    Route::put('/platform/tenants/{tenant}', [TenantController::class, 'update'])->name('tenants.update')->whereNumber('tenant');
-    Route::delete('/platform/tenants/{tenant}', [TenantController::class, 'destroy'])->name('tenants.destroy')->whereNumber('tenant');
-    Route::post('/platform/tenant-context', [TenantController::class, 'switch'])->name('tenants.switch');
-    Route::post('/platform/tenants/{tenant}/approve', [TenantController::class, 'approve'])->name('tenants.approve')->whereNumber('tenant');
-    Route::post('/platform/tenants/{tenant}/reject', [TenantController::class, 'reject'])->name('tenants.reject')->whereNumber('tenant');
 });
 
 Route::middleware(['admin_middle', 'permission:tasks.view'])->group(function () {

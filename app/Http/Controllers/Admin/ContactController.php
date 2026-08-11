@@ -104,7 +104,9 @@ class ContactController extends Controller
 
     private function tenantExistsRule(string $table, ?int $tenantId)
     {
-        return Rule::exists($table, 'id')->where(fn ($query) => $tenantId === null
+        $connection = $table === 'users' || config('tenancy.mode') === 'shared' ? config('tenancy.master_connection', 'mysql') : 'tenant';
+
+        return Rule::exists($connection.'.'.$table, 'id')->where(fn ($query) => $tenantId === null
             ? $query->whereNull('tenant_id')
             : $query->where('tenant_id', $tenantId));
     }

@@ -95,7 +95,7 @@ class OrderDetailController extends Controller
 
         $this->findEditableOrder($request->integer('order_id'));
 
-        DB::transaction(function () use ($request) {
+        DB::connection(app(\App\Tenancy\TenantConnectionManager::class)->connectionName())->transaction(function () use ($request) {
             $order = Order::whereKey($request->integer('order_id'))->lockForUpdate()->firstOrFail();
             $amount = (float) $request->paid_amount;
             $due = (float) $order->due_amount;

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Tenant;
+use App\Models\PlatformAuditLog;
 use App\Models\UserAttendance;
 use App\Support\TenantContext;
 use Illuminate\Http\Request;
@@ -21,7 +23,7 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         if (Auth::guard('web')->check()) {
-            return redirect()->route(Auth::guard('web')->user()->hasRole('Super Admin') ? 'platform.dashboard' : 'dashboard');
+            return redirect()->route(Auth::guard('web')->user()->hasRole('Super Admin') ? 'superadmin.dashboard' : 'dashboard');
         }
 
         $submitRoute = $request->is('admin/*') ? route('admin.login_submit') : route('user.login_submit');
@@ -42,6 +44,14 @@ class AuthController extends Controller
             return response()->json([
                 'status' => false,
                 'message' => 'Invalid Credentials',
+            ]);
+        }
+
+        if ($user->hasRole('Super Admin')) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Use the separate Super Admin portal to sign in.',
+                'location' => route('superadmin.login'),
             ]);
         }
 
@@ -83,7 +93,7 @@ class AuthController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Login successful',
-            'location' => route($user->hasRole('Super Admin') ? 'platform.dashboard' : 'dashboard'),
+            'location' => route('dashboard'),
         ]);
     }
 
@@ -159,5 +169,47 @@ class AuthController extends Controller
             'status' => true,
             'message' => 'Logged in as user successfully',
         ]);
+    }
+
+    public function platformImpersonate(Request $request, Tenant $tenant, User $user)
+    {
+        abort_unless(Auth::user()?->hasRole('Super Admin'), 403);
+        abort_unless((int) $user->tenant_id === $tenant->id && $user->status === 'Active', 404);
+        abort_unless($tenant->status === 'Active' && $tenant->approval_status === 'approved' && $tenant->provision_status === 'ready', 422, 'This workspace is not ready.');
+
+        $actor = Auth::user();
+        PlatformAuditLog::create([
+            'actor_id' => $actor->id,
+            'tenant_id' => $tenant->id,
+            'target_user_id' => $user->id,
+            'event' => 'user.impersonation_started',
+            'ip_address' => $request->ip(),
+        ]);
+        $request->session()->put('impersonator_id', $actor->id);
+        Auth::login($user);
+        $request->session()->regenerate();
+        $request->session()->put('session_token', $user->session_token);
+
+        return redirect()->route('dashboard')->with('success', 'Support session started. Actions are audited.');
+    }
+
+    public function stopImpersonating(Request $request)
+    {
+        $impersonatorId = $request->session()->pull('impersonator_id');
+        abort_unless($impersonatorId, 403);
+        $tenantId = Auth::user()?->tenant_id;
+
+        Auth::loginUsingId($impersonatorId);
+        $request->session()->regenerate();
+        $request->session()->put('session_token', Auth::user()->session_token);
+        $request->session()->forget('tenant_context_id');
+        PlatformAuditLog::create([
+            'actor_id' => $impersonatorId,
+            'tenant_id' => $tenantId,
+            'event' => 'user.impersonation_stopped',
+            'ip_address' => $request->ip(),
+        ]);
+
+        return redirect()->route('superadmin.dashboard');
     }
 }

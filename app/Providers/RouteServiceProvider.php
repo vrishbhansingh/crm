@@ -36,10 +36,15 @@ class RouteServiceProvider extends ServiceProvider
             Route::middleware('web')
                 ->group(base_path('routes/web.php'));
 
+            Route::middleware('web')
+                ->prefix('superadmin')
+                ->name('superadmin.')
+                ->group(base_path('routes/superadmin.php'));
+
             // Unified interface routes (no /admin or /user prefix) — every
             // page reachable regardless of role, gated by permission instead
             // of URL namespace.
-            Route::middleware('web')
+            Route::middleware(['web', 'tenant.database'])
                 ->group(base_path('routes/app.php'));
 
             Route::middleware('web')

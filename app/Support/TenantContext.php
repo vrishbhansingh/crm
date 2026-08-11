@@ -35,9 +35,7 @@ class TenantContext
             return (int) $user->tenant_id;
         }
 
-        $selectedTenant = session('tenant_context_id');
-
-        return $selectedTenant !== null ? (int) $selectedTenant : null;
+        return null;
     }
 
     /**

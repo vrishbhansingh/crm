@@ -31,8 +31,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        foreach ([Company::class, Contact::class, Deal::class, Lead::class, Order::class, PaymentDetails::class, Pipeline::class, ProjectInfo::class, Task::class, User::class] as $model) {
+        foreach ([Company::class, Contact::class, Deal::class, Lead::class, Order::class, PaymentDetails::class, Pipeline::class, ProjectInfo::class, Task::class] as $model) {
             $model::observe(CrmAuditObserver::class);
+        }
+
+        if (config('tenancy.mode') === 'shared') {
+            User::observe(CrmAuditObserver::class);
         }
     }
 }

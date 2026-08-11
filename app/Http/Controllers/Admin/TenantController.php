@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Tenancy\TenantDatabaseProvisioner;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -21,7 +22,7 @@ class TenantController extends Controller
         return view('tenants.index', compact('tenants'));
     }
 
-    public function store(Request $request)
+    public function store(Request $request, TenantDatabaseProvisioner $provisioner)
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:150'],
@@ -38,7 +39,7 @@ class TenantController extends Controller
             'admin_password' => ['required', 'string', 'min:8', 'max:72'],
         ]);
 
-        DB::transaction(function () use ($data) {
+        [$tenant, $admin] = DB::transaction(function () use ($data) {
             $tenant = Tenant::create([
                 'name' => $data['name'],
                 'slug' => $data['slug'] ?: Str::slug($data['name']).'-'.Str::lower(Str::random(6)),
@@ -65,7 +66,19 @@ class TenantController extends Controller
                 'session_token' => Str::random(60),
             ]);
             $admin->assignRole('Company Admin');
+
+            $tenant->update(['admin_user_id' => $admin->id]);
+
+            return [$tenant, $admin];
         });
+
+        try {
+            $provisioner->provision($tenant);
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            return back()->withErrors(['tenant' => 'Company was created, but database provisioning failed. Use Retry provisioning after checking the database settings.']);
+        }
 
         return back()->with('success', 'Tenant and company administrator created.');
     }
@@ -95,12 +108,7 @@ class TenantController extends Controller
 
     public function destroy(Tenant $tenant)
     {
-        $hasData = $tenant->users()->exists()
-            || DB::table('leads')->where('tenant_id', $tenant->id)->exists()
-            || DB::table('deals')->where('tenant_id', $tenant->id)->exists()
-            || DB::table('orders')->where('tenant_id', $tenant->id)->exists()
-            || DB::table('companies')->where('tenant_id', $tenant->id)->exists()
-            || DB::table('contacts')->where('tenant_id', $tenant->id)->exists();
+        $hasData = $tenant->users()->exists() || $tenant->database_name !== null;
 
         if ($hasData) {
             return back()->withErrors(['tenant' => 'This tenant contains users or CRM records. Deactivate it instead of deleting it.']);
@@ -111,22 +119,18 @@ class TenantController extends Controller
         return back()->with('success', 'Empty tenant deleted.');
     }
 
-    public function switch(Request $request)
+    public function approve(Tenant $tenant, TenantDatabaseProvisioner $provisioner)
     {
-        $request->validate(['tenant_id' => ['nullable', 'integer']]);
+        if ($tenant->provision_status !== 'ready') {
+            try {
+                $tenant = $provisioner->provision($tenant);
+            } catch (\Throwable $exception) {
+                report($exception);
 
-        if ($request->filled('tenant_id')) {
-            $tenant = Tenant::where('status', 'Active')->findOrFail($request->integer('tenant_id'));
-            session()->put('tenant_context_id', $tenant->id);
-        } else {
-            session()->forget('tenant_context_id');
+                return back()->withErrors(['tenant' => 'Approval stopped because the tenant database could not be provisioned.']);
+            }
         }
 
-        return redirect()->route('dashboard');
-    }
-
-    public function approve(Tenant $tenant)
-    {
         DB::transaction(function () use ($tenant) {
             $tenant = Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             $tenant->update([
@@ -140,6 +144,27 @@ class TenantController extends Controller
         });
 
         return back()->with('success', 'Signup approved. The company administrator can now log in.');
+    }
+
+    public function provision(Tenant $tenant, TenantDatabaseProvisioner $provisioner)
+    {
+        try {
+            $provisioner->provision($tenant);
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            return back()->withErrors(['tenant' => 'Provisioning failed: '.$exception->getMessage()]);
+        }
+
+        return back()->with('success', 'Tenant database is ready and passed its health check.');
+    }
+
+    public function health(Tenant $tenant, TenantDatabaseProvisioner $provisioner)
+    {
+        return back()->with(
+            $provisioner->healthCheck($tenant) ? 'success' : 'error',
+            $tenant->name.' database is '.($tenant->last_health_status === 'healthy' ? 'healthy.' : 'unreachable.')
+        );
     }
 
     public function reject(Request $request, Tenant $tenant)
