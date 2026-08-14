@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Tenancy\TenantDatabaseProvisioner;
+use App\Services\PlatformAuditLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -18,7 +19,7 @@ class RegistrationController extends Controller
         return view('auth.register');
     }
 
-    public function store(Request $request, TenantDatabaseProvisioner $provisioner)
+    public function store(Request $request, TenantDatabaseProvisioner $provisioner, PlatformAuditLogger $audit)
     {
         $data = $request->validate([
             'organization_name' => ['required', 'string', 'max:150'],
@@ -39,7 +40,7 @@ class RegistrationController extends Controller
                 'plan' => 'trial',
                 'timezone' => 'Asia/Kolkata',
                 'locale' => 'en',
-                'trial_ends_at' => now()->addDays(14),
+                'trial_ends_at' => null,
             ]);
 
             $admin = User::create([
@@ -52,22 +53,30 @@ class RegistrationController extends Controller
                 'session_token' => Str::random(60),
             ]);
 
-            Role::findOrCreate('Company Admin', 'web');
-            $admin->assignRole('Company Admin');
+            \App\Support\PermissionTeam::run($tenant->id, function () use ($admin) {
+                $role = Role::findOrCreate('Admin', 'web');
+                $role->syncPermissions(\Spatie\Permission\Models\Permission::where('name', 'not like', 'platform.%')->get());
+                $admin->assignRole($role);
+            });
 
             $tenant->update(['admin_user_id' => $admin->id]);
 
             return [$tenant, $admin];
         });
 
+        $audit->record('tenant.registered', $tenant, $admin, ['source' => 'self_service']);
+
         try {
             $provisioner->provision($tenant);
         } catch (\Throwable $exception) {
             report($exception);
+            $audit->record('tenant.provision_failed', $tenant->fresh(), $admin, ['error' => $exception->getMessage()]);
 
             return redirect()->route('register.success')
                 ->with('provision_warning', 'Your company was registered, but workspace setup needs administrator attention.');
         }
+
+        $audit->record('tenant.provisioned', $tenant->fresh(), $admin, ['source' => 'self_service']);
 
         return redirect()->route('register.success');
     }

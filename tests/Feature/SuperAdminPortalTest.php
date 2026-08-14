@@ -18,7 +18,7 @@ class SuperAdminPortalTest extends TestCase
     {
         $super = $this->makeUser(null, 'Super Admin');
         $tenant = Tenant::create(['name' => 'Portal Tenant', 'slug' => 'portal-'.Str::random(8), 'status' => 'Active']);
-        $tenantUser = $this->makeUser($tenant->id, 'Company Admin');
+        $tenantUser = $this->makeUser($tenant->id, 'Admin');
 
         $this->postJson('/user/login', ['email' => $super->email, 'password' => 'password'])
             ->assertOk()

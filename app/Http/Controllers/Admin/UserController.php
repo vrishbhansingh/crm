@@ -22,7 +22,7 @@ class UserController extends Controller
      * moot since the form only ever offered a single hardcoded "Agent"
      * option; now that every real role is selectable, this exclusion matters.)
      */
-    private const NON_ASSIGNABLE_ROLES = ['Super Admin', 'Company Admin'];
+    private const NON_ASSIGNABLE_ROLES = ['Super Admin', 'Admin'];
 
     public function user_profile()
     {
@@ -31,7 +31,7 @@ class UserController extends Controller
 
     public function getRoles()
     {
-        $roles = Role::whereNotIn('name', self::NON_ASSIGNABLE_ROLES)
+        $roles = Role::where('tenant_id', TenantContext::id())->whereNotIn('name', self::NON_ASSIGNABLE_ROLES)
             ->orderBy('name')
             ->pluck('name');
 
@@ -96,7 +96,7 @@ class UserController extends Controller
 
     public function add_user(Request $request)
     {
-        $assignableRoles = Role::whereNotIn('name', self::NON_ASSIGNABLE_ROLES)->pluck('name');
+        $assignableRoles = Role::where('tenant_id', TenantContext::id())->whereNotIn('name', self::NON_ASSIGNABLE_ROLES)->pluck('name');
 
         $rules = [
             'name' => ['required', 'string', 'max:100'],
@@ -158,7 +158,7 @@ class UserController extends Controller
 
     public function edit_user(Request $request)
     {
-        $assignableRoles = Role::whereNotIn('name', self::NON_ASSIGNABLE_ROLES)->pluck('name');
+        $assignableRoles = Role::where('tenant_id', TenantContext::id())->whereNotIn('name', self::NON_ASSIGNABLE_ROLES)->pluck('name');
 
         $validator = Validator::make($request->all(), [
             'id' => ['required', 'integer'],

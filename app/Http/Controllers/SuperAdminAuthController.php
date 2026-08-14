@@ -7,11 +7,13 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use App\Support\PermissionTeam;
 
 class SuperAdminAuthController extends Controller
 {
     public function login()
     {
+        PermissionTeam::set(null);
         if (Auth::check() && Auth::user()->hasRole('Super Admin')) {
             return redirect()->route('superadmin.dashboard');
         }
@@ -21,6 +23,7 @@ class SuperAdminAuthController extends Controller
 
     public function authenticate(Request $request)
     {
+        PermissionTeam::set(null);
         $data = $request->validate(['email' => ['required', 'email'], 'password' => ['required', 'string']]);
         $user = User::where('email', $data['email'])->first();
 

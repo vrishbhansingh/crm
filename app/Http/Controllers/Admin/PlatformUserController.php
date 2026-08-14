@@ -6,28 +6,32 @@ use App\Http\Controllers\Controller;
 use App\Models\PlatformAuditLog;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Services\CompanyAdminManager;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Spatie\Permission\Models\Role;
+use App\Support\PermissionTeam;
 
 class PlatformUserController extends Controller
 {
-    private const RESERVED_ROLES = ['Super Admin', 'Company Admin'];
+    private const RESERVED_ROLES = ['Super Admin', 'Admin'];
 
     public function index(Tenant $tenant)
     {
+        PermissionTeam::set($tenant->id);
         $tenant->load(['users.roles', 'admin']);
-        $roles = Role::whereNotIn('name', self::RESERVED_ROLES)->orderBy('name')->pluck('name');
+        $roles = Role::where('tenant_id', $tenant->id)->whereNotIn('name', self::RESERVED_ROLES)->orderBy('name')->pluck('name');
 
         return view('platform.users', compact('tenant', 'roles'));
     }
 
     public function store(Request $request, Tenant $tenant)
     {
+        PermissionTeam::set($tenant->id);
         abort_if($tenant->max_users && $tenant->users()->count() >= $tenant->max_users, 422, 'This company has reached its user limit.');
-        $roles = Role::whereNotIn('name', self::RESERVED_ROLES)->pluck('name');
+        $roles = Role::where('tenant_id', $tenant->id)->whereNotIn('name', self::RESERVED_ROLES)->pluck('name');
         $data = $request->validate([
             'name' => ['required', 'string', 'max:100'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
@@ -52,9 +56,10 @@ class PlatformUserController extends Controller
 
     public function update(Request $request, Tenant $tenant, User $user)
     {
+        PermissionTeam::set($tenant->id);
         abort_unless((int) $user->tenant_id === $tenant->id, 404);
         $isAdmin = $tenant->admin_user_id === $user->id;
-        $roles = Role::whereNotIn('name', self::RESERVED_ROLES)->pluck('name');
+        $roles = Role::where('tenant_id', $tenant->id)->whereNotIn('name', self::RESERVED_ROLES)->pluck('name');
         $data = $request->validate([
             'name' => ['required', 'string', 'max:100'],
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
@@ -78,21 +83,16 @@ class PlatformUserController extends Controller
         return back()->with('success', 'User account updated.');
     }
 
-    public function transferAdmin(Request $request, Tenant $tenant)
+    public function transferAdmin(Request $request, Tenant $tenant, CompanyAdminManager $admins)
     {
+        PermissionTeam::set($tenant->id);
         $data = $request->validate(['user_id' => ['required', 'integer']]);
         $newAdmin = $tenant->users()->findOrFail($data['user_id']);
         $oldAdmin = $tenant->admin;
-
-        if ($oldAdmin && $oldAdmin->id !== $newAdmin->id) {
-            $oldAdmin->syncRoles(['Manager']);
-        }
-        $newAdmin->syncRoles(['Company Admin']);
-        $newAdmin->update(['status' => 'Active']);
-        $tenant->update(['admin_user_id' => $newAdmin->id]);
+        $admins->assign($tenant, $newAdmin);
         $this->audit('company.admin_transferred', $tenant, $newAdmin, ['previous_admin_id' => $oldAdmin?->id]);
 
-        return back()->with('success', 'Company administrator transferred. Exactly one Company Admin remains.');
+        return back()->with('success', 'Company administrator transferred. Exactly one Admin remains.');
     }
 
     private function audit(string $event, Tenant $tenant, ?User $target = null, array $metadata = []): void

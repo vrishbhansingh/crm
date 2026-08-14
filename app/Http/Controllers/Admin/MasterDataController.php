@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Auth;
  * One reusable admin screen for every master data type (Phase 2) instead of
  * a separate page per lookup list. Global values (tenant_id null) are the
  * platform-wide defaults, editable only by a platform Super Admin; a
- * tenant's Company Admin can only add/edit/delete their own tenant's values.
+ * tenant's Admin can only add/edit/delete their own tenant's values.
  */
 class MasterDataController extends Controller
 {
@@ -81,7 +81,7 @@ class MasterDataController extends Controller
         MasterValue::create([
             'master_type_id' => $request->master_type_id,
             // Super Admin (tenant_id null) adds a global default seen by every
-            // tenant; a Company Admin's addition only applies to their tenant.
+            // tenant; an Admin's addition only applies to their tenant.
             'tenant_id' => $tenantId,
             'code' => $request->code,
             'label' => $request->label,
@@ -148,7 +148,7 @@ class MasterDataController extends Controller
         $tenantId = TenantContext::id();
 
         // Platform Super Admin (tenant_id null) manages everything, including
-        // globals. A Company Admin only manages their own tenant's values.
+        // globals. An Admin only manages their own tenant's values.
         return Auth::guard('web')->user()->hasRole('Super Admin') || $value->tenant_id === $tenantId;
     }
 }

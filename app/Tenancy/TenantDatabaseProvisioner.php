@@ -78,6 +78,7 @@ class TenantDatabaseProvisioner
             DB::connection('tenant')->statement(
                 'CREATE TABLE IF NOT EXISTS `tenant_sequences` (`name` VARCHAR(80) NOT NULL PRIMARY KEY, `current_value` BIGINT UNSIGNED NOT NULL DEFAULT 0, `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP) ENGINE=InnoDB'
             );
+            $this->runTenantMigrations();
 
             if ($copyExistingData) {
                 $this->copyExistingTenantData($tenant, $masterDatabase, $databaseName, $master);
@@ -115,6 +116,7 @@ class TenantDatabaseProvisioner
             throw $exception;
         } finally {
             $this->connections->deactivate();
+            $this->restoreMasterMigrationConnection();
         }
     }
 
@@ -136,6 +138,34 @@ class TenantDatabaseProvisioner
         ]);
 
         return $healthy;
+    }
+
+    public function migrateSchema(Tenant $tenant): void
+    {
+        $this->connections->activate($tenant);
+
+        try {
+            $this->runTenantMigrations();
+            $tenant->update(['schema_version' => self::SCHEMA_VERSION]);
+        } finally {
+            $this->connections->deactivate();
+            $this->restoreMasterMigrationConnection();
+        }
+    }
+
+    private function runTenantMigrations(): void
+    {
+        $migrator = app('migrator');
+        $migrator->setConnection(config('tenancy.tenant_connection', 'tenant'));
+        if (! $migrator->repositoryExists()) {
+            $migrator->getRepository()->createRepository();
+        }
+        $migrator->run(database_path('migrations/tenant'));
+    }
+
+    private function restoreMasterMigrationConnection(): void
+    {
+        app('migrator')->setConnection(config('tenancy.master_connection', 'mysql'));
     }
 
     private function seedFreshTenant(Tenant $tenant, string $masterDatabase, string $databaseName, string $master): void

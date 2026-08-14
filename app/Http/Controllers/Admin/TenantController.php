@@ -6,12 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Tenancy\TenantDatabaseProvisioner;
+use App\Services\PlatformAuditLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class TenantController extends Controller
 {
@@ -22,7 +24,7 @@ class TenantController extends Controller
         return view('tenants.index', compact('tenants'));
     }
 
-    public function store(Request $request, TenantDatabaseProvisioner $provisioner)
+    public function store(Request $request, TenantDatabaseProvisioner $provisioner, PlatformAuditLogger $audit)
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:150'],
@@ -53,7 +55,7 @@ class TenantController extends Controller
                 'timezone' => $data['timezone'],
                 'locale' => $data['locale'],
                 'max_users' => $data['max_users'] ?? null,
-                'trial_ends_at' => $data['trial_ends_at'] ?? null,
+                'trial_ends_at' => $data['trial_ends_at'] ?? ($data['plan'] === 'trial' ? now()->addDays(14) : null),
             ]);
 
             $admin = User::create([
@@ -65,7 +67,11 @@ class TenantController extends Controller
                 'status' => 'Active',
                 'session_token' => Str::random(60),
             ]);
-            $admin->assignRole('Company Admin');
+            \App\Support\PermissionTeam::run($tenant->id, function () use ($admin) {
+                $role = \Spatie\Permission\Models\Role::findOrCreate('Admin', 'web');
+                $role->syncPermissions(\Spatie\Permission\Models\Permission::where('name', 'not like', 'platform.%')->get());
+                $admin->assignRole($role);
+            });
 
             $tenant->update(['admin_user_id' => $admin->id]);
 
@@ -80,10 +86,12 @@ class TenantController extends Controller
             return back()->withErrors(['tenant' => 'Company was created, but database provisioning failed. Use Retry provisioning after checking the database settings.']);
         }
 
+        $audit->record('tenant.created', $tenant, $admin, ['source' => 'superadmin', 'plan' => $tenant->plan]);
+
         return back()->with('success', 'Tenant and company administrator created.');
     }
 
-    public function update(Request $request, Tenant $tenant)
+    public function update(Request $request, Tenant $tenant, PlatformAuditLogger $audit)
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:150'],
@@ -97,11 +105,15 @@ class TenantController extends Controller
             'status' => ['required', Rule::in(['Active', 'Inactive'])],
         ]);
 
-        $tenant->update($data);
-
-        if ($tenant->status === 'Inactive' && session('tenant_context_id') === $tenant->id) {
-            session()->forget('tenant_context_id');
+        if (($data['max_users'] ?? null) !== null && $data['max_users'] < $tenant->users()->count()) {
+            throw ValidationException::withMessages([
+                'max_users' => 'The user limit cannot be lower than the company’s current user count.',
+            ]);
         }
+
+        $before = $tenant->only(['name', 'contact_email', 'plan', 'max_users', 'trial_ends_at', 'status']);
+        $tenant->update($data);
+        $audit->record('tenant.updated', $tenant, metadata: ['before' => $before, 'after' => $tenant->only(array_keys($before))]);
 
         return back()->with('success', 'Tenant settings updated.');
     }
@@ -119,7 +131,7 @@ class TenantController extends Controller
         return back()->with('success', 'Empty tenant deleted.');
     }
 
-    public function approve(Tenant $tenant, TenantDatabaseProvisioner $provisioner)
+    public function approve(Tenant $tenant, TenantDatabaseProvisioner $provisioner, PlatformAuditLogger $audit)
     {
         if ($tenant->provision_status !== 'ready') {
             try {
@@ -139,14 +151,16 @@ class TenantController extends Controller
                 'approved_at' => now(),
                 'approved_by' => Auth::guard('web')->id(),
                 'rejection_reason' => null,
+                'trial_ends_at' => $tenant->plan === 'trial' && $tenant->trial_ends_at === null ? now()->addDays(14) : $tenant->trial_ends_at,
             ]);
-            $tenant->users()->whereHas('roles', fn ($query) => $query->where('name', 'Company Admin'))->update(['status' => 'Active']);
+            $tenant->admin?->update(['status' => 'Active']);
         });
+        $audit->record('tenant.approved', $tenant->fresh(), $tenant->admin);
 
         return back()->with('success', 'Signup approved. The company administrator can now log in.');
     }
 
-    public function provision(Tenant $tenant, TenantDatabaseProvisioner $provisioner)
+    public function provision(Tenant $tenant, TenantDatabaseProvisioner $provisioner, PlatformAuditLogger $audit)
     {
         try {
             $provisioner->provision($tenant);
@@ -156,18 +170,20 @@ class TenantController extends Controller
             return back()->withErrors(['tenant' => 'Provisioning failed: '.$exception->getMessage()]);
         }
 
+        $audit->record('tenant.provisioned', $tenant->fresh(), metadata: ['database_name' => $tenant->database_name]);
+
         return back()->with('success', 'Tenant database is ready and passed its health check.');
     }
 
-    public function health(Tenant $tenant, TenantDatabaseProvisioner $provisioner)
+    public function health(Tenant $tenant, TenantDatabaseProvisioner $provisioner, PlatformAuditLogger $audit)
     {
-        return back()->with(
-            $provisioner->healthCheck($tenant) ? 'success' : 'error',
-            $tenant->name.' database is '.($tenant->last_health_status === 'healthy' ? 'healthy.' : 'unreachable.')
-        );
+        $healthy = $provisioner->healthCheck($tenant);
+        $audit->record('tenant.health_checked', $tenant->fresh(), metadata: ['healthy' => $healthy]);
+
+        return back()->with($healthy ? 'success' : 'error', $tenant->name.' database is '.($healthy ? 'healthy.' : 'unreachable.'));
     }
 
-    public function reject(Request $request, Tenant $tenant)
+    public function reject(Request $request, Tenant $tenant, PlatformAuditLogger $audit)
     {
         $data = $request->validate(['rejection_reason' => ['required', 'string', 'max:2000']]);
 
@@ -181,6 +197,7 @@ class TenantController extends Controller
             ]);
             $tenant->users()->update(['status' => 'Inactive']);
         });
+        $audit->record('tenant.rejected', $tenant->fresh(), metadata: ['reason' => $data['rejection_reason']]);
 
         return back()->with('success', 'Signup rejected.');
     }

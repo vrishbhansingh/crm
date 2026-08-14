@@ -4,6 +4,8 @@ namespace Tests;
 
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Illuminate\Support\Facades\File;
+use App\Models\User;
+use App\Support\PermissionTeam;
 
 abstract class TestCase extends BaseTestCase
 {
@@ -16,5 +18,7 @@ abstract class TestCase extends BaseTestCase
         $compiledViewPath = storage_path('framework/testing/views');
         File::ensureDirectoryExists($compiledViewPath);
         config(['view.compiled' => $compiledViewPath]);
+        PermissionTeam::set(null);
+        User::created(fn (User $user) => PermissionTeam::set($user->tenant_id));
     }
 }

@@ -56,6 +56,6 @@ class User extends Authenticatable
      */
     public function hasElevatedAccess(): bool
     {
-        return $this->hasAnyRole(['Super Admin', 'Company Admin', 'Manager', 'Sales Manager']);
+        return $this->hasAnyRole(['Super Admin', 'Admin', 'Manager', 'Sales Manager']);
     }
 }

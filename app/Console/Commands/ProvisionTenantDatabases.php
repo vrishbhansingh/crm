@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Tenancy\TenantDatabaseProvisioner;
+use App\Services\CompanyAdminManager;
 use Illuminate\Console\Command;
 
 class ProvisionTenantDatabases extends Command
@@ -13,7 +14,7 @@ class ProvisionTenantDatabases extends Command
 
     protected $description = 'Create and initialize isolated company databases';
 
-    public function handle(TenantDatabaseProvisioner $provisioner): int
+    public function handle(TenantDatabaseProvisioner $provisioner, CompanyAdminManager $admins): int
     {
         $query = Tenant::query()->orderBy('id');
         if ($this->option('tenant')) {
@@ -30,8 +31,7 @@ class ProvisionTenantDatabases extends Command
         foreach ($tenants as $tenant) {
             if ($this->option('admin-user')) {
                 $admin = User::where('tenant_id', $tenant->id)->findOrFail((int) $this->option('admin-user'));
-                $admin->syncRoles(['Company Admin']);
-                $tenant->update(['admin_user_id' => $admin->id]);
+                $tenant = $admins->assign($tenant, $admin);
             }
 
             if (! $tenant->admin_user_id) {

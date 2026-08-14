@@ -238,8 +238,8 @@
         </li>
         @endcan
 
-        @canany(['company.view', 'masters.view', 'deals.manage-settings', 'audit.view'])
-        <li class="mb-1 sidebar-dropdown {{ request()->routeIs(['company.*', 'master_data.*', 'pipelines.*', 'stages.*', 'audit.*']) ? 'open' : '' }}">
+        @canany(['company.view', 'masters.view', 'deals.manage-settings', 'audit.view', 'roles.view'])
+        <li class="mb-1 sidebar-dropdown {{ request()->routeIs(['company.*', 'master_data.*', 'pipelines.*', 'stages.*', 'audit.*', 'roles.*']) ? 'open' : '' }}">
             <a href="javascript:void(0)" class="nav-link dropdown-left">
                 <i class="fa fa-cog"></i>
                 <span>Settings</span>
@@ -247,6 +247,9 @@
             </a>
 
             <ul class="sidebar-submenu">
+                @can('roles.view')
+                <li><a class="nav-link {{ request()->routeIs('roles.*') ? 'active' : '' }}" href="{{ route('roles.index') }}"><i class="fa fa-lock"></i> Roles & Permissions</a></li>
+                @endcan
                 @can('company.view')
                 <li>
                     <a class="nav-link {{ request()->routeIs('company.*') ? 'active' : '' }}"

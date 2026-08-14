@@ -14,4 +14,19 @@ class PlatformAuditLog extends Model
     {
         return config('tenancy.master_connection', 'mysql');
     }
+
+    public function actor()
+    {
+        return $this->belongsTo(User::class, 'actor_id');
+    }
+
+    public function tenant()
+    {
+        return $this->belongsTo(Tenant::class);
+    }
+
+    public function targetUser()
+    {
+        return $this->belongsTo(User::class, 'target_user_id');
+    }
 }

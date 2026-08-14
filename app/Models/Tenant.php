@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 
 class Tenant extends Model
 {
@@ -58,6 +59,50 @@ class Tenant extends Model
     public function admin()
     {
         return $this->belongsTo(User::class, 'admin_user_id');
+    }
+
+    public function isExpired(): bool
+    {
+        return $this->trial_ends_at !== null && $this->trial_ends_at->isPast();
+    }
+
+    public function accessBlockReason(): ?string
+    {
+        if ($this->approval_status === 'pending') {
+            return 'Your company signup is awaiting Super Admin approval.';
+        }
+
+        if ($this->approval_status !== 'approved') {
+            return 'Your company signup was not approved.';
+        }
+
+        if ($this->status !== 'Active') {
+            return 'Your organization workspace is inactive.';
+        }
+
+        if (config('tenancy.mode') === 'database' && $this->provision_status !== 'ready') {
+            return 'Your organization database is not ready. Contact the platform administrator.';
+        }
+
+        if ($this->isExpired()) {
+            return 'Your organization subscription has expired.';
+        }
+
+        return null;
+    }
+
+    public function isAccessible(): bool
+    {
+        return $this->accessBlockReason() === null;
+    }
+
+    public function scopeAccessible(Builder $query): Builder
+    {
+        return $query->where('status', 'Active')
+            ->where('approval_status', 'approved')
+            ->where(function (Builder $builder) {
+                $builder->whereNull('trial_ends_at')->orWhere('trial_ends_at', '>', now());
+            });
     }
 
     public function getConnectionName()

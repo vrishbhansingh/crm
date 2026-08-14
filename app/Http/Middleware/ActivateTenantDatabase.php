@@ -28,11 +28,8 @@ class ActivateTenantDatabase
 
         abort_if($tenantId === null, 403, 'Select a company workspace before opening the CRM.');
 
-        $tenant = Tenant::whereKey($tenantId)
-            ->where('status', 'Active')
-            ->where('approval_status', 'approved')
-            ->where('provision_status', 'ready')
-            ->firstOrFail();
+        $tenant = Tenant::findOrFail($tenantId);
+        abort_unless($tenant->isAccessible(), 403, $tenant->accessBlockReason());
 
         $this->connections->activate($tenant);
 

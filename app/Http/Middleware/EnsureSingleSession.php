@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Support\PermissionTeam;
 
 /**
  * Replaces the old separate Admin/User middleware (Phase 1 Step 6) now that
@@ -18,14 +19,18 @@ class EnsureSingleSession
     {
         if (Auth::guard('web')->check()) {
             $user = Auth::guard('web')->user();
+            PermissionTeam::set($user->tenant_id);
 
-            if ($user->tenant_id !== null && ($user->tenant?->approval_status !== 'approved' || $user->tenant?->status !== 'Active')) {
+            if ($user->tenant_id !== null && (! $user->tenant || ! $user->tenant->isAccessible())) {
+                $message = $user->tenant?->accessBlockReason() ?? 'Your organization workspace is unavailable.';
                 Auth::guard('web')->logout();
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
 
-                return redirect()->route('admin.login')
-                    ->with('error', 'Your organization workspace is inactive.');
+                $loginRoute = $request->is('superadmin/*') ? 'superadmin.login' : ($request->is('admin/*') ? 'admin.login' : 'user.login');
+
+                return redirect()->route($loginRoute)
+                    ->with('error', $message);
             }
 
             if ($user->session_token !== $request->session()->get('session_token')) {
@@ -42,6 +47,7 @@ class EnsureSingleSession
             return $next($request);
         }
 
+        PermissionTeam::set(null);
         $loginRoute = $request->is('superadmin/*') ? 'superadmin.login' : ($request->is('admin/*') ? 'admin.login' : 'user.login');
 
         return redirect()->route($loginRoute);

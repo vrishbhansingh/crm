@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\PipelineController;
 use App\Http\Controllers\Admin\PipelineStageController;
 use App\Http\Controllers\Admin\ProjectDetailsController;
 use App\Http\Controllers\Admin\ReportController;
+use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\TaskController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\ApiTokenController;
@@ -312,6 +313,11 @@ Route::middleware(['admin_middle', 'permission:users.delete'])->group(function (
 Route::middleware(['admin_middle', 'permission:users.impersonate'])->group(function () {
     Route::post('/users/impersonate', [AuthController::class, 'impersonate'])->name('users.impersonate');
 });
+
+Route::middleware(['admin_middle', 'permission:roles.view'])->get('/roles', [RoleController::class, 'index'])->name('roles.index');
+Route::middleware(['admin_middle', 'permission:roles.create'])->post('/roles', [RoleController::class, 'store'])->name('roles.store');
+Route::middleware(['admin_middle', 'permission:roles.edit'])->put('/roles/{role}', [RoleController::class, 'update'])->name('roles.update')->whereNumber('role');
+Route::middleware(['admin_middle', 'permission:roles.delete'])->delete('/roles/{role}', [RoleController::class, 'destroy'])->name('roles.destroy')->whereNumber('role');
 
 /*
 |--------------------------------------------------------------------------

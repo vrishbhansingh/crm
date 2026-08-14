@@ -7,6 +7,7 @@ use App\Models\Tenant;
 use App\Notifications\TaskDueReminder;
 use App\Support\TenantContext;
 use App\Tenancy\TenantConnectionManager;
+use App\Support\PermissionTeam;
 use Illuminate\Console\Command;
 
 class SendTaskReminders extends Command
@@ -26,18 +27,19 @@ class SendTaskReminders extends Command
             return self::SUCCESS;
         }
 
-        Tenant::where('status', 'Active')
-            ->where('approval_status', 'approved')
+        Tenant::accessible()
             ->where('provision_status', 'ready')
             ->orderBy('id')
             ->each(function (Tenant $tenant) use ($connections, &$sent) {
                 $connections->activate($tenant);
                 TenantContext::set($tenant->id);
+                PermissionTeam::set($tenant->id);
 
                 try {
                     $this->sendForActiveTenant($sent);
                 } finally {
                     TenantContext::clear();
+                    PermissionTeam::set(null);
                     $connections->deactivate();
                 }
             });

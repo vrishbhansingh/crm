@@ -10,7 +10,7 @@
 </div></div>
 @foreach($tenants as $tenant)
 <div class="card mb-3"><div class="card-body">
-<div class="d-flex justify-content-between flex-wrap"><div><h5>{{ $tenant->name }}</h5><span class="text-muted">{{ $tenant->contact_email ?: 'No contact email' }} · {{ $tenant->users_count }} users · {{ $tenant->database_name ?: 'No database' }}</span></div><div><span class="badge badge-{{ $tenant->approval_status==='approved'?'success':($tenant->approval_status==='pending'?'warning':'danger') }}">{{ ucfirst($tenant->approval_status) }}</span> <span class="badge badge-{{ $tenant->provision_status }}">DB {{ $tenant->provision_status }}</span></div></div>
+<div class="d-flex justify-content-between flex-wrap"><div><h5>{{ $tenant->name }}</h5><span class="text-muted">{{ $tenant->contact_email ?: 'No contact email' }} · 1 Admin + {{ max($tenant->users_count - 1, 0) }} users · {{ $tenant->database_name ?: 'No database' }}</span></div><div><span class="badge badge-{{ $tenant->approval_status==='approved'?'success':($tenant->approval_status==='pending'?'warning':'danger') }}">{{ ucfirst($tenant->approval_status) }}</span> <span class="badge badge-{{ $tenant->provision_status }}">DB {{ $tenant->provision_status }}</span></div></div>
 <p class="mt-2 mb-2"><strong>Plan:</strong> {{ ucfirst($tenant->plan) }} · <strong>Expires:</strong> {{ optional($tenant->trial_ends_at)->format('d M Y') ?: 'No expiry' }} · <strong>Admin:</strong> {{ $tenant->admin?->email ?: 'Not assigned' }}</p>
 @if($tenant->provision_error)<div class="alert alert-danger"><small>{{ $tenant->provision_error }}</small></div>@endif
 <div class="d-flex flex-wrap" style="gap:8px"><a class="btn btn-sm btn-outline-primary" href="{{ route('superadmin.users.index',$tenant) }}">Manage users</a>

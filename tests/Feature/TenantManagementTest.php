@@ -32,7 +32,6 @@ class TenantManagementTest extends TestCase
             'session_token' => 'platform-session-'.$suffix,
         ]);
         Role::findOrCreate('Super Admin', 'web');
-        Role::findOrCreate('Company Admin', 'web');
         foreach (['platform.manage-tenants', 'companies.view', 'companies.create'] as $permission) {
             $this->platformAdmin->givePermissionTo(Permission::findOrCreate($permission, 'web'));
         }
@@ -61,7 +60,8 @@ class TenantManagementTest extends TestCase
 
         $tenant = Tenant::where('slug', $slug)->firstOrFail();
         $admin = User::where('tenant_id', $tenant->id)->where('email', $slug.'@example.test')->firstOrFail();
-        $this->assertTrue($admin->hasRole('Company Admin'));
+        \App\Support\PermissionTeam::set($tenant->id);
+        $this->assertTrue($admin->hasRole('Admin'));
         $this->assertSame(25, $tenant->max_users);
     }
 

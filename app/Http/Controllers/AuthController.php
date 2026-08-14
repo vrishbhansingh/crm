@@ -7,6 +7,7 @@ use App\Models\Tenant;
 use App\Models\PlatformAuditLog;
 use App\Models\UserAttendance;
 use App\Support\TenantContext;
+use App\Support\PermissionTeam;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -39,6 +40,7 @@ class AuthController extends Controller
         ]);
 
         $user = User::where('email', $request->email)->first();
+        PermissionTeam::set($user?->tenant_id);
 
         if (! $user || ! Hash::check($request->password, $user->password)) {
             return response()->json([
@@ -64,17 +66,10 @@ class AuthController extends Controller
             ]);
         }
 
-        if ($user->tenant_id !== null && $user->tenant?->approval_status === 'pending') {
+        if ($user->tenant_id !== null && (! $user->tenant || ! $user->tenant->isAccessible())) {
             return response()->json([
                 'status' => false,
-                'message' => 'Your company signup is awaiting Super Admin approval.',
-            ]);
-        }
-
-        if ($user->tenant_id !== null && ($user->tenant?->approval_status !== 'approved' || $user->tenant?->status !== 'Active')) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Your organization workspace is inactive. Contact the platform administrator.',
+                'message' => $user->tenant?->accessBlockReason() ?? 'Your organization workspace is unavailable.',
             ]);
         }
 
@@ -175,7 +170,7 @@ class AuthController extends Controller
     {
         abort_unless(Auth::user()?->hasRole('Super Admin'), 403);
         abort_unless((int) $user->tenant_id === $tenant->id && $user->status === 'Active', 404);
-        abort_unless($tenant->status === 'Active' && $tenant->approval_status === 'approved' && $tenant->provision_status === 'ready', 422, 'This workspace is not ready.');
+        abort_unless($tenant->isAccessible(), 422, $tenant->accessBlockReason() ?? 'This workspace is not ready.');
 
         $actor = Auth::user();
         PlatformAuditLog::create([

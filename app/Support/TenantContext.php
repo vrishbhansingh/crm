@@ -12,8 +12,9 @@ use Illuminate\Support\Facades\Auth;
  * every BelongsToTenant scope is a no-op — existing admin/user-guard
  * behavior is unaffected until enforcement is switched on.
  *
- * A null tenant id also naturally represents platform-level Super Admins
- * (users.tenant_id = null), who intentionally see data across all tenants.
+ * A null tenant id represents a Super Admin or unauthenticated request. The
+ * Super Admin control plane never selects a tenant context directly; support
+ * access uses audited impersonation of a real tenant user.
  */
 class TenantContext
 {
