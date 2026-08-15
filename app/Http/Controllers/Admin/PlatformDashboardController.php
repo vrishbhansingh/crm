@@ -24,8 +24,14 @@ class PlatformDashboardController extends Controller
             'database_issues' => Tenant::whereIn('provision_status', ['pending', 'failed'])->count(),
         ];
         $recentSignups = Tenant::withCount('users')->latest()->limit(8)->get();
-        $recentActivity = PlatformAuditLog::with(['actor', 'tenant', 'targetUser'])->latest()->limit(12)->get();
+        $recentActivity = PlatformAuditLog::with(['actor', 'tenant', 'targetUser'])->latest()->limit(8)->get();
+        $needsAttention = Tenant::withCount('users')
+            ->where(fn ($query) => $query->where('approval_status', 'pending')->orWhereIn('provision_status', ['pending', 'failed']))
+            ->orderByRaw("approval_status = 'pending' desc")
+            ->latest()
+            ->limit(10)
+            ->get();
 
-        return view('platform.dashboard', compact('stats', 'recentSignups', 'recentActivity'));
+        return view('platform.dashboard', compact('stats', 'recentSignups', 'recentActivity', 'needsAttention'));
     }
 }

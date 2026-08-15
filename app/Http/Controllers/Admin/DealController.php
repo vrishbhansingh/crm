@@ -64,12 +64,22 @@ class DealController extends Controller
         if ($request->filled('pipeline_id')) {
             $query->where('pipeline_id', $request->pipeline_id);
         }
+        if ($request->filled('status')) {
+            $query->where('status', $request->string('status'));
+        }
+        if ($request->filled('search')) {
+            $term = '%'.$request->string('search').'%';
+            $query->where('name', 'like', $term);
+        }
 
-        $deals = $query->with(['stage', 'pipeline:id,name', 'owner:id,name', 'lead:id,name'])->orderBy('id', 'desc')->get();
+        $perPage = min(max((int) $request->input('per_page', 20), 5), 100);
+        $paginator = $query->with(['stage', 'pipeline:id,name', 'owner:id,name', 'lead:id,name'])
+            ->orderByDesc('id')
+            ->paginate($perPage);
 
         $data = [];
-        $sl_no = 1;
-        foreach ($deals as $deal) {
+        $sl_no = ($paginator->currentPage() - 1) * $paginator->perPage() + 1;
+        foreach ($paginator->items() as $deal) {
             $viewUrl = route('deals.show', $deal->id);
             $action = "<a href='{$viewUrl}' class='btn btn-sm btn-info'><i class='fa fa-eye'></i> View</a>";
 
@@ -92,7 +102,15 @@ class DealController extends Controller
             ];
         }
 
-        return response()->json(['data' => $data]);
+        return response()->json([
+            'data' => $data,
+            'meta' => [
+                'current_page' => $paginator->currentPage(),
+                'last_page' => $paginator->lastPage(),
+                'total' => $paginator->total(),
+                'per_page' => $paginator->perPage(),
+            ],
+        ]);
     }
 
     public function boardData(Request $request)

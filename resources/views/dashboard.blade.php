@@ -22,11 +22,11 @@
 
         .crm-page-header {
             background: #fff;
-            padding: 18px 22px;
-            border-radius: 14px;
+            padding: 16px 20px;
+            border-radius: 12px;
             box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
             border-left: 4px solid var(--primary);
-            margin-bottom: 20px;
+            margin-bottom: 16px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -34,68 +34,70 @@
 
         .crm-page-header h4 {
             font-weight: 700;
-            font-size: 19px;
+            font-size: 18px;
             color: var(--text-dark);
             margin: 0;
         }
 
         .crm-subtitle {
             color: var(--text-muted);
-            font-size: 13px;
+            font-size: 12.5px;
         }
 
         .stat-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-            gap: 16px;
-            margin-bottom: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
         }
 
         .stat-card {
             background: #fff;
-            border-radius: 14px;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+            border-radius: 12px;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
             border: 1px solid var(--border);
-            padding: 18px;
+            padding: 14px 16px;
         }
 
         .stat-card .value {
-            font-size: 26px;
+            font-size: 22px;
             font-weight: 700;
             color: var(--text-dark);
+            line-height: 1.2;
         }
 
         .stat-card .label {
-            font-size: 12.5px;
+            font-size: 12px;
             color: var(--text-muted);
-            margin-top: 4px;
+            margin-top: 2px;
         }
 
         .stat-card .icon {
-            width: 36px;
-            height: 36px;
-            border-radius: 10px;
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
             background: #eef2ff;
             color: var(--primary);
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 10px;
+            font-size: 13px;
+            margin-bottom: 8px;
         }
 
         .card-box {
             background: #fff;
-            border-radius: 14px;
-            box-shadow: 0 8px 22px rgba(0, 0, 0, 0.05);
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
             border: 1px solid var(--border);
-            padding: 20px;
+            padding: 16px;
         }
 
         .card-box h5 {
             font-weight: 700;
-            font-size: 15px;
+            font-size: 14px;
             color: var(--text-dark);
-            margin-bottom: 14px;
+            margin-bottom: 12px;
         }
 
         .checkin-box {

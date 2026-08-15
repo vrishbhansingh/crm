@@ -32,3 +32,4 @@
 </style>
 
 <script src="{{ asset('vendors/js/vendor.bundle.base.js') }}"></script>
+<script src="{{ asset('js/crm-pagination.js') }}"></script>

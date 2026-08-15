@@ -25,12 +25,12 @@ class TenantLifecycleTest extends TestCase
         ]);
         $user = $this->user($tenant, 'Admin');
 
-        $this->postJson('/user/login', ['email' => $user->email, 'password' => 'password'])
+        $this->postJson('/login', ['email' => $user->email, 'password' => 'password'])
             ->assertOk()->assertJsonPath('status', false)
             ->assertJsonPath('message', 'Your organization subscription has expired.');
 
         $this->actingAs($user)->withSession(['session_token' => $user->session_token])
-            ->get('/dashboard')->assertRedirect('/user/login');
+            ->get('/dashboard')->assertRedirect('/login');
     }
 
     public function test_approval_starts_a_fourteen_day_trial_and_activates_only_the_company_admin(): void

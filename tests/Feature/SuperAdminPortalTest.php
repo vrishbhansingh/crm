@@ -20,7 +20,7 @@ class SuperAdminPortalTest extends TestCase
         $tenant = Tenant::create(['name' => 'Portal Tenant', 'slug' => 'portal-'.Str::random(8), 'status' => 'Active']);
         $tenantUser = $this->makeUser($tenant->id, 'Admin');
 
-        $this->postJson('/user/login', ['email' => $super->email, 'password' => 'password'])
+        $this->postJson('/login', ['email' => $super->email, 'password' => 'password'])
             ->assertOk()
             ->assertJsonPath('status', false)
             ->assertJsonPath('location', route('superadmin.login'));

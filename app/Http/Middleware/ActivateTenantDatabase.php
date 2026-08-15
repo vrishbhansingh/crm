@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\Tenant;
+use App\Support\PermissionTeam;
 use App\Support\TenantContext;
 use App\Tenancy\TenantConnectionManager;
 use Closure;
@@ -20,7 +21,23 @@ class ActivateTenantDatabase
             return $next($request);
         }
 
-        if ($request->user()?->hasRole('Super Admin')) {
+        $user = $request->user();
+
+        if (! $user) {
+            // Not authenticated — let the downstream single-session
+            // middleware redirect to the correct login page instead of
+            // this middleware aborting with a tenant-workspace message.
+            return $next($request);
+        }
+
+        // Role checks are team/tenant-scoped and the team context for this
+        // request hasn't been set yet (EnsureSingleSession normally does
+        // that, but it runs after this middleware) — set it before any
+        // hasRole() call or it silently evaluates against no team and
+        // returns false for everyone, including Super Admin.
+        PermissionTeam::set($user->tenant_id);
+
+        if ($user->hasRole('Super Admin')) {
             return redirect()->route('superadmin.dashboard');
         }
 

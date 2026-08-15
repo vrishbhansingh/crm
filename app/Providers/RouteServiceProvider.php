@@ -50,8 +50,11 @@ class RouteServiceProvider extends ServiceProvider
             Route::middleware('web')
                 ->prefix('admin')
                 ->group(base_path('routes/admin_routes.php'));
+            // No /user prefix: these are the canonical /login, /logout —
+            // route *names* (user.login, user.logout, ...) are unchanged
+            // since they're referenced throughout the app; only the URL
+            // loses the redundant /user segment.
             Route::middleware('web')
-                ->prefix('user')
                 ->group(base_path('routes/user.php'));
         });
     }

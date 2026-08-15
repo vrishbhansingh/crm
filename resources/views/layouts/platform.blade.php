@@ -16,6 +16,8 @@
         <div class="platform-brand">CRM Control Plane</div>
         <a href="{{ route('superadmin.dashboard') }}" class="{{ request()->routeIs('superadmin.dashboard') ? 'active' : '' }}">Overview</a>
         <a href="{{ route('superadmin.tenants.index') }}" class="{{ request()->routeIs('superadmin.tenants.*','superadmin.users.*') ? 'active' : '' }}">Companies & Signups</a>
+        <a href="{{ route('superadmin.audit.index') }}" class="{{ request()->routeIs('superadmin.audit.*') ? 'active' : '' }}">Audit Log</a>
+        <a href="{{ route('superadmin.settings.mail.edit') }}" class="{{ request()->routeIs('superadmin.settings.mail.*') ? 'active' : '' }}">Mail Settings</a>
     </aside>
     <main class="platform-main">
         <div class="topbar"><div><h3 class="mb-1">@yield('heading')</h3><div class="text-muted">Super Admin · master database</div></div><form method="post" action="{{ route('superadmin.logout') }}">@csrf<button class="btn btn-outline-secondary">Sign out</button></form></div>

@@ -14,6 +14,7 @@ use App\Models\Task;
 use App\Models\User;
 use App\Observers\CrmAuditObserver;
 use App\Tenancy\TenantConnectionManager;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -31,6 +32,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Paginator::useBootstrap();
+
         foreach ([Company::class, Contact::class, Deal::class, Lead::class, Order::class, PaymentDetails::class, Pipeline::class, ProjectInfo::class, Task::class] as $model) {
             $model::observe(CrmAuditObserver::class);
         }

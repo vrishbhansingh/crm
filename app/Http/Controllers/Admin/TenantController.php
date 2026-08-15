@@ -17,9 +17,17 @@ use Illuminate\Validation\ValidationException;
 
 class TenantController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $tenants = Tenant::withCount('users')->orderBy('name')->get();
+        $tenants = Tenant::withCount('users')
+            ->when($request->filled('q'), function ($query) use ($request) {
+                $term = '%'.$request->string('q').'%';
+                $query->where(fn ($q) => $q->where('name', 'like', $term)->orWhere('contact_email', 'like', $term));
+            })
+            ->when($request->filled('approval_status'), fn ($query) => $query->where('approval_status', $request->string('approval_status')))
+            ->orderByRaw("approval_status = 'pending' desc")
+            ->orderBy('name')
+            ->get();
 
         return view('tenants.index', compact('tenants'));
     }

@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\CrmCompanyController;
 use App\Http\Controllers\Admin\DealController;
 use App\Http\Controllers\Admin\DealDetailController;
 use App\Http\Controllers\Admin\LeadDetailController;
+use App\Http\Controllers\Admin\MailSettingsController;
 use App\Http\Controllers\Admin\MasterDataController;
 use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\OrderDetailController;
@@ -233,6 +234,12 @@ Route::middleware(['admin_middle', 'permission:company.view'])->group(function (
 Route::middleware(['admin_middle', 'permission:company.edit'])->group(function () {
     Route::get('/company-details/edit', [CompanyController::class, 'edit_company_details_page'])->name('company.edit');
     Route::post('/company-details', [CompanyController::class, 'edit_com_details'])->name('company.update');
+});
+
+Route::middleware(['admin_middle', 'permission:company.manage-settings'])->group(function () {
+    Route::get('/settings/mail', [MailSettingsController::class, 'edit'])->name('settings.mail.edit');
+    Route::put('/settings/mail', [MailSettingsController::class, 'update'])->name('settings.mail.update');
+    Route::post('/settings/mail/test', [MailSettingsController::class, 'test'])->name('settings.mail.test');
 });
 
 Route::middleware(['admin_middle', 'permission:masters.view'])->group(function () {

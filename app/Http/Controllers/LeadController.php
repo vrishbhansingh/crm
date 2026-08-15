@@ -45,21 +45,42 @@ class LeadController extends Controller
 
         // Elevated roles see every lead in the tenant; everyone else sees
         // only leads assigned to them — unified interface data scoping.
-        $query = $me->hasElevatedAccess() ? Lead::query() : Lead::where('assigned_to', $me->id);
+        $baseQuery = $me->hasElevatedAccess() ? Lead::query() : Lead::where('assigned_to', $me->id);
 
-        if ($request->status === 'closed') {
-            $query->where('lead_status', 'closed');
-        } elseif (! $me->hasElevatedAccess()) {
-            // Individual contributors default to their open leads (matches
-            // the old user.lead_list behavior); elevated roles see everything
-            // mixed together by default (matches the old admin.lead behavior).
-            $query->where('lead_status', '!=', 'closed');
+        // Active/Converted tab counts, scoped the same way as the main
+        // query but computed before search/filter narrowing so the tab
+        // badges reflect the whole tab, not just the current search result.
+        $counts = [
+            'active' => (clone $baseQuery)->whereDoesntHave('deal')->count(),
+            'converted' => (clone $baseQuery)->whereHas('deal')->count(),
+        ];
+
+        $converted = $request->boolean('converted');
+        $query = (clone $baseQuery)->{$converted ? 'whereHas' : 'whereDoesntHave'}('deal');
+
+        if ($request->filled('search')) {
+            $term = '%'.$request->string('search').'%';
+            $query->where(function ($q) use ($term) {
+                $q->where('name', 'like', $term)
+                    ->orWhere('company_name', 'like', $term)
+                    ->orWhere('phone', 'like', $term)
+                    ->orWhere('email', 'like', $term);
+            });
+        }
+        foreach (['lead_status', 'priority', 'lead_source'] as $filterField) {
+            if ($request->filled($filterField)) {
+                $query->where($filterField, $request->string($filterField));
+            }
+        }
+        if ($request->filled('assigned_to')) {
+            $query->where('assigned_to', $request->integer('assigned_to'));
         }
 
-        $leads = $query->with('deal:id,lead_id,name')->get();
+        $perPage = min(max((int) $request->input('per_page', 20), 5), 100);
+        $paginator = $query->with('deal:id,lead_id,name')->orderByDesc('id')->paginate($perPage);
+
         $data = [];
-        $sl_no = 1;
-        foreach ($leads as $lead) {
+        foreach ($paginator->items() as $lead) {
             $editUrl = route('leads.edit', $lead->id);
             $dealUrl = $lead->deal ? route('deals.show', $lead->deal->id) : null;
             $action = "
@@ -159,6 +180,13 @@ class LeadController extends Controller
 
         return response()->json([
             'data' => $data,
+            'meta' => [
+                'current_page' => $paginator->currentPage(),
+                'last_page' => $paginator->lastPage(),
+                'total' => $paginator->total(),
+                'per_page' => $paginator->perPage(),
+            ],
+            'counts' => $counts,
         ]);
     }
 

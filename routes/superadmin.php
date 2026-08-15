@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\Admin\PlatformAuditLogController;
 use App\Http\Controllers\Admin\PlatformDashboardController;
+use App\Http\Controllers\Admin\PlatformMailSettingsController;
 use App\Http\Controllers\Admin\PlatformUserController;
 use App\Http\Controllers\Admin\TenantController;
 use App\Http\Controllers\AuthController;
@@ -12,6 +14,10 @@ Route::post('/login', [SuperAdminAuthController::class, 'authenticate'])->middle
 
 Route::middleware(['admin_middle', 'role:Super Admin'])->group(function () {
     Route::get('/', [PlatformDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/audit-log', [PlatformAuditLogController::class, 'index'])->name('audit.index');
+    Route::get('/settings/mail', [PlatformMailSettingsController::class, 'edit'])->name('settings.mail.edit');
+    Route::put('/settings/mail', [PlatformMailSettingsController::class, 'update'])->name('settings.mail.update');
+    Route::post('/settings/mail/test', [PlatformMailSettingsController::class, 'test'])->name('settings.mail.test');
     Route::get('/companies', [TenantController::class, 'index'])->name('tenants.index');
     Route::post('/companies', [TenantController::class, 'store'])->name('tenants.store');
     Route::put('/companies/{tenant}', [TenantController::class, 'update'])->name('tenants.update')->whereNumber('tenant');

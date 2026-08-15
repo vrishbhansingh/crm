@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Services\MailConfigurator;
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -57,5 +59,16 @@ class User extends Authenticatable
     public function hasElevatedAccess(): bool
     {
         return $this->hasAnyRole(['Super Admin', 'Admin', 'Manager', 'Sales Manager']);
+    }
+
+    /**
+     * Send through the tenant's own SMTP if configured, otherwise the
+     * platform default — Super Admins (no tenant) always use the platform
+     * default.
+     */
+    public function sendPasswordResetNotification($token): void
+    {
+        app(MailConfigurator::class)->configureFor($this->tenant);
+        $this->notify(new ResetPassword($token));
     }
 }

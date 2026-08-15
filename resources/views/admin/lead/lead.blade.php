@@ -555,6 +555,32 @@
                                     </li>
                                 </ul>
 
+                                <div class="row mb-3" id="leadFilterBar">
+                                    <div class="col-md-4 mb-2">
+                                        <input type="text" id="leadSearchInput" class="form-control form-control-sm" placeholder="Search name, company, phone, email…">
+                                    </div>
+                                    <div class="col-md-2 mb-2">
+                                        <select id="leadFilterStatus" class="form-control form-control-sm" data-master-type="lead_status">
+                                            <option value="">All statuses</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2 mb-2">
+                                        <select id="leadFilterPriority" class="form-control form-control-sm" data-master-type="lead_priority">
+                                            <option value="">All priorities</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2 mb-2">
+                                        <select id="leadFilterSource" class="form-control form-control-sm" data-master-type="lead_source">
+                                            <option value="">All sources</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2 mb-2">
+                                        <select id="leadFilterAssignee" class="form-control form-control-sm">
+                                            <option value="">All owners</option>
+                                        </select>
+                                    </div>
+                                </div>
+
                                 <div class="table-responsive user-table-wrapper">
                                     <table id="userTable" class="table user-table">
                                         <thead>
@@ -578,6 +604,8 @@
                                         </tbody>
                                     </table>
                                 </div>
+
+                                <div id="leadPagination" class="mt-3"></div>
 
                             </div>
                         </div>
@@ -819,18 +847,35 @@
 
         let allLeadsData = [];
         let activeLeadTab = 'active';
+        let leadCurrentPage = 1;
+        let leadSearchDebounce = null;
 
         function loadLeadList() {
             $.ajax({
-                url: '{{route("leads.data")}}', // keep your existing route
+                url: '{{route("leads.data")}}',
                 type: 'GET',
+                data: {
+                    converted: activeLeadTab === 'converted' ? 1 : 0,
+                    page: leadCurrentPage,
+                    search: $('#leadSearchInput').val() || undefined,
+                    lead_status: $('#leadFilterStatus').val() || undefined,
+                    priority: $('#leadFilterPriority').val() || undefined,
+                    lead_source: $('#leadFilterSource').val() || undefined,
+                    assigned_to: $('#leadFilterAssignee').val() || undefined,
+                },
                 success: function(response) {
                     allLeadsData = (response && Array.isArray(response.data)) ? response.data : [];
 
-                    $('#activeLeadCount').text(allLeadsData.filter(l => !l.deal_id).length);
-                    $('#convertedLeadCount').text(allLeadsData.filter(l => l.deal_id).length);
+                    if (response.counts) {
+                        $('#activeLeadCount').text(response.counts.active);
+                        $('#convertedLeadCount').text(response.counts.converted);
+                    }
 
                     renderLeadTab();
+                    renderCrmPagination('#leadPagination', response.meta, function(page) {
+                        leadCurrentPage = page;
+                        loadLeadList();
+                    });
                 },
 
                 error: function() {
@@ -840,9 +885,9 @@
         }
 
         function renderLeadTab() {
-            const filtered = allLeadsData.filter(item =>
-                activeLeadTab === 'converted' ? !!item.deal_id : !item.deal_id
-            );
+            // Tab, search, and filters are already applied server-side —
+            // this just renders whatever the current page's response was.
+            const filtered = allLeadsData;
 
             let tbody = '';
 
@@ -1081,8 +1126,30 @@
             $('#leadTabs .nav-link').removeClass('active');
             $(this).addClass('active');
             activeLeadTab = $(this).data('tab');
-            renderLeadTab();
+            leadCurrentPage = 1;
+            loadLeadList();
         });
+
+        $(document).on('input', '#leadSearchInput', function() {
+            clearTimeout(leadSearchDebounce);
+            leadSearchDebounce = setTimeout(function() {
+                leadCurrentPage = 1;
+                loadLeadList();
+            }, 350);
+        });
+
+        $(document).on('change', '#leadFilterStatus, #leadFilterPriority, #leadFilterSource, #leadFilterAssignee', function() {
+            leadCurrentPage = 1;
+            loadLeadList();
+        });
+
+        function loadLeadAssigneeFilterOptions() {
+            $.get("{{ route('leads.assignable_users') }}", function(response) {
+                (response.users || []).forEach(function(user) {
+                    $('#leadFilterAssignee').append(`<option value="${user.id}">${esc(user.name)}</option>`);
+                });
+            });
+        }
 
         // Populates every <select data-master-type="..."> from the Master Data
         // lookup endpoint instead of hardcoded <option> lists (Phase 2).
@@ -1102,6 +1169,7 @@
         $(document).ready(function() {
             loadLeadList();
             loadMasterDropdowns();
+            loadLeadAssigneeFilterOptions();
         });
         $(document).on('click', '.toggle-row', function() {
 

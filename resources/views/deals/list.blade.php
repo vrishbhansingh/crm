@@ -79,16 +79,37 @@
                         <h4>Deals</h4>
                         <p class="text-muted mb-0" style="font-size:12px;">{{ Auth::guard('web')->user()->hasElevatedAccess() ? 'Every deal in the pipeline' : 'Your deals' }}</p>
                     </div>
-                    <a href="{{ route('deals.index') }}" class="btn btn-outline-primary btn-sm">
-                        <i class="fa fa-columns"></i> Kanban View
-                    </a>
+                    <div class="d-flex" style="gap:8px;">
+                        <a href="{{ route('deals.index') }}" class="btn btn-outline-primary btn-sm">
+                            <i class="fa fa-columns"></i> Kanban View
+                        </a>
+                        @can('deals.create')
+                        <a href="{{ route('deals.create') }}" class="btn btn-primary btn-sm">
+                            <i class="fa fa-plus"></i> New Deal
+                        </a>
+                        @endcan
+                    </div>
                 </div>
 
-                <div id="pipelineFilterBanner" class="alert alert-info d-flex justify-content-between align-items-center" style="display:none;font-size:13px;">
+                <div id="pipelineFilterBanner" class="alert alert-info d-none justify-content-between align-items-center" style="font-size:13px;">
                     <span>Showing deals in pipeline: <strong id="pipelineFilterName"></strong></span>
                     <a href="{{ route('deals.list') }}" class="btn btn-sm btn-outline-secondary">
                         <i class="fa fa-times"></i> Clear filter
                     </a>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-5 mb-2">
+                        <input type="text" id="dealSearchInput" class="form-control form-control-sm" placeholder="Search deal name…">
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <select id="dealFilterStatus" class="form-control form-control-sm">
+                            <option value="">All statuses</option>
+                            <option value="open">Open</option>
+                            <option value="won">Won</option>
+                            <option value="lost">Lost</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="row">
@@ -115,6 +136,7 @@
                                     </tbody>
                                 </table>
                             </div>
+                            <div id="dealPagination" class="mt-3"></div>
                         </div>
                     </div>
                 </div>
@@ -152,20 +174,28 @@
             return new URLSearchParams(window.location.search).get(name);
         }
 
+        let dealCurrentPage = 1;
+        let dealSearchDebounce = null;
+
         function loadDealList() {
             const pipelineId = getQueryParam('pipeline_id');
 
             $.ajax({
                 url: "{{ route('deals.data') }}",
                 type: "GET",
-                data: pipelineId ? { pipeline_id: pipelineId } : {},
+                data: {
+                    pipeline_id: pipelineId || undefined,
+                    page: dealCurrentPage,
+                    search: $('#dealSearchInput').val() || undefined,
+                    status: $('#dealFilterStatus').val() || undefined,
+                },
                 success: function(response) {
                     let tbody = '';
 
                     if (response.data && response.data.length > 0) {
                         if (pipelineId) {
                             $('#pipelineFilterName').text(response.data[0].pipeline_name);
-                            $('#pipelineFilterBanner').show();
+                            $('#pipelineFilterBanner').removeClass('d-none').addClass('d-flex');
                         }
 
                         response.data.forEach((item) => {
@@ -192,16 +222,33 @@
                         });
                     } else {
                         if (pipelineId) {
-                            $('#pipelineFilterBanner').show();
+                            $('#pipelineFilterBanner').removeClass('d-none').addClass('d-flex');
                             $('#pipelineFilterName').text('this pipeline');
                         }
                         tbody = `<tr><td colspan="10">No deals found</td></tr>`;
                     }
 
                     $('#dealTable tbody').html(tbody);
+                    renderCrmPagination('#dealPagination', response.meta, function(page) {
+                        dealCurrentPage = page;
+                        loadDealList();
+                    });
                 }
             });
         }
+
+        $(document).on('input', '#dealSearchInput', function() {
+            clearTimeout(dealSearchDebounce);
+            dealSearchDebounce = setTimeout(function() {
+                dealCurrentPage = 1;
+                loadDealList();
+            }, 350);
+        });
+
+        $(document).on('change', '#dealFilterStatus', function() {
+            dealCurrentPage = 1;
+            loadDealList();
+        });
 
         $(document).ready(function() {
             loadDealList();

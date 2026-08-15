@@ -6,6 +6,7 @@ use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use App\Support\PermissionTeam;
+use Spatie\Permission\Models\Role;
 
 class CompanyAdminManager
 {
@@ -23,7 +24,7 @@ class CompanyAdminManager
             foreach ($existingAdmins as $existingAdmin) {
                 $existingAdmin->removeRole('Admin');
                 if ($existingAdmin->roles()->count() === 0) {
-                    $existingAdmin->assignRole('Manager');
+                    $existingAdmin->assignRole(Role::findOrCreate('Manager', 'web'));
                 }
             }
 

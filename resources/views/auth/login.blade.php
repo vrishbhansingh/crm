@@ -196,6 +196,9 @@
               <i class="fa fa-eye"></i>
             </button>
           </div>
+          <div style="text-align:right;margin-top:8px">
+            <a href="{{ route('password.request') }}" style="font-size:13px;color:#2563eb;text-decoration:none">Forgot password?</a>
+          </div>
         </div>
 
         <button type="submit" class="login-btn">

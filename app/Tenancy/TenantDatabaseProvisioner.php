@@ -14,14 +14,6 @@ class TenantDatabaseProvisioner
 {
     public const SCHEMA_VERSION = 1;
 
-    private const BUSINESS_TABLES = [
-        'master_types', 'master_values', 'company_details', 'companies', 'contacts',
-        'customer_contact', 'leads', 'lead_follow_up', 'lead_activities',
-        'lead_attachments', 'tags', 'lead_tag', 'pipelines', 'pipeline_stages',
-        'deals', 'deal_stage_history', 'project_info', 'orders', 'payment_details',
-        'tasks', 'user_attendance', 'audit_logs',
-    ];
-
     private const TENANT_SCOPED_TABLES = [
         'company_details', 'companies', 'contacts', 'customer_contact', 'leads',
         'lead_follow_up', 'lead_activities', 'lead_attachments', 'tags', 'pipelines',
@@ -65,12 +57,6 @@ class TenantDatabaseProvisioner
                 'CREATE DATABASE IF NOT EXISTS '.$this->quoteIdentifier($databaseName).' CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci'
             );
 
-            foreach (self::BUSINESS_TABLES as $table) {
-                DB::connection($master)->statement(
-                    'CREATE TABLE IF NOT EXISTS '.$this->qualified($databaseName, $table).' LIKE '.$this->qualified($masterDatabase, $table)
-                );
-            }
-
             $this->connections->activate($tenant->fresh());
             DB::connection('tenant')->statement(
                 'CREATE TABLE IF NOT EXISTS `tenant_schema_versions` (`version` INT UNSIGNED NOT NULL PRIMARY KEY, `applied_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP) ENGINE=InnoDB'
@@ -78,6 +64,9 @@ class TenantDatabaseProvisioner
             DB::connection('tenant')->statement(
                 'CREATE TABLE IF NOT EXISTS `tenant_sequences` (`name` VARCHAR(80) NOT NULL PRIMARY KEY, `current_value` BIGINT UNSIGNED NOT NULL DEFAULT 0, `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP) ENGINE=InnoDB'
             );
+            // Business tables (leads, companies, deals, ...) are created by
+            // the tracked migrations in database/migrations/tenant/, not by
+            // copying the central database's tables.
             $this->runTenantMigrations();
 
             if ($copyExistingData) {

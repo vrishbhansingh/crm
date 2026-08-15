@@ -35,6 +35,14 @@ class Tenant extends Model
         'last_health_status',
         'provision_error',
         'settings',
+        'smtp_enabled',
+        'smtp_host',
+        'smtp_port',
+        'smtp_encryption',
+        'smtp_username',
+        'smtp_password',
+        'smtp_from_address',
+        'smtp_from_name',
     ];
 
     protected $casts = [
@@ -44,7 +52,14 @@ class Tenant extends Model
         'provisioned_at' => 'datetime',
         'last_health_check_at' => 'datetime',
         'settings' => 'array',
+        'smtp_enabled' => 'boolean',
+        'smtp_password' => 'encrypted',
     ];
+
+    public function hasUsableSmtp(): bool
+    {
+        return $this->smtp_enabled && filled($this->smtp_host) && filled($this->smtp_port);
+    }
 
     public function users()
     {
