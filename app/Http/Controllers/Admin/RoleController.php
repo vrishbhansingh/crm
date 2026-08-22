@@ -15,13 +15,36 @@ use Spatie\Permission\Models\Role;
 
 class RoleController extends Controller
 {
+    /**
+     * Permissions that are either functionally inert for a custom role, or
+     * dangerous enough to need calling out instead of sitting anonymously in
+     * the general grid. Both lists are hidden from the ordinary grouped grid
+     * and rendered separately in the view.
+     *
+     * `roles.*` — the entire module — does nothing for a custom role: every
+     * write action in this controller is hard-gated to the tenant's literal
+     * protected Admin account (tenantAdmin() below), not to a Spatie
+     * permission, so ticking any roles.* checkbox grants a capability that
+     * can never actually be exercised. Left seeded (existing grants, if any,
+     * are harmless) but no longer offered — a checkbox that visibly does
+     * nothing erodes trust in the ones that do.
+     */
+    private const INERT_MODULE = 'roles';
+
+    private const SENSITIVE_PERMISSIONS = ['users.impersonate'];
+
     public function index()
     {
         $tenant = $this->tenantAdmin();
         $roles = Role::where('tenant_id', $tenant->id)->withCount('users')->orderBy('name')->get();
-        $permissions = Permission::where('name', 'not like', 'platform.%')->orderBy('name')->get()->groupBy(fn ($permission) => str($permission->name)->before('.')->value());
+        $all = Permission::where('name', 'not like', 'platform.%')
+            ->whereNotIn('name', self::SENSITIVE_PERMISSIONS)
+            ->where('name', 'not like', self::INERT_MODULE.'.%')
+            ->orderBy('name')->get();
+        $permissions = $all->groupBy(fn ($permission) => str($permission->name)->before('.')->value());
+        $sensitivePermissions = Permission::whereIn('name', self::SENSITIVE_PERMISSIONS)->orderBy('name')->get();
 
-        return view('roles.index', compact('tenant', 'roles', 'permissions'));
+        return view('roles.index', compact('tenant', 'roles', 'permissions', 'sensitivePermissions'));
     }
 
     public function store(Request $request, PlatformAuditLogger $audit)

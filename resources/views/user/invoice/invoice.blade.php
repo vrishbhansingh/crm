@@ -296,6 +296,29 @@
                         </tr>
                     </table>
 
+                    @if($payments->isNotEmpty())
+                    <div class="section-title mt-4">Payment History</div>
+                    <table class="invoice-table">
+                        <tr>
+                            <th>Date</th>
+                            <th>Mode</th>
+                            <th class="text-right">Amount</th>
+                        </tr>
+                        @foreach($payments as $payment)
+                        <tr>
+                            <td>{{ \Carbon\Carbon::parse($payment->payment_date)->format('d M Y') }}</td>
+                            <td>{{ ucfirst(str_replace('_', ' ', $payment->payment_mode)) }}</td>
+                            <td class="text-right">₹{{ number_format($payment->paid_amount, 2) }}</td>
+                        </tr>
+                        @endforeach
+                    </table>
+                    @if($order->due_amount > 0)
+                    <p class="text-danger mt-2" style="font-size:13px;">
+                        This is a receipt for the payment(s) above — ₹{{ number_format($order->due_amount, 2) }} remains outstanding on this order.
+                    </p>
+                    @endif
+                    @endif
+
                     <div class="d-flex justify-content-end mt-5">
                         <button onclick="window.print()" class="print-btn">
                             <i class="fa fa-print"></i> Print Invoice

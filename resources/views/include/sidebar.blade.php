@@ -338,9 +338,9 @@
                 </li>
                 @endcan
                 @can('company.view')
-                <li class="mb-1" data-nav-label="Company Details">
-                    <a class="nav-link {{ request()->routeIs('company.*') ? 'active' : '' }}" href="{{ route('company.show') }}" title="Company Details">
-                        <i class="fa fa-building"></i><span>Company Details</span>
+                <li class="mb-1" data-nav-label="Organization Profile">
+                    <a class="nav-link {{ request()->routeIs('company.*') ? 'active' : '' }}" href="{{ route('company.show') }}" title="Organization Profile">
+                        <i class="fa fa-building"></i><span>Organization Profile</span>
                     </a>
                 </li>
                 @endcan

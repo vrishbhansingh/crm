@@ -235,6 +235,16 @@
                             @endcan
                         </div>
 
+                        @can('tasks.create')
+                        <div class="card-box">
+                            <h5><i class="fa fa-check-square-o"></i> Follow-up</h5>
+                            <p class="text-muted" style="font-size:12.5px;">Add a task or reminder linked to this deal.</p>
+                            <button type="button" class="btn btn-primary btn-sm btn-block" onclick="var t=document.getElementById('dealName'); openQuickTask('deal', {{ (int) $dealId }}, t ? t.textContent : null)">
+                                <i class="fa fa-plus"></i> Add Task
+                            </button>
+                        </div>
+                        @endcan
+
                         @can('deals.delete')
                         <div class="card-box">
                             <button class="btn btn-outline-danger btn-sm btn-block" id="deleteDealBtn">
@@ -254,6 +264,8 @@
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="{{ asset('vendors/js/vendor.bundle.base.js') }}"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
+    @include('include.quick-task-modal')
 
     <script>
         const dealId = {{ (int) $dealId }};

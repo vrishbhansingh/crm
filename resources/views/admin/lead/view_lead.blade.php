@@ -304,6 +304,28 @@
                             </button>
                         </div>
                         @endcan
+
+                        @can('orders.view')
+                        <div class="card-box">
+                            <h5><i class="fa fa-file-text-o"></i> Quotation</h5>
+                            <p class="text-muted" style="font-size:12.5px;">Generate a printable quotation for this lead.</p>
+                            <div class="btn-group btn-block" role="group">
+                                <a class="btn btn-outline-primary btn-sm" target="_blank" href="{{ route('quotation.template1', base64_encode($leadId)) }}">Template 1</a>
+                                <a class="btn btn-outline-primary btn-sm" target="_blank" href="{{ route('quotation.template2', base64_encode($leadId)) }}">Template 2</a>
+                                <a class="btn btn-outline-primary btn-sm" target="_blank" href="{{ route('quotation.template3', base64_encode($leadId)) }}">Template 3</a>
+                            </div>
+                        </div>
+                        @endcan
+
+                        @can('tasks.create')
+                        <div class="card-box">
+                            <h5><i class="fa fa-check-square-o"></i> Follow-up</h5>
+                            <p class="text-muted" style="font-size:12.5px;">Add a task or reminder linked to this lead.</p>
+                            <button type="button" class="btn btn-primary btn-sm btn-block" onclick="var t=document.querySelector('.lead-title'); openQuickTask('lead', {{ (int) $leadId }}, t ? t.textContent : null)">
+                                <i class="fa fa-plus"></i> Add Task
+                            </button>
+                        </div>
+                        @endcan
                     </div>
                 </div>
 
@@ -357,6 +379,8 @@
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="{{ asset('vendors/js/vendor.bundle.base.js') }}"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
+    @include('include.quick-task-modal')
 
     <script>
         const leadId = {{ (int) $leadId }};

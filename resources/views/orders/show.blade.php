@@ -250,8 +250,13 @@
                         <div class="sub" id="orderSubTitle">Loading order details...</div>
                     </div>
                     <div class="hero-actions no-print">
+                        @can('tasks.create')
+                        <button type="button" class="hero-btn hero-btn-light" onclick="openQuickTask('order', ORDER_ID, document.getElementById('orderTitle') ? document.getElementById('orderTitle').textContent : null)">
+                            <i class="fa fa-check-square-o"></i> Add Task
+                        </button>
+                        @endcan
                         <a class="hero-btn hero-btn-light" href="#" id="invoiceBtn" style="display:none;">
-                            <i class="fa fa-print"></i> Print Invoice
+                            <i class="fa fa-print"></i> View Invoice
                         </a>
                         <a class="hero-btn hero-btn-white" href="{{ route('orders.index') }}">
                             <i class="fa fa-arrow-left"></i> Back
@@ -557,6 +562,8 @@
     <script src="{{ asset('vendors/js/vendor.bundle.base.js') }}"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
 
+    @include('include.quick-task-modal')
+
     <script>
         const ORDER_ID = {{ (int) $orderId }};
         const esc = value => $('<div>').text(value ?? '').html();
@@ -654,15 +661,23 @@
                     $('#modal_net_amount').text(money(cur, o.net_amount));
                     $('#modal_due_amount').text(money(cur, o.due_amount));
 
-                    // due <= 0: disable Add Payment, offer the invoice instead
+                    // due <= 0: fully paid, disable Add Payment (nothing left to collect).
                     const due = Number(o.due_amount || 0);
+                    const paidAmt = Number(o.paid_amount || 0);
                     if (due <= 0) {
                         $('#addPaymentBtn').prop('disabled', true).removeClass('btn-primary').addClass('btn-secondary')
                             .attr('data-toggle', '').attr('data-target', '');
-                        $('#invoiceBtn').css('display', 'inline-flex');
                     } else {
                         $('#addPaymentBtn').prop('disabled', false).removeClass('btn-secondary').addClass('btn-primary')
                             .attr('data-toggle', 'modal').attr('data-target', '#addPaymentModal');
+                    }
+                    // Any payment recorded — even partial — gets a receipt. Previously this
+                    // link only appeared once the order was 100% paid, leaving partial payers
+                    // with no proof of payment at all.
+                    if (paidAmt > 0) {
+                        $('#invoiceBtn').css('display', 'inline-flex')
+                            .html('<i class="fa fa-print"></i> ' + (due <= 0 ? 'View Invoice' : 'View Receipt'));
+                    } else {
                         $('#invoiceBtn').css('display', 'none');
                     }
 

@@ -301,8 +301,8 @@
     'audit.index' => ['Insights', 'Audit Log'],
     'users.index' => ['Administration', 'Users'],
     'roles.index' => ['Administration', 'Roles & Permissions'],
-    'company.show' => ['Administration', 'Company Details'],
-    'company.edit' => ['Administration', 'Company Details', 'Edit'],
+    'company.show' => ['Administration', 'Organization Profile'],
+    'company.edit' => ['Administration', 'Organization Profile', 'Edit'],
     'master_data.index' => ['Administration', 'Master Data'],
     'pipelines.index' => ['Administration', 'Pipelines'],
     'settings.mail.edit' => ['Administration', 'Mail Settings'],
@@ -314,7 +314,7 @@
     'Leads' => 'leads.index', 'Deals' => 'deals.list', 'Companies' => 'companies.index', 'Contacts' => 'contacts.index',
     'Orders' => 'orders.index', 'Projects' => 'projects.index', 'Tasks & Reminders' => 'tasks.index',
     'Reports & Analytics' => 'reports.index', 'Audit Log' => 'audit.index', 'Users' => 'users.index',
-    'Roles & Permissions' => 'roles.index', 'Company Details' => 'company.show', 'Master Data' => 'master_data.index',
+    'Roles & Permissions' => 'roles.index', 'Organization Profile' => 'company.show', 'Master Data' => 'master_data.index',
     'Pipelines' => 'pipelines.index',
   ];
   $currentRouteName = request()->route()?->getName();

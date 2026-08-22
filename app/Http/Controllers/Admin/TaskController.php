@@ -67,6 +67,16 @@ class TaskController extends Controller
         return response()->json(['data' => $tasks]);
     }
 
+    public function assignableUsers()
+    {
+        $tenantId = TenantContext::id();
+        $users = User::where('status', 'Active')
+            ->when($tenantId !== null, fn ($query) => $query->where('tenant_id', $tenantId))
+            ->orderBy('name')->get(['id', 'name']);
+
+        return response()->json(['users' => $users]);
+    }
+
     public function relatedOptions(string $type)
     {
         abort_unless(isset(self::RELATED_MODELS[$type]), 404);

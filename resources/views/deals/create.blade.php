@@ -130,6 +130,29 @@
                                 </select>
                             </div>
 
+                            <!-- A linked Lead already carries its own company/contact, so these
+                                 only matter (and are only enabled) when no Lead is picked — a
+                                 standalone deal not sourced from a lead can still be tied to an
+                                 existing Company/Contact instead of floating unlinked. -->
+                            <div class="form-group col-md-6">
+                                <label>Company <small class="text-muted">(only used without a linked lead)</small></label>
+                                <select name="company_id" id="company_id" class="form-control">
+                                    <option value="">-- None --</option>
+                                    @foreach ($companies as $c)
+                                        <option value="{{ $c->id }}" {{ (($deal->company_id ?? null) == $c->id) ? 'selected' : '' }}>{{ $c->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label>Contact <small class="text-muted">(only used without a linked lead)</small></label>
+                                <select name="contact_id" id="contact_id" class="form-control">
+                                    <option value="">-- None --</option>
+                                    @foreach ($contacts as $c)
+                                        <option value="{{ $c->id }}" {{ (($deal->contact_id ?? null) == $c->id) ? 'selected' : '' }}>{{ $c->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
                             <div class="form-group col-md-12">
                                 <label>Notes</label>
                                 <textarea name="notes" id="notes" class="form-control" rows="3">{{ $deal->notes ?? '' }}</textarea>
@@ -180,6 +203,12 @@
             populateStages($(this).val(), null);
         });
 
+        function toggleCompanyContactPickers() {
+            const hasLead = !!$('#lead_id').val();
+            $('#company_id, #contact_id').prop('disabled', hasLead);
+        }
+        $(document).on('change', '#lead_id', toggleCompanyContactPickers);
+
         $(document).on('submit', '#dealForm', function(e) {
             e.preventDefault();
             const data = {};
@@ -205,6 +234,7 @@
             if (!isEdit) {
                 populateStages($('#pipeline_id').val(), null);
             }
+            toggleCompanyContactPickers();
         });
     </script>
 

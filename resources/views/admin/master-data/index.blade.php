@@ -278,7 +278,7 @@
                                     data-color="${esc(v.color ?? '')}" data-sort="${v.sort_order}">
                                     <i class="fa fa-pencil"></i>
                                 </button>
-                                <button class="btn btn-sm btn-outline-secondary toggleStatusBtn" data-id="${v.id}">
+                                <button class="btn btn-sm btn-outline-secondary toggleStatusBtn" data-id="${v.id}" data-active="${v.is_active ? '1' : '0'}">
                                     <i class="fa fa-power-off"></i>
                                 </button>
                                 <button class="btn btn-sm btn-outline-danger deleteValueBtn" data-id="${v.id}">
@@ -355,6 +355,14 @@
 
         $(document).on('click', '.toggleStatusBtn', function() {
             const id = $(this).data('id');
+            // Only deactivating gets a prompt — it can hide the value from
+            // every dropdown that uses it elsewhere in the app, unlike
+            // re-activating which is always safe. Delete right next to this
+            // button already confirms; this used to be the only destructive
+            // action here that didn't.
+            if ($(this).data('active') == '1' && !confirm('Deactivate this value? It will stop appearing in dropdowns using it elsewhere in the app.')) {
+                return;
+            }
             $.post("{{ url('master-data/values') }}/" + id + "/toggle-status", {}, function(response) {
                 if (response.status) {
                     toastr.success('Status updated');

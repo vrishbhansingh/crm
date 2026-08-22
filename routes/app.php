@@ -60,6 +60,7 @@ Route::middleware(['admin_middle', 'permission:tasks.view'])->group(function () 
 
 Route::middleware(['admin_middle', 'permission:tasks.create'])->group(function () {
     Route::post('/tasks', [TaskController::class, 'store'])->name('tasks.store');
+    Route::get('/tasks/assignable-users', [TaskController::class, 'assignableUsers'])->name('tasks.assignable_users');
 });
 
 Route::middleware(['admin_middle', 'permission:tasks.edit'])->group(function () {

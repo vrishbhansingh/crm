@@ -272,11 +272,18 @@
                         </div>
                         <div class="form-row">
                             <div class="form-group col-md-6">
+                                <label>Existing Company <small class="text-muted">(optional — leave blank to create a new one)</small></label>
+                                <select name="company_id" id="company_id" class="form-control">
+                                    <option value="">— New company —</option>
+                                </select>
+                            </div>
+                            <div class="form-group col-md-6" id="companyNameGroup">
                                 <label>Company Name</label>
                                 <input type="text" name="company_name" id="company_name"
                                     class="form-control" placeholder="Company name">
                             </div>
-
+                        </div>
+                        <div class="form-row" id="gstGroup">
                             <div class="form-group col-md-6">
                                 <label>Gst No.</label>
                                 <input type="text" name="gst_no" id="gst_no"
@@ -284,7 +291,21 @@
                             </div>
                         </div>
 
-                        <!-- ================= CONTACT ================= -->
+                        <!-- ================= CONTACT PERSON =================
+                             One section, one set of fields — this used to be typed
+                             twice (once here, once under "Customer Contact Details")
+                             even though both ended up on the same Contact record
+                             (LeadController::store()). -->
+                        <div class="form-divider"></div>
+                        <div class="section-title">Contact Person</div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label>Existing Contact <small class="text-muted">(optional — leave blank to create a new one)</small></label>
+                                <select name="contact_id" id="contact_id" class="form-control">
+                                    <option value="">— New contact —</option>
+                                </select>
+                            </div>
+                        </div>
                         <div class="form-row">
                             <div class="form-group col-md-6">
                                 <label>Name</label>
@@ -308,6 +329,12 @@
                                 <label>Email</label>
                                 <input type="email" name="email" id="email"
                                     class="form-control" placeholder="Email address">
+                            </div>
+
+                            <div class="form-group col-md-6">
+                                <label>Designation</label>
+                                <input type="text" name="designation" id="designation"
+                                    class="form-control" placeholder="Designation / Role">
                             </div>
                         </div>
 
@@ -409,59 +436,22 @@
                                 placeholder="Client requirements"></textarea>
                         </div>
 
-                        <!-- ================= ASSIGNMENT ================= -->
+                        <!-- ================= ASSIGNMENT =================
+                             Was a raw numeric User-ID input — nobody has user IDs
+                             memorized. Same name-resolving picker the Leads list's
+                             own assignee filter already uses (leads.assignable_users).
+                             Left unset, the backend auto-assigns to whichever active
+                             sales user currently has the fewest leads. Assigned By /
+                             Assigned At / Last Contacted * were dropped entirely: the
+                             backend already defaults "assigned by" to the current
+                             user, and a brand-new lead can't have a "last contacted"
+                             date yet. -->
                         <div class="form-row">
                             <div class="form-group col-md-6">
-                                <label>Assigned To (User ID)</label>
-                                <input type="number" name="assigned_to" id="assigned_to"
-                                    class="form-control" placeholder="User ID">
-                            </div>
-
-                            <div class="form-group col-md-6">
-                                <label>Assigned By (User ID)</label>
-                                <input type="number" name="assigned_by" id="assigned_by"
-                                    class="form-control" placeholder="User ID">
-                            </div>
-
-                            <div class="form-group col-md-6">
-                                <label>Assigned At</label>
-                                <input type="datetime-local" name="assigned_at" id="assigned_at"
-                                    class="form-control">
-                            </div>
-
-                            <div class="form-group col-md-6">
-                                <label>Last Contacted At</label>
-                                <input type="datetime-local" name="last_contacted_at" id="last_contacted_at"
-                                    class="form-control">
-                            </div>
-
-                            <div class="form-group col-md-6">
-                                <label>Last Contacted By (User ID)</label>
-                                <input type="number" name="last_contacted_by" id="last_contacted_by"
-                                    class="form-control" placeholder="User ID">
-                            </div>
-                        </div>
-
-                        <!-- ================= CONVERSION ================= -->
-                        <div class="form-row">
-                            <div class="form-group col-md-4">
-                                <label>Is Converted</label>
-                                <select name="is_converted" id="is_converted" class="form-control">
-                                    <option value="No">No</option>
-                                    <option value="Yes">Yes</option>
+                                <label>Assign To <small class="text-muted">(optional — auto-assigned if left blank)</small></label>
+                                <select name="assigned_to" id="assigned_to" class="form-control">
+                                    <option value="">Auto-assign</option>
                                 </select>
-                            </div>
-
-                            <div class="form-group col-md-4">
-                                <label>Converted At</label>
-                                <input type="datetime-local" name="converted_at" id="converted_at"
-                                    class="form-control">
-                            </div>
-
-                            <div class="form-group col-md-4">
-                                <label>Conversion Value</label>
-                                <input type="number" step="0.01" name="conversion_value" id="conversion_value"
-                                    class="form-control" placeholder="Amount">
                             </div>
                         </div>
 
@@ -478,65 +468,6 @@
                             <textarea name="internal_note" id="internal_note"
                                 class="form-control" rows="2"
                                 placeholder="Internal note"></textarea>
-                        </div>
-
-                        <!-- ================= CUSTOMER CONTACT DETAILS ================= -->
-                        <div class="form-divider"></div>
-
-                        <div class="section-title">Customer Contact Details</div>
-
-                        <div class="form-row">
-                            <div class="form-group col-md-6">
-                                <label>Customer Name</label>
-                                <input type="text"
-                                    name="customer_name"
-                                    class="form-control"
-                                    placeholder="Customer full name">
-                            </div>
-
-                            <div class="form-group col-md-6">
-                                <label>Phone</label>
-                                <input type="text"
-                                    name="customer_phone"
-                                    class="form-control"
-                                    placeholder="Primary phone number">
-                            </div>
-                        </div>
-
-                        <div class="form-row">
-                            <div class="form-group col-md-6">
-                                <label>Email</label>
-                                <input type="email"
-                                    name="customer_email"
-                                    class="form-control"
-                                    placeholder="Email address">
-                            </div>
-
-                            <div class="form-group col-md-6">
-                                <label>Designation</label>
-                                <input type="text"
-                                    name="designation"
-                                    class="form-control"
-                                    placeholder="Designation / Role">
-                            </div>
-                        </div>
-
-                        <div class="form-row">
-                            <div class="form-group col-md-6">
-                                <label>Budget</label>
-                                <input type="number"
-                                    name="customer_budget"
-                                    class="form-control"
-                                    placeholder="Estimated budget">
-                            </div>
-
-                            <div class="form-group col-md-6">
-                                <label>City</label>
-                                <input type="text"
-                                    name="customer_city"
-                                    class="form-control"
-                                    placeholder="City">
-                            </div>
                         </div>
 
                     </div>
@@ -679,8 +610,62 @@
 
         $(document).on('blur', '#phone, #email, #company_name', checkDuplicate);
 
+        // Existing-company / existing-contact / assignee pickers — previously
+        // these were either a free-text "type the company name again" field
+        // (always creating a new Company row) or a raw numeric User-ID input.
+        var contactsById = {};
+
+        function loadPickers() {
+            $.get("{{ route('companies.options') }}", function(response) {
+                (response.data || []).forEach(function(company) {
+                    $('#company_id').append(`<option value="${company.id}">${esc(company.name)}</option>`);
+                });
+            });
+
+            $.get("{{ route('contacts.data') }}", function(response) {
+                (response.data || []).forEach(function(contact) {
+                    contactsById[contact.id] = contact;
+                    const companyLabel = contact.company ? ' — ' + contact.company.name : '';
+                    $('#contact_id').append(`<option value="${contact.id}">${esc(contact.name)}${esc(companyLabel)}</option>`);
+                });
+            });
+
+            $.get("{{ route('leads.assignable_users') }}", function(response) {
+                (response.users || []).forEach(function(user) {
+                    $('#assigned_to').append(`<option value="${user.id}">${esc(user.name)}</option>`);
+                });
+            });
+        }
+
+        // Picking an existing company makes the free-text name/GST fields
+        // redundant (the backend links to that company by ID and ignores
+        // them), so grey them out rather than leave two ways to say the
+        // same thing both active at once.
+        $(document).on('change', '#company_id', function() {
+            const picked = !!this.value;
+            $('#companyNameGroup, #gstGroup').find('input').prop('disabled', picked);
+            if (picked) $('#company_name').val($(this).find(':selected').text());
+        });
+
+        // Picking an existing contact pre-fills their details for reference
+        // and disables the fields — a linked contact isn't re-created or
+        // silently edited by submitting this form.
+        $(document).on('change', '#contact_id', function() {
+            const contact = contactsById[this.value];
+            const fields = ['name', 'phone', 'alternate_phone', 'email', 'designation'];
+            fields.forEach(function(field) {
+                const $input = $('#' + field);
+                if (contact) {
+                    $input.val(contact[field] ?? '').prop('disabled', true);
+                } else {
+                    $input.prop('disabled', false);
+                }
+            });
+        });
+
         $(document).ready(function() {
             loadMasterDropdowns();
+            loadPickers();
         });
     </script>
 </body>

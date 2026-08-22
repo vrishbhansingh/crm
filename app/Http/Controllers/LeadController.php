@@ -262,32 +262,63 @@ class LeadController extends Controller
                 'max:255',
                 Rule::in(MasterValue::options('lead_source')->pluck('code')),
             ],
+            // An existing company/contact can be linked by ID instead of
+            // typing their details again — the free-text fields below are
+            // then only required when no ID was picked (a new record).
+            'company_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('companies', 'id')->where('tenant_id', $tenantId),
+            ],
             'company_name' => [
-                'required',
+                Rule::requiredIf(fn () => ! $request->filled('company_id')),
+                'nullable',
                 'string',
                 'max:255',
             ],
             'gst_no' => [
-                'required',
+                'nullable',
                 'string',
                 'max:255',
             ],
 
+            'contact_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('contacts', 'id')->where('tenant_id', $tenantId),
+            ],
+
             'name' => [
-                'required',
+                Rule::requiredIf(fn () => ! $request->filled('contact_id')),
+                'nullable',
                 'string',
                 'max:255',
             ],
 
             'phone' => [
-                'required',
+                Rule::requiredIf(fn () => ! $request->filled('contact_id')),
+                'nullable',
+                'string',
+                'max:20',
+            ],
+
+            'alternate_phone' => [
+                'nullable',
                 'string',
                 'max:20',
             ],
 
             'email' => [
+                Rule::requiredIf(fn () => ! $request->filled('contact_id')),
                 'nullable',
                 'email',
+                'max:255',
+            ],
+
+            'designation' => [
+                Rule::requiredIf(fn () => ! $request->filled('contact_id')),
+                'nullable',
+                'string',
                 'max:255',
             ],
 
@@ -368,78 +399,20 @@ class LeadController extends Controller
             ],
 
             // ================= ASSIGNMENT =================
+            // assigned_by/last_contacted_*/conversion fields were dropped
+            // from the create form entirely: assigned_by already defaults to
+            // the current user below, and a brand-new lead can't have been
+            // "last contacted" or converted before it exists.
             'assigned_to' => [
                 'nullable',
                 'integer',
                 Rule::exists('users', 'id')->where('tenant_id', $tenantId),
             ],
 
-            'assigned_by' => [
-                'nullable',
-                'integer',
-                Rule::exists('users', 'id')->where('tenant_id', $tenantId),
-            ],
-
-            'assigned_at' => [
-                'nullable',
-                'date',
-            ],
-
-            // ================= CONTACT TRACKING =================
-            'last_contacted_at' => [
-                'nullable',
-            ],
-
-            'last_contacted_by' => [
-                'nullable',
-                'integer',
-                Rule::exists('users', 'id')->where('tenant_id', $tenantId),
-            ],
-
-            // ================= CONVERSION =================
-            'is_converted' => [
-                'nullable',
-            ],
-
-            'converted_at' => [
-                'nullable',
-            ],
-
-            'conversion_value' => [
-                'nullable',
-                'numeric',
-                'min:0',
-            ],
-
             // ================= NOTES =================
             'internal_note' => [
                 'nullable',
             ],
-
-            'customer_name' => [
-                'required',
-            ],
-
-            'customer_phone' => [
-                'required',
-            ],
-
-            'customer_email' => [
-                'required',
-            ],
-
-            'designation' => [
-                'required',
-            ],
-
-            'customer_budget' => [
-                'required',
-            ],
-
-            'customer_city' => [
-                'required',
-            ],
-
         ];
 
         $validator = Validator::make($request->all(), $rules);
@@ -459,12 +432,6 @@ class LeadController extends Controller
         $lead->tenant_id = $tenantId;
         $lead->lead_type = $request->lead_type;
         $lead->lead_source = $request->lead_source;
-        $lead->company_name = $request->company_name;
-        $lead->gst_no = $request->gst_no;
-        $lead->name = $request->name;
-        $lead->phone = $request->phone;
-        $lead->alternate_phone = $request->alternate_phone;
-        $lead->email = $request->email;
         $lead->city = $request->city;
         $lead->state = $request->state;
         $lead->country = $request->country;
@@ -490,10 +457,8 @@ class LeadController extends Controller
         }
 
         $lead->assigned_to = $assignedTo;
-        $lead->assigned_by = $request->assigned_by ?: Auth::guard('web')->id();
-        $lead->assigned_at = $assignedTo ? ($request->assigned_at ?: now()) : null;
-        $lead->last_contacted_at = $request->last_contacted_at;
-        $lead->last_contacted_by = $request->last_contacted_by;
+        $lead->assigned_by = Auth::guard('web')->id();
+        $lead->assigned_at = $assignedTo ? now() : null;
         // Conversion state is controlled only by the lead-to-deal workflow.
         // A newly entered lead must never arrive pre-converted from form data.
         $lead->is_converted = 'No';
@@ -524,31 +489,49 @@ class LeadController extends Controller
             ]);
         }
 
-        $company = Company::firstOrCreate([
-            'tenant_id' => $lead->tenant_id,
-            'name' => $lead->company_name,
-        ], [
-            'owner_id' => $assignedTo,
-            'gst_number' => $lead->gst_no,
-            'city' => $lead->city,
-            'state' => $lead->state,
-            'country' => $lead->country,
-            'status' => 'prospect',
-        ]);
+        // Existing company/contact can be linked by ID instead of always
+        // creating a new one — the picker on the form sends company_id /
+        // contact_id when the user chose an existing record there.
+        if ($request->filled('company_id')) {
+            $company = Company::where('tenant_id', $lead->tenant_id)->findOrFail($request->integer('company_id'));
+        } else {
+            $company = Company::firstOrCreate([
+                'tenant_id' => $lead->tenant_id,
+                'name' => $request->company_name,
+            ], [
+                'owner_id' => $assignedTo,
+                'gst_number' => $request->gst_no,
+                'city' => $lead->city,
+                'state' => $lead->state,
+                'country' => $lead->country,
+                'status' => 'prospect',
+            ]);
+        }
+        $lead->company_name = $company->name;
+        $lead->gst_no = $company->gst_number ?? $request->gst_no;
 
-        $contact = Contact::create([
-            'tenant_id' => $lead->tenant_id,
-            'company_id' => $company->id,
-            'owner_id' => $assignedTo,
-            'name' => $request->customer_name,
-            'phone' => $request->customer_phone,
-            'email' => $request->customer_email,
-            'designation' => $request->designation,
-            'city' => $request->customer_city,
-            'is_primary' => true,
-            'source' => 'lead',
-            'status' => 'active',
-        ]);
+        if ($request->filled('contact_id')) {
+            $contact = Contact::where('tenant_id', $lead->tenant_id)->findOrFail($request->integer('contact_id'));
+        } else {
+            $contact = Contact::create([
+                'tenant_id' => $lead->tenant_id,
+                'company_id' => $company->id,
+                'owner_id' => $assignedTo,
+                'name' => $request->name,
+                'phone' => $request->phone,
+                'alternate_phone' => $request->alternate_phone,
+                'email' => $request->email,
+                'designation' => $request->designation,
+                'city' => $lead->city,
+                'is_primary' => true,
+                'source' => 'lead',
+                'status' => 'active',
+            ]);
+        }
+        $lead->name = $contact->name;
+        $lead->phone = $contact->phone;
+        $lead->alternate_phone = $contact->alternate_phone;
+        $lead->email = $contact->email;
 
         $lead->company_id = $company->id;
         $lead->contact_id = $contact->id;

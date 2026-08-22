@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Company;
+use App\Models\Contact;
 use App\Models\Deal;
 use App\Models\DealStageHistory;
 use App\Models\Lead;
@@ -181,8 +183,10 @@ class DealController extends Controller
         $users = User::where('status', 'Active')->when($tenantId !== null, fn ($q) => $q->where('tenant_id', $tenantId))->get(['id', 'name']);
         $currencies = MasterValue::options('currency');
         $leads = Lead::orderBy('id', 'desc')->limit(200)->get(['id', 'name', 'company_name']);
+        $companies = Company::orderBy('name')->get(['id', 'name']);
+        $contacts = Contact::orderBy('name')->get(['id', 'name', 'company_id']);
 
-        return view('deals.create', compact('pipelines', 'users', 'currencies', 'leads'));
+        return view('deals.create', compact('pipelines', 'users', 'currencies', 'leads', 'companies', 'contacts'));
     }
 
     public function store(Request $request)
@@ -195,6 +199,8 @@ class DealController extends Controller
             'currency' => 'nullable|string|max:10',
             'owner_id' => 'nullable|integer',
             'lead_id' => 'nullable|integer',
+            'company_id' => 'nullable|integer',
+            'contact_id' => 'nullable|integer',
             'expected_close_date' => 'nullable|date',
             'notes' => 'nullable|string',
         ]);
@@ -209,8 +215,11 @@ class DealController extends Controller
                 'pipeline_id' => $pipeline->id,
                 'stage_id' => $request->stage_id,
                 'lead_id' => $request->lead_id,
-                'company_id' => $lead?->company_id,
-                'contact_id' => $lead?->contact_id,
+                // A linked lead's own company/contact take precedence (kept
+                // in sync); with no lead, a deal can still be linked to an
+                // existing company/contact directly via the form's pickers.
+                'company_id' => $lead?->company_id ?? $request->company_id,
+                'contact_id' => $lead?->contact_id ?? $request->contact_id,
                 'owner_id' => $request->owner_id,
                 'created_by' => Auth::guard('web')->id(),
                 'name' => $request->name,
@@ -242,8 +251,10 @@ class DealController extends Controller
         $users = User::where('status', 'Active')->when($tenantId !== null, fn ($q) => $q->where('tenant_id', $tenantId))->get(['id', 'name']);
         $currencies = MasterValue::options('currency');
         $leads = Lead::orderBy('id', 'desc')->limit(200)->get(['id', 'name', 'company_name']);
+        $companies = Company::orderBy('name')->get(['id', 'name']);
+        $contacts = Contact::orderBy('name')->get(['id', 'name', 'company_id']);
 
-        return view('deals.create', compact('deal', 'pipelines', 'users', 'currencies', 'leads'));
+        return view('deals.create', compact('deal', 'pipelines', 'users', 'currencies', 'leads', 'companies', 'contacts'));
     }
 
     public function update(Request $request, $id)
@@ -256,6 +267,8 @@ class DealController extends Controller
             'currency' => 'nullable|string|max:10',
             'owner_id' => 'nullable|integer',
             'lead_id' => 'nullable|integer',
+            'company_id' => 'nullable|integer',
+            'contact_id' => 'nullable|integer',
             'expected_close_date' => 'nullable|date',
             'notes' => 'nullable|string',
         ]);
@@ -267,8 +280,10 @@ class DealController extends Controller
             $deal->company_id = $lead->company_id;
             $deal->contact_id = $lead->contact_id;
         } elseif ($request->has('lead_id')) {
-            $deal->company_id = null;
-            $deal->contact_id = null;
+            // Lead explicitly cleared — fall back to whatever company/contact
+            // was picked directly, rather than always wiping the link.
+            $deal->company_id = $request->company_id;
+            $deal->contact_id = $request->contact_id;
         }
 
         $deal->fill($request->only(['name', 'amount', 'currency', 'owner_id', 'lead_id', 'expected_close_date', 'notes']));
@@ -279,7 +294,7 @@ class DealController extends Controller
 
     public function destroy($id)
     {
-        $deal = Deal::findOrFail($id);
+        $deal = $this->findEditableDeal($id);
         $deal->delete();
 
         return response()->json(['status' => true, 'message' => 'Deal deleted successfully']);
@@ -292,7 +307,11 @@ class DealController extends Controller
             'owner_id' => 'required|integer',
         ]);
 
-        $deal = Deal::findOrFail($request->deal_id);
+        // findEditableDeal(), not a bare findOrFail() — a non-elevated user
+        // with deals.assign/deals.delete could otherwise reach any deal in
+        // the tenant, not just their own (same ownership scoping every other
+        // deal-mutating action here already applies).
+        $deal = $this->findEditableDeal($request->integer('deal_id'));
         $request->validate([
             'owner_id' => $this->tenantExistsRule('users', $deal->tenant_id),
         ]);
@@ -468,6 +487,8 @@ class DealController extends Controller
         $rules = [
             'owner_id' => ['nullable', $this->tenantExistsRule('users', $tenantId)],
             'lead_id' => ['nullable', $this->tenantExistsRule('leads', $tenantId)],
+            'company_id' => ['nullable', $this->tenantExistsRule('companies', $tenantId)],
+            'contact_id' => ['nullable', $this->tenantExistsRule('contacts', $tenantId)],
         ];
 
         if ($pipelineId !== null) {

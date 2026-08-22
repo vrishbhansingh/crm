@@ -43,7 +43,12 @@ class CompanyController extends Controller
             'company_logo' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
-        $company = CompanyDetails::where('status', 'Active')->firstOrFail();
+        // Matches the plain CompanyDetails::first() the view pages above use —
+        // this is a per-tenant singleton settings row, not a filtered list, so
+        // scoping the save lookup to status='Active' could silently diverge
+        // from what the edit form was actually pre-filled with (and 404 the
+        // save entirely if the row was ever marked Inactive).
+        $company = CompanyDetails::firstOrFail();
 
         // 🔹 Update normal fields
         $company->company_name = $request->company_name;

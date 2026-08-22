@@ -5,7 +5,35 @@
 <body><div class="container-scroller">@include('include.header')<div class="container-fluid page-body-wrapper">@include('include.sidebar')<div class="main-panel"><div class="content-wrapper">
 <div class="mb-4"><h3 class="mb-1">Audit Log</h3><p class="text-muted">Immutable history of important CRM data changes.</p></div>
 <div class="card audit-card mb-3"><div class="card-body filter-grid"><select id="event" class="form-control"><option value="">All events</option><option value="created">Created</option><option value="updated">Updated</option><option value="deleted">Deleted</option></select><select id="type" class="form-control"><option value="">All record types</option>@foreach(['Lead','Deal','Order','Company','Contact','Task','PaymentDetails','Pipeline','ProjectInfo','User'] as $type)<option>{{ $type }}</option>@endforeach</select><select id="actor" class="form-control"><option value="">All users</option>@foreach($users as $user)<option value="{{ $user->id }}">{{ $user->name }}</option>@endforeach</select><input id="from" type="date" class="form-control"><input id="to" type="date" class="form-control"></div></div>
-<div class="card audit-card"><div class="table-responsive"><table class="table table-hover mb-0"><thead><tr><th>When</th><th>User</th><th>Event</th><th>Record</th><th>Changes</th></tr></thead><tbody id="auditRows"><tr><td colspan="5" class="text-center p-4 text-muted">Loading…</td></tr></tbody></table></div></div>
+<div class="card audit-card"><div class="table-responsive"><table class="table table-hover mb-0"><thead><tr><th>When</th><th>User</th><th>Event</th><th>Record</th><th>Changes</th></tr></thead><tbody id="auditRows"><tr><td colspan="5" class="text-center p-4 text-muted">Loading…</td></tr></tbody></table></div><div class="p-3" id="auditPagination"></div></div>
 </div>@include('include.footer')</div></div></div><script src="{{ asset('vendors/js/vendor.bundle.base.js') }}"></script><script>
-(() => { const esc=v=>$('<div>').text(v??'').html(); function load(){const p=new URLSearchParams({event:$('#event').val(),type:$('#type').val(),actor_id:$('#actor').val(),date_from:$('#from').val(),date_to:$('#to').val()});$.get(`{{ route('audit.data') }}?${p}`,r=>{const html=r.data.map(a=>`<tr><td>${esc(new Date(a.created_at).toLocaleString())}</td><td>${esc(a.actor?.name||'System')}</td><td><span class="audit-event text-${a.event==='deleted'?'danger':(a.event==='created'?'success':'primary')}">${esc(a.event)}</span></td><td>${esc(a.auditable_type)} #${a.auditable_id}</td><td><details><summary>View changes</summary>${a.old_values?`<small>Before</small><div class="change-json">${esc(JSON.stringify(a.old_values,null,2))}</div>`:''}${a.new_values?`<small>After</small><div class="change-json">${esc(JSON.stringify(a.new_values,null,2))}</div>`:''}</details></td></tr>`).join('');$('#auditRows').html(html||'<tr><td colspan="5" class="text-center p-4 text-muted">No audit events found.</td></tr>');});} $('.filter-grid :input').on('change',load);load();})();
+(() => {
+    const esc = v => $('<div>').text(v ?? '').html();
+    let currentPage = 1;
+
+    function renderChanges(a) {
+        // A create/delete event's "diff" is every field going from/to nothing —
+        // not a meaningful field-by-field change list, so show the plain
+        // one-line summary instead of a wall of "X: value → —" rows.
+        if (a.event === 'created' || a.event === 'deleted') {
+            return `<span class="text-muted">${a.event === 'created' ? 'Record created' : 'Record deleted'}</span>`;
+        }
+        if (a.changes && a.changes.length) {
+            const rows = a.changes.map(c => `<div><b>${esc(c.field)}</b>: ${esc(c.from)} → ${esc(c.to)}</div>`).join('');
+            return `<details><summary>${a.changes.length} field(s) changed</summary><div class="change-json">${rows}</div></details>`;
+        }
+        return '<span class="text-muted">No tracked field changes</span>';
+    }
+
+    function load() {
+        const p = new URLSearchParams({ event: $('#event').val(), type: $('#type').val(), actor_id: $('#actor').val(), date_from: $('#from').val(), date_to: $('#to').val(), page: currentPage });
+        $.get(`{{ route('audit.data') }}?${p}`, r => {
+            const html = r.data.map(a => `<tr><td>${esc(new Date(a.created_at).toLocaleString())}</td><td>${esc(a.actor?.name || 'System')}</td><td><span class="audit-event text-${a.event === 'deleted' ? 'danger' : (a.event === 'created' ? 'success' : 'primary')}">${esc(a.event)}</span></td><td>${esc(a.auditable_type)} #${a.auditable_id}</td><td>${renderChanges(a)}</td></tr>`).join('');
+            $('#auditRows').html(html || '<tr><td colspan="5" class="text-center p-4 text-muted">No audit events found.</td></tr>');
+            renderCrmPagination('#auditPagination', r.meta, page => { currentPage = page; load(); });
+        });
+    }
+    $('.filter-grid :input').on('change', function () { currentPage = 1; load(); });
+    load();
+})();
 </script></body></html>

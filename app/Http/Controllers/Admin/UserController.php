@@ -229,6 +229,18 @@ class UserController extends Controller
             $query->where('tenant_id', $tenantId);
         }
 
-        return $query->findOrFail($id);
+        $user = $query->findOrFail($id);
+
+        // A tenant's protected Admin (tenants.admin_user_id) can only manage
+        // their own record through this endpoint — a custom role granted
+        // users.edit/users.delete previously had no guard against targeting
+        // that account, letting it demote, lock out, or delete the one user
+        // who actually owns the tenant.
+        if ($tenantId !== null && $user->id !== $actingUser->id
+            && Tenant::where('id', $tenantId)->where('admin_user_id', $user->id)->exists()) {
+            abort(403, 'This account is the protected company Admin and cannot be managed by another user.');
+        }
+
+        return $user;
     }
 }
