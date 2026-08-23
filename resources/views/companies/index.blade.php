@@ -33,6 +33,20 @@
                 <button class="btn btn-primary btn-sm" id="newCompanyBtn"><i class="fa fa-plus"></i> New Company</button>
                 @endcan
             </div>
+            <div class="crm-card mb-3">
+                <div class="form-row">
+                    <div class="form-group col-md-8 mb-0"><input type="text" id="companySearchInput" class="form-control" placeholder="Search name, email, phone…"></div>
+                    <div class="form-group col-md-4 mb-0">
+                        <select id="companyFilterStatus" class="form-control">
+                            <option value="">All statuses</option>
+                            <option value="prospect">Prospect</option>
+                            <option value="customer">Customer</option>
+                            <option value="partner">Partner</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
             <div class="crm-card">
                 <div class="table-responsive">
                     <table class="table crm-table" id="companiesTable">
@@ -40,6 +54,7 @@
                         <tbody><tr><td colspan="7" class="text-center text-muted">Loading companies…</td></tr></tbody>
                     </table>
                 </div>
+                <div id="companyPagination"></div>
             </div>
             @include('include.footer')
         </div>
@@ -84,10 +99,15 @@
     const canEditCompanies = {{ Auth::guard('web')->user()->can('companies.edit') ? 'true' : 'false' }};
     const canDeleteCompanies = {{ Auth::guard('web')->user()->can('companies.delete') ? 'true' : 'false' }};
     let companiesById = {};
+    let companyPage = 1;
     const esc = value => $('<div>').text(value ?? '').html();
 
     function loadCompanies() {
-        $.get("{{ route('companies.data') }}", function(response) {
+        $.get("{{ route('companies.data') }}", {
+            search: $('#companySearchInput').val(),
+            status: $('#companyFilterStatus').val(),
+            page: companyPage,
+        }, function(response) {
             companiesById = {};
             let html = '';
             response.data.forEach(company => {
@@ -103,8 +123,16 @@
                 </tr>`;
             });
             $('#companiesTable tbody').html(html || '<tr><td colspan="7" class="text-center text-muted">No companies found</td></tr>');
+            renderCrmPagination('#companyPagination', response.meta, page => { companyPage = page; loadCompanies(); });
         }).fail(() => toastr.error('Could not load companies'));
     }
+
+    let companySearchTimer;
+    $('#companySearchInput').on('input', function() {
+        clearTimeout(companySearchTimer);
+        companySearchTimer = setTimeout(() => { companyPage = 1; loadCompanies(); }, 350);
+    });
+    $('#companyFilterStatus').on('change', function() { companyPage = 1; loadCompanies(); });
 
     function openCompany(company = null) {
         $('#companyForm')[0].reset(); $('#companyId').val(company?.id || '');

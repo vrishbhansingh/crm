@@ -38,7 +38,45 @@ class ContactController extends Controller
             $query->where('company_id', $request->integer('company_id'));
         }
 
-        return response()->json(['data' => $query->latest()->get()]);
+        if ($request->filled('search')) {
+            $term = '%'.$request->string('search').'%';
+            $query->where(function ($q) use ($term) {
+                $q->where('name', 'like', $term)
+                    ->orWhere('email', 'like', $term)
+                    ->orWhere('phone', 'like', $term);
+            });
+        }
+
+        $perPage = min(max((int) $request->input('per_page', 20), 5), 100);
+        $paginator = $query->latest()->paginate($perPage);
+
+        return response()->json([
+            'data' => $paginator->items(),
+            'meta' => [
+                'current_page' => $paginator->currentPage(),
+                'last_page' => $paginator->lastPage(),
+                'total' => $paginator->total(),
+                'per_page' => $paginator->perPage(),
+            ],
+        ]);
+    }
+
+    /**
+     * Unpaginated {id, name, company} list for pickers (e.g. the Lead create
+     * form's "Existing Contact" select) — data() above now paginates for the
+     * Contacts list page itself, which would silently truncate a picker to
+     * one page's worth of contacts if it used the same endpoint.
+     */
+    public function options()
+    {
+        $user = Auth::guard('web')->user();
+        $query = Contact::with('company:id,name')->orderBy('name');
+
+        if (! $user->hasElevatedAccess()) {
+            $query->where('owner_id', $user->id);
+        }
+
+        return response()->json(['data' => $query->get(['id', 'name', 'phone', 'email', 'alternate_phone', 'designation', 'company_id'])]);
     }
 
     public function store(Request $request)

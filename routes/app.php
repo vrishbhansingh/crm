@@ -265,6 +265,7 @@ Route::middleware(['admin_middle', 'permission:masters.delete'])->group(function
 Route::middleware(['admin_middle', 'permission:contacts.view'])->group(function () {
     Route::get('/contacts', [ContactController::class, 'index'])->name('contacts.index');
     Route::get('/contacts/data', [ContactController::class, 'data'])->name('contacts.data');
+    Route::get('/contacts/options', [ContactController::class, 'options'])->name('contacts.options');
 });
 
 Route::middleware(['admin_middle', 'permission:contacts.create'])->group(function () {

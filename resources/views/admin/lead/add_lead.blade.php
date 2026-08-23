@@ -622,7 +622,7 @@
                 });
             });
 
-            $.get("{{ route('contacts.data') }}", function(response) {
+            $.get("{{ route('contacts.options') }}", function(response) {
                 (response.data || []).forEach(function(contact) {
                     contactsById[contact.id] = contact;
                     const companyLabel = contact.company ? ' — ' + contact.company.name : '';

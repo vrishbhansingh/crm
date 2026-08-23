@@ -22,7 +22,7 @@ class CrmCompanyController extends Controller
         return view('companies.index', compact('owners'));
     }
 
-    public function data()
+    public function data(Request $request)
     {
         $user = Auth::guard('web')->user();
         $query = Company::with('owner:id,name')
@@ -32,8 +32,30 @@ class CrmCompanyController extends Controller
             $query->where('owner_id', $user->id);
         }
 
+        if ($request->filled('search')) {
+            $term = '%'.$request->string('search').'%';
+            $query->where(function ($q) use ($term) {
+                $q->where('name', 'like', $term)
+                    ->orWhere('email', 'like', $term)
+                    ->orWhere('phone', 'like', $term);
+            });
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->string('status'));
+        }
+
+        $perPage = min(max((int) $request->input('per_page', 20), 5), 100);
+        $paginator = $query->latest()->paginate($perPage);
+
         return response()->json([
-            'data' => $query->latest()->get(),
+            'data' => $paginator->items(),
+            'meta' => [
+                'current_page' => $paginator->currentPage(),
+                'last_page' => $paginator->lastPage(),
+                'total' => $paginator->total(),
+                'per_page' => $paginator->perPage(),
+            ],
         ]);
     }
 
