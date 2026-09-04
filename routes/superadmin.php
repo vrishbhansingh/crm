@@ -33,5 +33,3 @@ Route::middleware(['admin_middle', 'role:Super Admin'])->group(function () {
     Route::post('/companies/{tenant}/users/{user}/impersonate', [AuthController::class, 'platformImpersonate'])->name('users.impersonate')->whereNumber(['tenant', 'user']);
     Route::post('/logout', [SuperAdminAuthController::class, 'logout'])->name('logout');
 });
-
-Route::middleware('admin_middle')->post('/impersonation/stop', [AuthController::class, 'stopImpersonating'])->name('impersonation.stop');

@@ -323,6 +323,12 @@ Route::middleware(['admin_middle', 'permission:users.impersonate'])->group(funct
     Route::post('/users/impersonate', [AuthController::class, 'impersonate'])->name('users.impersonate');
 });
 
+// Lives here (not under routes/superadmin.php) so the "End support session"
+// banner shown while impersonating — rendered on the CRM domain — stays
+// reachable under RestrictToAdminDomain's domain split. Its own guard is
+// the live `impersonator_id` session value, not the URL namespace.
+Route::middleware('admin_middle')->post('/impersonation/stop', [AuthController::class, 'stopImpersonating'])->name('impersonation.stop');
+
 Route::middleware(['admin_middle', 'permission:roles.view'])->get('/roles', [RoleController::class, 'index'])->name('roles.index');
 Route::middleware(['admin_middle', 'permission:roles.create'])->post('/roles', [RoleController::class, 'store'])->name('roles.store');
 Route::middleware(['admin_middle', 'permission:roles.edit'])->put('/roles/{role}', [RoleController::class, 'update'])->name('roles.update')->whereNumber('role');

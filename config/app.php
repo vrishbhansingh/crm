@@ -61,6 +61,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Portal Domains
+    |--------------------------------------------------------------------------
+    |
+    | The two production hosts this app is split across: the tenant-facing
+    | CRM and the Super Admin control plane. RestrictToAdminDomain uses
+    | these to keep each portal reachable only on its own host.
+    |
+    */
+
+    'crm_domain' => env('CRM_DOMAIN', 'crm.mohindramachine.tech'),
+
+    'admin_domain' => env('ADMIN_DOMAIN', 'admin.mohindramachine.tech'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |

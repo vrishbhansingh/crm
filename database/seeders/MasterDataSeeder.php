@@ -2,9 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Models\MasterType;
-use App\Models\MasterValue;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Seeds the master types/values that are genuinely live in the app today
@@ -134,18 +133,42 @@ class MasterDataSeeder extends Seeder
 
     public function run(): void
     {
+        $master = config('tenancy.master_connection', 'mysql');
+
         foreach ($this->types as $typeCode => $definition) {
-            $type = MasterType::firstOrCreate(
-                ['code' => $typeCode],
-                ['name' => $definition['name'], 'is_active' => true]
-            );
+            $typeId = DB::connection($master)->table('master_types')
+                ->where('code', $typeCode)
+                ->value('id');
+
+            if (! $typeId) {
+                $typeId = DB::connection($master)->table('master_types')->insertGetId([
+                    'code' => $typeCode,
+                    'name' => $definition['name'],
+                    'is_active' => true,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
 
             $sortOrder = 0;
             foreach ($definition['values'] as $valueCode => $label) {
-                MasterValue::firstOrCreate(
-                    ['master_type_id' => $type->id, 'tenant_id' => null, 'code' => $valueCode],
-                    ['label' => $label, 'sort_order' => $sortOrder]
-                );
+                $exists = DB::connection($master)->table('master_values')
+                    ->where('master_type_id', $typeId)
+                    ->where('tenant_id', null)
+                    ->where('code', $valueCode)
+                    ->exists();
+
+                if (! $exists) {
+                    DB::connection($master)->table('master_values')->insert([
+                        'master_type_id' => $typeId,
+                        'tenant_id' => null,
+                        'code' => $valueCode,
+                        'label' => $label,
+                        'sort_order' => $sortOrder,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
                 $sortOrder++;
             }
         }

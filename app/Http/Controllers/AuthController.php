@@ -52,8 +52,8 @@ class AuthController extends Controller
         if ($user->hasRole('Super Admin')) {
             return response()->json([
                 'status' => false,
-                'message' => 'Use the separate Super Admin portal to sign in.',
-                'location' => route('superadmin.login'),
+                'message' => 'Use the Super Admin portal to sign in.',
+                'location' => 'https://'.config('app.admin_domain').'/superadmin/login',
             ]);
         }
 
@@ -185,7 +185,12 @@ class AuthController extends Controller
         $request->session()->regenerate();
         $request->session()->put('session_token', $user->session_token);
 
-        return redirect()->route('dashboard')->with('success', 'Support session started. Actions are audited.');
+        // The superadmin panel this was submitted from lives on the admin
+        // domain, but `dashboard` is a CRM-domain-only route — build an
+        // absolute cross-domain redirect rather than route()'s default
+        // (which would reuse the current, wrong, request host).
+        return redirect()->to('https://'.config('app.crm_domain').route('dashboard', absolute: false))
+            ->with('success', 'Support session started. Actions are audited.');
     }
 
     public function stopImpersonating(Request $request)
@@ -205,6 +210,10 @@ class AuthController extends Controller
             'ip_address' => $request->ip(),
         ]);
 
-        return redirect()->route('superadmin.dashboard');
+        // Mirror image of platformImpersonate's fix: this is submitted from
+        // a CRM-domain page (the "End support session" banner shown while
+        // impersonating), but superadmin.dashboard only exists on the
+        // admin domain.
+        return redirect()->to('https://'.config('app.admin_domain').route('superadmin.dashboard', absolute: false));
     }
 }

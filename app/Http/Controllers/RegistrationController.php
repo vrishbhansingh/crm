@@ -78,6 +78,24 @@ class RegistrationController extends Controller
 
         $audit->record('tenant.provisioned', $tenant->fresh(), $admin, ['source' => 'self_service']);
 
+        if (! config('tenancy.require_approval')) {
+            DB::transaction(function () use ($tenant, $admin) {
+                $tenant = Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
+                $tenant->update([
+                    'status' => 'Active',
+                    'approval_status' => 'approved',
+                    'approved_at' => now(),
+                    'trial_ends_at' => $tenant->plan === 'trial' && $tenant->trial_ends_at === null
+                        ? now()->addDays(14)
+                        : $tenant->trial_ends_at,
+                ]);
+                $admin->update(['status' => 'Active']);
+            });
+            $audit->record('tenant.approved', $tenant->fresh(), $admin, ['source' => 'self_service_auto']);
+
+            return redirect()->route('register.success')->with('auto_approved', true);
+        }
+
         return redirect()->route('register.success');
     }
 

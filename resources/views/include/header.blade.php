@@ -344,7 +344,7 @@
 
     <div class="crm-right">
       @if(session('impersonator_id'))
-        <form method="post" action="{{ route('superadmin.impersonation.stop') }}">@csrf<button class="btn btn-sm btn-warning">End support session</button></form>
+        <form method="post" action="{{ route('impersonation.stop') }}">@csrf<button class="btn btn-sm btn-warning">End support session</button></form>
       @endif
       <a class="notification-link" href="{{ route('notifications.index') }}" title="Notifications">
         <i class="fa fa-bell-o"></i>
