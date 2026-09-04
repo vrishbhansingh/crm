@@ -22,16 +22,19 @@
             margin-bottom: 20px;
         }
 
+        /* Same modernization pattern as Roles & Permissions / Dashboard /
+           Leads / Deals list: bigger, roomier white header card. */
         .page-header {
             background: #ffffff;
-            padding: 18px 22px;
-            border-radius: 14px;
-            margin-bottom: 18px;
-            box-shadow: 0 8px 22px rgba(0, 0, 0, 0.05);
+            padding: 26px 28px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
         }
 
         .page-header h4 {
             font-weight: 700;
+            font-size: 22px;
             margin: 0;
         }
     </style>

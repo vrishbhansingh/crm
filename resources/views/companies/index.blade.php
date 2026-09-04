@@ -10,14 +10,16 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
     <style>
-        .crm-card,.crm-header{background:#fff;border:1px solid #e5e7eb;border-radius:14px;box-shadow:0 8px 24px rgba(15,23,42,.05)}
-        .crm-header{padding:18px 22px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;gap:12px}
-        .crm-header h4{margin:0;font-weight:700}.crm-header p{margin:3px 0 0;color:#6b7280;font-size:12px}
-        .crm-card{padding:18px}.crm-table{border-collapse:separate;border-spacing:0 7px}
-        .crm-table th{border:0;background:#f1f5f9;color:#475569;font-size:12px}.crm-table td{vertical-align:middle;font-size:13px;background:#fff;border-top:1px solid #e5e7eb;border-bottom:1px solid #e5e7eb}
+        /* Same modernization pattern as Roles & Permissions / Dashboard / Leads / Deals: bigger, roomier cards. */
+        .crm-card,.crm-header{background:#fff;border:none;border-radius:16px;box-shadow:0 8px 24px rgba(15,23,42,.06)}
+        .crm-header{padding:26px 28px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+        .crm-header h4{margin:0 0 6px;font-weight:700;font-size:22px}.crm-header p{margin:0;color:#6b7280;font-size:14px}
+        .crm-header .btn{border-radius:10px;padding:10px 20px;font-weight:600}
+        .crm-card{padding:20px}.crm-table{border-collapse:separate;border-spacing:0 10px;font-size:14.5px}
+        .crm-table th{border:0;background:#f8fafc;color:#475569;font-size:12.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:14px 16px}.crm-table td{vertical-align:middle;font-size:14px;background:#fff;border-top:1px solid #e5e7eb;border-bottom:1px solid #e5e7eb;padding:16px}
         .crm-table td:first-child{border-left:1px solid #e5e7eb;border-radius:9px 0 0 9px}.crm-table td:last-child{border-right:1px solid #e5e7eb;border-radius:0 9px 9px 0}
-        .status-pill{display:inline-block;padding:4px 9px;border-radius:999px;background:#eef2ff;color:#4338ca;font-size:11px;text-transform:capitalize}
-        .metric{font-size:11px;color:#64748b;margin-right:8px}.company-link{font-weight:700;color:#1d4ed8}
+        .status-pill{display:inline-block;padding:6px 14px;border-radius:999px;background:#eef2ff;color:#4338ca;font-size:12px;font-weight:600;text-transform:capitalize}
+        .metric{font-size:12px;color:#64748b;margin-right:8px}.company-link{font-weight:700;color:#1d4ed8}
         @media(max-width:768px){.crm-header{align-items:flex-start;flex-direction:column}}
     </style>
 </head>

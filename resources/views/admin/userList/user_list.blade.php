@@ -275,48 +275,57 @@
         /* ===============================
    USER PAGE HEADER
 ================================ */
+        /* Same modernization pattern as the rest of this pass — plain
+           white card with a light icon circle, matching every other page,
+           instead of the previous blue gradient banner. */
         .user-page-header {
-            background: linear-gradient(135deg, #0d6efd, #00c6ff);
-            padding: 20px 24px;
-            border-radius: 14px;
+            background: #fff;
+            padding: 26px 28px;
+            border-radius: 16px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-            color: #ffffff;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+            color: #111827;
         }
 
         .user-header-left {
             display: flex;
             align-items: center;
-            gap: 14px;
+            gap: 16px;
         }
 
         .user-header-icon {
-            width: 48px;
-            height: 48px;
+            width: 46px;
+            height: 46px;
             border-radius: 12px;
-            background: rgba(255, 255, 255, 0.2);
+            background: #eff6ff;
+            color: #2563eb;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
+            font-size: 19px;
         }
 
         .user-page-header h4 {
             font-weight: 700;
+            font-size: 22px;
+            margin: 0 0 6px;
         }
 
         .add-user-btn {
-            border-radius: 30px;
-            padding: 6px 18px;
+            border-radius: 10px;
+            padding: 10px 20px;
             font-weight: 600;
-            transition: 0.3s ease;
+            transition: 0.2s ease;
+            background: #2563eb;
+            color: #fff;
+            border: none;
         }
 
         .add-user-btn:hover {
-            background: #ffffff;
-            color: #0d6efd;
+            background: #1d4ed8;
+            color: #fff;
         }
 
         /* Mobile */
@@ -356,7 +365,7 @@
                         </div>
                         <div>
                             <h4 class="mb-0">User Management</h4>
-                            <small class="text-light">Manage all CRM users and roles</small>
+                            <small class="text-muted">Manage all CRM users and roles</small>
                         </div>
                     </div>
 

@@ -9,7 +9,7 @@ use Throwable;
 
 class MigrateTenantSchemas extends Command
 {
-    protected $signature = 'crm:migrate-tenant-schemas {--tenant= : Migrate only one tenant ID}';
+    protected $signature = 'tenants:migrate {--tenant= : Migrate only one tenant ID}';
 
     protected $description = 'Apply database/migrations/tenant migrations to provisioned tenant databases';
 

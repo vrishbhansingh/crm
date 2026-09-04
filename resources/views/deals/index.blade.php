@@ -30,12 +30,14 @@
             overflow-x: hidden;
         }
 
+        /* Same modernization pattern as Roles & Permissions / Dashboard /
+           Leads / Deals list: bigger, roomier white header card. */
         .page-header {
             background: #ffffff;
-            padding: 18px 22px;
-            border-radius: 14px;
-            margin-bottom: 18px;
-            box-shadow: 0 8px 22px rgba(0, 0, 0, 0.05);
+            padding: 26px 28px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
         }
 
         /* Title and toolbar each get their own row instead of sharing one
@@ -52,14 +54,15 @@
 
         .page-header h4 {
             font-weight: 700;
+            font-size: 22px;
             color: var(--text-dark);
             margin: 0;
         }
 
         .page-header p {
-            font-size: 12px;
+            font-size: 14px;
             color: var(--text-muted);
-            margin: 2px 0 0;
+            margin: 4px 0 0;
         }
 
         .board-toolbar {

@@ -20,24 +20,40 @@
     <link rel="stylesheet" href="{{ asset('vendors/datatables.net-bs4/dataTables.bootstrap4.css') }}">
 
     <style>
-        .order-table-wrapper {
-            background: #fff;
-            border-radius: 10px;
-            padding: 15px;
-            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+        /* --text-dark/--text-muted were referenced below but never defined
+           in this file — silently fell back to the browser default rather
+           than the intended color. Defining them properly here. */
+        :root {
+            --text-dark: #111827;
+            --text-muted: #6b7280;
         }
 
+        /* Same modernization pattern as the rest of this pass. */
+        .order-table-wrapper {
+            background: #fff;
+            border-radius: 14px;
+            padding: 18px;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+        }
+
+        .order-table { font-size: 14.5px; }
+
         .order-table thead th {
-            background: #f5f7fb;
-            font-size: 13px;
-            font-weight: 600;
+            background: #f8fafc;
+            color: #475569;
+            font-size: 12.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
             text-align: center;
+            padding: 14px 12px;
         }
 
         .order-table tbody td {
-            font-size: 13px;
+            font-size: 14px;
             text-align: center;
             vertical-align: middle;
+            padding: 14px 12px;
         }
 
         .status-badge {
@@ -77,39 +93,32 @@
         .status-closed      { background: #eef1f5; color: #64748b; }
         .status-cancelled   { background: #fdecec; color: #d64545; }
 
+        /* Same modernization pattern as the rest of this pass — plain
+           white card, no accent stripe, matching every other page. */
         .page-header {
             background: #ffffff;
-            padding: 18px 22px;
-            border-radius: 14px;
-            margin-bottom: 18px;
-            box-shadow: 0 8px 22px rgba(0, 0, 0, 0.05);
+            padding: 26px 28px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            position: relative;
-        }
-
-        .page-header::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 5px;
-            height: 100%;
-            border-radius: 14px 0 0 14px;
-            background: linear-gradient(180deg, #2563eb, #4f46e5);
+            flex-wrap: wrap;
+            gap: 16px;
         }
 
         .page-header h4 {
-            font-weight: 600;
+            font-weight: 700;
+            font-size: 22px;
             color: var(--text-dark);
-            margin: 0;
+            margin: 0 0 6px;
         }
 
         .page-header p {
-            font-size: 12px;
+            font-size: 14px;
             color: var(--text-muted);
-            margin: 2px 0 0;
+            margin: 0;
         }
     </style>
 </head>

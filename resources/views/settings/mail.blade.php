@@ -15,10 +15,15 @@
     <style>
         :root { --bg: #f5f7fb; --card: #ffffff; --border: #e6e9f0; --text: #1f2937; --muted: #6b7280; --primary: #2563eb; }
         body { background: var(--bg); font-family: "Inter", system-ui, sans-serif; }
-        .panel { background: var(--card); border-radius: 14px; border: 1px solid var(--border); padding: 22px; max-width: 720px; }
-        .section-title { font-size: 15px; font-weight: 600; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
-        label { font-size: 12px; font-weight: 600; color: var(--muted); }
-        .hint { font-size: 12px; color: var(--muted); margin-top: -8px; margin-bottom: 16px; }
+
+        /* Same modernization pattern as the rest of this pass. */
+        .crm-page-header{background:#fff;padding:26px 28px;border-radius:16px;box-shadow:0 8px 24px rgba(15,23,42,.06);margin-bottom:24px}
+        .crm-page-header h3{margin:0 0 6px;font-weight:700;font-size:22px;color:#111827}.crm-page-header p{margin:0;color:#6b7280;font-size:14px;max-width:640px}
+
+        .panel { background: var(--card); border-radius: 16px; border: none; box-shadow: 0 8px 24px rgba(15,23,42,.06); padding: 24px; max-width: 720px; }
+        .section-title { font-size: 15.5px; font-weight: 700; margin-bottom: 18px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+        label { font-size: 12.5px; font-weight: 600; color: var(--muted); }
+        .hint { font-size: 12.5px; color: var(--muted); margin-top: -8px; margin-bottom: 16px; }
     </style>
 </head>
 
@@ -32,8 +37,10 @@
 
             <div class="content-wrapper">
 
-                <h3 class="mb-1">Mail Settings</h3>
-                <p class="text-muted mb-4">Configure this company's own SMTP for outgoing emails (invoices, password resets, notifications). If disabled, the platform's default mail server is used instead.</p>
+                <div class="crm-page-header">
+                    <h3>Mail Settings</h3>
+                    <p>Configure this company's own SMTP for outgoing emails (invoices, password resets, notifications). If disabled, the platform's default mail server is used instead.</p>
+                </div>
 
                 <div class="panel section">
                     <div class="section-title">SMTP configuration</div>

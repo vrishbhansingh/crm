@@ -27,26 +27,29 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
     <style>
         /* ===== PAGE HEADER ===== */
+        /* Same modernization pattern as the rest of this pass. */
         .page-header {
             background: #ffffff;
-            padding: 18px 24px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+            padding: 26px 28px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
             display: flex;
             align-items: center;
             justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
         }
 
         .page-header h2 {
-            font-size: 18px;
-            font-weight: 600;
+            font-size: 22px;
+            font-weight: 700;
             color: #111827;
             margin: 0;
         }
 
         .page-header .breadcrumb {
-            font-size: 12px;
+            font-size: 14px;
             color: #6b7280;
         }
 

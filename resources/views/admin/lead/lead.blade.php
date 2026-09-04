@@ -27,28 +27,33 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
 
     <style>
-        /* ===== User Table Wrapper ===== */
+        /* ===== User Table Wrapper — modernization pass: bigger type,
+           roomier row padding, matching Roles/Dashboard. Structure and all
+           IDs are untouched, this is a pure visual pass. ===== */
         .user-table-wrapper {
             background: #ffffff;
-            border-radius: 10px;
-            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
-            padding: 15px;
+            border-radius: 14px;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+            padding: 18px;
         }
 
         /* ===== Table Base ===== */
         .user-table {
             width: 100%;
             border-collapse: separate;
-            border-spacing: 0 10px;
+            border-spacing: 0 12px;
+            font-size: 14.5px;
         }
 
         .user-table thead th {
-            background: #f5f7fb;
-            color: #4a4a4a;
-            font-weight: 600;
-            font-size: 13px;
+            background: #f8fafc;
+            color: #475569;
+            font-weight: 700;
+            font-size: 12.5px;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
             border: none;
-            padding: 12px 14px;
+            padding: 14px 16px;
         }
 
         .user-table tbody tr {
@@ -57,15 +62,15 @@
         }
 
         .user-table tbody tr:hover {
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
         }
 
         .user-table tbody td {
-            padding: 14px;
+            padding: 16px;
             border-top: 1px solid #eef1f6;
             border-bottom: 1px solid #eef1f6;
-            font-size: 13px;
-            color: #555;
+            font-size: 14px;
+            color: #374151;
         }
 
         .lead-name-link {
@@ -411,50 +416,59 @@
         /* ===============================
    LEAD HERO HEADER (Like Track Lead)
 ================================ */
+        /* Same modernization pattern as Roles & Permissions / Dashboard:
+           a white, roomy header card with a colored icon circle, rather
+           than the previous blue gradient banner — kept the same class
+           names so none of this page's JS (which targets other IDs) needed
+           to change. */
         .lead-hero-header {
-            background: linear-gradient(135deg, #1d4ed8, #0ea5e9);
-            padding: 22px 28px;
+            background: #fff;
+            padding: 26px 28px;
             border-radius: 16px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            color: #ffffff;
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+            color: #111827;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+            flex-wrap: wrap;
+            gap: 16px;
         }
 
         .lead-hero-left {
             display: flex;
             align-items: center;
-            gap: 14px;
+            gap: 16px;
         }
 
         .lead-hero-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 14px;
-            background: rgba(255, 255, 255, 0.2);
+            width: 46px;
+            height: 46px;
+            border-radius: 12px;
+            background: #eff6ff;
+            color: #2563eb;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
+            font-size: 19px;
         }
 
         .lead-hero-header h4 {
             font-weight: 700;
-            font-size: 20px;
+            font-size: 22px;
+            color: #111827;
         }
 
         .lead-hero-header small {
-            font-size: 13px;
-            opacity: 0.9;
+            font-size: 14px;
+            color: #6b7280;
         }
 
         /* Buttons */
         .lead-hero-right .btn {
-            border-radius: 30px;
-            padding: 6px 18px;
+            border-radius: 10px;
+            padding: 10px 20px;
             font-weight: 600;
-            transition: 0.3s ease;
+            transition: 0.2s ease;
         }
 
         .lead-hero-right .btn:hover {
@@ -506,7 +520,7 @@
 
                     <div class="lead-hero-right">
                         @can('leads.import')
-                        <button class="btn btn-light btn-sm mr-2"
+                        <button class="btn btn-outline-secondary mr-2"
                             data-toggle="modal"
                             data-target="#uploadLeadsModal">
                             <i class="fa fa-upload mr-1"></i> Upload Leads
@@ -514,7 +528,7 @@
                         @endcan
 
                         <a href="{{ route('leads.create') }}"
-                            class="btn btn-dark btn-sm">
+                            class="btn btn-primary">
                             <i class="fa fa-plus mr-1"></i> Add Lead
                         </a>
                     </div>
@@ -556,25 +570,25 @@
 
                                 <div class="row mb-3" id="leadFilterBar">
                                     <div class="col-md-4 mb-2">
-                                        <input type="text" id="leadSearchInput" class="form-control form-control-sm" placeholder="Search name, company, phone, email…">
+                                        <input type="text" id="leadSearchInput" class="form-control" placeholder="Search name, company, phone, email…">
                                     </div>
                                     <div class="col-md-2 mb-2">
-                                        <select id="leadFilterStatus" class="form-control form-control-sm" data-master-type="lead_status">
+                                        <select id="leadFilterStatus" class="form-control" data-master-type="lead_status">
                                             <option value="">All statuses</option>
                                         </select>
                                     </div>
                                     <div class="col-md-2 mb-2">
-                                        <select id="leadFilterPriority" class="form-control form-control-sm" data-master-type="lead_priority">
+                                        <select id="leadFilterPriority" class="form-control" data-master-type="lead_priority">
                                             <option value="">All priorities</option>
                                         </select>
                                     </div>
                                     <div class="col-md-2 mb-2">
-                                        <select id="leadFilterSource" class="form-control form-control-sm" data-master-type="lead_source">
+                                        <select id="leadFilterSource" class="form-control" data-master-type="lead_source">
                                             <option value="">All sources</option>
                                         </select>
                                     </div>
                                     <div class="col-md-2 mb-2">
-                                        <select id="leadFilterAssignee" class="form-control form-control-sm">
+                                        <select id="leadFilterAssignee" class="form-control">
                                             <option value="">All owners</option>
                                         </select>
                                     </div>

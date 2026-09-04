@@ -13,30 +13,41 @@
     <link rel="stylesheet" href="{{ asset('vendors/datatables.net-bs4/dataTables.bootstrap4.css') }}">
 
     <style>
+        /* Same modernization pattern as Roles & Permissions / Dashboard /
+           Leads: bigger type, roomier cards. Pure visual pass — IDs and
+           structure this page's JS depends on are untouched. */
         .order-table-wrapper {
             background: #fff;
-            border-radius: 10px;
-            padding: 15px;
-            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+            border-radius: 14px;
+            padding: 18px;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
         }
 
+        .order-table { font-size: 14.5px; }
+
         .order-table thead th {
-            background: #f5f7fb;
-            font-size: 13px;
-            font-weight: 600;
+            background: #f8fafc;
+            color: #475569;
+            font-size: 12.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
             text-align: center;
+            padding: 14px 12px;
         }
 
         .order-table tbody td {
-            font-size: 13px;
+            font-size: 14px;
             text-align: center;
             vertical-align: middle;
+            padding: 14px 12px;
         }
 
         .status-badge {
-            padding: 5px 12px;
-            font-size: 11px;
-            border-radius: 20px;
+            padding: 6px 14px;
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: 999px;
             display: inline-block;
         }
 
@@ -46,19 +57,27 @@
 
         .page-header {
             background: #ffffff;
-            padding: 18px 22px;
-            border-radius: 14px;
-            margin-bottom: 18px;
-            box-shadow: 0 8px 22px rgba(0, 0, 0, 0.05);
+            padding: 26px 28px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
         }
 
         .page-header h4 {
-            font-weight: 600;
-            margin: 0;
+            font-weight: 700;
+            font-size: 22px;
+            margin: 0 0 6px;
+            color: #111827;
         }
+
+        .page-header .text-muted { font-size: 14px !important; }
+
+        .page-header .btn { border-radius: 10px; padding: 10px 18px; font-weight: 600; }
     </style>
 </head>
 

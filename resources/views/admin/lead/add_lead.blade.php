@@ -154,47 +154,51 @@
         /* ===============================
    HERO HEADER STYLE
 ================================ */
+        /* Same modernization pattern as the rest of this pass. */
         .lead-hero-header {
-            background: linear-gradient(135deg, #1d4ed8, #0ea5e9);
-            padding: 22px 28px;
+            background: #fff;
+            padding: 26px 28px;
             border-radius: 16px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            color: #ffffff;
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+            color: #111827;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+            flex-wrap: wrap;
+            gap: 16px;
         }
 
         .lead-hero-left {
             display: flex;
             align-items: center;
-            gap: 14px;
+            gap: 16px;
         }
 
         .lead-hero-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 14px;
-            background: rgba(255, 255, 255, 0.2);
+            width: 46px;
+            height: 46px;
+            border-radius: 12px;
+            background: #eff6ff;
+            color: #2563eb;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
+            font-size: 19px;
         }
 
         .lead-hero-header h4 {
             font-weight: 700;
-            font-size: 20px;
+            font-size: 22px;
         }
 
         .lead-hero-header small {
-            font-size: 13px;
-            opacity: 0.9;
+            font-size: 14px;
+            color: #6b7280;
         }
 
         .lead-hero-right .btn {
-            border-radius: 30px;
-            padding: 6px 18px;
+            border-radius: 10px;
+            padding: 10px 20px;
             font-weight: 600;
         }
 

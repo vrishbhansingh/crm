@@ -27,6 +27,21 @@
             font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
         }
 
+        /* Same modernization pattern as the rest of this pass. */
+        .crm-page-header {
+            background: var(--card);
+            padding: 26px 28px;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+            margin-bottom: 24px;
+        }
+
+        .crm-page-header h3 {
+            margin: 0;
+            font-weight: 700;
+            font-size: 22px;
+        }
+
         /* LAYOUT */
         .company-layout {
             display: grid;
@@ -181,7 +196,9 @@
 
             <div class="content-wrapper">
 
-                <h3 class="mb-4">Company Details</h3>
+                <div class="crm-page-header">
+                    <h3>Organization Profile</h3>
+                </div>
 
                 <div class="company-layout">
 

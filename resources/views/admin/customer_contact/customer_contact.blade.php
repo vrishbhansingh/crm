@@ -198,47 +198,49 @@
         /* ===============================
    CRM PAGE HEADER
 ================================ */
+        /* Same modernization pattern as Roles & Permissions / Dashboard /
+           Leads / Deals: bigger, roomier white header card. */
         .crm-page-header {
             background: #ffffff;
-            padding: 18px 22px;
-            border-radius: 14px;
-            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
-            border-left: 4px solid #0d6efd;
+            padding: 26px 28px;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
         }
 
         .crm-header-content {
             display: flex;
             align-items: center;
-            gap: 14px;
+            gap: 16px;
         }
 
         .crm-header-icon {
-            width: 42px;
-            height: 42px;
-            border-radius: 10px;
-            background: linear-gradient(135deg, #0d6efd, #00c6ff);
-            color: #ffffff;
+            width: 46px;
+            height: 46px;
+            border-radius: 12px;
+            background: #eff6ff;
+            color: #2563eb;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 18px;
+            font-size: 19px;
         }
 
         .crm-page-header h4 {
             font-weight: 700;
-            font-size: 18px;
+            font-size: 22px;
             color: #1f2937;
+            margin: 0 0 6px;
         }
 
         .crm-subtitle {
             color: #6b7280;
-            font-size: 13px;
+            font-size: 14px;
         }
 
         /* Mobile */
         @media (max-width: 768px) {
             .crm-page-header {
-                padding: 14px 16px;
+                padding: 18px 20px;
             }
         }
     </style>

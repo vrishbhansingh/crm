@@ -20,18 +20,19 @@
             --text-muted: #6b7280;
         }
 
+        /* Same modernization pattern as Roles & Permissions / Dashboard /
+           Leads / Deals: bigger, roomier white header card. */
         .crm-page-header {
             background: #fff;
-            padding: 18px 22px;
-            border-radius: 14px;
-            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
-            border-left: 4px solid var(--primary);
-            margin-bottom: 20px;
+            padding: 24px 28px;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+            margin-bottom: 24px;
         }
 
         .lead-title {
             font-weight: 700;
-            font-size: 20px;
+            font-size: 22px;
             color: var(--text-dark);
             margin: 0;
         }

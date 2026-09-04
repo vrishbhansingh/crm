@@ -36,7 +36,7 @@ Admin is an invariant: `tenants.admin_user_id` is authoritative. Every other acc
 ```text
 php artisan crm:tenant-status --health
 php artisan crm:provision-tenants --tenant=ID
-php artisan crm:migrate-tenant-schemas
+php artisan tenants:migrate
 php artisan crm:verify-tenant-isolation
 ```
 
