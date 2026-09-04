@@ -138,23 +138,38 @@
         .rp-dropdown-menu .dropdown-item i { width: 14px; text-align: center; }
         .rp-dropdown-menu .dropdown-item.text-danger:hover { background: #fef2f2; }
 
-        /* Manage Access modal */
-        .perm-modal .modal-dialog { max-width: 760px; }
-        .perm-summary { display: flex; justify-content: space-between; align-items: center; font-size: 12.5px; color: var(--text-muted); margin-bottom: 10px; }
+        /* Manage Permissions / Create Role modal */
+        .perm-modal .modal-dialog { max-width: 700px; }
+
+        .perm-toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+        .perm-toolbar .perm-search { font-size: 12.5px; height: 30px; padding: 4px 10px; }
+        .perm-toolbar .btn-link { font-size: 12px; white-space: nowrap; padding: 4px 2px; }
+
+        .perm-summary { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--text-muted); margin-bottom: 8px; }
         .perm-summary strong { color: var(--text-dark); }
 
-        .perm-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; max-height: 48vh; overflow-y: auto; padding-right: 4px; }
-        .perm-group { background: var(--surface); border-radius: 8px; padding: 10px; align-self: start; }
-        .perm-group-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-        .perm-group-head .perm-group-title { font-weight: 700; font-size: 12.5px; color: var(--text-dark); }
-        .perm-group-head .perm-group-count { font-size: 10.5px; color: var(--text-muted); background: #fff; border: 1px solid var(--border); border-radius: 999px; padding: 1px 7px; }
-        .perm-item { display: flex; align-items: center; gap: 7px; font-size: 12px; color: #374151; padding: 3px 0; }
-        .perm-item input { width: 13px; height: 13px; }
+        /* Compact module cards, two per row, each card's own checkboxes
+           flowing inline (not one-per-line) — matches the target mockup
+           instead of a tall single-column wall or a wide 3-column grid. */
+        .perm-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 8px; max-height: 46vh; overflow-y: auto; padding-right: 4px; }
+        .perm-group { background: var(--surface); border-radius: 8px; padding: 8px 10px; align-self: start; }
+        .perm-group-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+        .perm-group-head .perm-group-title { font-weight: 700; font-size: 12px; color: var(--text-dark); }
+        .perm-group-head .perm-group-count { font-size: 10px; color: var(--text-muted); background: #fff; border: 1px solid var(--border); border-radius: 999px; padding: 1px 6px; }
 
-        .perm-sensitive { background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 10px; margin-top: 10px; }
-        .perm-sensitive-title { color: #b91c1c; font-weight: 700; font-size: 12px; margin-bottom: 5px; }
+        .perm-select-all-row { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--primary); font-weight: 600; padding: 2px 0 5px; margin: 0; border-bottom: 1px dashed var(--border); margin-bottom: 5px; cursor: pointer; }
+        .perm-select-all-row input { width: 12px; height: 12px; }
+
+        .perm-items-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(78px, 1fr)); gap: 3px 6px; }
+        .perm-item { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: #374151; padding: 2px 0; white-space: nowrap; }
+        .perm-item input { width: 12px; height: 12px; flex-shrink: 0; }
+        .perm-item.perm-hidden { display: none; }
+        .perm-group.perm-hidden { display: none; }
+
+        .perm-sensitive { background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 8px 10px; margin-top: 8px; }
+        .perm-sensitive-title { color: #b91c1c; font-weight: 700; font-size: 11.5px; margin-bottom: 4px; }
         .perm-sensitive .perm-item { color: #7f1d1d; }
-        .perm-sensitive small { display: block; color: #991b1b; margin-left: 20px; }
+        .perm-sensitive small { display: block; color: #991b1b; margin-left: 18px; font-size: 10.5px; }
 
         .perm-footer { display: flex; justify-content: space-between; align-items: center; width: 100%; }
         .perm-footer .perm-footer-count { font-size: 12.5px; color: var(--text-muted); }
@@ -230,7 +245,11 @@
                             <label>Description <small class="text-muted">(optional)</small></label>
                             <input type="text" id="create_description" class="form-control" placeholder="What this role is for">
                         </div>
-                        <label class="d-block mb-2">Permissions</label>
+                        <label class="d-block mb-1">Permissions</label>
+                        <div class="perm-toolbar">
+                            <input type="text" class="form-control perm-search" data-scope="createRoleModal" placeholder="Search permissions…">
+                            <button type="button" class="btn btn-link select-all-visible-btn" data-scope="createRoleModal">Select all visible</button>
+                        </div>
                         <div class="perm-summary">
                             <span>Choose what this role can access</span>
                             <span class="perm-footer-count"><strong id="createSelectedCount">0</strong> / <span id="createTotalCount">0</span> selected</span>
@@ -275,13 +294,13 @@
         </div>
     </div>
 
-    <!-- Manage Access Modal -->
+    <!-- Manage Permissions Modal -->
     <div class="modal fade perm-modal" id="manageAccessModal" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
                     <div>
-                        <h5 class="modal-title mb-0">Manage Access</h5>
+                        <h5 class="modal-title mb-0">Manage Permissions</h5>
                         <small class="text-muted">Assign permissions for <strong id="manageAccessRoleName"></strong></small>
                     </div>
                     <button type="button" class="close" data-dismiss="modal">&times;</button>
@@ -289,15 +308,19 @@
                 <form id="manageAccessForm">
                     <input type="hidden" id="manage_access_role_id">
                     <div class="modal-body">
+                        <div class="perm-toolbar">
+                            <input type="text" class="form-control perm-search" data-scope="manageAccessModal" placeholder="Search permissions…">
+                            <button type="button" class="btn btn-link select-all-visible-btn" data-scope="manageAccessModal">Select all visible</button>
+                        </div>
                         <div class="perm-summary">
-                            <button type="button" class="btn btn-link p-0" id="selectAllPerms">Select all</button>
+                            <button type="button" class="btn btn-link p-0" id="selectAllPerms">Select all / none</button>
                             <span class="perm-footer-count"><strong id="manageSelectedCount">0</strong> / <span id="manageTotalCount">0</span> permissions selected</span>
                         </div>
                         <div class="perm-grid" id="manageAccessGrid"></div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Save</button>
+                        <button type="submit" class="btn btn-primary">Save Permissions</button>
                     </div>
                 </form>
             </div>
@@ -329,7 +352,7 @@
                         let items = '';
                         if (canEdit) {
                             items += `<a class="dropdown-item editInfoBtn" href="#" data-id="${role.id}" data-name="${esc(role.name)}" data-description="${esc(role.description)}"><i class="fa fa-pencil"></i> Edit Info</a>`;
-                            items += `<a class="dropdown-item manageAccessBtn" href="#" data-id="${role.id}" data-name="${esc(role.name)}"><i class="fa fa-lock"></i> Manage Access</a>`;
+                            items += `<a class="dropdown-item manageAccessBtn" href="#" data-id="${role.id}" data-name="${esc(role.name)}"><i class="fa fa-lock"></i> Manage Permissions</a>`;
                         }
                         if (canDelete) {
                             items += `<a class="dropdown-item text-danger deleteRoleBtn" href="#" data-id="${role.id}" data-name="${esc(role.name)}"><i class="fa fa-trash"></i> Delete</a>`;
@@ -356,6 +379,10 @@
             });
         }
 
+        // Each module is a compact card: title + count, a "Select all" row
+        // for that module, then its own permissions flowing inline (2-3
+        // per row) rather than one per line — keeps 13 modules readable
+        // without a tall single column or an oversized 3-column wall.
         function renderPermGrid($container, groups, sensitive, granted) {
             let html = '';
             groups.forEach((group) => {
@@ -364,12 +391,14 @@
                     <div class="perm-group-head">
                         <span class="perm-group-title">${esc(group.label)}</span>
                         <span class="perm-group-count">${groupGranted}/${group.permissions.length}</span>
-                    </div>`;
+                    </div>
+                    <label class="perm-select-all-row"><input type="checkbox" class="perm-group-select-all"> <span>Select all</span></label>
+                    <div class="perm-items-grid">`;
                 group.permissions.forEach((p) => {
                     const checked = granted.includes(p.name) ? 'checked' : '';
-                    html += `<label class="perm-item"><input type="checkbox" class="perm-checkbox" value="${p.name}" ${checked}> ${esc(p.label)}</label>`;
+                    html += `<label class="perm-item" data-search="${esc(group.label + ' ' + p.label)}"><input type="checkbox" class="perm-checkbox" value="${p.name}" ${checked}> ${esc(p.label)}</label>`;
                 });
-                html += `</div>`;
+                html += `</div></div>`;
             });
             $container.html(html);
 
@@ -377,12 +406,14 @@
                 let sHtml = `<div class="perm-sensitive"><div class="perm-sensitive-title"><i class="fa fa-exclamation-triangle"></i> Sensitive permissions</div>`;
                 sensitive.forEach((p) => {
                     const checked = granted.includes(p.name) ? 'checked' : '';
-                    sHtml += `<label class="perm-item"><input type="checkbox" class="perm-checkbox" value="${p.name}" ${checked}> <b>${esc(p.label)}</b></label>`;
+                    sHtml += `<label class="perm-item" data-search="${esc(p.label)}"><input type="checkbox" class="perm-checkbox" value="${p.name}" ${checked}> <b>${esc(p.label)}</b></label>`;
                     if (p.note) sHtml += `<small>${esc(p.note)}</small>`;
                 });
                 sHtml += `</div>`;
                 $container.after(sHtml);
             }
+
+            syncGroupSelectAll($container.closest('.modal-body'));
         }
 
         function updatePermCounts($scope, $selectedEl, $totalEl) {
@@ -395,11 +426,55 @@
                 const $boxes = $group.find('.perm-checkbox');
                 $group.find('.perm-group-count').text($boxes.filter(':checked').length + '/' + $boxes.length);
             });
+
+            syncGroupSelectAll($scope);
         }
+
+        // Keeps each module's own "Select all" checkbox in sync with its
+        // individual checkboxes — checked when all are on, indeterminate
+        // when some are, unchecked when none are.
+        function syncGroupSelectAll($scope) {
+            $scope.find('.perm-group').each(function() {
+                const $boxes = $(this).find('.perm-checkbox');
+                const checkedCount = $boxes.filter(':checked').length;
+                const $selectAll = $(this).find('.perm-group-select-all');
+                $selectAll.prop('checked', checkedCount > 0 && checkedCount === $boxes.length);
+                $selectAll.prop('indeterminate', checkedCount > 0 && checkedCount < $boxes.length);
+            });
+        }
+
+        $(document).on('change', '.perm-group-select-all', function() {
+            const checked = $(this).is(':checked');
+            $(this).closest('.perm-group').find('.perm-checkbox').prop('checked', checked).trigger('change');
+        });
+
+        // Search filters individual permission rows by module+label text;
+        // a module card hides entirely once none of its rows still match.
+        $(document).on('input', '.perm-search', function() {
+            const scope = $(this).data('scope');
+            const term = $(this).val().trim().toLowerCase();
+            const $modal = $('#' + scope);
+
+            $modal.find('.perm-item').each(function() {
+                const matches = !term || ($(this).data('search') || '').toLowerCase().includes(term);
+                $(this).toggleClass('perm-hidden', !matches);
+            });
+            $modal.find('.perm-group').each(function() {
+                const anyVisible = $(this).find('.perm-item:not(.perm-hidden)').length > 0;
+                $(this).toggleClass('perm-hidden', !anyVisible);
+            });
+        });
+
+        $(document).on('click', '.select-all-visible-btn', function() {
+            const scope = $(this).data('scope');
+            const $modal = $('#' + scope);
+            $modal.find('.perm-item:not(.perm-hidden) .perm-checkbox').prop('checked', true).trigger('change');
+        });
 
         // ---- Create Role ----
         $(document).on('click', '#createRoleBtn', function() {
             $('#createRoleForm')[0].reset();
+            $('#createRoleModal .perm-search').val('');
             $.get("{{ route('roles.permissions.catalog') }}", function(response) {
                 $('#manageAccessModal .perm-sensitive').remove();
                 $('#createPermGrid').next('.perm-sensitive').remove();
@@ -472,6 +547,7 @@
             $('#manage_access_role_id').val(id);
             $('#manageAccessRoleName').text($(this).data('name'));
             $('#manageAccessGrid').next('.perm-sensitive').remove();
+            $('#manageAccessModal .perm-search').val('');
 
             $.get("{{ url('roles') }}/" + id + "/permissions", function(response) {
                 renderPermGrid($('#manageAccessGrid'), response.groups, response.sensitive, response.granted);

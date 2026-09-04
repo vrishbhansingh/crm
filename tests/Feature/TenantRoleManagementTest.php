@@ -70,6 +70,27 @@ class TenantRoleManagementTest extends TestCase
             ->assertJsonMissing(['module' => 'roles']);
     }
 
+    public function test_permission_catalog_only_offers_actions_a_real_route_enforces(): void
+    {
+        [$tenant, $admin] = $this->tenantAdmin('five');
+        $this->actingAs($admin)->withSession(['session_token' => $admin->session_token]);
+
+        $response = $this->getJson('/roles/permissions')->assertOk()->json();
+        $allNames = collect($response['groups'])->flatMap(fn ($g) => collect($g['permissions'])->pluck('name'));
+
+        // Real: routes/app.php actually gates these with `permission:`.
+        $this->assertTrue($allNames->contains('leads.assign'));
+        $this->assertTrue($allNames->contains('deals.manage-settings'));
+
+        // Not real: no route checks these, so they must not appear as
+        // offerable checkboxes even though the seeder's blanket
+        // module x action cross-product created rows for them.
+        $this->assertFalse($allNames->contains('contacts.reject'));
+        $this->assertFalse($allNames->contains('companies.approve'));
+        $this->assertFalse($allNames->contains(fn ($name) => str_starts_with($name, 'projects.')));
+        $this->assertFalse($allNames->contains(fn ($name) => str_starts_with($name, 'attendance.')));
+    }
+
     public function test_non_admin_cannot_manage_roles_even_if_given_role_permissions(): void
     {
         [$tenant, $admin] = $this->tenantAdmin('two');
