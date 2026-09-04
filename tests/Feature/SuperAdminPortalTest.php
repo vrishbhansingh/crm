@@ -23,7 +23,7 @@ class SuperAdminPortalTest extends TestCase
         $this->postJson('/login', ['email' => $super->email, 'password' => 'password'])
             ->assertOk()
             ->assertJsonPath('status', false)
-            ->assertJsonPath('location', 'https://'.config('app.admin_domain').'/superadmin/login');
+            ->assertJsonPath('location', 'http://'.config('app.admin_domain').'/superadmin/login');
 
         $this->post('/superadmin/login', ['email' => $super->email, 'password' => 'password'])
             ->assertRedirect('/superadmin');

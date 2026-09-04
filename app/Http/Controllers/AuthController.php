@@ -16,8 +16,10 @@ use Illuminate\Support\Str;
 /**
  * Single centralized login for every role (Phase 1 Step 5), replacing the
  * old Admin\AuthController + User\LoginController pair. Existing route
- * names/URLs (admin.login, user.login, admin.login_submit, ...) are kept
- * so no other view/JS needs to change — they all now resolve here.
+ * names/URLs (user.login, admin.login_submit, ...) are kept so no other
+ * view/JS needs to change — they all now resolve here. The only sign-in
+ * pages are /login (this one) and /superadmin/login — the old /admin/login
+ * duplicate of this same page was removed.
  */
 class AuthController extends Controller
 {
@@ -27,9 +29,7 @@ class AuthController extends Controller
             return redirect()->route(Auth::guard('web')->user()->hasRole('Super Admin') ? 'superadmin.dashboard' : 'dashboard');
         }
 
-        $submitRoute = $request->is('admin/*') ? route('admin.login_submit') : route('user.login_submit');
-
-        return view('auth.login', compact('submitRoute'));
+        return view('auth.login', ['submitRoute' => route('user.login_submit')]);
     }
 
     public function login_submit(Request $request)
@@ -53,7 +53,7 @@ class AuthController extends Controller
             return response()->json([
                 'status' => false,
                 'message' => 'Use the Super Admin portal to sign in.',
-                'location' => 'https://'.config('app.admin_domain').'/superadmin/login',
+                'location' => $request->getScheme().'://'.config('app.admin_domain').'/superadmin/login',
             ]);
         }
 
@@ -114,9 +114,7 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        $loginRoute = $request->is('admin/*') ? 'admin.login' : 'user.login';
-
-        return redirect()->route($loginRoute);
+        return redirect()->route('user.login');
     }
 
     /**
@@ -188,8 +186,10 @@ class AuthController extends Controller
         // The superadmin panel this was submitted from lives on the admin
         // domain, but `dashboard` is a CRM-domain-only route — build an
         // absolute cross-domain redirect rather than route()'s default
-        // (which would reuse the current, wrong, request host).
-        return redirect()->to('https://'.config('app.crm_domain').route('dashboard', absolute: false))
+        // (which would reuse the current, wrong, request host). Scheme is
+        // taken from the current request rather than hardcoded, since this
+        // app isn't served over HTTPS on every environment.
+        return redirect()->to($request->getScheme().'://'.config('app.crm_domain').route('dashboard', absolute: false))
             ->with('success', 'Support session started. Actions are audited.');
     }
 
@@ -214,6 +214,6 @@ class AuthController extends Controller
         // a CRM-domain page (the "End support session" banner shown while
         // impersonating), but superadmin.dashboard only exists on the
         // admin domain.
-        return redirect()->to('https://'.config('app.admin_domain').route('superadmin.dashboard', absolute: false));
+        return redirect()->to($request->getScheme().'://'.config('app.admin_domain').route('superadmin.dashboard', absolute: false));
     }
 }

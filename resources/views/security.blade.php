@@ -149,7 +149,7 @@
                     if (response.status) {
                         toastr.success(response.message);
                         setTimeout(() => {
-                            window.location.href = '{{ route("admin.login") }}';
+                            window.location.href = '{{ route("user.login") }}';
                         }, 1500);
                     } else {
                         toastr.error(response.message);

@@ -12,8 +12,14 @@ class ExampleTest extends TestCase
      */
     public function test_login_page_is_available(): void
     {
-        $response = $this->get('/admin/login');
+        $response = $this->get('/login');
 
         $response->assertStatus(200);
+    }
+
+    public function test_the_old_duplicate_admin_login_page_is_gone(): void
+    {
+        $this->get('/admin/login')->assertNotFound();
+        $this->post('/admin/login-submit')->assertNotFound();
     }
 }
