@@ -369,9 +369,17 @@ Route::middleware(['admin_middle', 'permission:users.impersonate'])->group(funct
 // the live `impersonator_id` session value, not the URL namespace.
 Route::middleware('admin_middle')->post('/impersonation/stop', [AuthController::class, 'stopImpersonating'])->name('impersonation.stop');
 
-Route::middleware(['admin_middle', 'permission:roles.view'])->get('/roles', [RoleController::class, 'index'])->name('roles.index');
+Route::middleware(['admin_middle', 'permission:roles.view'])->group(function () {
+    Route::get('/roles', [RoleController::class, 'index'])->name('roles.index');
+    Route::get('/roles/data', [RoleController::class, 'data'])->name('roles.data');
+    Route::get('/roles/permissions', [RoleController::class, 'permissionCatalog'])->name('roles.permissions.catalog');
+    Route::get('/roles/{role}/permissions', [RoleController::class, 'permissionCatalog'])->name('roles.permissions.show')->whereNumber('role');
+});
 Route::middleware(['admin_middle', 'permission:roles.create'])->post('/roles', [RoleController::class, 'store'])->name('roles.store');
-Route::middleware(['admin_middle', 'permission:roles.edit'])->put('/roles/{role}', [RoleController::class, 'update'])->name('roles.update')->whereNumber('role');
+Route::middleware(['admin_middle', 'permission:roles.edit'])->group(function () {
+    Route::put('/roles/{role}', [RoleController::class, 'update'])->name('roles.update')->whereNumber('role');
+    Route::put('/roles/{role}/permissions', [RoleController::class, 'updatePermissions'])->name('roles.permissions.update')->whereNumber('role');
+});
 Route::middleware(['admin_middle', 'permission:roles.delete'])->delete('/roles/{role}', [RoleController::class, 'destroy'])->name('roles.destroy')->whereNumber('role');
 
 /*

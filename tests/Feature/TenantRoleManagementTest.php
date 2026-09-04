@@ -22,12 +22,52 @@ class TenantRoleManagementTest extends TestCase
         $otherTenant = Tenant::create(['name' => 'Other Tenant', 'slug' => 'other-'.Str::random(8), 'status' => 'Active']);
 
         $this->actingAs($admin)->withSession(['session_token' => $admin->session_token])
-            ->post('/roles', ['name' => 'Agent', 'permissions' => ['leads.view', 'leads.create']])
-            ->assertRedirect()->assertSessionHas('success');
+            ->postJson('/roles', ['name' => 'Agent', 'permissions' => ['leads.view', 'leads.create']])
+            ->assertOk()->assertJsonPath('status', true);
 
         $role = Role::where('tenant_id', $tenant->id)->where('name', 'Agent')->firstOrFail();
         $this->assertTrue($role->hasPermissionTo('leads.view'));
         $this->assertDatabaseMissing('roles', ['tenant_id' => $otherTenant->id, 'name' => 'Agent']);
+    }
+
+    public function test_edit_info_and_manage_access_are_independent_actions(): void
+    {
+        [$tenant, $admin] = $this->tenantAdmin('three');
+        $this->actingAs($admin)->withSession(['session_token' => $admin->session_token]);
+
+        $this->postJson('/roles', ['name' => 'Agent', 'description' => 'Front-line sales', 'permissions' => ['leads.view']])
+            ->assertOk();
+        $role = Role::where('tenant_id', $tenant->id)->where('name', 'Agent')->firstOrFail();
+
+        // Edit Info changes name/description but leaves permissions alone.
+        $this->putJson("/roles/{$role->id}", ['name' => 'Senior Agent', 'description' => 'Updated'])
+            ->assertOk()->assertJsonPath('status', true);
+        $role->refresh();
+        $this->assertSame('Senior Agent', $role->name);
+        $this->assertSame('Updated', $role->description);
+        $this->assertTrue($role->hasPermissionTo('leads.view'));
+
+        // Manage Access changes permissions but leaves the name alone.
+        $this->putJson("/roles/{$role->id}/permissions", ['permissions' => ['leads.view', 'leads.edit']])
+            ->assertOk()->assertJsonPath('status', true);
+        $role->refresh();
+        $this->assertSame('Senior Agent', $role->name);
+        $this->assertTrue($role->hasPermissionTo('leads.edit'));
+    }
+
+    public function test_roles_data_and_permission_catalog_endpoints(): void
+    {
+        [$tenant, $admin] = $this->tenantAdmin('four');
+        $this->actingAs($admin)->withSession(['session_token' => $admin->session_token]);
+
+        $this->getJson('/roles/data')
+            ->assertOk()
+            ->assertJsonFragment(['name' => 'Admin', 'is_protected' => true]);
+
+        $this->getJson('/roles/permissions')
+            ->assertOk()
+            ->assertJsonStructure(['status', 'groups' => [['module', 'label', 'permissions']], 'sensitive', 'total'])
+            ->assertJsonMissing(['module' => 'roles']);
     }
 
     public function test_non_admin_cannot_manage_roles_even_if_given_role_permissions(): void

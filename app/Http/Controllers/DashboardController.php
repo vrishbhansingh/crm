@@ -6,7 +6,10 @@ use App\Models\Lead;
 use App\Models\Leadfollowup;
 use App\Models\Order;
 use App\Models\PaymentDetails;
+use App\Models\Task;
+use App\Models\User;
 use App\Models\UserAttendance;
+use App\Support\TenantContext;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 
@@ -43,6 +46,8 @@ class DashboardController extends Controller
 
     private function teamData(): array
     {
+        $today = Carbon::now('Asia/Kolkata')->toDateString();
+
         return [
             'totalLead' => Lead::count(),
             'newLeadToday' => Lead::where('lead_type', 'new')
@@ -52,6 +57,10 @@ class DashboardController extends Controller
             'callLead' => Lead::where('lead_source', 'cold_call')->count(),
             'webLead' => Lead::where('lead_source', 'website')->count(),
             'facebook' => Lead::whereIn('lead_source', ['facebook_ads', 'linkedIn'])->count(),
+            'tasksDueToday' => Task::whereDate('due_at', $today)
+                ->whereNotIn('status', ['completed', 'cancelled'])
+                ->count(),
+            'totalUsers' => User::where('tenant_id', TenantContext::id())->where('status', 'Active')->count(),
         ];
     }
 
@@ -92,21 +101,43 @@ class DashboardController extends Controller
         $user = Auth::guard('web')->user();
         abort_unless($user->hasElevatedAccess() || $user->hasRole('HR'), 403);
 
-        $latestIds = UserAttendance::selectRaw('MAX(id) as id')
+        $today = Carbon::now('Asia/Kolkata')->toDateString();
+        $latestIds = UserAttendance::whereDate('date', $today)
+            ->selectRaw('MAX(id) as id')
             ->groupBy('user_id')
             ->pluck('id');
 
-        $records = UserAttendance::join('users', 'users.id', '=', 'user_attendance.user_id')
-            ->whereIn('user_attendance.id', $latestIds)
-            ->orderBy('user_attendance.date', 'desc')
-            ->get([
-                'users.name',
-                'user_attendance.user_id',
-                'user_attendance.date as check_in',
-                'user_attendance.check_out',
-            ]);
+        // No SQL join here: user_attendance lives in the tenant database,
+        // users lives in the master database — two separate physical
+        // connections can't be joined in one query. Fetch each side
+        // separately and merge in PHP instead.
+        $records = UserAttendance::whereIn('id', $latestIds)
+            ->orderBy('date', 'desc')
+            ->get(['user_id', 'date as check_in', 'check_out']);
 
-        return response()->json(['status' => true, 'data' => $records]);
+        $names = User::whereIn('id', $records->pluck('user_id'))->pluck('name', 'id');
+
+        $data = $records->map(fn (UserAttendance $r) => [
+            'name' => $names[$r->user_id] ?? 'Unknown',
+            'user_id' => $r->user_id,
+            'check_in' => $r->check_in,
+            'check_out' => $r->check_out,
+        ])->values();
+
+        $totalUsers = User::where('tenant_id', TenantContext::id())->where('status', 'Active')->count();
+        $checkedIn = $data->whereNull('check_out')->count();
+        $checkedOut = $data->whereNotNull('check_out')->count();
+
+        return response()->json([
+            'status' => true,
+            'data' => $data,
+            'summary' => [
+                'present' => $checkedIn,
+                'checked_out' => $checkedOut,
+                'not_marked' => max(0, $totalUsers - $data->count()),
+                'total' => $totalUsers,
+            ],
+        ]);
     }
 
     public function attendanceStatus()
