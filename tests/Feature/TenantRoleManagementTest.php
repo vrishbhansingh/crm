@@ -16,18 +16,24 @@ class TenantRoleManagementTest extends TestCase
 {
     use DatabaseTransactions;
 
-    public function test_admin_can_create_a_tenant_scoped_custom_role(): void
+    public function test_admin_can_create_a_tenant_scoped_custom_role_with_no_permissions_yet(): void
     {
         [$tenant, $admin] = $this->tenantAdmin('one');
         $otherTenant = Tenant::create(['name' => 'Other Tenant', 'slug' => 'other-'.Str::random(8), 'status' => 'Active']);
 
+        // Create asks only for a name — permissions are a separate step.
         $this->actingAs($admin)->withSession(['session_token' => $admin->session_token])
-            ->postJson('/roles', ['name' => 'Agent', 'permissions' => ['leads.view', 'leads.create']])
+            ->postJson('/roles', ['name' => 'Agent'])
             ->assertOk()->assertJsonPath('status', true);
 
         $role = Role::where('tenant_id', $tenant->id)->where('name', 'Agent')->firstOrFail();
-        $this->assertTrue($role->hasPermissionTo('leads.view'));
+        $this->assertCount(0, $role->permissions);
         $this->assertDatabaseMissing('roles', ['tenant_id' => $otherTenant->id, 'name' => 'Agent']);
+
+        // Manage Permissions is where access actually gets assigned.
+        $this->putJson("/roles/{$role->id}/permissions", ['permissions' => ['leads.view', 'leads.create']])
+            ->assertOk()->assertJsonPath('status', true);
+        $this->assertTrue($role->fresh()->hasPermissionTo('leads.view'));
     }
 
     public function test_edit_info_and_manage_access_are_independent_actions(): void
@@ -35,9 +41,10 @@ class TenantRoleManagementTest extends TestCase
         [$tenant, $admin] = $this->tenantAdmin('three');
         $this->actingAs($admin)->withSession(['session_token' => $admin->session_token]);
 
-        $this->postJson('/roles', ['name' => 'Agent', 'description' => 'Front-line sales', 'permissions' => ['leads.view']])
+        $this->postJson('/roles', ['name' => 'Agent', 'description' => 'Front-line sales'])
             ->assertOk();
         $role = Role::where('tenant_id', $tenant->id)->where('name', 'Agent')->firstOrFail();
+        $role->syncPermissions(['leads.view']);
 
         // Edit Info changes name/description but leaves permissions alone.
         $this->putJson("/roles/{$role->id}", ['name' => 'Senior Agent', 'description' => 'Updated'])
@@ -66,7 +73,7 @@ class TenantRoleManagementTest extends TestCase
 
         $this->getJson('/roles/permissions')
             ->assertOk()
-            ->assertJsonStructure(['status', 'groups' => [['module', 'label', 'permissions']], 'sensitive', 'total'])
+            ->assertJsonStructure(['status', 'groups' => [['module', 'label', 'permissions']], 'total'])
             ->assertJsonMissing(['module' => 'roles']);
     }
 
@@ -89,6 +96,11 @@ class TenantRoleManagementTest extends TestCase
         $this->assertFalse($allNames->contains('companies.approve'));
         $this->assertFalse($allNames->contains(fn ($name) => str_starts_with($name, 'projects.')));
         $this->assertFalse($allNames->contains(fn ($name) => str_starts_with($name, 'attendance.')));
+
+        // Sensitive and not delegable — no longer offered at all, not even
+        // in a separate "sensitive" section.
+        $this->assertFalse($allNames->contains('users.impersonate'));
+        $this->assertArrayNotHasKey('sensitive', $response);
     }
 
     public function test_non_admin_cannot_manage_roles_even_if_given_role_permissions(): void

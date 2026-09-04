@@ -42,6 +42,11 @@ class RoleController extends Controller
         'company' => ['view', 'edit', 'manage-settings'],
         'reports' => ['view'],
         'audit' => ['view'],
+        // 'users.impersonate' is deliberately excluded from every module
+        // list here — it's real and route-enforced, but sensitive enough
+        // that it isn't offered as a delegable checkbox at all; only the
+        // protected Admin role (which gets every permission via a blanket
+        // sync, not through this picker) has it.
     ];
 
     /**
@@ -64,8 +69,6 @@ class RoleController extends Controller
         'reports' => 'Reports',
         'audit' => 'Audit Log',
     ];
-
-    private const SENSITIVE_PERMISSIONS = ['users.impersonate'];
 
     public function index()
     {
@@ -101,15 +104,14 @@ class RoleController extends Controller
     }
 
     /**
-     * The permission catalog (grouped by module, plus the sensitive set)
-     * for the "Manage Access" picker — with a role's currently granted
-     * permission names included when editing an existing role.
+     * The permission catalog (grouped by module) for the "Manage
+     * Permissions" picker — with a role's currently granted permission
+     * names included when editing an existing role.
      */
     public function permissionCatalog(?int $role = null)
     {
         $tenant = $this->tenantAdmin();
         $grouped = $this->grantablePermissions()->groupBy(fn ($permission) => str($permission->name)->before('.')->value());
-        $sensitive = Permission::whereIn('name', self::SENSITIVE_PERMISSIONS)->orderBy('name')->get();
 
         $granted = [];
         if ($role) {
@@ -132,28 +134,32 @@ class RoleController extends Controller
         return response()->json([
             'status' => true,
             'groups' => $orderedGroups,
-            'sensitive' => $sensitive->map(fn ($p) => [
-                'name' => $p->name,
-                'label' => $label($p),
-                'note' => $p->name === 'users.impersonate' ? 'Sign in as any other user in this workspace without their password.' : null,
-            ])->values(),
             'granted' => $granted,
-            'total' => $this->grantablePermissions()->count() + $sensitive->count(),
+            'total' => $this->grantablePermissions()->count(),
         ]);
     }
 
+    /**
+     * Name + description only — permissions always start empty and are
+     * assigned afterward through the separate "Manage Permissions" action,
+     * exactly like editing an existing role does.
+     */
     public function store(Request $request, PlatformAuditLogger $audit)
     {
         $tenant = $this->tenantAdmin();
-        $data = $this->validated($request, $tenant);
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:80', Rule::unique('roles', 'name')->where(fn ($q) => $q->where('tenant_id', $tenant->id)->where('guard_name', 'web'))],
+            'description' => ['nullable', 'string', 'max:150'],
+        ]);
+        $this->assertNotProtectedName($data['name']);
+
         $role = Role::create([
             'tenant_id' => $tenant->id,
             'name' => trim($data['name']),
             'description' => $data['description'] ?? null,
             'guard_name' => 'web',
         ]);
-        $role->syncPermissions($data['permissions']);
-        $audit->record('role.created', $tenant, metadata: ['role' => $role->name, 'permissions' => $data['permissions']]);
+        $audit->record('role.created', $tenant, metadata: ['role' => $role->name]);
 
         return response()->json(['status' => true, 'message' => 'Role created', 'data' => ['id' => $role->id]]);
     }
@@ -242,19 +248,6 @@ class RoleController extends Controller
         abort_unless($tenant->admin_user_id === Auth::id() && Auth::user()->hasRole('Admin'), 403, 'Only the company Admin can manage roles.');
 
         return $tenant;
-    }
-
-    private function validated(Request $request, Tenant $tenant, ?int $ignoreRoleId = null): array
-    {
-        $data = $request->validate([
-            'name' => ['required', 'string', 'max:80', Rule::unique('roles', 'name')->where(fn ($query) => $query->where('tenant_id', $tenant->id)->where('guard_name', 'web'))->ignore($ignoreRoleId)],
-            'description' => ['nullable', 'string', 'max:150'],
-            'permissions' => ['required', 'array', 'min:1'],
-            'permissions.*' => ['required', 'string', Rule::exists('permissions', 'name')->where('guard_name', 'web')->where(fn ($query) => $query->where('name', 'not like', 'platform.%'))],
-        ]);
-        $this->assertNotProtectedName($data['name']);
-
-        return $data;
     }
 
     private function assertNotProtectedName(string $name): void

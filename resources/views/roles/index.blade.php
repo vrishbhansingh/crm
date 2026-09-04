@@ -138,42 +138,47 @@
         .rp-dropdown-menu .dropdown-item i { width: 14px; text-align: center; }
         .rp-dropdown-menu .dropdown-item.text-danger:hover { background: #fef2f2; }
 
-        /* Manage Permissions / Create Role modal */
-        .perm-modal .modal-dialog { max-width: 700px; }
+        /* Manage Permissions modal — wider than a typical form modal on
+           purpose, so each module card has room to lay its checkboxes out
+           without wrapping awkwardly. Create Role stays a plain, narrow
+           modal (default Bootstrap width) since it's just two text fields. */
+        .perm-modal .modal-dialog { max-width: 920px; }
 
-        .perm-toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-        .perm-toolbar .perm-search { font-size: 12.5px; height: 30px; padding: 4px 10px; }
-        .perm-toolbar .btn-link { font-size: 12px; white-space: nowrap; padding: 4px 2px; }
+        .perm-toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .perm-toolbar .perm-search { font-size: 13px; height: 32px; padding: 4px 10px; flex: 1; }
+        .perm-toolbar .btn-link { font-size: 12.5px; white-space: nowrap; padding: 4px 2px; }
 
-        .perm-summary { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--text-muted); margin-bottom: 8px; }
+        .perm-summary { display: flex; align-items: center; gap: 16px; font-size: 12.5px; color: var(--text-muted); margin-bottom: 10px; }
         .perm-summary strong { color: var(--text-dark); }
 
-        /* Compact module cards, two per row, each card's own checkboxes
-           flowing inline (not one-per-line) — matches the target mockup
-           instead of a tall single-column wall or a wide 3-column grid. */
-        .perm-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 8px; max-height: 46vh; overflow-y: auto; padding-right: 4px; }
-        .perm-group { background: var(--surface); border-radius: 8px; padding: 8px 10px; align-self: start; }
-        .perm-group-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
-        .perm-group-head .perm-group-title { font-weight: 700; font-size: 12px; color: var(--text-dark); }
-        .perm-group-head .perm-group-count { font-size: 10px; color: var(--text-muted); background: #fff; border: 1px solid var(--border); border-radius: 999px; padding: 1px 6px; }
+        /* A real checkbox, not a text link — its checked/indeterminate
+           state always shows whether everything is currently selected,
+           and clicking it works both directions (select all / deselect
+           all), same affordance as each module's own "Select all". */
+        .perm-select-all-toggle { display: flex; align-items: center; gap: 6px; font-weight: 600; color: var(--text-dark); cursor: pointer; }
+        .perm-select-all-toggle input { width: 14px; height: 14px; }
 
-        .perm-select-all-row { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--primary); font-weight: 600; padding: 2px 0 5px; margin: 0; border-bottom: 1px dashed var(--border); margin-bottom: 5px; cursor: pointer; }
-        .perm-select-all-row input { width: 12px; height: 12px; }
+        .perm-footer-count { margin-left: auto; }
+        .perm-footer-count strong { color: var(--primary); }
 
-        .perm-items-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(78px, 1fr)); gap: 3px 6px; }
-        .perm-item { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: #374151; padding: 2px 0; white-space: nowrap; }
-        .perm-item input { width: 12px; height: 12px; flex-shrink: 0; }
+        /* Compact module cards, three per row on this wider modal, each
+           card's own checkboxes flowing inline (not one-per-line) —
+           matches the target mockup instead of a tall single column or a
+           cramped, oversized grid. */
+        .perm-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; max-height: 50vh; overflow-y: auto; padding-right: 6px; }
+        .perm-group { background: var(--surface); border-radius: 8px; padding: 10px 12px; align-self: start; }
+        .perm-group-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+        .perm-group-head .perm-group-title { font-weight: 700; font-size: 12.5px; color: var(--text-dark); }
+        .perm-group-head .perm-group-count { font-size: 10.5px; color: var(--text-muted); background: #fff; border: 1px solid var(--border); border-radius: 999px; padding: 1px 7px; }
+
+        .perm-select-all-row { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--primary); font-weight: 600; padding: 2px 0 6px; margin: 0; border-bottom: 1px dashed var(--border); margin-bottom: 6px; cursor: pointer; }
+        .perm-select-all-row input { width: 13px; height: 13px; }
+
+        .perm-items-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(95px, 1fr)); gap: 4px 8px; }
+        .perm-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #374151; padding: 2px 0; white-space: nowrap; }
+        .perm-item input { width: 13px; height: 13px; flex-shrink: 0; }
         .perm-item.perm-hidden { display: none; }
         .perm-group.perm-hidden { display: none; }
-
-        .perm-sensitive { background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 8px 10px; margin-top: 8px; }
-        .perm-sensitive-title { color: #b91c1c; font-weight: 700; font-size: 11.5px; margin-bottom: 4px; }
-        .perm-sensitive .perm-item { color: #7f1d1d; }
-        .perm-sensitive small { display: block; color: #991b1b; margin-left: 18px; font-size: 10.5px; }
-
-        .perm-footer { display: flex; justify-content: space-between; align-items: center; width: 100%; }
-        .perm-footer .perm-footer-count { font-size: 12.5px; color: var(--text-muted); }
-        .perm-footer .perm-footer-count strong { color: var(--primary); }
     </style>
 </head>
 
@@ -227,8 +232,10 @@
         </div>
     </div>
 
-    <!-- Create Role Modal -->
-    <div class="modal fade perm-modal" id="createRoleModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <!-- Create Role Modal — name + description only. Permissions are
+         assigned afterward from the role's own "Manage Permissions"
+         action, exactly like editing an existing role works. -->
+    <div class="modal fade" id="createRoleModal" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
@@ -241,20 +248,13 @@
                             <label>Role name</label>
                             <input type="text" id="create_name" class="form-control" placeholder="e.g. Sales Manager, Support Agent" required>
                         </div>
-                        <div class="form-group">
+                        <div class="form-group mb-0">
                             <label>Description <small class="text-muted">(optional)</small></label>
                             <input type="text" id="create_description" class="form-control" placeholder="What this role is for">
                         </div>
-                        <label class="d-block mb-1">Permissions</label>
-                        <div class="perm-toolbar">
-                            <input type="text" class="form-control perm-search" data-scope="createRoleModal" placeholder="Search permissions…">
-                            <button type="button" class="btn btn-link select-all-visible-btn" data-scope="createRoleModal">Select all visible</button>
-                        </div>
-                        <div class="perm-summary">
-                            <span>Choose what this role can access</span>
-                            <span class="perm-footer-count"><strong id="createSelectedCount">0</strong> / <span id="createTotalCount">0</span> selected</span>
-                        </div>
-                        <div class="perm-grid" id="createPermGrid"></div>
+                        <p class="text-muted mt-3 mb-0" style="font-size:12.5px">
+                            <i class="fa fa-info-circle"></i> You'll assign permissions next, from this role's own "Manage Permissions" action.
+                        </p>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
@@ -313,7 +313,9 @@
                             <button type="button" class="btn btn-link select-all-visible-btn" data-scope="manageAccessModal">Select all visible</button>
                         </div>
                         <div class="perm-summary">
-                            <button type="button" class="btn btn-link p-0" id="selectAllPerms">Select all / none</button>
+                            <label class="perm-select-all-toggle">
+                                <input type="checkbox" id="selectAllPerms"> Select all
+                            </label>
                             <span class="perm-footer-count"><strong id="manageSelectedCount">0</strong> / <span id="manageTotalCount">0</span> permissions selected</span>
                         </div>
                         <div class="perm-grid" id="manageAccessGrid"></div>
@@ -382,8 +384,8 @@
         // Each module is a compact card: title + count, a "Select all" row
         // for that module, then its own permissions flowing inline (2-3
         // per row) rather than one per line — keeps 13 modules readable
-        // without a tall single column or an oversized 3-column wall.
-        function renderPermGrid($container, groups, sensitive, granted) {
+        // without a tall single column or an oversized, cramped grid.
+        function renderPermGrid($container, groups, granted) {
             let html = '';
             groups.forEach((group) => {
                 const groupGranted = group.permissions.filter(p => granted.includes(p.name)).length;
@@ -402,17 +404,6 @@
             });
             $container.html(html);
 
-            if (sensitive && sensitive.length) {
-                let sHtml = `<div class="perm-sensitive"><div class="perm-sensitive-title"><i class="fa fa-exclamation-triangle"></i> Sensitive permissions</div>`;
-                sensitive.forEach((p) => {
-                    const checked = granted.includes(p.name) ? 'checked' : '';
-                    sHtml += `<label class="perm-item" data-search="${esc(p.label)}"><input type="checkbox" class="perm-checkbox" value="${p.name}" ${checked}> <b>${esc(p.label)}</b></label>`;
-                    if (p.note) sHtml += `<small>${esc(p.note)}</small>`;
-                });
-                sHtml += `</div>`;
-                $container.after(sHtml);
-            }
-
             syncGroupSelectAll($container.closest('.modal-body'));
         }
 
@@ -430,9 +421,12 @@
             syncGroupSelectAll($scope);
         }
 
-        // Keeps each module's own "Select all" checkbox in sync with its
-        // individual checkboxes — checked when all are on, indeterminate
-        // when some are, unchecked when none are.
+        // Keeps every "Select all" checkbox in sync with the individual
+        // checkboxes underneath it — checked when all are on,
+        // indeterminate when some are, unchecked when none are. Applies
+        // to each module's own toggle and the modal-wide one, so both are
+        // always an honest reflection of the current selection and both
+        // work in either direction (select all / deselect all).
         function syncGroupSelectAll($scope) {
             $scope.find('.perm-group').each(function() {
                 const $boxes = $(this).find('.perm-checkbox');
@@ -441,6 +435,12 @@
                 $selectAll.prop('checked', checkedCount > 0 && checkedCount === $boxes.length);
                 $selectAll.prop('indeterminate', checkedCount > 0 && checkedCount < $boxes.length);
             });
+
+            const $all = $scope.find('.perm-checkbox');
+            const allCheckedCount = $all.filter(':checked').length;
+            const $topToggle = $scope.find('#selectAllPerms');
+            $topToggle.prop('checked', allCheckedCount > 0 && allCheckedCount === $all.length);
+            $topToggle.prop('indeterminate', allCheckedCount > 0 && allCheckedCount < $all.length);
         }
 
         $(document).on('change', '.perm-group-select-all', function() {
@@ -471,33 +471,17 @@
             $modal.find('.perm-item:not(.perm-hidden) .perm-checkbox').prop('checked', true).trigger('change');
         });
 
-        // ---- Create Role ----
+        // ---- Create Role ---- (name + description only; permissions are
+        // assigned afterward via this role's own "Manage Permissions" action)
         $(document).on('click', '#createRoleBtn', function() {
             $('#createRoleForm')[0].reset();
-            $('#createRoleModal .perm-search').val('');
-            $.get("{{ route('roles.permissions.catalog') }}", function(response) {
-                $('#manageAccessModal .perm-sensitive').remove();
-                $('#createPermGrid').next('.perm-sensitive').remove();
-                renderPermGrid($('#createPermGrid'), response.groups, response.sensitive, []);
-                updatePermCounts($('#createRoleModal .modal-body'), $('#createSelectedCount'), $('#createTotalCount'));
-            });
-        });
-
-        $(document).on('change', '#createPermGrid, #createRoleModal .perm-sensitive', function() {
-            updatePermCounts($('#createRoleModal .modal-body'), $('#createSelectedCount'), $('#createTotalCount'));
         });
 
         $(document).on('submit', '#createRoleForm', function(e) {
             e.preventDefault();
-            const permissions = $('#createRoleModal .modal-body .perm-checkbox:checked').map((i, el) => el.value).get();
-            if (permissions.length === 0) {
-                toastr.error('Select at least one permission');
-                return;
-            }
             $.post("{{ route('roles.store') }}", {
                 name: $('#create_name').val(),
                 description: $('#create_description').val(),
-                permissions: permissions,
             }, function(response) {
                 if (response.status) {
                     toastr.success(response.message);
@@ -541,29 +525,30 @@
             });
         });
 
-        // ---- Manage Access ----
+        // ---- Manage Permissions ----
         $(document).on('click', '.manageAccessBtn', function() {
             const id = $(this).data('id');
             $('#manage_access_role_id').val(id);
             $('#manageAccessRoleName').text($(this).data('name'));
-            $('#manageAccessGrid').next('.perm-sensitive').remove();
             $('#manageAccessModal .perm-search').val('');
 
             $.get("{{ url('roles') }}/" + id + "/permissions", function(response) {
-                renderPermGrid($('#manageAccessGrid'), response.groups, response.sensitive, response.granted);
+                renderPermGrid($('#manageAccessGrid'), response.groups, response.granted);
                 updatePermCounts($('#manageAccessModal .modal-body'), $('#manageSelectedCount'), $('#manageTotalCount'));
                 $('#manageAccessModal').modal('show');
             });
         });
 
-        $(document).on('change', '#manageAccessGrid, #manageAccessModal .perm-sensitive', function() {
+        $(document).on('change', '#manageAccessGrid', function() {
             updatePermCounts($('#manageAccessModal .modal-body'), $('#manageSelectedCount'), $('#manageTotalCount'));
         });
 
-        $(document).on('click', '#selectAllPerms', function() {
-            const $boxes = $('#manageAccessModal .modal-body .perm-checkbox');
-            const allChecked = $boxes.filter(':checked').length === $boxes.length;
-            $boxes.prop('checked', !allChecked);
+        // A real checkbox — works both directions on its own (ticking it
+        // selects everything, unticking deselects everything), no need to
+        // compute a toggle direction by hand.
+        $(document).on('change', '#selectAllPerms', function() {
+            const checked = $(this).is(':checked');
+            $('#manageAccessModal .modal-body .perm-checkbox').prop('checked', checked);
             updatePermCounts($('#manageAccessModal .modal-body'), $('#manageSelectedCount'), $('#manageTotalCount'));
         });
 
