@@ -22,32 +22,34 @@
             --surface: #f8fafc;
         }
 
-        /* ---- Modern, roomier baseline for this page (larger type, more
-           breathing room than the app's current density) — the pattern
-           later pages in this redesign will reuse. ---- */
-        .rp-wrap { font-size: 15px; }
+        /* ---- Compact baseline, matching the reference density exactly:
+           small type, tight padding — not the larger scale used
+           elsewhere in this app. Roles & Permissions is deliberately
+           denser since it's a control panel people scan quickly, not a
+           landing page. ---- */
+        .rp-wrap { font-size: 13.5px; }
 
         .rp-header {
             background: #fff;
-            padding: 26px 28px;
-            border-radius: 16px;
-            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+            padding: 16px 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 20px;
-            margin-bottom: 24px;
+            gap: 16px;
+            margin-bottom: 16px;
         }
 
         .rp-header h1 {
-            font-size: 24px;
+            font-size: 18px;
             font-weight: 700;
             color: var(--text-dark);
-            margin: 0 0 6px;
+            margin: 0 0 3px;
         }
 
         .rp-header p {
-            font-size: 14.5px;
+            font-size: 12.5px;
             color: var(--text-muted);
             margin: 0;
             max-width: 560px;
@@ -57,9 +59,9 @@
             background: var(--primary);
             color: #fff;
             border: none;
-            border-radius: 12px;
-            padding: 14px 26px;
-            font-size: 15px;
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-size: 13px;
             font-weight: 600;
             white-space: nowrap;
             transition: 0.2s;
@@ -70,17 +72,17 @@
         .rp-note {
             background: #eff6ff;
             border: 1px solid #bfdbfe;
-            border-radius: 14px;
-            padding: 16px 20px;
+            border-radius: 10px;
+            padding: 10px 14px;
             display: flex;
-            gap: 14px;
+            gap: 10px;
             align-items: flex-start;
-            margin-bottom: 24px;
-            font-size: 14px;
+            margin-bottom: 16px;
+            font-size: 12.5px;
             color: #1e3a8a;
         }
 
-        .rp-note i { font-size: 20px; color: #2563eb; margin-top: 2px; }
+        .rp-note i { font-size: 16px; color: #2563eb; margin-top: 1px; }
 
         /* Deliberately no overflow:hidden on this card or the table inside
            it — that would clip the actions dropdown on the last row, since
@@ -90,72 +92,72 @@
            that always renders fully. */
         .rp-card {
             background: #fff;
-            border-radius: 16px;
-            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+            border-radius: 12px;
+            box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
         }
 
         .rp-table { width: 100%; border-collapse: collapse; }
         .rp-table th {
             text-align: left;
-            font-size: 12.5px;
+            font-size: 11px;
             text-transform: uppercase;
             letter-spacing: 0.04em;
             color: var(--text-muted);
-            padding: 18px 24px;
+            padding: 10px 16px;
             border-bottom: 1px solid var(--border);
         }
         .rp-table td {
-            padding: 20px 24px;
+            padding: 10px 16px;
             border-bottom: 1px solid var(--border);
             vertical-align: middle;
-            font-size: 15px;
+            font-size: 13px;
         }
         .rp-table tr:last-child td { border-bottom: none; }
 
-        .rp-role-name { font-weight: 700; color: var(--text-dark); font-size: 15.5px; }
-        .rp-role-desc { color: var(--text-muted); font-size: 13.5px; margin-top: 3px; }
+        .rp-role-name { font-weight: 700; color: var(--text-dark); font-size: 13.5px; }
+        .rp-role-desc { color: var(--text-muted); font-size: 11.5px; margin-top: 2px; }
 
         .rp-pill {
             display: inline-block;
-            padding: 5px 12px;
+            padding: 3px 9px;
             border-radius: 999px;
-            font-size: 12.5px;
+            font-size: 11px;
             font-weight: 600;
         }
         .rp-pill.protected { background: #dcfce7; color: #15803d; }
         .rp-pill.count { background: #f1f5f9; color: #475569; }
 
         .rp-actions-btn {
-            width: 38px; height: 38px; border-radius: 10px; border: 1px solid var(--border);
-            background: #fff; color: var(--text-muted); display: inline-flex; align-items: center; justify-content: center;
+            width: 28px; height: 28px; border-radius: 7px; border: 1px solid var(--border);
+            background: #fff; color: var(--text-muted); display: inline-flex; align-items: center; justify-content: center; font-size: 12px;
         }
         .rp-actions-btn:hover { background: var(--surface); }
 
-        .rp-dropdown-menu { font-size: 14px; border-radius: 12px; box-shadow: 0 12px 32px rgba(15,23,42,.12); border: none; padding: 6px; min-width: 190px; }
-        .rp-dropdown-menu .dropdown-item { border-radius: 8px; padding: 10px 12px; display: flex; align-items: center; gap: 10px; }
-        .rp-dropdown-menu .dropdown-item i { width: 16px; text-align: center; }
+        .rp-dropdown-menu { font-size: 12.5px; border-radius: 10px; box-shadow: 0 12px 32px rgba(15,23,42,.12); border: none; padding: 4px; min-width: 165px; }
+        .rp-dropdown-menu .dropdown-item { border-radius: 6px; padding: 7px 10px; display: flex; align-items: center; gap: 8px; }
+        .rp-dropdown-menu .dropdown-item i { width: 14px; text-align: center; }
         .rp-dropdown-menu .dropdown-item.text-danger:hover { background: #fef2f2; }
 
         /* Manage Access modal */
-        .perm-modal .modal-dialog { max-width: 900px; }
-        .perm-summary { display: flex; justify-content: space-between; align-items: center; font-size: 14px; color: var(--text-muted); margin-bottom: 16px; }
+        .perm-modal .modal-dialog { max-width: 760px; }
+        .perm-summary { display: flex; justify-content: space-between; align-items: center; font-size: 12.5px; color: var(--text-muted); margin-bottom: 10px; }
         .perm-summary strong { color: var(--text-dark); }
 
-        .perm-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; max-height: 55vh; overflow-y: auto; padding-right: 4px; }
-        .perm-group { background: var(--surface); border-radius: 12px; padding: 16px; align-self: start; }
-        .perm-group-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .perm-group-head .perm-group-title { font-weight: 700; font-size: 14px; color: var(--text-dark); }
-        .perm-group-head .perm-group-count { font-size: 12px; color: var(--text-muted); background: #fff; border: 1px solid var(--border); border-radius: 999px; padding: 2px 9px; }
-        .perm-item { display: flex; align-items: center; gap: 9px; font-size: 13.5px; color: #374151; padding: 5px 0; }
-        .perm-item input { width: 15px; height: 15px; }
+        .perm-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; max-height: 48vh; overflow-y: auto; padding-right: 4px; }
+        .perm-group { background: var(--surface); border-radius: 8px; padding: 10px; align-self: start; }
+        .perm-group-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .perm-group-head .perm-group-title { font-weight: 700; font-size: 12.5px; color: var(--text-dark); }
+        .perm-group-head .perm-group-count { font-size: 10.5px; color: var(--text-muted); background: #fff; border: 1px solid var(--border); border-radius: 999px; padding: 1px 7px; }
+        .perm-item { display: flex; align-items: center; gap: 7px; font-size: 12px; color: #374151; padding: 3px 0; }
+        .perm-item input { width: 13px; height: 13px; }
 
-        .perm-sensitive { background: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; padding: 16px; margin-top: 16px; }
-        .perm-sensitive-title { color: #b91c1c; font-weight: 700; font-size: 13.5px; margin-bottom: 8px; }
+        .perm-sensitive { background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 10px; margin-top: 10px; }
+        .perm-sensitive-title { color: #b91c1c; font-weight: 700; font-size: 12px; margin-bottom: 5px; }
         .perm-sensitive .perm-item { color: #7f1d1d; }
-        .perm-sensitive small { display: block; color: #991b1b; margin-left: 24px; }
+        .perm-sensitive small { display: block; color: #991b1b; margin-left: 20px; }
 
         .perm-footer { display: flex; justify-content: space-between; align-items: center; width: 100%; }
-        .perm-footer .perm-footer-count { font-size: 14px; color: var(--text-muted); }
+        .perm-footer .perm-footer-count { font-size: 12.5px; color: var(--text-muted); }
         .perm-footer .perm-footer-count strong { color: var(--primary); }
     </style>
 </head>
