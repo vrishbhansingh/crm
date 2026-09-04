@@ -153,7 +153,11 @@ class LeadDetailController extends Controller
             'file' => 'required|file|max:10240|mimes:pdf,jpg,jpeg,png,webp,doc,docx,xls,xlsx,csv,txt',
         ]);
 
-        $lead = $this->findEditableLead($id);
+        // Any agent with the leads.edit permission (already required by the
+        // route) can attach a document to any lead in their tenant — not
+        // only the one it happens to be assigned to. A document supports
+        // whoever is currently working the lead, not just its sole owner.
+        $lead = Lead::findOrFail($id);
         $file = $request->file('file');
 
         $storedPath = $file->store('lead-attachments/'.$lead->tenant_id.'/'.$id, 'local');

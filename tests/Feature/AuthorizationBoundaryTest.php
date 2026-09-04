@@ -113,6 +113,23 @@ class AuthorizationBoundaryTest extends TestCase
         Storage::disk('public')->assertDirectoryEmpty('lead-attachments');
     }
 
+    public function test_any_agent_with_edit_permission_can_upload_to_a_colleagues_lead_but_still_cannot_edit_it(): void
+    {
+        Storage::fake('local');
+        $this->grant('leads.edit');
+        $owner = $this->createUser($this->tenant, 'owner');
+        $lead = $this->createLead($owner);
+
+        $this->postJson("/leads/{$lead->id}/attachments", [
+            'file' => UploadedFile::fake()->create('brochure.pdf', 100, 'application/pdf'),
+        ])->assertOk()->assertJsonPath('status', true);
+
+        $this->assertTrue(\App\Models\LeadAttachment::where('lead_id', $lead->id)->exists());
+
+        $this->postJson("/leads/{$lead->id}/notes", ['body' => 'still not mine to edit'])
+            ->assertNotFound();
+    }
+
     private function grant(string ...$permissions): void
     {
         foreach ($permissions as $permission) {

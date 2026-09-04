@@ -6,6 +6,8 @@ use App\Http\Controllers\Admin\ContactController;
 use App\Http\Controllers\Admin\CrmCompanyController;
 use App\Http\Controllers\Admin\DealController;
 use App\Http\Controllers\Admin\DealDetailController;
+use App\Http\Controllers\Admin\EmailCampaignController;
+use App\Http\Controllers\Admin\EmailTemplateController;
 use App\Http\Controllers\Admin\LeadDetailController;
 use App\Http\Controllers\Admin\MailSettingsController;
 use App\Http\Controllers\Admin\MasterDataController;
@@ -241,6 +243,44 @@ Route::middleware(['admin_middle', 'permission:company.manage-settings'])->group
     Route::get('/settings/mail', [MailSettingsController::class, 'edit'])->name('settings.mail.edit');
     Route::put('/settings/mail', [MailSettingsController::class, 'update'])->name('settings.mail.update');
     Route::post('/settings/mail/test', [MailSettingsController::class, 'test'])->name('settings.mail.test');
+});
+
+Route::middleware(['admin_middle', 'permission:templates.view'])->group(function () {
+    Route::get('/email-templates', [EmailTemplateController::class, 'index'])->name('templates.index');
+    Route::get('/email-templates/data', [EmailTemplateController::class, 'data'])->name('templates.data');
+    Route::get('/email-templates/variables', [EmailTemplateController::class, 'variables'])->name('templates.variables');
+    Route::post('/email-templates/preview', [EmailTemplateController::class, 'preview'])->name('templates.preview');
+});
+
+Route::middleware(['admin_middle', 'permission:templates.create'])->group(function () {
+    Route::post('/email-templates', [EmailTemplateController::class, 'store'])->name('templates.store');
+});
+
+Route::middleware(['admin_middle', 'permission:templates.edit'])->group(function () {
+    Route::put('/email-templates/{emailTemplate}', [EmailTemplateController::class, 'update'])->name('templates.update');
+});
+
+Route::middleware(['admin_middle', 'permission:templates.delete'])->group(function () {
+    Route::delete('/email-templates/{emailTemplate}', [EmailTemplateController::class, 'destroy'])->name('templates.destroy');
+});
+
+Route::middleware(['admin_middle', 'permission:campaigns.view'])->group(function () {
+    Route::get('/email-campaigns', [EmailCampaignController::class, 'index'])->name('campaigns.index');
+    Route::get('/email-campaigns/data', [EmailCampaignController::class, 'data'])->name('campaigns.data');
+    Route::get('/email-campaigns/{emailCampaign}', [EmailCampaignController::class, 'show'])->name('campaigns.show');
+    Route::post('/email-campaigns/preview-audience', [EmailCampaignController::class, 'previewAudience'])->name('campaigns.preview_audience');
+});
+
+Route::middleware(['admin_middle', 'permission:campaigns.create'])->group(function () {
+    Route::post('/email-campaigns', [EmailCampaignController::class, 'store'])->name('campaigns.store');
+});
+
+Route::middleware(['admin_middle', 'permission:campaigns.delete'])->group(function () {
+    Route::delete('/email-campaigns/{emailCampaign}', [EmailCampaignController::class, 'destroy'])->name('campaigns.destroy');
+});
+
+Route::middleware(['admin_middle', 'permission:campaigns.send'])->group(function () {
+    Route::post('/email-campaigns/{emailCampaign}/send', [EmailCampaignController::class, 'send'])->name('campaigns.send');
 });
 
 Route::middleware(['admin_middle', 'permission:masters.view'])->group(function () {

@@ -230,6 +230,28 @@
         </div>
         @endcan
 
+        @canany(['templates.view', 'campaigns.view'])
+        <div class="nav-section {{ request()->routeIs(['templates.*','campaigns.*']) ? 'has-active' : '' }}">
+            <div class="nav-section-label">Marketing</div>
+            <ul class="nav nav-sidebar-menu">
+                @can('templates.view')
+                <li class="mb-1" data-nav-label="Email Templates">
+                    <a class="nav-link {{ request()->routeIs('templates.*') ? 'active' : '' }}" href="{{ route('templates.index') }}" title="Email Templates">
+                        <i class="fa fa-file-text-o"></i><span>Email Templates</span>
+                    </a>
+                </li>
+                @endcan
+                @can('campaigns.view')
+                <li class="mb-1" data-nav-label="Email Campaigns">
+                    <a class="nav-link {{ request()->routeIs('campaigns.*') ? 'active' : '' }}" href="{{ route('campaigns.index') }}" title="Email Campaigns">
+                        <i class="fa fa-paper-plane"></i><span>Email Campaigns</span>
+                    </a>
+                </li>
+                @endcan
+            </ul>
+        </div>
+        @endcanany
+
         @canany(['leads.view', 'deals.view', 'companies.view', 'contacts.view'])
         <div class="nav-section {{ request()->routeIs(['leads.*','deals.*','companies.*','contacts.*']) ? 'has-active' : '' }}">
             <div class="nav-section-label">Sales</div>

@@ -13,6 +13,7 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule): void
     {
         $schedule->command('crm:send-task-reminders')->everyMinute()->withoutOverlapping();
+        $schedule->command('crm:dispatch-scheduled-campaigns')->everyMinute()->withoutOverlapping();
     }
 
     /**

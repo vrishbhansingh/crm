@@ -16,11 +16,12 @@ class RolePermissionSeeder extends Seeder
     private array $modules = [
         'leads', 'orders', 'companies', 'contacts', 'tasks', 'reports', 'audit',
         'users', 'roles', 'company', 'attendance', 'masters', 'deals',
+        'templates', 'campaigns',
     ];
 
     private array $actions = [
         'view', 'create', 'edit', 'delete', 'import', 'export', 'assign',
-        'approve', 'reject', 'share', 'manage-settings',
+        'approve', 'reject', 'share', 'manage-settings', 'send',
     ];
 
     public function run(): void
