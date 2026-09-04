@@ -98,7 +98,7 @@ class EmailTemplateController extends Controller
         return response()->json(['status' => true, 'message' => 'Template created', 'data' => $template]);
     }
 
-    public function update(Request $request, EmailTemplate $emailTemplate)
+    public function update(Request $request, $id)
     {
         $data = $request->validate([
             'name' => 'required|string|max:150',
@@ -106,13 +106,20 @@ class EmailTemplateController extends Controller
             'body' => 'required|string',
         ]);
 
+        // Plain $id + a manual lookup here, not route-model-binding: implicit
+        // binding resolves during SubstituteBindings, which runs before
+        // ActivateTenantDatabase — too early for a model whose connection is
+        // only known once the tenant DB is active for this request.
+        $emailTemplate = EmailTemplate::findOrFail($id);
         $emailTemplate->update($data);
 
         return response()->json(['status' => true, 'message' => 'Template updated', 'data' => $emailTemplate]);
     }
 
-    public function destroy(EmailTemplate $emailTemplate)
+    public function destroy($id)
     {
+        $emailTemplate = EmailTemplate::findOrFail($id);
+
         if ($emailTemplate->campaigns()->exists()) {
             return response()->json([
                 'status' => false,

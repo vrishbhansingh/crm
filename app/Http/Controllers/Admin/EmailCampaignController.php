@@ -40,9 +40,14 @@ class EmailCampaignController extends Controller
         return response()->json(['status' => true, 'data' => $campaigns]);
     }
 
-    public function show(EmailCampaign $emailCampaign)
+    // Plain $id + a manual lookup throughout this controller, not
+    // route-model-binding: implicit binding resolves during
+    // SubstituteBindings, which runs before ActivateTenantDatabase — too
+    // early for a model whose connection is only known once the tenant DB
+    // is active for this request.
+    public function show($id)
     {
-        $emailCampaign->load('template', 'recipients');
+        $emailCampaign = EmailCampaign::with('template', 'recipients')->findOrFail($id);
 
         return response()->json(['status' => true, 'data' => $emailCampaign]);
     }
@@ -91,8 +96,10 @@ class EmailCampaignController extends Controller
         return response()->json(['status' => true, 'message' => 'Campaign saved', 'data' => $campaign]);
     }
 
-    public function destroy(EmailCampaign $emailCampaign)
+    public function destroy($id)
     {
+        $emailCampaign = EmailCampaign::findOrFail($id);
+
         if (in_array($emailCampaign->status, ['sending', 'sent'], true)) {
             return response()->json(['status' => false, 'message' => 'A sent campaign cannot be deleted.'], 422);
         }
@@ -102,8 +109,10 @@ class EmailCampaignController extends Controller
         return response()->json(['status' => true, 'message' => 'Campaign deleted']);
     }
 
-    public function send(EmailCampaign $emailCampaign, CampaignSender $sender)
+    public function send($id, CampaignSender $sender)
     {
+        $emailCampaign = EmailCampaign::findOrFail($id);
+
         if (! in_array($emailCampaign->status, ['draft', 'scheduled', 'failed'], true)) {
             return response()->json(['status' => false, 'message' => 'This campaign has already been sent.'], 422);
         }
