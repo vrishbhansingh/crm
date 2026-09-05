@@ -173,12 +173,20 @@
 
         .perm-select-all-row { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--primary); font-weight: 600; padding: 2px 0 6px; margin: 0; border-bottom: 1px dashed var(--border); margin-bottom: 6px; cursor: pointer; }
         .perm-select-all-row input { width: 13px; height: 13px; }
+        .perm-select-all-row input:disabled { cursor: not-allowed; }
+        .perm-select-all-row:has(input:disabled) { color: #92400e; cursor: default; }
 
         .perm-items-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(95px, 1fr)); gap: 4px 8px; }
         .perm-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #374151; padding: 2px 0; white-space: nowrap; }
         .perm-item input { width: 13px; height: 13px; flex-shrink: 0; }
         .perm-item.perm-hidden { display: none; }
         .perm-group.perm-hidden { display: none; }
+
+        /* A locked permission (only ever roles.* on the protected Admin
+           role) — visibly "always on" rather than a checkbox that would
+           silently do nothing if unchecked. */
+        .perm-item-locked { color: #92400e; font-weight: 600; }
+        .perm-item-locked input:disabled { cursor: not-allowed; }
     </style>
 </head>
 
@@ -346,30 +354,30 @@
             $.get("{{ route('roles.data') }}", function(response) {
                 let rows = '';
                 response.data.forEach((role) => {
-                    const menuId = 'roleMenu' + role.id;
-                    let actions = '';
-                    if (role.is_protected) {
-                        actions = '<span class="rp-pill protected"><i class="fa fa-shield"></i> Protected</span>';
-                    } else {
-                        let items = '';
-                        if (canEdit) {
-                            items += `<a class="dropdown-item editInfoBtn" href="#" data-id="${role.id}" data-name="${esc(role.name)}" data-description="${esc(role.description)}"><i class="fa fa-pencil"></i> Edit Info</a>`;
-                            items += `<a class="dropdown-item manageAccessBtn" href="#" data-id="${role.id}" data-name="${esc(role.name)}"><i class="fa fa-lock"></i> Manage Permissions</a>`;
-                        }
-                        if (canDelete) {
-                            items += `<a class="dropdown-item text-danger deleteRoleBtn" href="#" data-id="${role.id}" data-name="${esc(role.name)}"><i class="fa fa-trash"></i> Delete</a>`;
-                        }
-                        actions = items ? `
-                            <div class="dropdown">
-                                <button class="rp-actions-btn" type="button" data-toggle="dropdown" aria-expanded="false"><i class="fa fa-ellipsis-v"></i></button>
-                                <div class="dropdown-menu dropdown-menu-right rp-dropdown-menu">${items}</div>
-                            </div>` : '<span class="text-muted">—</span>';
+                    // Admin's name/deletion stay off-limits (no Edit Info,
+                    // no Delete), but its permissions are genuinely
+                    // editable now — Manage Permissions is available here
+                    // too, just without those other two actions.
+                    let items = '';
+                    if (canEdit && !role.is_protected) {
+                        items += `<a class="dropdown-item editInfoBtn" href="#" data-id="${role.id}" data-name="${esc(role.name)}" data-description="${esc(role.description)}"><i class="fa fa-pencil"></i> Edit Info</a>`;
                     }
+                    if (canEdit) {
+                        items += `<a class="dropdown-item manageAccessBtn" href="#" data-id="${role.id}" data-name="${esc(role.name)}" data-protected="${role.is_protected ? 1 : 0}"><i class="fa fa-lock"></i> Manage Permissions</a>`;
+                    }
+                    if (canDelete && !role.is_protected) {
+                        items += `<a class="dropdown-item text-danger deleteRoleBtn" href="#" data-id="${role.id}" data-name="${esc(role.name)}"><i class="fa fa-trash"></i> Delete</a>`;
+                    }
+                    const actions = items ? `
+                        <div class="dropdown">
+                            <button class="rp-actions-btn" type="button" data-toggle="dropdown" aria-expanded="false"><i class="fa fa-ellipsis-v"></i></button>
+                            <div class="dropdown-menu dropdown-menu-right rp-dropdown-menu">${items}</div>
+                        </div>` : '<span class="text-muted">—</span>';
 
                     rows += `
                         <tr>
                             <td>
-                                <div class="rp-role-name">${esc(role.name)}</div>
+                                <div class="rp-role-name">${esc(role.name)} ${role.is_protected ? '<span class="rp-pill protected"><i class="fa fa-shield"></i> Protected</span>' : ''}</div>
                                 ${role.description ? `<div class="rp-role-desc">${esc(role.description)}</div>` : ''}
                             </td>
                             <td><span class="rp-pill count">${role.users_count} user${role.users_count === 1 ? '' : 's'}</span></td>
@@ -385,20 +393,29 @@
         // for that module, then its own permissions flowing inline (2-3
         // per row) rather than one per line — keeps 13 modules readable
         // without a tall single column or an oversized, cramped grid.
-        function renderPermGrid($container, groups, granted) {
+        // `locked` (only ever non-empty when managing the protected Admin
+        // role) names permissions that are always granted and can't be
+        // unchecked here — the backend force-re-adds them regardless, this
+        // is just making that visible instead of letting a click silently
+        // do nothing.
+        function renderPermGrid($container, groups, granted, locked) {
+            locked = locked || [];
             let html = '';
             groups.forEach((group) => {
                 const groupGranted = group.permissions.filter(p => granted.includes(p.name)).length;
+                const groupLocked = group.permissions.every(p => locked.includes(p.name)) && group.permissions.length > 0;
                 html += `<div class="perm-group" data-group="${group.module}">
                     <div class="perm-group-head">
                         <span class="perm-group-title">${esc(group.label)}</span>
                         <span class="perm-group-count">${groupGranted}/${group.permissions.length}</span>
                     </div>
-                    <label class="perm-select-all-row"><input type="checkbox" class="perm-group-select-all"> <span>Select all</span></label>
+                    <label class="perm-select-all-row"><input type="checkbox" class="perm-group-select-all" ${groupLocked ? 'checked disabled' : ''}> <span>${groupLocked ? '<i class="fa fa-lock"></i> Always on' : 'Select all'}</span></label>
                     <div class="perm-items-grid">`;
                 group.permissions.forEach((p) => {
-                    const checked = granted.includes(p.name) ? 'checked' : '';
-                    html += `<label class="perm-item" data-search="${esc(group.label + ' ' + p.label)}"><input type="checkbox" class="perm-checkbox" value="${p.name}" ${checked}> ${esc(p.label)}</label>`;
+                    const isLocked = locked.includes(p.name);
+                    const checked = (granted.includes(p.name) || isLocked) ? 'checked' : '';
+                    const disabled = isLocked ? 'disabled' : '';
+                    html += `<label class="perm-item ${isLocked ? 'perm-item-locked' : ''}" data-search="${esc(group.label + ' ' + p.label)}"><input type="checkbox" class="perm-checkbox" value="${p.name}" ${checked} ${disabled}> ${esc(p.label)}</label>`;
                 });
                 html += `</div></div>`;
             });
@@ -528,12 +545,13 @@
         // ---- Manage Permissions ----
         $(document).on('click', '.manageAccessBtn', function() {
             const id = $(this).data('id');
+            const isProtected = $(this).data('protected') == 1;
             $('#manage_access_role_id').val(id);
-            $('#manageAccessRoleName').text($(this).data('name'));
+            $('#manageAccessRoleName').text($(this).data('name') + (isProtected ? ' (protected — Roles & Permissions access always stays on)' : ''));
             $('#manageAccessModal .perm-search').val('');
 
             $.get("{{ url('roles') }}/" + id + "/permissions", function(response) {
-                renderPermGrid($('#manageAccessGrid'), response.groups, response.granted);
+                renderPermGrid($('#manageAccessGrid'), response.groups, response.granted, response.locked);
                 updatePermCounts($('#manageAccessModal .modal-body'), $('#manageSelectedCount'), $('#manageTotalCount'));
                 $('#manageAccessModal').modal('show');
             });
@@ -545,10 +563,12 @@
 
         // A real checkbox — works both directions on its own (ticking it
         // selects everything, unticking deselects everything), no need to
-        // compute a toggle direction by hand.
+        // compute a toggle direction by hand. Locked (disabled) boxes are
+        // excluded — "deselect all" must never even visually uncheck the
+        // permission that's permanently guaranteed.
         $(document).on('change', '#selectAllPerms', function() {
             const checked = $(this).is(':checked');
-            $('#manageAccessModal .modal-body .perm-checkbox').prop('checked', checked);
+            $('#manageAccessModal .modal-body .perm-checkbox:not(:disabled)').prop('checked', checked);
             updatePermCounts($('#manageAccessModal .modal-body'), $('#manageSelectedCount'), $('#manageTotalCount'));
         });
 

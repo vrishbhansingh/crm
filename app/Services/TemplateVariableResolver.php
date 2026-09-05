@@ -82,11 +82,16 @@ class TemplateVariableResolver
     /**
      * Replace every `{{token}}` in $text using $context; unresolvable or
      * unmapped tokens render as empty rather than leaking raw `{{...}}`
-     * markup into a sent email.
+     * markup into a sent email. The editor inserts tokens wrapped in a
+     * `.var-token` span for a nicer authoring view — that wrapper is
+     * matched and discarded too, so a sent email shows the plain resolved
+     * value rather than a leftover pill around real data.
      */
     public function resolve(string $text, array $context): string
     {
-        return preg_replace_callback('/\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}/', function ($matches) use ($context) {
+        $pattern = '/(?:<span[^>]*class="[^"]*var-token[^"]*"[^>]*>\s*)?\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}(?:\s*<\/span>)?/';
+
+        return preg_replace_callback($pattern, function ($matches) use ($context) {
             $value = $context[$matches[1]] ?? '';
 
             return $value === null ? '' : (string) $value;

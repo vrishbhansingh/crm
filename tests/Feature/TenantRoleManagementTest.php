@@ -71,10 +71,11 @@ class TenantRoleManagementTest extends TestCase
             ->assertOk()
             ->assertJsonFragment(['name' => 'Admin', 'is_protected' => true]);
 
+        // roles.* is now a real, delegable module — no longer hidden.
         $this->getJson('/roles/permissions')
             ->assertOk()
             ->assertJsonStructure(['status', 'groups' => [['module', 'label', 'permissions']], 'total'])
-            ->assertJsonMissing(['module' => 'roles']);
+            ->assertJsonFragment(['module' => 'roles']);
     }
 
     public function test_permission_catalog_only_offers_actions_a_real_route_enforces(): void
@@ -103,18 +104,68 @@ class TenantRoleManagementTest extends TestCase
         $this->assertArrayNotHasKey('sensitive', $response);
     }
 
-    public function test_non_admin_cannot_manage_roles_even_if_given_role_permissions(): void
+    public function test_roles_create_permission_is_now_genuinely_delegable_not_just_symbolic(): void
     {
-        [$tenant, $admin] = $this->tenantAdmin('two');
+        [$tenant] = $this->tenantAdmin('two');
         PermissionTeam::set($tenant->id);
-        $managerRole = Role::create(['tenant_id' => $tenant->id, 'name' => 'Manager', 'guard_name' => 'web']);
-        $managerRole->syncPermissions(Permission::whereIn('name', ['roles.view', 'roles.create'])->get());
-        $manager = User::create(['tenant_id' => $tenant->id, 'name' => 'Manager', 'email' => Str::random(10).'@example.test', 'password' => Hash::make('password'), 'status' => 'Active', 'session_token' => Str::random(60)]);
-        $manager->assignRole($managerRole);
 
-        $this->actingAs($manager)->withSession(['session_token' => $manager->session_token])
-            ->post('/roles', ['name' => 'Forbidden Role', 'permissions' => ['leads.view']])
+        // Granted roles.create: this is the whole point of curating roles.*
+        // into the picker — it must actually work for a non-Admin holder,
+        // not just look like it does.
+        $delegateRole = Role::create(['tenant_id' => $tenant->id, 'name' => 'Delegate', 'guard_name' => 'web']);
+        $delegateRole->syncPermissions(Permission::whereIn('name', ['roles.view', 'roles.create'])->get());
+        $delegate = User::create(['tenant_id' => $tenant->id, 'name' => 'Delegate', 'email' => Str::random(10).'@example.test', 'password' => Hash::make('password'), 'status' => 'Active', 'session_token' => Str::random(60)]);
+        $delegate->assignRole($delegateRole);
+
+        $this->actingAs($delegate)->withSession(['session_token' => $delegate->session_token])
+            ->postJson('/roles', ['name' => 'Created By Delegate'])
+            ->assertOk()->assertJsonPath('status', true);
+        $this->assertDatabaseHas('roles', ['tenant_id' => $tenant->id, 'name' => 'Created By Delegate']);
+
+        // No roles.create: still genuinely blocked, at the route/middleware
+        // level, not by a hardcoded "must be the literal Admin" check.
+        $bystanderRole = Role::create(['tenant_id' => $tenant->id, 'name' => 'Bystander', 'guard_name' => 'web']);
+        $bystanderRole->syncPermissions(Permission::whereIn('name', ['leads.view'])->get());
+        $bystander = User::create(['tenant_id' => $tenant->id, 'name' => 'Bystander', 'email' => Str::random(10).'@example.test', 'password' => Hash::make('password'), 'status' => 'Active', 'session_token' => Str::random(60)]);
+        $bystander->assignRole($bystanderRole);
+
+        $this->actingAs($bystander)->withSession(['session_token' => $bystander->session_token])
+            ->post('/roles', ['name' => 'Forbidden Role'])
             ->assertForbidden();
+    }
+
+    public function test_admin_permissions_are_editable_except_roles_which_stays_locked_on(): void
+    {
+        [$tenant, $admin] = $this->tenantAdmin('six');
+        $adminRole = $admin->roles()->where('roles.tenant_id', $tenant->id)->firstOrFail();
+        $this->actingAs($admin)->withSession(['session_token' => $admin->session_token]);
+
+        // Attempt to submit Admin's permissions with roles.* deliberately
+        // left out, and nothing else granted either.
+        $this->putJson("/roles/{$adminRole->id}/permissions", ['permissions' => ['leads.view']])
+            ->assertOk()->assertJsonPath('status', true);
+
+        $adminRole->refresh();
+        // The one thing that survives regardless of what was submitted.
+        $this->assertTrue($adminRole->hasPermissionTo('roles.view'));
+        $this->assertTrue($adminRole->hasPermissionTo('roles.create'));
+        $this->assertTrue($adminRole->hasPermissionTo('roles.edit'));
+        $this->assertTrue($adminRole->hasPermissionTo('roles.delete'));
+        // Genuinely editable — what was submitted is what it has, roles.*
+        // aside. Not silently kept at "every permission" as it used to be.
+        $this->assertTrue($adminRole->hasPermissionTo('leads.view'));
+        $this->assertFalse($adminRole->hasPermissionTo('users.view'));
+    }
+
+    public function test_admin_role_name_and_deletion_stay_protected_even_though_permissions_do_not(): void
+    {
+        [$tenant, $admin] = $this->tenantAdmin('seven');
+        $adminRole = $admin->roles()->where('roles.tenant_id', $tenant->id)->firstOrFail();
+        $this->actingAs($admin)->withSession(['session_token' => $admin->session_token]);
+
+        $this->putJson("/roles/{$adminRole->id}", ['name' => 'Renamed'])->assertForbidden();
+        $this->deleteJson("/roles/{$adminRole->id}")->assertForbidden();
+        $this->assertSame('Admin', $adminRole->fresh()->name);
     }
 
     private function tenantAdmin(string $label): array

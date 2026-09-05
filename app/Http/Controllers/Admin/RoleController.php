@@ -7,7 +7,6 @@ use App\Models\Tenant;
 use App\Services\PlatformAuditLogger;
 use App\Support\TenantContext;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Spatie\Permission\Models\Permission;
@@ -42,12 +41,22 @@ class RoleController extends Controller
         'company' => ['view', 'edit', 'manage-settings'],
         'reports' => ['view'],
         'audit' => ['view'],
+        'roles' => ['view', 'create', 'edit', 'delete'],
         // 'users.impersonate' is deliberately excluded from every module
         // list here — it's real and route-enforced, but sensitive enough
         // that it isn't offered as a delegable checkbox at all; only the
         // protected Admin role (which gets every permission via a blanket
         // sync, not through this picker) has it.
     ];
+
+    /**
+     * The protected Admin role's one non-negotiable permission: it can
+     * never lose access to Roles & Permissions itself, or a mistake here
+     * could lock every admin out of fixing role assignments with no way
+     * back in through the UI. Every other module — including Users — is
+     * now genuinely editable on Admin, same as any custom role.
+     */
+    private const ADMIN_LOCKED_PERMISSIONS = ['roles.view', 'roles.create', 'roles.edit', 'roles.delete'];
 
     /**
      * Nicer names than a bare ucfirst($module) — matches how each module
@@ -68,6 +77,7 @@ class RoleController extends Controller
         'company' => 'Organization Profile',
         'reports' => 'Reports',
         'audit' => 'Audit Log',
+        'roles' => 'Roles & Permissions',
     ];
 
     public function index()
@@ -77,7 +87,7 @@ class RoleController extends Controller
 
     public function data()
     {
-        $tenant = $this->tenantAdmin();
+        $tenant = $this->currentTenant();
         $roles = Role::where('tenant_id', $tenant->id)->withCount('users')->orderBy('name')->get();
 
         $grantableNames = $this->grantablePermissionNames();
@@ -86,9 +96,10 @@ class RoleController extends Controller
         return response()->json([
             'status' => true,
             'data' => $roles->map(function (Role $role) use ($grantableNames, $totalGrantable) {
-                $granted = $role->name === 'Admin'
-                    ? $totalGrantable
-                    : $role->permissions()->pluck('name')->intersect($grantableNames)->count();
+                // Admin's real count, not an assumed 100% — its permissions
+                // are editable now (only roles.* stays locked), so this
+                // should reflect whatever it actually holds.
+                $granted = $role->permissions()->pluck('name')->intersect($grantableNames)->count();
 
                 return [
                     'id' => $role->id,
@@ -110,13 +121,15 @@ class RoleController extends Controller
      */
     public function permissionCatalog(?int $role = null)
     {
-        $tenant = $this->tenantAdmin();
+        $tenant = $this->currentTenant();
         $grouped = $this->grantablePermissions()->groupBy(fn ($permission) => str($permission->name)->before('.')->value());
 
         $granted = [];
+        $isProtected = false;
         if ($role) {
             $roleModel = Role::where('tenant_id', $tenant->id)->findOrFail($role);
             $granted = $roleModel->permissions()->pluck('name')->all();
+            $isProtected = $roleModel->name === 'Admin';
         }
 
         $label = fn ($permission) => str($permission->name)->after('.')->replace('-', ' ')->ucfirst()->value();
@@ -135,6 +148,7 @@ class RoleController extends Controller
             'status' => true,
             'groups' => $orderedGroups,
             'granted' => $granted,
+            'locked' => $isProtected ? self::ADMIN_LOCKED_PERMISSIONS : [],
             'total' => $this->grantablePermissions()->count(),
         ]);
     }
@@ -146,7 +160,7 @@ class RoleController extends Controller
      */
     public function store(Request $request, PlatformAuditLogger $audit)
     {
-        $tenant = $this->tenantAdmin();
+        $tenant = $this->currentTenant();
         $data = $request->validate([
             'name' => ['required', 'string', 'max:80', Rule::unique('roles', 'name')->where(fn ($q) => $q->where('tenant_id', $tenant->id)->where('guard_name', 'web'))],
             'description' => ['nullable', 'string', 'max:150'],
@@ -171,8 +185,10 @@ class RoleController extends Controller
      */
     public function update(Request $request, int $role, PlatformAuditLogger $audit)
     {
-        $tenant = $this->tenantAdmin();
+        $tenant = $this->currentTenant();
         $roleModel = Role::where('tenant_id', $tenant->id)->findOrFail($role);
+        // Name/description stay off-limits for Admin — only its
+        // permissions are editable (see updatePermissions()).
         $this->assertEditable($roleModel);
 
         $data = $request->validate([
@@ -189,28 +205,36 @@ class RoleController extends Controller
     }
 
     /**
-     * Permissions only — the "Manage Permissions" action.
+     * Permissions only — the "Manage Permissions" action. Unlike
+     * update()/destroy(), this is NOT blocked for the Admin role: every
+     * permission on Admin is editable except the locked Roles &
+     * Permissions set, which this force-merges back in regardless of what
+     * was submitted, so Admin can never be edited into losing access to
+     * this very screen.
      */
     public function updatePermissions(Request $request, int $role, PlatformAuditLogger $audit)
     {
-        $tenant = $this->tenantAdmin();
+        $tenant = $this->currentTenant();
         $roleModel = Role::where('tenant_id', $tenant->id)->findOrFail($role);
-        $this->assertEditable($roleModel);
 
         $data = $request->validate([
             'permissions' => ['present', 'array'],
             'permissions.*' => ['string', Rule::exists('permissions', 'name')->where('guard_name', 'web')->where(fn ($q) => $q->where('name', 'not like', 'platform.%'))],
         ]);
 
-        $roleModel->syncPermissions($data['permissions']);
-        $audit->record('role.permissions_updated', $tenant, metadata: ['role' => $roleModel->name, 'permissions' => $data['permissions']]);
+        $permissions = $roleModel->name === 'Admin'
+            ? array_values(array_unique([...$data['permissions'], ...self::ADMIN_LOCKED_PERMISSIONS]))
+            : $data['permissions'];
+
+        $roleModel->syncPermissions($permissions);
+        $audit->record('role.permissions_updated', $tenant, metadata: ['role' => $roleModel->name, 'permissions' => $permissions]);
 
         return response()->json(['status' => true, 'message' => 'Permissions updated']);
     }
 
     public function destroy(int $role, PlatformAuditLogger $audit)
     {
-        $tenant = $this->tenantAdmin();
+        $tenant = $this->currentTenant();
         $roleModel = Role::where('tenant_id', $tenant->id)->findOrFail($role);
         $this->assertEditable($roleModel);
         if ($roleModel->users()->exists()) {
@@ -240,14 +264,21 @@ class RoleController extends Controller
         return Permission::whereIn('name', $this->grantablePermissionNames())->orderBy('name')->get();
     }
 
-    private function tenantAdmin(): Tenant
+    /**
+     * Every action in this controller is already gated by a real
+     * `permission:roles.*` route middleware (view/create/edit/delete) — so
+     * unlike the old hard "must literally be the protected Admin account"
+     * check this used to do, any role holding the matching roles.*
+     * permission can reach these endpoints now. That is the point of
+     * making `roles.*` a genuine, delegable permission rather than one
+     * that silently did nothing.
+     */
+    private function currentTenant(): Tenant
     {
         $tenantId = TenantContext::id();
         abort_if($tenantId === null, 403);
-        $tenant = Tenant::findOrFail($tenantId);
-        abort_unless($tenant->admin_user_id === Auth::id() && Auth::user()->hasRole('Admin'), 403, 'Only the company Admin can manage roles.');
 
-        return $tenant;
+        return Tenant::findOrFail($tenantId);
     }
 
     private function assertNotProtectedName(string $name): void
