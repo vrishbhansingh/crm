@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Tenant;
 use App\Models\User;
+use App\Support\PermissionTeam;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -28,6 +29,11 @@ class SuperAdminPortalTest extends TestCase
         $this->post('/superadmin/login', ['email' => $super->email, 'password' => 'password'])
             ->assertRedirect('/superadmin');
 
+        // The redirect target must actually be reachable, not just the
+        // right URL — a middleware that mis-scopes its own hasRole() check
+        // would redirect here successfully and then 403 this exact request.
+        $this->get('/superadmin')->assertOk();
+
         auth()->logout();
         $this->actingAs($tenantUser)->withSession(['session_token' => $tenantUser->session_token])
             ->get('/superadmin')
@@ -50,8 +56,14 @@ class SuperAdminPortalTest extends TestCase
             'status' => 'Active',
             'session_token' => Str::random(60),
         ]);
-        Role::findOrCreate($role, 'web');
-        $user->assignRole($role);
+
+        // Scoped exactly like production: SuperAdminSeeder creates the
+        // Super Admin role under the platform team (null -> 0), tenant
+        // roles live under their own tenant's team.
+        PermissionTeam::run($tenantId, function () use ($role, $user) {
+            Role::findOrCreate($role, 'web');
+            $user->assignRole($role);
+        });
 
         return $user;
     }
