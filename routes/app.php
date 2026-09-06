@@ -222,6 +222,7 @@ Route::middleware('admin_middle')->group(function () {
     Route::get('/security', [SecurityController::class, 'show'])->name('security.show');
     Route::post('/security', [SecurityController::class, 'update'])->name('security.update');
     Route::get('/profile', [ProfileController::class, 'profile'])->name('profile.show');
+    Route::post('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::get('/api-tokens', [ApiTokenController::class, 'index'])->name('api_tokens.index');
     Route::post('/api-tokens', [ApiTokenController::class, 'store'])->name('api_tokens.store');
     Route::delete('/api-tokens/{id}', [ApiTokenController::class, 'destroy'])->name('api_tokens.destroy')->whereNumber('id');

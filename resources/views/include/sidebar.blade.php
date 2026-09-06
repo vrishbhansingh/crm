@@ -24,7 +24,12 @@
         width: var(--sidebar-w);
         height: calc(100vh - 98px);
         background: linear-gradient(180deg, #0c7bfe, #01bdff);
-        padding: 12px 8px;
+        /* Generous bottom padding, not just the top's 12px: without it the
+           last nav item sits flush against the very bottom pixel row of
+           the viewport — exactly where an auto-hide OS taskbar overlaps
+           when it pops up, making that item unreachable/unclickable. This
+           keeps it scrollable to a comfortable position clear of that. */
+        padding: 12px 8px 64px;
         font-family: 'Poppins', sans-serif;
         overflow-y: auto;
         overscroll-behavior: contain;

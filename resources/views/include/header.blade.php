@@ -115,6 +115,29 @@
     padding: 5px 4px;
   }
 
+  /* A tenant-uploaded company logo has no known internal layout to crop
+     to (unlike the static app wordmark above) — scale it to fit instead,
+     both expanded and collapsed, rather than applying the same crop. */
+  .crm-brand-chip.has-custom-logo {
+    max-width: 200px;
+    padding: 6px 10px;
+  }
+  .crm-brand-chip.has-custom-logo img {
+    height: 32px;
+    width: auto;
+    max-width: 100%;
+    object-fit: contain;
+  }
+  html.sidebar-collapsed .crm-brand-chip.has-custom-logo {
+    width: 48px;
+    max-width: 48px;
+    padding: 6px;
+  }
+  html.sidebar-collapsed .crm-brand-chip.has-custom-logo img {
+    height: 100%;
+    width: 100%;
+  }
+
   /* Global content-area padding — overrides the vendor template's
      .content-wrapper{padding:1.375rem 2.375rem}, which ran wider (38px)
      than the app's spacing scale. */
@@ -158,6 +181,11 @@
     transition: background 0.15s ease;
   }
   .crm-profile:hover { background: rgba(75, 73, 172, 0.06); }
+
+  .crm-profile-avatar {
+    width: 34px; height: 34px; border-radius: 50%;
+    object-fit: cover; flex-shrink: 0; border: 1px solid #e5e7eb;
+  }
 
   .notification-link { position: relative; color:#475569; font-size:19px; }
   .notification-count { position:absolute; top:-8px; right:-10px; min-width:17px; height:17px; border-radius:10px; background:#ef4444; color:#fff; font-size:10px; line-height:17px; text-align:center; }
@@ -338,13 +366,18 @@
     $prefix = $currentRouteName ? explode('.', $currentRouteName)[0] : 'dashboard';
     $crumbParts = [ucwords(str_replace('_', ' ', $prefix))];
   }
+  // Each tenant can upload its own logo (Organization Profile); fall back
+  // to the generic app mark for tenants that haven't set one yet.
+  $companyLogo = \App\Models\CompanyDetails::first()?->company_logo;
+  $authUser = Auth::guard('web')->user();
+  $avatarUrl = $authUser->avatar ? asset($authUser->avatar) : asset('images/profile_img.jpg');
 @endphp
 
 <div class="crm-navbar-wrap">
 <div class="crm-navbar">
   <div class="crm-brand-wrapper">
-    <a href="{{ route('dashboard') }}" class="crm-brand-chip">
-      <img src="{{ asset('images/logo.svg') }}" alt="Logo">
+    <a href="{{ route('dashboard') }}" class="crm-brand-chip {{ $companyLogo ? 'has-custom-logo' : '' }}">
+      <img src="{{ $companyLogo ? asset($companyLogo) : asset('images/logo.svg') }}" alt="Logo">
     </a>
     <button type="button" class="sidebar-collapse-btn" id="sidebarCollapseBtn" title="Collapse sidebar" aria-label="Collapse sidebar">
         <i class="fa fa-angle-left"></i>
@@ -366,6 +399,7 @@
         @if($unreadNotificationCount)<span class="notification-count">{{ $unreadNotificationCount > 99 ? '99+' : $unreadNotificationCount }}</span>@endif
       </a>
       <div class="crm-profile" id="profileToggle">
+        <img src="{{ $avatarUrl }}" class="crm-profile-avatar" alt="">
         <div class="crm-profile-text">
           <span>{{ Auth::guard('web')->user()->name }}</span>
           <small>{{ Auth::guard('web')->user()->getRoleNames()->first() }}</small>
