@@ -38,9 +38,25 @@
 <form method="post" action="{{ route('superadmin.tenants.provision',$tenant) }}">@csrf<button class="btn btn-sm btn-outline-secondary">{{ $tenant->provision_status==='ready'?'Re-provision safely':'Retry provisioning' }}</button></form>
 @if($tenant->database_name)<form method="post" action="{{ route('superadmin.tenants.health',$tenant) }}">@csrf<button class="btn btn-sm btn-outline-secondary">Health check</button></form>@endif
 <button class="btn btn-sm btn-outline-dark" data-toggle="collapse" data-target="#edit{{ $tenant->id }}">Edit settings</button>
+<button class="btn btn-sm btn-outline-danger" data-toggle="collapse" data-target="#delete{{ $tenant->id }}">Delete company</button>
 </div>
 <div class="collapse mt-2" id="reject{{ $tenant->id }}"><form method="post" action="{{ route('superadmin.tenants.reject',$tenant) }}" class="form-inline">@csrf<input class="form-control mr-2" name="rejection_reason" placeholder="Reason required" required><button class="btn btn-danger">Confirm rejection</button></form></div>
-<div class="collapse mt-2" id="edit{{ $tenant->id }}"><hr><form method="post" action="{{ route('superadmin.tenants.update',$tenant) }}">@csrf @method('PUT')<input type="hidden" name="slug" value="{{ $tenant->slug }}"><input type="hidden" name="timezone" value="{{ $tenant->timezone }}"><input type="hidden" name="locale" value="{{ $tenant->locale }}"><div class="form-row"><div class="col-md-3"><input class="form-control" name="name" value="{{ $tenant->name }}" required></div><div class="col-md-3"><input class="form-control" type="email" name="contact_email" value="{{ $tenant->contact_email }}"></div><div class="col-md-2"><select class="form-control" name="plan">@foreach(['trial','standard','professional','enterprise'] as $plan)<option value="{{ $plan }}" @selected($tenant->plan===$plan)>{{ ucfirst($plan) }}</option>@endforeach</select></div><div class="col-md-2"><input class="form-control" type="date" name="trial_ends_at" value="{{ optional($tenant->trial_ends_at)->format('Y-m-d') }}"></div><div class="col-md-1"><input class="form-control" type="number" min="1" name="max_users" value="{{ $tenant->max_users }}"></div><div class="col-md-1"><select class="form-control" name="status"><option @selected($tenant->status==='Active')>Active</option><option @selected($tenant->status==='Inactive')>Inactive</option></select></div></div><button class="btn btn-sm btn-outline-primary mt-2">Save settings</button></form></div>
+<div class="collapse mt-2" id="edit{{ $tenant->id }}"><hr><form method="post" action="{{ route('superadmin.tenants.update',$tenant) }}">@csrf @method('PUT')<input type="hidden" name="slug" value="{{ $tenant->slug }}"><input type="hidden" name="timezone" value="{{ $tenant->timezone }}"><input type="hidden" name="locale" value="{{ $tenant->locale }}"><div class="form-row">
+<div class="col-md-3 mb-2"><label>Company name</label><input class="form-control" name="name" value="{{ $tenant->name }}" required></div>
+<div class="col-md-3 mb-2"><label>Contact email</label><input class="form-control" type="email" name="contact_email" value="{{ $tenant->contact_email }}"></div>
+<div class="col-md-2 mb-2"><label>Plan</label><select class="form-control" name="plan">@foreach(['trial','standard','professional','enterprise'] as $plan)<option value="{{ $plan }}" @selected($tenant->plan===$plan)>{{ ucfirst($plan) }}</option>@endforeach</select></div>
+<div class="col-md-2 mb-2"><label>Expiry date</label><input class="form-control" type="date" name="trial_ends_at" value="{{ optional($tenant->trial_ends_at)->format('Y-m-d') }}"></div>
+<div class="col-md-1 mb-2"><label>User limit</label><input class="form-control" type="number" min="1" name="max_users" value="{{ $tenant->max_users }}" placeholder="No limit"></div>
+<div class="col-md-1 mb-2"><label>Status</label><select class="form-control" name="status"><option @selected($tenant->status==='Active')>Active</option><option @selected($tenant->status==='Inactive')>Inactive</option></select></div>
+</div><button class="btn btn-sm btn-outline-primary mt-2">Save settings</button></form></div>
+<div class="collapse mt-2" id="delete{{ $tenant->id }}"><hr>
+    <form method="post" action="{{ route('superadmin.tenants.destroy',$tenant) }}" class="form-inline" onsubmit="return confirm('This permanently deletes &quot;{{ $tenant->name }}&quot; and every one of its user accounts. A backup of its database is saved on the server first, but this cannot be undone from this screen. Continue?');">
+        @csrf @method('DELETE')
+        <input class="form-control mr-2" name="confirm_name" placeholder='Type "{{ $tenant->name }}" to confirm' required style="min-width:260px">
+        <button class="btn btn-danger">Permanently delete</button>
+    </form>
+    <small class="text-muted d-block mt-2">A full backup of this company's database is saved on the server before anything is deleted or dropped.</small>
+</div>
 </div></div>
 @endforeach
 @endsection

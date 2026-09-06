@@ -6,7 +6,6 @@ use App\Http\Controllers\Admin\PlatformMailSettingsController;
 use App\Http\Controllers\Admin\PlatformUserController;
 use App\Http\Controllers\Admin\TenantController;
 use App\Http\Controllers\Auth\SuperAdminForgotPasswordController;
-use App\Http\Controllers\AuthController;
 use App\Http\Controllers\SuperAdminAuthController;
 use Illuminate\Support\Facades\Route;
 
@@ -40,6 +39,5 @@ Route::middleware(['admin_middle', 'role:Super Admin'])->group(function () {
     Route::post('/companies/{tenant}/users', [PlatformUserController::class, 'store'])->name('users.store')->whereNumber('tenant');
     Route::put('/companies/{tenant}/users/{user}', [PlatformUserController::class, 'update'])->name('users.update')->whereNumber(['tenant', 'user']);
     Route::post('/companies/{tenant}/transfer-admin', [PlatformUserController::class, 'transferAdmin'])->name('users.transfer_admin')->whereNumber('tenant');
-    Route::post('/companies/{tenant}/users/{user}/impersonate', [AuthController::class, 'platformImpersonate'])->name('users.impersonate')->whereNumber(['tenant', 'user']);
     Route::post('/logout', [SuperAdminAuthController::class, 'logout'])->name('logout');
 });

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Tenancy\TenantDatabaseBackupService;
 use App\Tenancy\TenantDatabaseProvisioner;
 use App\Services\PlatformAuditLogger;
 use Illuminate\Http\Request;
@@ -126,17 +127,54 @@ class TenantController extends Controller
         return back()->with('success', 'Tenant settings updated.');
     }
 
-    public function destroy(Tenant $tenant)
+    /**
+     * Permanently removes a company: its isolated database is backed up to
+     * a plain SQL file on the server first (TenantDatabaseBackupService),
+     * then dropped, and its central-identity user accounts are deleted so
+     * they don't linger with tenant_id nulled out (users.tenant_id is
+     * nullOnDelete, which reads as "platform-level Super Admin" elsewhere —
+     * leaving that column null on a deleted company's old accounts would be
+     * a real privilege footgun, not just clutter).
+     */
+    public function destroy(Request $request, Tenant $tenant, TenantDatabaseBackupService $backups, PlatformAuditLogger $audit)
     {
-        $hasData = $tenant->users()->exists() || $tenant->database_name !== null;
+        $request->validate(['confirm_name' => ['required', 'string']]);
 
-        if ($hasData) {
-            return back()->withErrors(['tenant' => 'This tenant contains users or CRM records. Deactivate it instead of deleting it.']);
+        if ($request->input('confirm_name') !== $tenant->name) {
+            return back()->withErrors(['tenant' => 'The typed name did not match "'.$tenant->name.'" exactly — nothing was deleted.']);
         }
 
-        $tenant->delete();
+        $backupPath = null;
 
-        return back()->with('success', 'Empty tenant deleted.');
+        if ($tenant->database_name) {
+            try {
+                $backupPath = $backups->backup($tenant);
+                $backups->dropDatabase($tenant);
+            } catch (\Throwable $exception) {
+                report($exception);
+
+                return back()->withErrors(['tenant' => 'Could not safely back up this company’s database, so nothing was deleted. Please try again or check the server logs.']);
+            }
+        }
+
+        $userCount = $tenant->users()->count();
+
+        // Logged before the delete below: platform_audit_logs.tenant_id is
+        // a real FK (ON DELETE SET NULL for rows that already reference it),
+        // but inserting a brand-new row against an id that's already gone
+        // violates that constraint rather than being nulled — the tenant
+        // has to still exist at insert time.
+        $audit->record('tenant.deleted', $tenant, metadata: [
+            'users_removed' => $userCount,
+            'backup_path' => $backupPath,
+        ]);
+
+        DB::transaction(function () use ($tenant) {
+            $tenant->users()->delete();
+            $tenant->delete();
+        });
+
+        return back()->with('success', '"'.$tenant->name.'" and its '.$userCount.' user account(s) were permanently deleted.'.($backupPath ? ' A backup was saved on the server first.' : ''));
     }
 
     public function approve(Tenant $tenant, TenantDatabaseProvisioner $provisioner, PlatformAuditLogger $audit)

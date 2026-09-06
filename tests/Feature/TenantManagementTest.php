@@ -77,6 +77,23 @@ class TenantManagementTest extends TestCase
         $this->get('/dashboard')->assertRedirect('/superadmin');
     }
 
+    public function test_deleting_a_tenant_requires_typing_its_exact_name(): void
+    {
+        $tenant = $this->tenant('guarded');
+
+        $this->delete("/superadmin/companies/{$tenant->id}", ['confirm_name' => 'the wrong name'])
+            ->assertRedirect()
+            ->assertSessionHasErrors('tenant');
+
+        $this->assertDatabaseHas('tenants', ['id' => $tenant->id]);
+    }
+
+    // The real backup-then-drop path is covered by TenantDeletionTest
+    // instead: this class's store() call never provisions a real database
+    // (TENANCY_MODE=shared in phpunit.xml short-circuits provisioning), and
+    // CREATE/DROP DATABASE's implicit MySQL commit doesn't mix safely with
+    // this class's DatabaseTransactions wrapper anyway.
+
     private function tenant(string $label): Tenant
     {
         $suffix = Str::lower(Str::random(8));

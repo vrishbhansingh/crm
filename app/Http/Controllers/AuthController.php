@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use App\Models\Tenant;
 use App\Models\PlatformAuditLog;
 use App\Support\TenantContext;
 use App\Support\PermissionTeam;
@@ -151,35 +150,6 @@ class AuthController extends Controller
             'status' => true,
             'message' => 'Logged in as user successfully',
         ]);
-    }
-
-    public function platformImpersonate(Request $request, Tenant $tenant, User $user)
-    {
-        abort_unless(Auth::user()?->hasRole('Super Admin'), 403);
-        abort_unless((int) $user->tenant_id === $tenant->id && $user->status === 'Active', 404);
-        abort_unless($tenant->isAccessible(), 422, $tenant->accessBlockReason() ?? 'This workspace is not ready.');
-
-        $actor = Auth::user();
-        PlatformAuditLog::create([
-            'actor_id' => $actor->id,
-            'tenant_id' => $tenant->id,
-            'target_user_id' => $user->id,
-            'event' => 'user.impersonation_started',
-            'ip_address' => $request->ip(),
-        ]);
-        $request->session()->put('impersonator_id', $actor->id);
-        Auth::login($user);
-        $request->session()->regenerate();
-        $request->session()->put('session_token', $user->session_token);
-
-        // The superadmin panel this was submitted from lives on the admin
-        // domain, but `dashboard` is a CRM-domain-only route — build an
-        // absolute cross-domain redirect rather than route()'s default
-        // (which would reuse the current, wrong, request host). Scheme is
-        // taken from the current request rather than hardcoded, since this
-        // app isn't served over HTTPS on every environment.
-        return redirect()->to($request->getScheme().'://'.config('app.crm_domain').route('dashboard', absolute: false))
-            ->with('success', 'Support session started. Actions are audited.');
     }
 
     public function stopImpersonating(Request $request)

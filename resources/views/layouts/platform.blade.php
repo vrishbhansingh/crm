@@ -32,19 +32,25 @@
         }
 
         .platform-shell {
-            display: grid;
-            grid-template-columns: 250px 1fr;
             min-height: 100vh;
         }
 
-        /* Sidebar */
+        /* Sidebar — fixed rather than sticky: the vendor admin-template CSS
+           this layout loads sets overflow-x:hidden somewhere up the
+           ancestor chain, which silently breaks position:sticky in Chromium
+           (it disables sticky on every axis, not just the hidden one) once
+           a page's content is taller than one screen. Fixed positioning
+           doesn't depend on any ancestor's overflow, so it stays pinned. */
         .platform-nav {
             background: var(--accent-dark);
             color: #fff;
             padding: 22px 16px;
-            position: sticky;
+            position: fixed;
             top: 0;
-            height: 100vh;
+            left: 0;
+            bottom: 0;
+            width: 250px;
+            overflow-y: auto;
         }
 
         .platform-brand {
@@ -107,10 +113,8 @@
 
         /* Main column */
         .platform-main {
+            margin-left: 250px;
             padding: 28px 32px;
-            /* A grid item defaults to min-width:auto, so a wide table inside
-               would grow this whole track instead of letting
-               .table-responsive's own overflow-x:auto contain it. */
             min-width: 0;
         }
 
@@ -261,9 +265,8 @@
         .platform-main a:not(.btn):hover { text-decoration: underline; }
 
         @media (max-width: 860px) {
-            .platform-shell { display: block; }
-            .platform-nav { position: static; height: auto; }
-            .platform-main { padding: 18px; }
+            .platform-nav { position: static; width: auto; height: auto; }
+            .platform-main { margin-left: 0; padding: 18px; }
         }
     </style>
     @stack('styles')
