@@ -28,19 +28,19 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 30px 0;
+      padding: 8px 0;
     }
 
     .auth-wrapper {
       width: 100%;
       max-width: 600px;
-      padding: 20px;
+      padding: 8px;
     }
 
     .auth-card {
       background: #ffffff;
       border-radius: 20px;
-      padding: 40px 44px;
+      padding: 20px 36px;
       box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08);
       animation: slideUp 0.6s ease;
     }
@@ -51,49 +51,43 @@
     }
 
     .logo {
-      width: 110px;
-      margin: 0 auto 18px;
+      width: 88px;
+      margin: 0 auto 10px;
       display: block;
-    }
-
-    .icon-badge {
-      width: 52px; height: 52px; border-radius: 14px; margin: 0 auto 18px;
-      background: rgba(37, 99, 235, 0.1); color: #2563eb;
-      display: flex; align-items: center; justify-content: center; font-size: 21px;
     }
 
     .auth-title {
       text-align: center;
-      font-size: 24px;
+      font-size: 21px;
       font-weight: 700;
       color: #1f2937;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
     }
 
     .auth-subtitle {
       text-align: center;
-      font-size: 14px;
+      font-size: 13px;
       color: #6b7280;
-      margin-bottom: 30px;
-      line-height: 1.5;
+      margin-bottom: 16px;
+      line-height: 1.4;
     }
 
     .error-summary {
       background: #fef2f2;
       color: #991b1b;
-      padding: 12px 14px;
+      padding: 10px 14px;
       border-radius: 10px;
-      margin-bottom: 20px;
-      font-size: 13.5px;
+      margin-bottom: 14px;
+      font-size: 13px;
     }
 
     .section-label {
       display: flex; align-items: center; gap: 10px;
-      font-size: 11.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
-      color: #94a3b8; margin-bottom: 14px;
+      font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+      color: #94a3b8; margin-bottom: 10px;
     }
 
-    .section-label:not(:first-child) { margin-top: 26px; }
+    .section-label:not(:first-child) { margin-top: 14px; }
 
     .section-label::after {
       content: ""; flex: 1; height: 1px; background: #e5e7eb;
@@ -102,7 +96,7 @@
     .form-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 18px;
+      gap: 12px;
     }
 
     .form-grid .full {
@@ -110,24 +104,24 @@
     }
 
     .form-group {
-      margin-bottom: 18px;
+      margin-bottom: 12px;
     }
 
     .form-label {
       display: block;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 600;
       color: #374151;
-      margin-bottom: 6px;
+      margin-bottom: 5px;
     }
 
     .form-control {
       width: 100%;
-      height: 48px;
-      border-radius: 12px;
+      height: 42px;
+      border-radius: 10px;
       border: 1px solid #d1d5db;
-      padding: 0 14px;
-      font-size: 15px;
+      padding: 0 13px;
+      font-size: 14px;
       transition: 0.25s;
     }
 
@@ -172,15 +166,15 @@
 
     .register-btn {
       width: 100%;
-      height: 50px;
-      border-radius: 14px;
+      height: 46px;
+      border-radius: 12px;
       background: linear-gradient(135deg, #2563eb, #1d4ed8);
       border: none;
       color: #fff;
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 600;
       cursor: pointer;
-      margin-top: 8px;
+      margin-top: 4px;
       transition: 0.3s;
     }
 
@@ -191,8 +185,8 @@
 
     .signin-row {
       text-align: center;
-      margin-top: 20px;
-      font-size: 14px;
+      margin-top: 12px;
+      font-size: 13px;
       color: #6b7280;
     }
 
@@ -206,9 +200,9 @@
 
     .footer-text {
       text-align: center;
-      font-size: 12px;
+      font-size: 11px;
       color: #9ca3af;
-      margin-top: 22px;
+      margin-top: 12px;
     }
 
     @media (max-width: 640px) {
@@ -225,7 +219,6 @@
     <div class="auth-card">
 
       <img src="{{ asset('images/logo.svg') }}" class="logo" alt="Logo" onerror="this.style.display='none'">
-      <div class="icon-badge"><i class="fa-solid fa-building"></i></div>
 
       <h2 class="auth-title">Create your company workspace</h2>
       <p class="auth-subtitle">Your company gets its own private database and an Admin account you can sign in with right away.</p>
