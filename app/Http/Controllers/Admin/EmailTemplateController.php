@@ -18,6 +18,20 @@ class EmailTemplateController extends Controller
         return view('email_templates.index');
     }
 
+    public function create()
+    {
+        return view('email_templates.form', ['template' => null]);
+    }
+
+    public function edit($id)
+    {
+        // Plain $id + a manual lookup, not route-model-binding — see the
+        // note on update() below for why.
+        $template = EmailTemplate::findOrFail($id);
+
+        return view('email_templates.form', ['template' => $template]);
+    }
+
     public function data()
     {
         $templates = EmailTemplate::with('campaigns:id,email_template_id')

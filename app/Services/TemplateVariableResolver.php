@@ -44,9 +44,15 @@ class TemplateVariableResolver
     {
         $catalog = static::catalog();
 
+        // Only the audience's own fields, plus the two that make sense on
+        // any template regardless of who it's sent to (the sender and the
+        // sending organization) — deliberately not every related record
+        // resolve() happens to be able to reach (e.g. a lead's linked deal),
+        // which read as "why is everything mixed together" clutter rather
+        // than a useful shortcut.
         $groups = match ($audienceType) {
-            'leads' => ['lead', 'deal', 'company', 'contact', 'user', 'organization'],
-            'contacts' => ['contact', 'company', 'user', 'organization'],
+            'leads' => ['lead', 'user', 'organization'],
+            'contacts' => ['contact', 'user', 'organization'],
             'companies' => ['company', 'user', 'organization'],
             default => array_keys($catalog),
         };

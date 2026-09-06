@@ -260,10 +260,12 @@ Route::middleware(['admin_middle', 'permission:templates.view'])->group(function
 });
 
 Route::middleware(['admin_middle', 'permission:templates.create'])->group(function () {
+    Route::get('/email-templates/create', [EmailTemplateController::class, 'create'])->name('templates.create');
     Route::post('/email-templates', [EmailTemplateController::class, 'store'])->name('templates.store');
 });
 
 Route::middleware(['admin_middle', 'permission:templates.edit'])->group(function () {
+    Route::get('/email-templates/{id}/edit', [EmailTemplateController::class, 'edit'])->name('templates.edit')->whereNumber('id');
     Route::put('/email-templates/{emailTemplate}', [EmailTemplateController::class, 'update'])->name('templates.update');
 });
 
