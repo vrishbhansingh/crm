@@ -130,6 +130,36 @@ class AuthorizationBoundaryTest extends TestCase
             ->assertNotFound();
     }
 
+    /**
+     * Documents stay company-isolated on two independent layers: the
+     * uploaded file itself lives under lead-attachments/{tenant_id}/{lead_id}
+     * on the private disk (never web-reachable directly), and the download
+     * route always resolves through Lead/LeadAttachment's own tenant-scoped
+     * query — so even knowing another company's attachment id outright
+     * (not just guessing) can't retrieve it; the row itself isn't visible
+     * outside its own tenant.
+     */
+    public function test_a_user_cannot_download_another_tenants_lead_attachment_even_knowing_its_id(): void
+    {
+        Storage::fake('local');
+        $this->grant('leads.edit', 'leads.view');
+        $lead = $this->createLead($this->user);
+
+        $this->postJson("/leads/{$lead->id}/attachments", [
+            'file' => UploadedFile::fake()->create('confidential.pdf', 100, 'application/pdf'),
+        ])->assertOk();
+        $attachmentId = \App\Models\LeadAttachment::where('lead_id', $lead->id)->firstOrFail()->id;
+
+        $otherTenant = $this->createTenant('other');
+        $otherUser = $this->createUser($otherTenant, 'outsider');
+        $otherUser->givePermissionTo(Permission::findOrCreate('leads.view', 'web'));
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+
+        $this->actingAs($otherUser, 'web')->withSession(['session_token' => $otherUser->session_token])
+            ->get("/attachments/{$attachmentId}/download")
+            ->assertNotFound();
+    }
+
     private function grant(string ...$permissions): void
     {
         foreach ($permissions as $permission) {
