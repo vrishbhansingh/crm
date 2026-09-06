@@ -80,6 +80,29 @@ class DomainSeparationTest extends TestCase
             ->assertOk();
     }
 
+    /**
+     * Regression test for a real lockout: "Enter as user" (impersonation)
+     * logs the impersonated tenant user in on the same admin-domain session
+     * cookie before redirecting to the CRM domain. If that cookie is ever
+     * used against the admin domain again without going through the proper
+     * "stop impersonating" flow, Auth::check() is true for a non-Super-Admin
+     * — gating the login route itself on isSuperAdmin() would 403 the one
+     * page that's supposed to let them log back in.
+     */
+    public function test_admin_domain_login_stays_reachable_for_a_poisoned_non_super_admin_session(): void
+    {
+        $tenant = Tenant::create(['name' => 'Poisoned Tenant', 'slug' => 'poisoned-'.Str::random(8), 'status' => 'Active']);
+        $tenantUser = $this->makeUser($tenant->id, 'Admin');
+
+        $this->actingAs($tenantUser)->withSession(['session_token' => $tenantUser->session_token])
+            ->get($this->adminUrl('/superadmin/login'))
+            ->assertOk();
+
+        $this->actingAs($tenantUser)->withSession(['session_token' => $tenantUser->session_token])
+            ->get($this->adminUrl('/superadmin/forgot-password'))
+            ->assertOk();
+    }
+
     private function crmUrl(string $path): string
     {
         return 'http://'.config('app.crm_domain').$path;

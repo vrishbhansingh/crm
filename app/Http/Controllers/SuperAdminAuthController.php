@@ -11,11 +11,20 @@ use App\Support\PermissionTeam;
 
 class SuperAdminAuthController extends Controller
 {
-    public function login()
+    public function login(Request $request)
     {
         PermissionTeam::set(null);
-        if (Auth::check() && Auth::user()->hasRole('Super Admin')) {
-            return redirect()->route('superadmin.dashboard');
+
+        if (Auth::check()) {
+            if (Auth::user()->hasRole('Super Admin')) {
+                return redirect()->route('superadmin.dashboard');
+            }
+
+            // A leftover impersonation session (see RestrictToAdminDomain) —
+            // clear it so it can't collide with the Super Admin login below.
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
         }
 
         return view('auth.superadmin-login');

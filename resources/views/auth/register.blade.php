@@ -5,6 +5,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Create company workspace</title>
+  <link rel="icon" type="image/svg+xml" href="{{ asset('images/favicon.svg') }}">
 
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
@@ -32,14 +33,14 @@
 
     .auth-wrapper {
       width: 100%;
-      max-width: 640px;
+      max-width: 600px;
       padding: 20px;
     }
 
     .auth-card {
       background: #ffffff;
       border-radius: 20px;
-      padding: 35px 40px;
+      padding: 40px 44px;
       box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08);
       animation: slideUp 0.6s ease;
     }
@@ -55,6 +56,12 @@
       display: block;
     }
 
+    .icon-badge {
+      width: 52px; height: 52px; border-radius: 14px; margin: 0 auto 18px;
+      background: rgba(37, 99, 235, 0.1); color: #2563eb;
+      display: flex; align-items: center; justify-content: center; font-size: 21px;
+    }
+
     .auth-title {
       text-align: center;
       font-size: 24px;
@@ -67,23 +74,35 @@
       text-align: center;
       font-size: 14px;
       color: #6b7280;
-      margin-bottom: 26px;
+      margin-bottom: 30px;
       line-height: 1.5;
     }
 
     .error-summary {
-      background: #fee2e2;
+      background: #fef2f2;
       color: #991b1b;
       padding: 12px 14px;
       border-radius: 10px;
-      margin-bottom: 18px;
+      margin-bottom: 20px;
       font-size: 13.5px;
+    }
+
+    .section-label {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 11.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+      color: #94a3b8; margin-bottom: 14px;
+    }
+
+    .section-label:not(:first-child) { margin-top: 26px; }
+
+    .section-label::after {
+      content: ""; flex: 1; height: 1px; background: #e5e7eb;
     }
 
     .form-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 16px;
+      gap: 18px;
     }
 
     .form-grid .full {
@@ -91,12 +110,12 @@
     }
 
     .form-group {
-      margin-bottom: 16px;
+      margin-bottom: 18px;
     }
 
     .form-label {
       display: block;
-      font-size: 13.5px;
+      font-size: 14px;
       font-weight: 600;
       color: #374151;
       margin-bottom: 6px;
@@ -104,11 +123,11 @@
 
     .form-control {
       width: 100%;
-      height: 46px;
+      height: 48px;
       border-radius: 12px;
       border: 1px solid #d1d5db;
       padding: 0 14px;
-      font-size: 14.5px;
+      font-size: 15px;
       transition: 0.25s;
     }
 
@@ -139,7 +158,8 @@
     .eye-btn {
       position: absolute;
       right: 12px;
-      top: 23px;
+      top: 50%;
+      transform: translateY(-50%);
       background: transparent;
       border: none;
       cursor: pointer;
@@ -160,7 +180,7 @@
       font-size: 16px;
       font-weight: 600;
       cursor: pointer;
-      margin-top: 6px;
+      margin-top: 8px;
       transition: 0.3s;
     }
 
@@ -168,6 +188,21 @@
       transform: translateY(-2px);
       box-shadow: 0 12px 25px rgba(37, 99, 235, 0.3);
     }
+
+    .signin-row {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 14px;
+      color: #6b7280;
+    }
+
+    .signin-row a {
+      color: #2563eb;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .signin-row a:hover { text-decoration: underline; }
 
     .footer-text {
       text-align: center;
@@ -190,6 +225,7 @@
     <div class="auth-card">
 
       <img src="{{ asset('images/logo.svg') }}" class="logo" alt="Logo" onerror="this.style.display='none'">
+      <div class="icon-badge"><i class="fa-solid fa-building"></i></div>
 
       <h2 class="auth-title">Create your company workspace</h2>
       <p class="auth-subtitle">Your company gets its own private database and an Admin account you can sign in with right away.</p>
@@ -200,6 +236,8 @@
 
       <form method="post" action="{{ route('register.store') }}">
         @csrf
+
+        <div class="section-label">Company details</div>
         <div class="form-grid">
           <div class="form-group full">
             <label class="form-label">Company name</label>
@@ -207,7 +245,10 @@
               class="form-control @error('organization_name') is-invalid @enderror" required autofocus>
             @error('organization_name') <div class="field-error">{{ $message }}</div> @enderror
           </div>
+        </div>
 
+        <div class="section-label">Your account</div>
+        <div class="form-grid">
           <div class="form-group">
             <label class="form-label">Your name</label>
             <input name="name" value="{{ old('name') }}"
@@ -247,13 +288,13 @@
             </div>
           </div>
 
-          <div class="form-group full">
+          <div class="form-group full" style="margin-bottom:0">
             <button type="submit" class="register-btn">Create workspace</button>
           </div>
         </div>
       </form>
 
-      <p style="text-align:center;margin-top:6px;font-size:14px">Already have a workspace? <a href="{{ url('/') }}" style="color:#2563eb;text-decoration:none">Sign in</a></p>
+      <p class="signin-row">Already have a workspace? <a href="{{ url('/') }}">Sign in</a></p>
 
       <div class="footer-text">
         &copy; {{ date('Y') }} {{ config('app.name', 'CRM') }}. All rights reserved.

@@ -43,6 +43,20 @@ class RestrictToAdminDomain
                 abort(404);
             }
 
+            // The login/forgot-password screens must stay reachable no
+            // matter who (if anyone) this admin-domain session currently
+            // belongs to. Impersonating a tenant user ("Enter as user")
+            // logs that user in on this same host-only cookie before
+            // redirecting to the CRM domain — if the browser ever comes
+            // back to the admin domain on that stale cookie without going
+            // through the proper "stop impersonating" flow, Auth::check()
+            // is true for a non-Super-Admin. Gating the login route itself
+            // on isSuperAdmin() would hard-lock that person out with no way
+            // back in short of manually clearing cookies.
+            if ($this->isGuestAuthRoute($request)) {
+                return $next($request);
+            }
+
             if (Auth::check() && ! $this->isSuperAdmin(Auth::user())) {
                 abort(403, 'Super Admin access only.');
             }
@@ -52,6 +66,18 @@ class RestrictToAdminDomain
 
         // Any other host (localhost during local dev, etc.) — unrestricted.
         return $next($request);
+    }
+
+    private function isGuestAuthRoute(Request $request): bool
+    {
+        return (bool) $request->route()?->named([
+            'superadmin.login',
+            'superadmin.login.submit',
+            'superadmin.password.request',
+            'superadmin.password.email',
+            'superadmin.password.reset',
+            'superadmin.password.update',
+        ]);
     }
 
     /**
