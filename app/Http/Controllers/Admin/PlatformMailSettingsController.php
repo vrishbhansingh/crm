@@ -6,16 +6,30 @@ use App\Http\Controllers\Controller;
 use App\Models\PlatformMailSetting;
 use App\Services\MailConfigurator;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Validator;
 
 class PlatformMailSettingsController extends Controller
 {
-    public function edit()
+    /**
+     * Overview: shows the one platform SMTP config as a row (Test/Edit/
+     * Delete) if it's set up, or an empty state pointing at the add form —
+     * kept separate from the form itself so "is something configured or
+     * not" is obvious at a glance instead of an inline form that looks the
+     * same whether it holds real values or not.
+     */
+    public function index()
     {
         $settings = PlatformMailSetting::current();
 
         return view('platform.mail', compact('settings'));
+    }
+
+    public function form()
+    {
+        $settings = PlatformMailSetting::current();
+
+        return view('platform.mail-form', compact('settings'));
     }
 
     public function update(Request $request)
@@ -47,23 +61,42 @@ class PlatformMailSettingsController extends Controller
 
         $settings->update($update);
 
-        return back()->with('success', 'Platform mail settings saved.');
+        return redirect()->route('superadmin.settings.mail.edit')->with('success', 'Platform mail settings saved.');
     }
 
-    public function test(Request $request, MailConfigurator $mailer)
+    public function destroy()
     {
-        $data = Validator::make($request->all(), ['test_email' => ['required', 'email']])->validate();
+        PlatformMailSetting::current()->update([
+            'smtp_host' => null,
+            'smtp_port' => null,
+            'smtp_encryption' => null,
+            'smtp_username' => null,
+            'smtp_password' => null,
+            'smtp_from_address' => null,
+            'smtp_from_name' => null,
+        ]);
 
+        return redirect()->route('superadmin.settings.mail.edit')->with('success', 'Platform mail settings removed.');
+    }
+
+    /**
+     * One-click test — sends to the Super Admin's own account email rather
+     * than asking for an address, since this is now a plain row action
+     * (Test/Edit/Delete) instead of its own little form.
+     */
+    public function test(MailConfigurator $mailer)
+    {
+        $to = Auth::guard('web')->user()->email;
         $mailer->configureFor(null);
 
         try {
-            Mail::raw('This is a test email from the CRM platform default mail settings. If you received this, SMTP is working correctly.', function ($message) use ($data) {
-                $message->to($data['test_email'])->subject('CRM platform: SMTP test email');
+            Mail::raw('This is a test email from the CRM platform default mail settings. If you received this, SMTP is working correctly.', function ($message) use ($to) {
+                $message->to($to)->subject('CRM platform: SMTP test email');
             });
         } catch (\Throwable $exception) {
-            return back()->withErrors(['test_email' => 'Could not send test email: '.$exception->getMessage()]);
+            return back()->withErrors(['test' => 'Could not send test email: '.$exception->getMessage()]);
         }
 
-        return back()->with('success', 'Test email sent to '.$data['test_email'].'.');
+        return back()->with('success', 'Test email sent to '.$to.'.');
     }
 }
