@@ -77,6 +77,43 @@ class TenantManagementTest extends TestCase
         $this->get('/dashboard')->assertRedirect('/superadmin');
     }
 
+    /**
+     * Regression test: PlatformUserController::update() used to guard this
+     * with abort_if(..., 422, 'message'), which on a normal (non-JSON) form
+     * POST rendered Laravel's generic error page instead of the app's usual
+     * inline flash-error banner — from the Super Admin's side this looked
+     * exactly like "the Save button doesn't work" rather than an
+     * explanation of why the change was refused.
+     */
+    public function test_disabling_the_tenant_admin_shows_a_friendly_error_instead_of_a_blank_500(): void
+    {
+        $slug = 'admin-guard-'.Str::lower(Str::random(8));
+        $this->post('/superadmin/companies', [
+            'name' => 'Admin Guard Co '.$slug,
+            'slug' => $slug,
+            'plan' => 'trial',
+            'timezone' => 'Asia/Kolkata',
+            'locale' => 'en',
+            'admin_name' => 'Guarded Admin',
+            'admin_email' => $slug.'@example.test',
+            'admin_password' => 'password123',
+        ])->assertRedirect()->assertSessionHas('success');
+
+        $tenant = Tenant::where('slug', $slug)->firstOrFail();
+        $admin = User::where('tenant_id', $tenant->id)->firstOrFail();
+
+        $this->put("/superadmin/companies/{$tenant->id}/users/{$admin->id}", [
+            'name' => $admin->name,
+            'email' => $admin->email,
+            'phone' => $admin->phone,
+            'status' => 'Inactive',
+        ])
+            ->assertRedirect()
+            ->assertSessionHasErrors('status');
+
+        $this->assertSame('Active', $admin->fresh()->status);
+    }
+
     public function test_deleting_a_tenant_requires_typing_its_exact_name(): void
     {
         $tenant = $this->tenant('guarded');

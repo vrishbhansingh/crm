@@ -68,7 +68,9 @@ class PlatformUserController extends Controller
             'password' => ['nullable', 'string', 'min:8', 'max:72'],
             'role' => [$isAdmin ? 'nullable' : 'required', Rule::in($roles)],
         ]);
-        abort_if($isAdmin && $data['status'] !== 'Active', 422, 'Transfer company administration before disabling this administrator.');
+        if ($isAdmin && $data['status'] !== 'Active') {
+            return back()->withErrors(['status' => 'Transfer company administration to someone else before disabling this administrator.']);
+        }
 
         $user->fill(collect($data)->only(['name', 'email', 'phone', 'status'])->all());
         if (! empty($data['password'])) {
