@@ -19,19 +19,31 @@ class ForgotPasswordController extends Controller
     {
         $request->validate(['email' => ['required', 'email']]);
 
+        $genericStatus = 'If an account exists for that email, a password reset link has been sent.';
+
         try {
-            Password::broker('users')->sendResetLink($request->only('email'));
+            $status = Password::broker('users')->sendResetLink($request->only('email'));
         } catch (\Throwable $exception) {
-            // A misconfigured SMTP server (tenant or platform) must not turn
-            // into a 500 for the person requesting a reset — log it for an
-            // admin to notice and fix in Mail Settings.
+            // Password::broker() only ever reaches the actual mail send
+            // (and so only ever throws) once it has already found a real
+            // matching user — an unknown email returns INVALID_USER below
+            // without attempting to send anything. So a thrown exception
+            // here always means a genuine SMTP/transport failure on a real
+            // account, not "this email doesn't exist" — safe to say so
+            // plainly instead of silently pretending it worked, which is
+            // what was happening before and is why reset emails could fail
+            // with no visible sign anything was wrong.
             report($exception);
+
+            return back()
+                ->withErrors(['email' => 'We could not send the reset email right now due to a mail server problem. Please try again shortly, or contact your administrator if this keeps happening.'])
+                ->onlyInput('email');
         }
 
-        // Always the same response regardless of whether the email exists
-        // or the send actually succeeded, so this endpoint can't be used to
-        // enumerate registered accounts.
-        return back()->with('status', 'If an account exists for that email, a password reset link has been sent.');
+        // Every other status (RESET_LINK_SENT, INVALID_USER, or a broker
+        // throttle) gets the exact same response, so this endpoint can't be
+        // used to enumerate registered accounts by comparing messages.
+        return back()->with('status', $genericStatus);
     }
 
     public function reset(Request $request, string $token)
