@@ -39,6 +39,39 @@ class RegistrationAutoApprovalTest extends TestCase
             ->assertJsonPath('status', true);
     }
 
+    /**
+     * Regression test for a production 500: registration completed (the
+     * tenant + admin were really created) but the request still crashed on
+     * a foreign key violation writing PlatformAuditLogger's audit row,
+     * because Auth::id() pointed at a browser session whose user no longer
+     * existed in the database. Simulated here by forging exactly that
+     * state — an authenticated "user" whose id was never actually
+     * persisted — rather than the real trigger, since what matters is that
+     * PlatformAuditLogger::record() (used by every audited action in the
+     * app, not just registration) can never take down the caller's already-
+     * committed work just because the audit row itself couldn't be written.
+     */
+    public function test_registration_succeeds_even_if_the_visitors_stale_session_points_at_a_deleted_user(): void
+    {
+        config(['tenancy.require_approval' => true]);
+        $phantom = new User(['name' => 'Ghost', 'email' => 'ghost@example.test']);
+        $phantom->id = 999999999;
+        $this->actingAs($phantom, 'web');
+
+        $email = Str::random(10).'@example.test';
+
+        $this->post('/register', [
+            'organization_name' => 'Survives Stale Auth Co',
+            'name' => 'New Owner',
+            'email' => $email,
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+        ])->assertRedirect(route('register.success'));
+
+        $this->assertDatabaseHas('tenants', ['contact_email' => $email]);
+        $this->assertDatabaseHas('users', ['email' => $email]);
+    }
+
     public function test_require_approval_flag_keeps_the_old_pending_flow(): void
     {
         config(['tenancy.require_approval' => true]);
