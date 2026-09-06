@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AuditLogController;
+use App\Http\Controllers\Admin\CalendarController;
 use App\Http\Controllers\admin\CompanyController;
 use App\Http\Controllers\Admin\ContactController;
 use App\Http\Controllers\Admin\CrmCompanyController;
@@ -49,9 +50,6 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('admin_middle')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard/data', [DashboardController::class, 'data'])->name('dashboard.data');
-    Route::get('/dashboard/attendance/team', [DashboardController::class, 'attendanceTeam'])->name('dashboard.attendance.team');
-    Route::get('/dashboard/attendance/status', [DashboardController::class, 'attendanceStatus'])->name('dashboard.attendance.status');
-    Route::post('/dashboard/attendance/check-in', [DashboardController::class, 'checkIn'])->name('dashboard.attendance.checkin');
 });
 
 Route::middleware(['admin_middle', 'permission:tasks.view'])->group(function () {
@@ -72,6 +70,11 @@ Route::middleware(['admin_middle', 'permission:tasks.edit'])->group(function () 
 
 Route::middleware(['admin_middle', 'permission:tasks.delete'])->group(function () {
     Route::delete('/tasks/{id}', [TaskController::class, 'destroy'])->name('tasks.destroy')->whereNumber('id');
+});
+
+Route::middleware(['admin_middle', 'permission:calendar.view'])->group(function () {
+    Route::get('/calendar', [CalendarController::class, 'index'])->name('calendar.index');
+    Route::get('/calendar/events', [CalendarController::class, 'events'])->name('calendar.events');
 });
 
 Route::middleware(['admin_middle', 'permission:audit.view'])->group(function () {
@@ -241,7 +244,10 @@ Route::middleware(['admin_middle', 'permission:company.edit'])->group(function (
 
 Route::middleware(['admin_middle', 'permission:company.manage-settings'])->group(function () {
     Route::get('/settings/mail', [MailSettingsController::class, 'edit'])->name('settings.mail.edit');
-    Route::put('/settings/mail', [MailSettingsController::class, 'update'])->name('settings.mail.update');
+    Route::post('/settings/mail', [MailSettingsController::class, 'store'])->name('settings.mail.store');
+    Route::put('/settings/mail/{mailSetting}', [MailSettingsController::class, 'update'])->name('settings.mail.update')->whereNumber('mailSetting');
+    Route::post('/settings/mail/{mailSetting}/activate', [MailSettingsController::class, 'activate'])->name('settings.mail.activate')->whereNumber('mailSetting');
+    Route::delete('/settings/mail/{mailSetting}', [MailSettingsController::class, 'destroy'])->name('settings.mail.destroy')->whereNumber('mailSetting');
     Route::post('/settings/mail/test', [MailSettingsController::class, 'test'])->name('settings.mail.test');
 });
 

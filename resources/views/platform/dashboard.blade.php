@@ -3,8 +3,19 @@
 @section('heading','Super Admin overview')
 @section('content')
 <div class="stat-grid mb-4">
-@foreach(['total'=>'Companies','active'=>'Active','pending'=>'Pending approval','expired'=>'Expired','expiring'=>'Expiring in 14 days','database_issues'=>'Database issues','users'=>'Tenant users'] as $key=>$label)
-<div class="card stat"><span class="text-muted">{{ $label }}</span><strong>{{ $stats[$key] }}</strong></div>
+@foreach([
+    'total'=>['Companies','fa-building','#4338ca'],
+    'active'=>['Active','fa-circle-check','#16a34a'],
+    'pending'=>['Pending approval','fa-hourglass-half','#d97706'],
+    'expired'=>['Expired','fa-calendar-xmark','#dc2626'],
+    'expiring'=>['Expiring in 14 days','fa-clock','#d97706'],
+    'database_issues'=>['Database issues','fa-database','#dc2626'],
+    'users'=>['Tenant users','fa-users','#0891b2'],
+] as $key=>[$label,$icon,$color])
+<div class="card stat">
+    <div style="width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:{{ $color }}1a;color:{{ $color }};font-size:14px;margin-bottom:2px"><i class="fa-solid {{ $icon }}"></i></div>
+    <span class="text-muted">{{ $label }}</span><strong>{{ $stats[$key] }}</strong>
+</div>
 @endforeach
 </div>
 @if($needsAttention->isNotEmpty())

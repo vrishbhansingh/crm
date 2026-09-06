@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\Tenant;
 use App\Models\PlatformAuditLog;
-use App\Models\UserAttendance;
 use App\Support\TenantContext;
 use App\Support\PermissionTeam;
 use Illuminate\Http\Request;
@@ -97,16 +96,6 @@ class AuthController extends Controller
         $user = Auth::guard('web')->user();
 
         if ($user) {
-            $open = UserAttendance::where('user_id', $user->id)
-                ->whereNull('check_out')
-                ->orderBy('id', 'desc')
-                ->first();
-
-            if ($open) {
-                $open->check_out = now();
-                $open->save();
-            }
-
             Auth::guard('web')->logout();
         }
 

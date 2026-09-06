@@ -15,15 +15,17 @@ class MailConfigurator
 {
     public function configureFor(?Tenant $tenant): void
     {
-        if ($tenant && $tenant->hasUsableSmtp()) {
+        $active = $tenant?->activeMailSetting();
+
+        if ($active && $active->isUsable()) {
             $this->apply(
-                host: $tenant->smtp_host,
-                port: $tenant->smtp_port,
-                encryption: $tenant->smtp_encryption,
-                username: $tenant->smtp_username,
-                password: $tenant->smtp_password,
-                fromAddress: $tenant->smtp_from_address ?: config('mail.from.address'),
-                fromName: $tenant->smtp_from_name ?: ($tenant->name ?: config('mail.from.name')),
+                host: $active->smtp_host,
+                port: $active->smtp_port,
+                encryption: $active->smtp_encryption,
+                username: $active->smtp_username,
+                password: $active->smtp_password,
+                fromAddress: $active->smtp_from_address ?: config('mail.from.address'),
+                fromName: $active->smtp_from_name ?: ($tenant->name ?: config('mail.from.name')),
             );
 
             return;

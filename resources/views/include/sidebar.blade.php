@@ -119,26 +119,6 @@
     .nav-sidebar-menu i { font-size: 15px; width: 18px; text-align: center; flex-shrink: 0; }
     .nav-sidebar-menu .nav-link span { overflow: hidden; text-overflow: ellipsis; }
 
-    .sidebar-footer { margin-top: 12px; padding-top: 8px; border-top: 1px solid rgba(255, 255, 255, 0.16); }
-
-    .logout-btn {
-        width: 100%;
-        border: none;
-        background: rgba(255, 255, 255, 0.1);
-        color: #ffffff;
-        padding: 10px 14px;
-        border-radius: 7px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        font-size: 13.5px;
-        cursor: pointer;
-        transition: background 0.15s ease;
-        white-space: nowrap;
-    }
-    .logout-btn:hover { background: rgba(220, 38, 38, 0.85); color: #ffffff; }
-    .logout-btn:hover i { color: #ffffff; }
-
     /* Collapsed (icon-only) state */
     .sidebar.collapsed { padding-left: 6px; padding-right: 6px; }
     .sidebar.collapsed .nav-section-label,
@@ -146,8 +126,6 @@
     .sidebar.collapsed .sidebar-search { display: none; }
     .sidebar.collapsed .nav-sidebar-menu .nav-link { justify-content: center; padding: 10px 8px; }
     .sidebar.collapsed .nav-sidebar-menu i { font-size: 16px; }
-    .sidebar.collapsed .logout-btn { justify-content: center; padding: 10px 8px; }
-    .sidebar.collapsed .logout-btn span { display: none; }
 
     /* In collapsed mode, wayfinding falls back to the native title-attribute
        tooltip (set on every .nav-link) rather than a custom CSS tooltip,
@@ -306,18 +284,27 @@
         </div>
         @endcan
 
-        @can('tasks.view')
-        <div class="nav-section {{ request()->routeIs('tasks.*') ? 'has-active' : '' }}">
+        @canany(['tasks.view', 'calendar.view'])
+        <div class="nav-section {{ request()->routeIs(['tasks.*','calendar.*']) ? 'has-active' : '' }}">
             <div class="nav-section-label">Activity</div>
             <ul class="nav nav-sidebar-menu">
+                @can('tasks.view')
                 <li class="mb-1" data-nav-label="Tasks &amp; Reminders">
                     <a class="nav-link {{ request()->routeIs('tasks.*') ? 'active' : '' }}" href="{{ route('tasks.index') }}" title="Tasks">
                         <i class="fa fa-check-square-o"></i><span>Tasks &amp; Reminders</span>
                     </a>
                 </li>
+                @endcan
+                @can('calendar.view')
+                <li class="mb-1" data-nav-label="Calendar">
+                    <a class="nav-link {{ request()->routeIs('calendar.*') ? 'active' : '' }}" href="{{ route('calendar.index') }}" title="Calendar">
+                        <i class="fa fa-calendar"></i><span>Calendar</span>
+                    </a>
+                </li>
+                @endcan
             </ul>
         </div>
-        @endcan
+        @endcanany
 
         @canany(['reports.view', 'audit.view'])
         <div class="nav-section {{ request()->routeIs(['reports.*','audit.*']) ? 'has-active' : '' }}">
@@ -384,23 +371,6 @@
         </div>
         @endcanany
 
-        <div class="sidebar-footer">
-            <ul class="nav nav-sidebar-menu">
-                <li class="mb-1" data-nav-label="My Profile">
-                    <a class="nav-link {{ request()->routeIs('profile.show') ? 'active' : '' }}" href="{{ route('profile.show') }}" title="My Profile">
-                        <i class="fa fa-user"></i><span>My Profile</span>
-                    </a>
-                </li>
-                <li class="mt-2">
-                    <form method="post" action="{{ route('admin.logout') }}">
-                        @csrf
-                        <button class="logout-btn" title="Logout">
-                            <i class="fa fa-sign-out"></i> <span>Logout</span>
-                        </button>
-                    </form>
-                </li>
-            </ul>
-        </div>
     </div>
 
     <div class="sidebar-no-results" id="sidebarNoResults">No matching pages.</div>
@@ -417,6 +387,7 @@
         // not, without a separate sync mechanism.
         function setSidebarWidth(collapsed) {
             document.documentElement.style.setProperty("--sidebar-w", collapsed ? "72px" : "244px");
+            document.documentElement.classList.toggle("sidebar-collapsed", collapsed);
         }
 
         // Apply the saved collapsed preference as early as possible to avoid a flash.

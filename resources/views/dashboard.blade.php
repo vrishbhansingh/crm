@@ -21,8 +21,6 @@
             --surface: #f8fafc;
         }
 
-        /* ---- Same modernization pass as Roles & Permissions: larger
-           type, roomier cards, more breathing room. ---- */
         .dash-wrap { font-size: 15px; }
 
         .dash-header {
@@ -63,8 +61,8 @@
             font-size: 17px; margin-bottom: 14px;
         }
 
-        .stat-card .value { font-size: 28px; font-weight: 700; color: var(--text-dark); line-height: 1.15; }
-        .stat-card .label { font-size: 13.5px; color: var(--text-muted); margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.02em; }
+        .stat-card .value { font-size: 26px; font-weight: 700; color: var(--text-dark); line-height: 1.15; }
+        .stat-card .label { font-size: 13px; color: var(--text-muted); margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.02em; }
 
         .icon-blue { background: #eff6ff; color: #2563eb; }
         .icon-orange { background: #fff7ed; color: #ea580c; }
@@ -72,6 +70,8 @@
         .icon-green { background: #ecfdf5; color: #16a34a; }
         .icon-purple { background: #f5f3ff; color: #7c3aed; }
         .icon-teal { background: #f0fdfa; color: #0d9488; }
+        .icon-pink { background: #fdf2f8; color: #db2777; }
+        .icon-indigo { background: #eef2ff; color: #4338ca; }
 
         .dash-card {
             background: #fff;
@@ -84,25 +84,33 @@
 
         .dash-card h5 { font-weight: 700; font-size: 15.5px; color: var(--text-dark); margin: 0 0 18px; display: flex; align-items: center; gap: 8px; }
         .dash-card h5 i { color: var(--primary); }
+        .dash-card h5 a { margin-left: auto; font-size: 12.5px; font-weight: 600; color: var(--primary); text-decoration: none; }
+        .dash-card h5 a:hover { text-decoration: underline; }
 
         .dash-table th { font-size: 12px; text-transform: uppercase; color: var(--text-muted); border-top: none; }
         .dash-table td { font-size: 14px; vertical-align: middle; }
 
-        /* Attendance donut rings — pure CSS conic-gradient, no chart lib */
-        .donut-row { display: flex; justify-content: space-around; flex-wrap: wrap; gap: 20px; }
-        .donut-item { text-align: center; }
-        .donut {
-            width: 92px; height: 92px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            position: relative; margin: 0 auto 10px;
-        }
-        .donut::before { content: ''; position: absolute; inset: 11px; background: #fff; border-radius: 50%; }
-        .donut span { position: relative; font-weight: 700; font-size: 17px; color: var(--text-dark); }
-        .donut-label { font-size: 13px; font-weight: 600; color: var(--text-dark); }
-        .donut-sub { font-size: 12px; color: var(--text-muted); }
+        .chart-box { position: relative; height: 260px; }
+        .chart-box canvas { max-height: 260px; }
 
-        .checkin-box { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
-        .checkin-status { font-size: 14px; color: var(--text-muted); }
+        .followup-list { list-style: none; margin: 0; padding: 0; }
+        .followup-item {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 12px; padding: 11px 0; border-bottom: 1px solid #f1f5f9;
+            text-decoration: none; color: inherit;
+        }
+        .followup-item:last-child { border-bottom: none; }
+        .followup-item:hover { background: #fafbff; }
+        .followup-main { display: flex; align-items: center; gap: 10px; min-width: 0; }
+        .followup-badge {
+            flex-shrink: 0; width: 30px; height: 30px; border-radius: 9px;
+            display: flex; align-items: center; justify-content: center; font-size: 12.5px;
+        }
+        .followup-title { font-size: 13.5px; font-weight: 600; color: var(--text-dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .followup-sub { font-size: 12px; color: var(--text-muted); }
+        .followup-when { font-size: 12px; font-weight: 600; white-space: nowrap; flex-shrink: 0; }
+        .followup-when.overdue { color: #dc2626; }
+        .followup-empty { text-align: center; color: var(--text-muted); padding: 24px 0; font-size: 13.5px; }
     </style>
 </head>
 
@@ -128,41 +136,38 @@
 
                 <div class="stat-grid" id="statGrid"></div>
 
+                <div class="row" id="chartsRow" style="display:none">
+                    <div class="col-lg-6">
+                        <div class="dash-card">
+                            <h5><i class="fa fa-line-chart"></i> Leads — last 14 days</h5>
+                            <div class="chart-box"><canvas id="leadsTrendChart"></canvas></div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3">
+                        <div class="dash-card">
+                            <h5><i class="fa fa-pie-chart"></i> Leads by Status</h5>
+                            <div class="chart-box"><canvas id="leadsStatusChart"></canvas></div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3">
+                        <div class="dash-card">
+                            <h5><i class="fa fa-bar-chart"></i> Deals by Stage</h5>
+                            <div class="chart-box"><canvas id="dealsStageChart"></canvas></div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="row">
-                    <div class="col-lg-8" id="teamAttendanceWrap" style="display:none;">
+                    <div class="col-lg-6">
                         <div class="dash-card">
-                            <h5><i class="fa fa-clock-o"></i> Today's Attendance</h5>
-                            <div class="table-responsive">
-                                <table class="table dash-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Name</th>
-                                            <th>Check In</th>
-                                            <th>Check Out</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="attendanceBody"></tbody>
-                                </table>
-                            </div>
+                            <h5><i class="fa fa-bell-o"></i> Upcoming Follow-ups &amp; Reminders @can('calendar.view')<a href="{{ route('calendar.index') }}">Open calendar</a>@endcan</h5>
+                            <ul class="followup-list" id="followUpList"></ul>
                         </div>
                     </div>
-
-                    <div class="col-lg-4" id="attendanceOverviewWrap" style="display:none;">
+                    <div class="col-lg-6" id="closingSoonWrap" style="display:none">
                         <div class="dash-card">
-                            <h5><i class="fa fa-pie-chart"></i> Attendance Overview</h5>
-                            <div class="donut-row" id="attendanceDonuts"></div>
-                        </div>
-                    </div>
-
-                    <div class="col-lg-4" id="checkInWrap" style="display:none;">
-                        <div class="dash-card">
-                            <h5><i class="fa fa-check-square-o"></i> My Attendance</h5>
-                            <div class="checkin-box">
-                                <span class="checkin-status" id="checkinStatus">Checking…</span>
-                                <button class="btn btn-primary btn-sm" id="checkInBtn">
-                                    <i class="fa fa-sign-in"></i> Check In
-                                </button>
-                            </div>
+                            <h5><i class="fa fa-flag-checkered"></i> Deals Closing Soon</h5>
+                            <ul class="followup-list" id="closingSoonList"></ul>
                         </div>
                     </div>
                 </div>
@@ -176,6 +181,7 @@
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="{{ asset('vendors/js/vendor.bundle.base.js') }}"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script src="{{ asset('vendors/chart.js/Chart.min.js') }}"></script>
 
     <script>
         $.ajaxSetup({
@@ -198,8 +204,12 @@
             { key: 'newLeadToday', label: 'New Today', icon: 'fa-star', color: 'icon-purple' },
             { key: 'hotLead', label: 'Hot Leads', icon: 'fa-fire', color: 'icon-red' },
             { key: 'tasksDueToday', label: 'Tasks Due Today', icon: 'fa-check-square-o', color: 'icon-teal' },
-            { key: 'webLead', label: 'Website Leads', icon: 'fa-globe', color: 'icon-green' },
-            { key: 'facebook', label: 'Facebook/LinkedIn', icon: 'fa-thumbs-up', color: 'icon-orange' },
+            { key: 'openDeals', label: 'Open Deals', icon: 'fa-handshake-o', color: 'icon-indigo' },
+            { key: 'pipelineValue', label: 'Pipeline Value', icon: 'fa-inr', color: 'icon-green', money: true },
+            { key: 'totalCompanies', label: 'Companies', icon: 'fa-building-o', color: 'icon-orange' },
+            { key: 'activeCampaigns', label: 'Active Campaigns', icon: 'fa-paper-plane-o', color: 'icon-pink' },
+            { key: 'totalTemplates', label: 'Email Templates', icon: 'fa-file-text-o', color: 'icon-blue' },
+            { key: 'totalUsers', label: 'Team Members', icon: 'fa-users', color: 'icon-teal' },
         ];
 
         const ownCards = [
@@ -218,6 +228,102 @@
             return '₹' + Number(value ?? 0).toLocaleString('en-IN');
         }
 
+        let charts = {};
+        function draw(id, config) {
+            if (charts[id]) charts[id].destroy();
+            const ctx = document.getElementById(id);
+            if (!ctx) return;
+            charts[id] = new Chart(ctx, config);
+        }
+
+        function renderCharts(data) {
+            $('#chartsRow').show();
+
+            draw('leadsTrendChart', {
+                type: 'line',
+                data: {
+                    labels: data.leadsTrend.labels,
+                    datasets: [{
+                        label: 'Leads created',
+                        data: data.leadsTrend.data,
+                        borderColor: '#2563eb',
+                        backgroundColor: 'rgba(37,99,235,0.08)',
+                        fill: true,
+                        tension: 0.35,
+                        pointRadius: 2,
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+            });
+
+            const statusColors = ['#2563eb', '#7c3aed', '#0d9488', '#ea580c', '#db2777', '#16a34a', '#dc2626', '#64748b'];
+            draw('leadsStatusChart', {
+                type: 'doughnut',
+                data: {
+                    labels: data.leadsByStatus.labels,
+                    datasets: [{ data: data.leadsByStatus.data, backgroundColor: statusColors }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } } } }
+            });
+
+            draw('dealsStageChart', {
+                type: 'bar',
+                data: {
+                    labels: data.dealsByStage.labels,
+                    datasets: [{ label: 'Deals', data: data.dealsByStage.data, backgroundColor: '#4338ca', borderRadius: 6 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+            });
+        }
+
+        const followTypeMeta = {
+            lead: { icon: 'fa-bullseye', color: 'icon-blue', label: 'Lead follow-up' },
+            deal: { icon: 'fa-handshake-o', color: 'icon-indigo', label: 'Deal reminder' },
+        };
+
+        function renderClosingSoon(deals) {
+            if (!deals || !deals.length) return;
+            $('#closingSoonWrap').show();
+            let html = '';
+            deals.forEach(d => {
+                html += `
+                    <a class="followup-item" href="${d.url}">
+                        <div class="followup-main">
+                            <div class="followup-badge icon-green"><i class="fa fa-inr"></i></div>
+                            <div>
+                                <div class="followup-title">${d.name}</div>
+                                <div class="followup-sub">${fmt(d.amount, true)}</div>
+                            </div>
+                        </div>
+                        <div class="followup-when ${d.overdue ? 'overdue' : ''}">${d.expected_close_date ?? ''}</div>
+                    </a>`;
+            });
+            $('#closingSoonList').html(html);
+        }
+
+        function renderFollowUps(items) {
+            if (!items || !items.length) {
+                $('#followUpList').html('<div class="followup-empty">Nothing due in the next few days.</div>');
+                return;
+            }
+            let html = '';
+            items.forEach(item => {
+                const meta = followTypeMeta[item.type] || followTypeMeta.lead;
+                html += `
+                    <a class="followup-item" href="${item.url}">
+                        <div class="followup-main">
+                            <div class="followup-badge ${meta.color}"><i class="fa ${meta.icon}"></i></div>
+                            <div>
+                                <div class="followup-title">${item.title}</div>
+                                <div class="followup-sub">${meta.label}</div>
+                            </div>
+                        </div>
+                        <div class="followup-when ${item.overdue ? 'overdue' : ''}">${item.when ?? ''}</div>
+                    </a>`;
+            });
+            $('#followUpList').html(html);
+        }
+
         function loadDashboardData() {
             $.get("{{ route('dashboard.data') }}", function(response) {
                 const cards = response.scope === 'team' ? teamCards : ownCards;
@@ -232,60 +338,14 @@
                 });
                 $('#statGrid').html(html);
 
-                if (response.scope === 'team') {
-                    $('#teamAttendanceWrap, #attendanceOverviewWrap').show();
-                    loadTeamAttendance();
-                } else {
-                    $('#checkInWrap').show();
-                    loadCheckInStatus();
+                renderFollowUps(response.followUps);
+
+                if (response.scope === 'team' && response.charts) {
+                    renderCharts(response.charts);
+                    renderClosingSoon(response.closingSoon);
                 }
             });
         }
-
-        function donut(pct, color, value, label, sub) {
-            return `
-                <div class="donut-item">
-                    <div class="donut" style="background:conic-gradient(${color} ${pct}%, #e5e7eb 0)"><span>${value}</span></div>
-                    <div class="donut-label">${label}</div>
-                    <div class="donut-sub">${sub}</div>
-                </div>`;
-        }
-
-        function loadTeamAttendance() {
-            $.get("{{ route('dashboard.attendance.team') }}", function(response) {
-                let rows = '';
-                response.data.forEach(r => {
-                    rows += `<tr><td>${r.name}</td><td>${r.check_in ?? '-'}</td><td>${r.check_out ?? '<span class="text-success">Still in</span>'}</td></tr>`;
-                });
-                $('#attendanceBody').html(rows || '<tr><td colspan="3" class="text-muted">No attendance marked yet today.</td></tr>');
-
-                const s = response.summary;
-                const total = s.total || 1;
-                let html = '';
-                html += donut(Math.round(s.present / total * 100), '#16a34a', s.present, 'Present', 'checked in');
-                html += donut(Math.round(s.checked_out / total * 100), '#2563eb', s.checked_out, 'Checked out', 'done for today');
-                html += donut(Math.round(s.not_marked / total * 100), '#e11d48', s.not_marked, 'Not marked', 'no record yet');
-                $('#attendanceDonuts').html(html);
-            });
-        }
-
-        function loadCheckInStatus() {
-            $.get("{{ route('dashboard.attendance.status') }}", function(response) {
-                if (response.attendanceMarked) {
-                    $('#checkinStatus').text('Checked in today');
-                    $('#checkInBtn').prop('disabled', true).text('Checked In');
-                } else {
-                    $('#checkinStatus').text('Not checked in yet');
-                }
-            });
-        }
-
-        $(document).on('click', '#checkInBtn', function() {
-            $.post("{{ route('dashboard.attendance.checkin') }}", {}, function(response) {
-                toastr.success(response.message);
-                loadCheckInStatus();
-            });
-        });
 
         $(document).ready(function() {
             loadDashboardData();

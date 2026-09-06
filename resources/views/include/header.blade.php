@@ -47,21 +47,20 @@
   @media (max-width: 991px) { .crm-breadcrumb { display: none; } }
 
   .crm-brand-wrapper {
-    /* Stays the sidebar's expanded width even when the sidebar itself
-       collapses to icon-only — the full wordmark logo doesn't fit in 72px,
-       and a mismatched-but-still-blue header reads far better than either
-       an overflowing logo or shrinking it illegibly. Since this width never
-       changes with collapse state, it's also the toggle button's anchor —
-       the button previously lived on the sidebar itself and visibly jumped
-       left/right as --sidebar-w animated between 244px and 72px; anchored
-       here it stays in exactly one place. */
-    width: max(var(--sidebar-w, 244px), 244px);
+    /* Tracks the sidebar's own width exactly, so the blue brand column and
+       the icon rail beneath it shrink together instead of the column
+       staying wide while the rail below it goes narrow. The full wordmark
+       doesn't fit in the collapsed 72px, so .crm-brand-chip crops down to
+       just the logo's icon mark instead (see below) rather than either
+       overflowing or squishing the whole lockup illegibly. */
+    width: var(--sidebar-w, 244px);
     height: 64px;
     position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
     background: linear-gradient(180deg, #0c7bfe, #01bdff);
+    transition: width 0.2s ease;
   }
 
   .sidebar-collapse-btn {
@@ -94,11 +93,26 @@
     display: inline-flex;
     align-items: center;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: width 0.2s ease, padding 0.2s ease;
   }
   .crm-brand-wrapper img {
     display: block;
     height: 22px;
     width: auto;
+    flex-shrink: 0;
+    transition: margin-left 0.2s ease;
+  }
+
+  /* Collapsed: the full "icon + CRMS" lockup doesn't fit in 72px, so the
+     chip clips down to a window sized to the logo's leading icon mark
+     (measured from the source image's actual opaque pixels — it starts
+     right at the image's left edge and runs about half the full width,
+     with "CRMS" beginning well clear of this window) instead of squishing
+     the whole wordmark or cutting the icon off mid-shape. */
+  html.sidebar-collapsed .crm-brand-chip {
+    width: 64px;
+    padding: 5px 4px;
   }
 
   /* Global content-area padding — overrides the vendor template's

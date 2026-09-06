@@ -58,7 +58,25 @@ class Tenant extends Model
 
     public function hasUsableSmtp(): bool
     {
-        return $this->smtp_enabled && filled($this->smtp_host) && filled($this->smtp_port);
+        return $this->activeMailSetting()?->isUsable() ?? false;
+    }
+
+    public function mailSettings()
+    {
+        return $this->hasMany(TenantMailSetting::class);
+    }
+
+    /**
+     * The one SMTP config currently in use for this tenant, or null if it
+     * never configured one (or removed its active config without picking a
+     * replacement) — MailConfigurator falls back to the platform default
+     * in that case.
+     */
+    public function activeMailSetting(): ?TenantMailSetting
+    {
+        return $this->relationLoaded('mailSettings')
+            ? $this->mailSettings->firstWhere('is_active', true)
+            : $this->mailSettings()->where('is_active', true)->first();
     }
 
     public function users()

@@ -20,7 +20,13 @@
 <td>{{ $log->actor?->email ?: 'System/signup' }}</td>
 <td>{{ $log->targetUser?->email ?: '—' }}</td>
 <td>{{ $log->ip_address ?: '—' }}</td>
-<td><small class="text-muted">{{ $log->metadata ? json_encode($log->metadata) : '—' }}</small></td>
+<td style="max-width:260px;white-space:normal;word-break:break-word">
+    @if($log->metadata)
+        <small class="text-muted" title="{{ json_encode($log->metadata) }}">{{ \Illuminate\Support\Str::limit(json_encode($log->metadata), 80) }}</small>
+    @else
+        <small class="text-muted">—</small>
+    @endif
+</td>
 </tr>
 @empty
 <tr><td colspan="7">No audit events match these filters.</td></tr>

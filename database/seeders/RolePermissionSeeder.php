@@ -15,8 +15,8 @@ class RolePermissionSeeder extends Seeder
 
     private array $modules = [
         'leads', 'orders', 'companies', 'contacts', 'tasks', 'reports', 'audit',
-        'users', 'roles', 'company', 'attendance', 'masters', 'deals',
-        'templates', 'campaigns',
+        'users', 'roles', 'company', 'masters', 'deals',
+        'templates', 'campaigns', 'calendar',
     ];
 
     private array $actions = [
