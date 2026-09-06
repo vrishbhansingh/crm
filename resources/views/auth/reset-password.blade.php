@@ -46,7 +46,10 @@
       <p class="auth-subtitle">Choose a new password for your account</p>
 
       @if($errors->any())
-        <div class="error-banner">{{ $errors->first() }}</div>
+        <div class="error-banner">
+          {{ $errors->first() }}
+          <a href="{{ route('password.request') }}" style="display:inline-block;margin-top:8px;color:#991b1b;font-weight:700;text-decoration:underline">Request a new reset link &rarr;</a>
+        </div>
       @endif
 
       <form method="POST" action="{{ route('password.update') }}">

@@ -311,7 +311,7 @@
       </form>
 
       <div class="auth-links">
-        <a href="{{ route('password.request') }}">Forgot password?</a>
+        <a href="{{ route('superadmin.password.request') }}">Forgot password?</a>
       </div>
     </div>
   </div>

@@ -4,8 +4,7 @@
 @section('content')
 
 <style>
-    .mail-intro { color: #64748b; font-size: 13.5px; max-width: 780px; margin-bottom: 20px; }
-    .setup-card { max-width: 900px; }
+    .mail-intro { color: #64748b; font-size: 13.5px; max-width: 900px; margin-bottom: 20px; }
 
     .smtp-row {
         display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap;
@@ -23,8 +22,10 @@
     .empty-state { text-align: center; padding: 34px 20px; color: #64748b; }
     .empty-state i { font-size: 30px; color: #cbd5e1; margin-bottom: 12px; display: block; }
 
-    .guide-card { max-width: 900px; }
-    .guide-steps { list-style: none; margin: 0; padding: 0; counter-reset: guide-step; }
+    /* The card itself spans the full content width (no more big empty gap
+       on wide screens), but the step text stays capped for readability —
+       a paragraph stretched across 1600px is hard to read either way. */
+    .guide-steps { list-style: none; margin: 0; padding: 0; max-width: 820px; counter-reset: guide-step; }
     .guide-steps > li {
         counter-increment: guide-step;
         position: relative; padding: 0 0 18px 40px; margin-bottom: 18px;

@@ -70,7 +70,17 @@ class ForgotPasswordController extends Controller
         });
 
         if ($status !== Password::PASSWORD_RESET) {
-            return back()->withErrors(['email' => __($status)])->onlyInput('email');
+            // Laravel's stock "This password reset token is invalid." reads
+            // like something broke, when the far more common cause is
+            // mundane: the tokens table keeps exactly one row per email, so
+            // requesting a second reset email silently invalidates the
+            // first — someone who re-submitted "forgot password" and then
+            // opened an older email lands here confused. Say so plainly.
+            $message = $status === Password::INVALID_TOKEN
+                ? "This reset link is invalid or has expired. If you requested more than one reset email, only the link in the most recent one still works — check your inbox for a newer email, or request a new link below."
+                : __($status);
+
+            return back()->withErrors(['email' => $message])->onlyInput('email');
         }
 
         return redirect()->route('user.login')->with('success', 'Your password has been reset. You can now log in.');

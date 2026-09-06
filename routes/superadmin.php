@@ -5,12 +5,20 @@ use App\Http\Controllers\Admin\PlatformDashboardController;
 use App\Http\Controllers\Admin\PlatformMailSettingsController;
 use App\Http\Controllers\Admin\PlatformUserController;
 use App\Http\Controllers\Admin\TenantController;
+use App\Http\Controllers\Auth\SuperAdminForgotPasswordController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\SuperAdminAuthController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/login', [SuperAdminAuthController::class, 'login'])->name('login');
 Route::post('/login', [SuperAdminAuthController::class, 'authenticate'])->middleware('throttle:5,1')->name('login.submit');
+
+Route::middleware('throttle:5,1')->group(function () {
+    Route::get('/forgot-password', [SuperAdminForgotPasswordController::class, 'show'])->name('password.request');
+    Route::post('/forgot-password', [SuperAdminForgotPasswordController::class, 'send'])->name('password.email');
+    Route::get('/reset-password/{token}', [SuperAdminForgotPasswordController::class, 'reset'])->name('password.reset');
+    Route::post('/reset-password', [SuperAdminForgotPasswordController::class, 'update'])->name('password.update');
+});
 
 Route::middleware(['admin_middle', 'role:Super Admin'])->group(function () {
     Route::get('/', [PlatformDashboardController::class, 'index'])->name('dashboard');
