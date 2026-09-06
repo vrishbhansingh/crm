@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\PlatformAuditLogController;
 use App\Http\Controllers\Admin\PlatformDashboardController;
 use App\Http\Controllers\Admin\PlatformMailSettingsController;
 use App\Http\Controllers\Admin\PlatformUserController;
+use App\Http\Controllers\Admin\TenantBackupController;
 use App\Http\Controllers\Admin\TenantController;
 use App\Http\Controllers\Auth\SuperAdminForgotPasswordController;
 use App\Http\Controllers\SuperAdminAuthController;
@@ -39,5 +40,8 @@ Route::middleware(['admin_middle', 'role:Super Admin'])->group(function () {
     Route::post('/companies/{tenant}/users', [PlatformUserController::class, 'store'])->name('users.store')->whereNumber('tenant');
     Route::put('/companies/{tenant}/users/{user}', [PlatformUserController::class, 'update'])->name('users.update')->whereNumber(['tenant', 'user']);
     Route::post('/companies/{tenant}/transfer-admin', [PlatformUserController::class, 'transferAdmin'])->name('users.transfer_admin')->whereNumber('tenant');
+    Route::get('/backups', [TenantBackupController::class, 'index'])->name('backups.index');
+    Route::get('/backups/{filename}/download', [TenantBackupController::class, 'download'])->name('backups.download');
+    Route::delete('/backups/{filename}', [TenantBackupController::class, 'destroy'])->name('backups.destroy');
     Route::post('/logout', [SuperAdminAuthController::class, 'logout'])->name('logout');
 });

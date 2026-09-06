@@ -280,6 +280,7 @@
         </div>
         <a href="{{ route('superadmin.dashboard') }}" class="{{ request()->routeIs('superadmin.dashboard') ? 'active' : '' }}"><i class="fa-solid fa-gauge-high"></i> Overview</a>
         <a href="{{ route('superadmin.tenants.index') }}" class="{{ request()->routeIs('superadmin.tenants.*','superadmin.users.*') ? 'active' : '' }}"><i class="fa-solid fa-building"></i> Companies & Signups</a>
+        <a href="{{ route('superadmin.backups.index') }}" class="{{ request()->routeIs('superadmin.backups.*') ? 'active' : '' }}"><i class="fa-solid fa-database"></i> Backups</a>
         <a href="{{ route('superadmin.audit.index') }}" class="{{ request()->routeIs('superadmin.audit.*') ? 'active' : '' }}"><i class="fa-solid fa-clock-rotate-left"></i> Audit Log</a>
         <a href="{{ route('superadmin.settings.mail.edit') }}" class="{{ request()->routeIs('superadmin.settings.mail.*') ? 'active' : '' }}"><i class="fa-solid fa-envelope"></i> Mail Settings</a>
     </aside>

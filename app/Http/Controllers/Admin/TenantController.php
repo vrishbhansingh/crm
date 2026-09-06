@@ -174,7 +174,7 @@ class TenantController extends Controller
             $tenant->delete();
         });
 
-        return back()->with('success', '"'.$tenant->name.'" and its '.$userCount.' user account(s) were permanently deleted.'.($backupPath ? ' A backup was saved on the server first.' : ''));
+        return back()->with('success', '"'.$tenant->name.'" and its '.$userCount.' user account(s) were permanently deleted.'.($backupPath ? ' A backup was saved first — find it under Backups in the sidebar.' : ''));
     }
 
     public function approve(Tenant $tenant, TenantDatabaseProvisioner $provisioner, PlatformAuditLogger $audit)
