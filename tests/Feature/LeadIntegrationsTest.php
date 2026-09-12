@@ -67,15 +67,98 @@ class LeadIntegrationsTest extends TestCase
         ]);
     }
 
-    public function test_cannot_connect_the_same_platform_twice(): void
+    public function test_multiple_webhooks_of_the_same_platform_are_allowed(): void
     {
-        LeadIntegration::create([
-            'tenant_id' => $this->tenant->id, 'platform' => 'website', 'name' => 'Existing',
-            'token' => LeadIntegration::generateToken(),
+        $this->postJson('/integrations', ['platform' => 'website', 'name' => 'Main site form'])->assertOk();
+        $this->postJson('/integrations', ['platform' => 'website', 'name' => 'Landing page form'])->assertOk();
+
+        $this->assertSame(2, LeadIntegration::where('tenant_id', $this->tenant->id)->where('platform', 'website')->count());
+    }
+
+    public function test_default_lead_type_status_priority_and_assignee_are_applied(): void
+    {
+        $agent = User::create([
+            'tenant_id' => $this->tenant->id, 'name' => 'Dedicated Agent',
+            'email' => Str::lower(Str::random(10)).'@example.test',
+            'password' => Hash::make('password'), 'status' => 'Active', 'session_token' => Str::random(60),
         ]);
 
-        $this->postJson('/integrations', ['platform' => 'website', 'name' => 'Duplicate'])
-            ->assertStatus(422);
+        $integration = LeadIntegration::create([
+            'tenant_id' => $this->tenant->id, 'platform' => 'website', 'name' => 'Priority form',
+            'token' => LeadIntegration::generateToken(),
+            'default_lead_type' => 'hot', 'default_lead_status' => 'contacted', 'default_priority' => 'high',
+            'default_assigned_to' => $agent->id,
+        ]);
+
+        $this->postJson('/webhooks/leads/'.$integration->token, ['name' => 'Anita', 'phone' => '9000000001'])
+            ->assertJsonPath('status', 'created');
+
+        $lead = Lead::where('tenant_id', $this->tenant->id)->where('phone', '9000000001')->first();
+        $this->assertSame('hot', $lead->lead_type);
+        $this->assertSame('contacted', $lead->lead_status);
+        $this->assertSame('high', $lead->priority);
+        $this->assertSame($agent->id, $lead->assigned_to);
+    }
+
+    public function test_custom_field_mapping_overrides_the_built_in_heuristic(): void
+    {
+        $integration = LeadIntegration::create([
+            'tenant_id' => $this->tenant->id, 'platform' => 'website', 'name' => 'Odd field names',
+            'token' => LeadIntegration::generateToken(),
+            'field_mapping' => ['phone' => 'phn', 'name' => 'full'],
+        ]);
+
+        $this->postJson('/webhooks/leads/'.$integration->token, [
+            'full' => 'Mapped Name',
+            'phn' => '9000000002',
+        ])->assertJsonPath('status', 'created');
+
+        $lead = Lead::where('tenant_id', $this->tenant->id)->where('phone', '9000000002')->first();
+        $this->assertNotNull($lead);
+        $this->assertSame('Mapped Name', $lead->name);
+    }
+
+    public function test_a_pipeline_on_the_integration_auto_creates_a_deal_in_the_first_open_stage(): void
+    {
+        $pipeline = \App\Models\Pipeline::create(['tenant_id' => $this->tenant->id, 'name' => 'Webhook Funnel', 'is_active' => true, 'sort_order' => 0]);
+        \App\Models\PipelineStage::create(['tenant_id' => $this->tenant->id, 'pipeline_id' => $pipeline->id, 'name' => 'New', 'sort_order' => 0]);
+        \App\Models\PipelineStage::create(['tenant_id' => $this->tenant->id, 'pipeline_id' => $pipeline->id, 'name' => 'Won', 'sort_order' => 1, 'is_won' => true]);
+
+        $integration = LeadIntegration::create([
+            'tenant_id' => $this->tenant->id, 'platform' => 'website', 'name' => 'Funnel form',
+            'token' => LeadIntegration::generateToken(), 'pipeline_id' => $pipeline->id,
+        ]);
+
+        $response = $this->postJson('/webhooks/leads/'.$integration->token, ['name' => 'Funnel Lead', 'phone' => '9000000003']);
+        $response->assertJsonPath('status', 'created');
+        $dealId = $response->json('deal_id');
+        $this->assertNotNull($dealId);
+
+        $lead = Lead::where('tenant_id', $this->tenant->id)->where('phone', '9000000003')->first();
+        $this->assertSame('Yes', $lead->is_converted);
+
+        $deal = \App\Models\Deal::find($dealId);
+        $this->assertSame($pipeline->id, $deal->pipeline_id);
+        $this->assertSame($lead->id, $deal->lead_id);
+    }
+
+    public function test_tenant_admin_can_edit_a_webhooks_settings(): void
+    {
+        $integration = LeadIntegration::create([
+            'tenant_id' => $this->tenant->id, 'platform' => 'website', 'name' => 'Editable form',
+            'token' => LeadIntegration::generateToken(),
+        ]);
+        $originalToken = $integration->token;
+
+        $this->putJson('/integrations/'.$integration->id, [
+            'name' => 'Renamed form',
+            'default_priority' => 'low',
+        ])->assertOk();
+
+        $integration->refresh();
+        $this->assertSame('Renamed form', $integration->name);
+        $this->assertSame('low', $integration->default_priority);
+        $this->assertSame($originalToken, $integration->token, 'Editing settings must not change the webhook URL.');
     }
 
     public function test_webhook_creates_a_lead_from_a_generic_payload(): void

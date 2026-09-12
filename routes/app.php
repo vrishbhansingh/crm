@@ -90,6 +90,7 @@ Route::middleware(['admin_middle', 'permission:reports.view'])->group(function (
 
 Route::middleware(['admin_middle', 'permission:integrations.view'])->group(function () {
     Route::get('/integrations', [LeadIntegrationController::class, 'index'])->name('integrations.index');
+    Route::get('/integrations/{integration}', [LeadIntegrationController::class, 'show'])->name('integrations.show')->whereNumber('integration');
     Route::get('/integrations/{integration}/logs', [LeadIntegrationController::class, 'logs'])->name('integrations.logs')->whereNumber('integration');
 });
 Route::middleware(['admin_middle', 'permission:integrations.create'])->group(function () {

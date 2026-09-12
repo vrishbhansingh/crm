@@ -21,12 +21,15 @@ class LeadIntegration extends Model
     protected $fillable = [
         'tenant_id', 'platform', 'name', 'token', 'secret', 'verify_token',
         'is_active', 'leads_created_count', 'last_received_at', 'created_by',
+        'default_lead_type', 'default_lead_status', 'default_priority',
+        'default_assigned_to', 'pipeline_id', 'field_mapping',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
         'last_received_at' => 'datetime',
         'secret' => 'encrypted',
+        'field_mapping' => 'array',
     ];
 
     protected $hidden = ['secret', 'verify_token'];
@@ -48,6 +51,11 @@ class LeadIntegration extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function defaultAssignee(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'default_assigned_to');
     }
 
     public function logs(): HasMany

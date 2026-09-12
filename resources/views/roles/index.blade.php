@@ -146,7 +146,6 @@
 
         .perm-toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
         .perm-toolbar .perm-search { font-size: 13px; height: 32px; padding: 4px 10px; flex: 1; }
-        .perm-toolbar .btn-link { font-size: 12.5px; white-space: nowrap; padding: 4px 2px; }
 
         .perm-summary { display: flex; align-items: center; gap: 16px; font-size: 12.5px; color: var(--text-muted); margin-bottom: 10px; }
         .perm-summary strong { color: var(--text-dark); }
@@ -318,7 +317,6 @@
                     <div class="modal-body">
                         <div class="perm-toolbar">
                             <input type="text" class="form-control perm-search" data-scope="manageAccessModal" placeholder="Search permissions…">
-                            <button type="button" class="btn btn-link select-all-visible-btn" data-scope="manageAccessModal">Select all visible</button>
                         </div>
                         <div class="perm-summary">
                             <label class="perm-select-all-toggle">
@@ -486,12 +484,6 @@
                 const anyVisible = $(this).find('.perm-item:not(.perm-hidden)').length > 0;
                 $(this).toggleClass('perm-hidden', !anyVisible);
             });
-        });
-
-        $(document).on('click', '.select-all-visible-btn', function() {
-            const scope = $(this).data('scope');
-            const $modal = $('#' + scope);
-            $modal.find('.perm-item:not(.perm-hidden) .perm-checkbox').prop('checked', true).trigger('change');
         });
 
         // ---- Create Role ---- (name + description only; permissions are

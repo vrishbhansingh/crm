@@ -30,14 +30,47 @@ class LeadPayloadNormalizer
 
     private const ID_ALIASES = ['id', 'submission_id', 'unique_id', 'event_id', 'message_id', 'lead_id', 'leadgen_id'];
 
-    public function normalize(string $platform, array $data): array
+    /**
+     * $fieldMapping is a tenant-configured override — e.g. {"phone":"phn"}
+     * when a website form's field for phone number happens to be named
+     * "phn" instead of anything the built-in alias list or a platform's
+     * fixed format would recognize. Always wins over the automatic guess,
+     * for any platform, since a human who bothered to set it up knows their
+     * own form better than a heuristic ever could.
+     */
+    public function normalize(string $platform, array $data, array $fieldMapping = []): array
     {
-        return match ($platform) {
+        $result = match ($platform) {
             'indiamart' => $this->fromIndiaMart($data),
             'whatsapp' => $this->fromWhatsApp($data),
             'facebook' => $this->fromFacebook($data),
             default => $this->fromGeneric($data),
         };
+
+        return empty($fieldMapping) ? $result : $this->applyMapping($result, $data, $fieldMapping);
+    }
+
+    private function applyMapping(array $result, array $data, array $fieldMapping): array
+    {
+        $lower = [];
+        foreach ($data as $key => $value) {
+            if (is_scalar($value)) {
+                $lower[strtolower((string) $key)] = $value;
+            }
+        }
+
+        foreach ($fieldMapping as $crmField => $incomingKey) {
+            if (! is_string($incomingKey) || $incomingKey === '') {
+                continue;
+            }
+
+            $value = $lower[strtolower($incomingKey)] ?? null;
+            if ($value !== null && $value !== '') {
+                $result[$crmField] = $value;
+            }
+        }
+
+        return $result;
     }
 
     private function fromIndiaMart(array $data): array
