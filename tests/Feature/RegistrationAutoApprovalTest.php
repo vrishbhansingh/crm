@@ -34,6 +34,9 @@ class RegistrationAutoApprovalTest extends TestCase
         $this->assertSame('Active', $admin->status);
         $this->assertTrue($tenant->isAccessible());
 
+        \App\Support\PermissionTeam::set($tenant->id);
+        $this->assertTrue(\Spatie\Permission\Models\Role::where('tenant_id', $tenant->id)->where('name', 'Agent')->exists());
+
         $this->postJson('/login', ['email' => $email, 'password' => 'password123'])
             ->assertOk()
             ->assertJsonPath('status', true);

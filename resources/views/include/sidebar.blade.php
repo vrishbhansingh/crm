@@ -235,8 +235,8 @@
         </div>
         @endcanany
 
-        @canany(['leads.view', 'deals.view', 'companies.view', 'contacts.view'])
-        <div class="nav-section {{ request()->routeIs(['leads.*','deals.*','companies.*','contacts.*']) ? 'has-active' : '' }}">
+        @canany(['leads.view', 'deals.view', 'companies.view', 'contacts.view', 'integrations.view'])
+        <div class="nav-section {{ request()->routeIs(['leads.*','deals.*','companies.*','contacts.*','integrations.*']) ? 'has-active' : '' }}">
             <div class="nav-section-label">Sales</div>
             <ul class="nav nav-sidebar-menu">
                 @can('leads.view')
@@ -264,6 +264,13 @@
                 <li class="mb-1" data-nav-label="Contacts">
                     <a class="nav-link {{ request()->routeIs('contacts.*') ? 'active' : '' }}" href="{{ route('contacts.index') }}" title="Contacts">
                         <i class="fa fa-address-book"></i><span>Contacts</span>
+                    </a>
+                </li>
+                @endcan
+                @can('integrations.view')
+                <li class="mb-1" data-nav-label="Lead Integrations">
+                    <a class="nav-link {{ request()->routeIs('integrations.*') ? 'active' : '' }}" href="{{ route('integrations.index') }}" title="Lead Integrations">
+                        <i class="fa fa-plug"></i><span>Lead Integrations</span>
                     </a>
                 </li>
                 @endcan

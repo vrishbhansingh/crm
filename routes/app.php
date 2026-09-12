@@ -25,6 +25,7 @@ use App\Http\Controllers\ApiTokenController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LeadController;
+use App\Http\Controllers\LeadIntegrationController;
 use App\Http\Controllers\MasterValueLookupController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\SecurityController;
@@ -85,6 +86,21 @@ Route::middleware(['admin_middle', 'permission:audit.view'])->group(function () 
 Route::middleware(['admin_middle', 'permission:reports.view'])->group(function () {
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
     Route::get('/reports/data', [ReportController::class, 'data'])->name('reports.data');
+});
+
+Route::middleware(['admin_middle', 'permission:integrations.view'])->group(function () {
+    Route::get('/integrations', [LeadIntegrationController::class, 'index'])->name('integrations.index');
+    Route::get('/integrations/{integration}/logs', [LeadIntegrationController::class, 'logs'])->name('integrations.logs')->whereNumber('integration');
+});
+Route::middleware(['admin_middle', 'permission:integrations.create'])->group(function () {
+    Route::post('/integrations', [LeadIntegrationController::class, 'store'])->name('integrations.store');
+});
+Route::middleware(['admin_middle', 'permission:integrations.edit'])->group(function () {
+    Route::put('/integrations/{integration}', [LeadIntegrationController::class, 'update'])->name('integrations.update')->whereNumber('integration');
+    Route::post('/integrations/{integration}/regenerate', [LeadIntegrationController::class, 'regenerate'])->name('integrations.regenerate')->whereNumber('integration');
+});
+Route::middleware(['admin_middle', 'permission:integrations.delete'])->group(function () {
+    Route::delete('/integrations/{integration}', [LeadIntegrationController::class, 'destroy'])->name('integrations.destroy')->whereNumber('integration');
 });
 
 /*

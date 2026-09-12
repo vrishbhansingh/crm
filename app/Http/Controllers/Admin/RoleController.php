@@ -43,6 +43,7 @@ class RoleController extends Controller
         'audit' => ['view'],
         'roles' => ['view', 'create', 'edit', 'delete'],
         'calendar' => ['view'],
+        'integrations' => ['view', 'create', 'edit', 'delete'],
         // 'users.impersonate' is deliberately excluded from every module
         // list here — it's real and route-enforced, but sensitive enough
         // that it isn't offered as a delegable checkbox at all; only the
@@ -80,6 +81,7 @@ class RoleController extends Controller
         'audit' => 'Audit Log',
         'roles' => 'Roles & Permissions',
         'calendar' => 'Calendar',
+        'integrations' => 'Lead Integrations',
     ];
 
     public function index()

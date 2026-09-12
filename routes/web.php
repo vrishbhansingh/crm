@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\RegistrationController;
+use App\Http\Controllers\WebhookLeadController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -27,6 +28,13 @@ Route::middleware('throttle:5,1')->group(function () {
     Route::get('/reset-password/{token}', [ForgotPasswordController::class, 'reset'])->name('password.reset');
     Route::post('/reset-password', [ForgotPasswordController::class, 'update'])->name('password.update');
 });
+
+// Public lead-capture webhook — identified only by the opaque token in the
+// URL (no session, no tenant.database middleware: the tenant DB connection
+// is activated by hand inside the controller once the token resolves a
+// tenant). GET supports Meta's verification handshake for Facebook/WhatsApp;
+// POST is the actual lead delivery every platform uses.
+Route::middleware('throttle:30,1')->match(['get', 'post'], '/webhooks/leads/{token}', [WebhookLeadController::class, 'handle'])->name('webhooks.leads');
 
 // Route::get('/about-us', [WebController::class, 'aboutUs'])->name('website.about_us');
 // Route::get('/contact-us', [WebController::class, 'contactUs'])->name('website.contact_us');

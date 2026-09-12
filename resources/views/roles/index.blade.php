@@ -337,8 +337,14 @@
         </div>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <script src="{{ asset('vendors/js/vendor.bundle.base.js') }}"></script>
+    <!-- jQuery + Bootstrap already come from include.footer's vendor.bundle.base.js,
+         loaded earlier in this page. Loading either again here replaced
+         window.jQuery with a second instance, leaving the first instance's
+         Bootstrap dropdown/modal handlers attached as orphaned native
+         listeners that still fired — every dropdown toggle click ran both
+         instances' handlers back-to-back (open, then immediately close
+         again), and modal backdrops from the orphaned instance never got
+         cleaned up on hide. Only toastr is genuinely not loaded elsewhere. -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
 
     <script>

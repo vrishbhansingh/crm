@@ -80,6 +80,7 @@ class TenantController extends Controller
                 $role = \Spatie\Permission\Models\Role::findOrCreate('Admin', 'web');
                 $role->syncPermissions(\Spatie\Permission\Models\Permission::where('name', 'not like', 'platform.%')->get());
                 $admin->assignRole($role);
+                \App\Support\DefaultTenantRoles::seedAgentRole();
             });
 
             $tenant->update(['admin_user_id' => $admin->id]);

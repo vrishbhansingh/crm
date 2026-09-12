@@ -63,6 +63,14 @@ class TenantManagementTest extends TestCase
         \App\Support\PermissionTeam::set($tenant->id);
         $this->assertTrue($admin->hasRole('Admin'));
         $this->assertSame(25, $tenant->max_users);
+
+        // Every new tenant also gets a default "Agent" role, scoped to that
+        // tenant only, so a company isn't stuck with zero assignable roles
+        // until its Admin manually creates one.
+        $agent = \Spatie\Permission\Models\Role::where('tenant_id', $tenant->id)->where('name', 'Agent')->first();
+        $this->assertNotNull($agent, 'A default Agent role should exist for the new tenant.');
+        $this->assertTrue($agent->hasPermissionTo('leads.view'));
+        $this->assertFalse($agent->hasPermissionTo('users.view'), 'Agent should not get admin-level permissions.');
     }
 
     public function test_super_admin_tenant_context_route_is_not_exposed(): void
