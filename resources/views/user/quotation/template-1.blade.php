@@ -37,7 +37,7 @@
 
         .quotation-card {
             background: #fff;
-            border-radius: 16px;
+            border-radius: 13px;
             padding: 30px;
             box-shadow: 0 15px 40px rgba(0, 0, 0, 0.08);
         }

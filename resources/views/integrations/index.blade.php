@@ -52,7 +52,7 @@
 
         .li-table { width: 100%; border-collapse: collapse; }
         .li-table th { text-align: left; font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em; color: var(--text-muted); padding: 8px 20px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); background: var(--surface); }
-        .li-table td { padding: 10px 20px; border-bottom: 1px solid var(--border); vertical-align: middle; font-size: 12.5px; }
+        .li-table td { padding: 8px 16px; border-bottom: 1px solid var(--border); vertical-align: middle; font-size: 12.5px; }
         .li-table tr:last-child td { border-bottom: none; }
         .li-row-name { font-weight: 700; color: var(--text-dark); }
         .li-row-sub { font-size: 11px; color: var(--text-muted); font-family: monospace; margin-top: 2px; display: flex; align-items: center; gap: 6px; }
@@ -67,7 +67,7 @@
         .li-dropdown-menu .dropdown-item { border-radius: 6px; padding: 6px 10px; display: flex; align-items: center; gap: 8px; }
         .li-dropdown-menu .dropdown-item.text-danger:hover { background: #fef2f2; }
 
-        .li-steps-toggle { font-size: 11.5px; color: var(--primary); font-weight: 600; cursor: pointer; display: block; padding: 10px 20px; border-top: 1px dashed var(--border); }
+        .li-steps-toggle { font-size: 11.5px; color: var(--primary); font-weight: 600; cursor: pointer; display: block; padding: 8px 16px; border-top: 1px dashed var(--border); }
         .guide-steps { list-style: none; margin: 0; padding: 12px 20px 16px; counter-reset: guide-step; }
         .guide-steps li { counter-increment: guide-step; position: relative; padding: 0 0 10px 28px; margin-bottom: 10px; border-bottom: 1px dashed var(--border); font-size: 12px; color: #374151; line-height: 1.5; }
         .guide-steps li:last-child { padding-bottom: 0; margin-bottom: 0; border-bottom: none; }

@@ -423,8 +423,8 @@
            to change. */
         .lead-hero-header {
             background: #fff;
-            padding: 26px 28px;
-            border-radius: 16px;
+            padding: 20px 22px;
+            border-radius: 13px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -454,7 +454,7 @@
 
         .lead-hero-header h4 {
             font-weight: 700;
-            font-size: 22px;
+            font-size: 18px;
             color: #111827;
         }
 
@@ -466,7 +466,7 @@
         /* Buttons */
         .lead-hero-right .btn {
             border-radius: 10px;
-            padding: 10px 20px;
+            padding: 8px 16px;
             font-weight: 600;
             transition: 0.2s ease;
         }
@@ -503,7 +503,7 @@
 
         .lead-stat-card {
             background: #fff;
-            border-radius: 16px;
+            border-radius: 13px;
             box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
             padding: 20px 22px;
             display: flex;

@@ -153,7 +153,7 @@
         /* Cards */
         .card {
             border: none;
-            border-radius: 16px;
+            border-radius: 13px;
             box-shadow: 0 6px 20px rgba(15, 23, 42, .05);
             margin-bottom: 22px;
         }

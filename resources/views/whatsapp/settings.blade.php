@@ -35,7 +35,7 @@
             padding: 18px; cursor: pointer; transition: box-shadow .15s ease, border-color .15s ease;
         }
         .channel-pick-card:hover { box-shadow: 0 8px 22px rgba(0,0,0,.08); border-color: var(--primary); }
-        .channel-pick-card i { font-size: 22px; color: var(--primary-dark); margin-bottom: 8px; display: block; }
+        .channel-pick-card i { font-size: 18px; color: var(--primary-dark); margin-bottom: 8px; display: block; }
         .channel-pick-card h6 { font-weight: 700; margin: 0 0 4px; }
         .channel-pick-card p { color: var(--text-muted); font-size: 12.5px; margin: 0; }
 

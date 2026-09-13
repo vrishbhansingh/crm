@@ -112,7 +112,7 @@
         /* ===== TABLE CARD ===== */
         .table-wrapper {
             background: #ffffff;
-            border-radius: 16px;
+            border-radius: 13px;
             padding: 18px;
             box-shadow: 0 12px 30px rgba(0, 0, 0, 0.06);
             border: 1px solid var(--border);
@@ -202,8 +202,8 @@
            Leads / Deals: bigger, roomier white header card. */
         .crm-page-header {
             background: #ffffff;
-            padding: 26px 28px;
-            border-radius: 16px;
+            padding: 20px 22px;
+            border-radius: 13px;
             box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
         }
 
@@ -227,7 +227,7 @@
 
         .crm-page-header h4 {
             font-weight: 700;
-            font-size: 22px;
+            font-size: 18px;
             color: #1f2937;
             margin: 0 0 6px;
         }

@@ -1,5 +1,5 @@
 <style>
-    :root { --sidebar-w: 244px; }
+    :root { --sidebar-w: 200px; }
 
     /* Pure spacer: reserves --sidebar-w of horizontal space in the flex row
        so .content-wrapper starts at the right x-offset, since the actual
@@ -19,10 +19,10 @@
        pages — no separate full-height rail trick needed for that anymore. */
     .sidebar {
         position: fixed;
-        top: 98px;
+        top: 80px;
         left: 0;
         width: var(--sidebar-w);
-        height: calc(100vh - 98px);
+        height: calc(100vh - 80px);
         background: linear-gradient(180deg, #0c7bfe, #01bdff);
         /* Generous bottom padding, not just the top's 12px: without it the
            last nav item sits flush against the very bottom pixel row of
@@ -99,10 +99,10 @@
     .nav-sidebar-menu .nav-link {
         display: flex;
         align-items: center;
-        gap: 10px;
-        padding: 11px 14px;
-        border-radius: 7px;
-        font-size: 13.5px;
+        gap: 8px;
+        padding: 9px 11px;
+        border-radius: 6px;
+        font-size: 12px;
         line-height: 1.3;
         color: rgba(255, 255, 255, 0.92);
         text-decoration: none;
@@ -159,10 +159,10 @@
         .sidebar {
             position: fixed;
             top: 64px;
-            left: -244px;
+            left: -200px;
             height: calc(100vh - 64px);
-            width: 244px;
-            min-width: 244px;
+            width: 200px;
+            min-width: 200px;
             background: linear-gradient(180deg, #0c7bfe, #01bdff);
             transition: left 0.3s ease;
             z-index: 1000;
@@ -417,7 +417,7 @@
         // brand column can stay the same width as the sidebar, collapsed or
         // not, without a separate sync mechanism.
         function setSidebarWidth(collapsed) {
-            document.documentElement.style.setProperty("--sidebar-w", collapsed ? "72px" : "244px");
+            document.documentElement.style.setProperty("--sidebar-w", collapsed ? "58px" : "200px");
             document.documentElement.classList.toggle("sidebar-collapsed", collapsed);
         }
 

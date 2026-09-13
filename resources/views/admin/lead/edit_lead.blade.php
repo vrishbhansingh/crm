@@ -30,9 +30,9 @@
         /* Same modernization pattern as the rest of this pass. */
         .page-header {
             background: #ffffff;
-            padding: 26px 28px;
-            border-radius: 16px;
-            margin-bottom: 24px;
+            padding: 20px 22px;
+            border-radius: 13px;
+            margin-bottom: 18px;
             box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
             display: flex;
             align-items: center;
@@ -42,7 +42,7 @@
         }
 
         .page-header h2 {
-            font-size: 22px;
+            font-size: 18px;
             font-weight: 700;
             color: #111827;
             margin: 0;

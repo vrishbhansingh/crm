@@ -17,10 +17,10 @@
         :root { --bg: #f5f7fb; --card: #ffffff; --border: #e6e9f0; --text: #1f2937; --muted: #6b7280; --primary: #2563eb; }
         body { background: var(--bg); font-family: "Inter", system-ui, sans-serif; }
 
-        .crm-page-header{background:#fff;padding:26px 28px;border-radius:16px;box-shadow:0 8px 24px rgba(15,23,42,.06);margin-bottom:24px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
-        .crm-page-header h3{margin:0 0 6px;font-weight:700;font-size:22px;color:#111827}.crm-page-header p{margin:0;color:#6b7280;font-size:14px;max-width:640px}
+        .crm-page-header{background:#fff;padding:20px 22px;border-radius:13px;box-shadow:0 8px 24px rgba(15,23,42,.06);margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+        .crm-page-header h3{margin:0 0 6px;font-weight:700;font-size:18px;color:#111827}.crm-page-header p{margin:0;color:#6b7280;font-size:14px;max-width:640px}
 
-        .panel { background: var(--card); border-radius: 16px; border: none; box-shadow: 0 8px 24px rgba(15,23,42,.06); padding: 24px; max-width: 900px; }
+        .panel { background: var(--card); border-radius: 13px; border: none; box-shadow: 0 8px 24px rgba(15,23,42,.06); padding: 24px; max-width: 900px; }
         .section-title { font-size: 15.5px; font-weight: 700; margin-bottom: 18px; }
         label { font-size: 12.5px; font-weight: 600; color: var(--muted); }
         .hint { font-size: 12.5px; color: var(--muted); margin-top: -8px; margin-bottom: 16px; }

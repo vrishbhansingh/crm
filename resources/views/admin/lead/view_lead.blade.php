@@ -25,14 +25,14 @@
         .crm-page-header {
             background: #fff;
             padding: 24px 28px;
-            border-radius: 16px;
+            border-radius: 13px;
             box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
-            margin-bottom: 24px;
+            margin-bottom: 18px;
         }
 
         .lead-title {
             font-weight: 700;
-            font-size: 22px;
+            font-size: 18px;
             color: var(--text-dark);
             margin: 0;
         }
@@ -174,7 +174,7 @@
         }
         .lead-subtitle { color: var(--text-muted); font-size: 13px; margin-top: 2px; }
         .lead-hero-budget { text-align: right; flex-shrink: 0; }
-        .lead-hero-budget .value { font-size: 22px; font-weight: 700; color: #16a34a; }
+        .lead-hero-budget .value { font-size: 18px; font-weight: 700; color: #16a34a; }
         .lead-hero-budget .label { font-size: 11.5px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .03em; }
         .lead-hero-actions { display: flex; gap: 8px; margin-top: 10px; }
         .lead-hero-actions .btn { border-radius: 10px; font-weight: 600; font-size: 13px; }

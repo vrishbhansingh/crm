@@ -38,7 +38,7 @@
             justify-content: center;
             margin: 0 auto 20px;
         }
-        h1 { font-size: 22px; font-weight: 700; margin-bottom: 10px; color: #0f172a; }
+        h1 { font-size: 18px; font-weight: 700; margin-bottom: 10px; color: #0f172a; }
         p { font-size: 14px; color: #64748b; line-height: 1.6; }
         .domain {
             margin-top: 18px;

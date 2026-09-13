@@ -53,7 +53,7 @@
       margin: 0 auto 18px;
     }
 
-    .auth-title { font-size: 22px; font-weight: 700; color: #1f2937; margin-bottom: 10px; }
+    .auth-title { font-size: 18px; font-weight: 700; color: #1f2937; margin-bottom: 10px; }
     .auth-subtitle { font-size: 14.5px; color: #6b7280; line-height: 1.6; margin-bottom: 22px; }
 
     .warning {

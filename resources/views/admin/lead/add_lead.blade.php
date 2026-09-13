@@ -123,7 +123,7 @@
 
         .gradient-border-card {
             /* border thickness */
-            border-radius: 16px;
+            border-radius: 13px;
             background: linear-gradient(135deg,
                     #2563eb,
                     #22c55e,
@@ -157,8 +157,8 @@
         /* Same modernization pattern as the rest of this pass. */
         .lead-hero-header {
             background: #fff;
-            padding: 26px 28px;
-            border-radius: 16px;
+            padding: 20px 22px;
+            border-radius: 13px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -188,7 +188,7 @@
 
         .lead-hero-header h4 {
             font-weight: 700;
-            font-size: 22px;
+            font-size: 18px;
         }
 
         .lead-hero-header small {
@@ -198,7 +198,7 @@
 
         .lead-hero-right .btn {
             border-radius: 10px;
-            padding: 10px 20px;
+            padding: 8px 16px;
             font-weight: 600;
         }
 

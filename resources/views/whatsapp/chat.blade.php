@@ -73,7 +73,7 @@
                     </div>
                     <div class="chat-thread">
                         <div id="threadEmpty" class="chat-empty"><i class="fa fa-comments-o" style="font-size:40px;"></i><p class="mt-2">Select a conversation to view messages</p></div>
-                        <div id="threadBody" style="display:none; flex:1; display:flex; flex-direction:column;">
+                        <div id="threadBody" style="display:none; flex-direction:column;">
                             <div class="chat-thread-header">
                                 <div>
                                     <div style="font-weight:700;" id="threadName">-</div>

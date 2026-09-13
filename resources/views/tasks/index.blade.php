@@ -6,10 +6,10 @@
     <link rel="stylesheet" href="{{ asset('vendors/feather/feather.css') }}"><link rel="stylesheet" href="{{ asset('vendors/ti-icons/css/themify-icons.css') }}"><link rel="stylesheet" href="{{ asset('vendors/css/vendor.bundle.base.css') }}"><link rel="stylesheet" href="{{ asset('css/vertical-layout-light/style.css') }}"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <style>
         /* Same modernization pattern as the rest of this pass: bigger, roomier cards. */
-        .crm-page-header{background:#fff;padding:26px 28px;border-radius:16px;box-shadow:0 8px 24px rgba(15,23,42,.06);margin-bottom:24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}
-        .crm-page-header h3{margin:0 0 6px;font-weight:700;font-size:22px;color:#111827}.crm-page-header p{margin:0;color:#6b7280;font-size:14px}
-        .crm-page-header .btn{border-radius:10px;padding:10px 20px;font-weight:600}
-        .task-shell { background:#fff; border-radius:16px; box-shadow:0 8px 24px rgba(15,23,42,.06); overflow:hidden; }
+        .crm-page-header{background:#fff;padding:20px 22px;border-radius:13px;box-shadow:0 8px 24px rgba(15,23,42,.06);margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}
+        .crm-page-header h3{margin:0 0 6px;font-weight:700;font-size:18px;color:#111827}.crm-page-header p{margin:0;color:#6b7280;font-size:14px}
+        .crm-page-header .btn{border-radius:10px;padding:8px 16px;font-weight:600}
+        .task-shell { background:#fff; border-radius:13px; box-shadow:0 8px 24px rgba(15,23,42,.06); overflow:hidden; }
         .task-row { display:grid; grid-template-columns:32px minmax(220px,1fr) 135px 155px 130px 100px; gap:14px; align-items:center; padding:18px 22px; border-bottom:1px solid #edf2f7; font-size:14.5px; }
         .task-row:hover { background:#f8fbff; } .task-title { font-weight:600;color:#1f2937;font-size:15px}.task-meta{font-size:13px;color:#6b7280}.priority{font-size:12px;font-weight:700;text-transform:uppercase}.overdue{color:#dc2626}.completed .task-title{text-decoration:line-through;color:#9ca3af}
         .filter-grid { display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px }
@@ -18,7 +18,7 @@
 </head>
 <body><div class="container-scroller">@include('include.header')<div class="container-fluid page-body-wrapper">@include('include.sidebar')<div class="main-panel"><div class="content-wrapper">
     <div class="crm-page-header"><div><h3>Tasks & Reminders</h3><p>Keep every follow-up and commitment visible.</p></div>@can('tasks.create')<button class="btn btn-primary" id="newTaskBtn"><i class="fa fa-plus"></i> New Task</button>@endcan</div>
-    <div class="card mb-3" style="border-radius:16px;box-shadow:0 8px 24px rgba(15,23,42,.06);border:none"><div class="card-body filter-grid">
+    <div class="card mb-3" style="border-radius:13px;box-shadow:0 8px 24px rgba(15,23,42,.06);border:none"><div class="card-body filter-grid">
         <select id="filterStatus" class="form-control"><option value="">All statuses</option><option value="todo">To do</option><option value="in_progress">In progress</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select>
         <select id="filterPriority" class="form-control"><option value="">All priorities</option><option value="urgent">Urgent</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select>
         <select id="filterDue" class="form-control"><option value="">Any due date</option><option value="today">Due today</option><option value="overdue">Overdue</option><option value="upcoming">Upcoming</option></select>

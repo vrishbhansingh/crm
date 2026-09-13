@@ -30,16 +30,16 @@
         /* Same modernization pattern as the rest of this pass. */
         .crm-page-header {
             background: var(--card);
-            padding: 26px 28px;
-            border-radius: 16px;
+            padding: 20px 22px;
+            border-radius: 13px;
             box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
-            margin-bottom: 24px;
+            margin-bottom: 18px;
         }
 
         .crm-page-header h3 {
             margin: 0;
             font-weight: 700;
-            font-size: 22px;
+            font-size: 18px;
         }
 
         /* LAYOUT */
@@ -71,7 +71,7 @@
         .company-logo {
             width: 120px;
             height: 120px;
-            border-radius: 16px;
+            border-radius: 13px;
             background: #eef2ff;
             display: flex;
             align-items: center;
@@ -117,7 +117,7 @@
 
         /* RIGHT CONTENT */
         .section {
-            margin-bottom: 24px;
+            margin-bottom: 18px;
         }
 
         .section-title {
@@ -156,7 +156,7 @@
             width: 120px;
             height: 120px;
             margin: 0 auto 16px;
-            border-radius: 16px;
+            border-radius: 13px;
             overflow: hidden;
             background: #eef2ff;
             display: flex;
@@ -169,7 +169,7 @@
             width: 100%;
             height: 100%;
             object-fit: contain;
-            border-radius: 16px;
+            border-radius: 13px;
         }
 
         /* Placeholder letter */

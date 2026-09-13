@@ -11,12 +11,12 @@
 
   /* Compensate the page content for the fixed header + breadcrumb bar.
      Overrides the vendor template's .page-body-wrapper{padding-top:60px}. */
-  .page-body-wrapper { padding-top: 98px !important; }
-  @media (max-width: 991px) { .page-body-wrapper { padding-top: 64px !important; } }
-  @media (max-width: 768px) { .page-body-wrapper { padding-top: 56px !important; } }
+  .page-body-wrapper { padding-top: 80px !important; }
+  @media (max-width: 991px) { .page-body-wrapper { padding-top: 52px !important; } }
+  @media (max-width: 768px) { .page-body-wrapper { padding-top: 46px !important; } }
 
   .crm-navbar {
-    height: 64px;
+    height: 52px;
     background: linear-gradient(90deg, #f9fafb 0%, #eef2ff 50%, #f0f9ff 100%);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
     display: flex;
@@ -28,12 +28,12 @@
      the page down, instead of a white header sitting disconnected above a
      blue sidebar. Breadcrumb content is pushed clear of that blue strip. */
   .crm-breadcrumb {
-    height: 34px;
+    height: 28px;
     display: flex;
     align-items: center;
     gap: 6px;
-    padding: 0 24px 0 calc(var(--sidebar-w, 244px) + 24px);
-    background: linear-gradient(to right, #0c7bfe 0, #0c7bfe var(--sidebar-w, 244px), #ffffff var(--sidebar-w, 244px), #ffffff 100%);
+    padding: 0 24px 0 calc(var(--sidebar-w, 200px) + 24px);
+    background: linear-gradient(to right, #0c7bfe 0, #0c7bfe var(--sidebar-w, 200px), #ffffff var(--sidebar-w, 200px), #ffffff 100%);
     border-top: 1px solid #edf0f5;
     font-size: 12.5px;
     color: #6b7280;
@@ -55,8 +55,8 @@
        doesn't fit in the collapsed 72px, so .crm-brand-chip crops down to
        just the logo's icon mark instead (see below) rather than either
        overflowing or squishing the whole lockup illegibly. */
-    width: var(--sidebar-w, 244px);
-    height: 64px;
+    width: var(--sidebar-w, 200px);
+    height: 52px;
     position: relative;
     display: flex;
     align-items: center;

@@ -11,10 +11,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
     <style>
         /* Same modernization pattern as Roles & Permissions / Dashboard / Leads / Deals: bigger, roomier cards. */
-        .crm-card,.crm-header{background:#fff;border:none;border-radius:16px;box-shadow:0 8px 24px rgba(15,23,42,.06)}
-        .crm-header{padding:26px 28px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
-        .crm-header h4{margin:0 0 6px;font-weight:700;font-size:22px}.crm-header p{margin:0;color:#6b7280;font-size:14px}
-        .crm-header .btn{border-radius:10px;padding:10px 20px;font-weight:600}
+        .crm-card,.crm-header{background:#fff;border:none;border-radius:13px;box-shadow:0 8px 24px rgba(15,23,42,.06)}
+        .crm-header{padding:20px 22px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+        .crm-header h4{margin:0 0 6px;font-weight:700;font-size:18px}.crm-header p{margin:0;color:#6b7280;font-size:14px}
+        .crm-header .btn{border-radius:10px;padding:8px 16px;font-weight:600}
         .crm-card{padding:20px}.crm-table{border-collapse:separate;border-spacing:0 10px;font-size:14.5px}
         .crm-table th{border:0;background:#f8fafc;color:#475569;font-size:12.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:14px 16px}.crm-table td{vertical-align:middle;font-size:14px;background:#fff;border-top:1px solid #e5e7eb;border-bottom:1px solid #e5e7eb;padding:16px}
         .crm-table td:first-child{border-left:1px solid #e5e7eb;border-radius:9px 0 0 9px}.crm-table td:last-child{border-right:1px solid #e5e7eb;border-radius:0 9px 9px 0}

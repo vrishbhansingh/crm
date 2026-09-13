@@ -38,7 +38,6 @@ class DashboardController extends Controller
                 'status' => true,
                 'scope' => 'team',
                 'data' => $this->teamData(),
-                'charts' => $this->charts(),
                 'followUps' => $this->teamFollowUps(),
                 'closingSoon' => $this->dealsClosingSoon(),
                 'pipeline' => $this->pipelineByStage(),
@@ -46,7 +45,6 @@ class DashboardController extends Controller
                 'recentLeads' => $this->recentLeads(),
                 'revenue' => $this->revenueOverview(),
                 'leadSources' => $this->leadSources(),
-                'winRate' => $this->winRate(),
             ]);
         }
 
@@ -59,7 +57,6 @@ class DashboardController extends Controller
             'recentLeads' => $this->recentLeads($user->id),
             'revenue' => $this->revenueOverview($user->id),
             'leadSources' => $this->leadSources($user->id),
-            'winRate' => $this->winRate($user->id),
         ]);
     }
 
@@ -199,23 +196,6 @@ class DashboardController extends Controller
             ->all();
     }
 
-    private function winRate(?int $ownerId = null): array
-    {
-        $query = Deal::query()
-            ->whereIn('status', ['won', 'lost'])
-            ->when($ownerId, fn ($q) => $q->where('owner_id', $ownerId));
-
-        $won = (clone $query)->where('status', 'won')->count();
-        $lost = (clone $query)->where('status', 'lost')->count();
-        $total = $won + $lost;
-
-        return [
-            'won' => $won,
-            'lost' => $lost,
-            'rate' => $total ? round(($won / $total) * 100, 1) : 0,
-        ];
-    }
-
     private function teamData(): array
     {
         $today = Carbon::now('Asia/Kolkata')->toDateString();
@@ -268,49 +248,6 @@ class DashboardController extends Controller
                 fn ($q) => $q->where('user_id', $userId)
             )->sum('paid_amount'),
             'pending_payment' => Order::where('user_id', $userId)->sum('due_amount'),
-        ];
-    }
-
-    /**
-     * Chart.js feeds for the team dashboard — reuses the same library and
-     * `new Chart(...)` pattern already used on the Reports page rather than
-     * introducing a second charting library.
-     */
-    private function charts(): array
-    {
-        $days = collect(range(13, 0))->map(fn ($i) => Carbon::today()->subDays($i));
-
-        $leadsByDay = Lead::selectRaw('DATE(created_at) as d, COUNT(*) as c')
-            ->where('created_at', '>=', Carbon::today()->subDays(13))
-            ->groupBy('d')
-            ->pluck('c', 'd');
-
-        $leadsTrend = [
-            'labels' => $days->map(fn ($d) => $d->format('d M'))->all(),
-            'data' => $days->map(fn ($d) => (int) ($leadsByDay[$d->toDateString()] ?? 0))->all(),
-        ];
-
-        $leadsByStatus = Lead::selectRaw('lead_status, COUNT(*) as c')
-            ->groupBy('lead_status')
-            ->orderByDesc('c')
-            ->get();
-
-        $dealsByStage = Deal::with('stage:id,name')
-            ->selectRaw('stage_id, COUNT(*) as c')
-            ->groupBy('stage_id')
-            ->get()
-            ->sortByDesc('c');
-
-        return [
-            'leadsTrend' => $leadsTrend,
-            'leadsByStatus' => [
-                'labels' => $leadsByStatus->pluck('lead_status')->map(fn ($s) => ucfirst(str_replace('_', ' ', $s)))->all(),
-                'data' => $leadsByStatus->pluck('c')->all(),
-            ],
-            'dealsByStage' => [
-                'labels' => $dealsByStage->map(fn ($d) => $d->stage?->name ?? 'No stage')->all(),
-                'data' => $dealsByStage->pluck('c')->all(),
-            ],
         ];
     }
 

@@ -280,8 +280,8 @@
            instead of the previous blue gradient banner. */
         .user-page-header {
             background: #fff;
-            padding: 26px 28px;
-            border-radius: 16px;
+            padding: 20px 22px;
+            border-radius: 13px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -309,13 +309,13 @@
 
         .user-page-header h4 {
             font-weight: 700;
-            font-size: 22px;
+            font-size: 18px;
             margin: 0 0 6px;
         }
 
         .add-user-btn {
             border-radius: 10px;
-            padding: 10px 20px;
+            padding: 8px 16px;
             font-weight: 600;
             transition: 0.2s ease;
             background: #2563eb;

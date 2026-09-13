@@ -130,7 +130,7 @@
 
         .total-card h3 {
             margin-top: 6px;
-            font-size: 22px;
+            font-size: 18px;
         }
 
         /* TERMS */
@@ -288,7 +288,7 @@
 
         .grand-total-box h2 {
             margin-top: 6px;
-            font-size: 22px;
+            font-size: 18px;
             font-weight: 700;
             color: #fdfdff;
         }

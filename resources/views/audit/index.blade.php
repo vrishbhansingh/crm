@@ -3,9 +3,9 @@
 <link rel="stylesheet" href="{{ asset('vendors/feather/feather.css') }}"><link rel="stylesheet" href="{{ asset('vendors/ti-icons/css/themify-icons.css') }}"><link rel="stylesheet" href="{{ asset('vendors/css/vendor.bundle.base.css') }}"><link rel="stylesheet" href="{{ asset('css/vertical-layout-light/style.css') }}"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 <style>
     /* Same modernization pattern as the rest of this pass. */
-    .crm-page-header{background:#fff;padding:26px 28px;border-radius:16px;box-shadow:0 8px 24px rgba(15,23,42,.06);margin-bottom:24px}
-    .crm-page-header h3{margin:0 0 6px;font-weight:700;font-size:22px;color:#111827}.crm-page-header p{margin:0;color:#6b7280;font-size:14px}
-    .audit-card{border:0;border-radius:16px;box-shadow:0 8px 24px rgba(15,23,42,.06)}.audit-event{font-size:12px;font-weight:700;text-transform:uppercase}.change-json{white-space:pre-wrap;word-break:break-word;font-size:12px;max-height:180px;overflow:auto;background:#f8fafc;padding:10px;border-radius:8px}.filter-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px}
+    .crm-page-header{background:#fff;padding:20px 22px;border-radius:13px;box-shadow:0 8px 24px rgba(15,23,42,.06);margin-bottom:18px}
+    .crm-page-header h3{margin:0 0 6px;font-weight:700;font-size:18px;color:#111827}.crm-page-header p{margin:0;color:#6b7280;font-size:14px}
+    .audit-card{border:0;border-radius:13px;box-shadow:0 8px 24px rgba(15,23,42,.06)}.audit-event{font-size:12px;font-weight:700;text-transform:uppercase}.change-json{white-space:pre-wrap;word-break:break-word;font-size:12px;max-height:180px;overflow:auto;background:#f8fafc;padding:10px;border-radius:8px}.filter-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px}
 </style></head>
 <body><div class="container-scroller">@include('include.header')<div class="container-fluid page-body-wrapper">@include('include.sidebar')<div class="main-panel"><div class="content-wrapper">
 <div class="crm-page-header"><h3>Audit Log</h3><p>Immutable history of important CRM data changes.</p></div>

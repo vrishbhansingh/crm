@@ -30,13 +30,13 @@
 
         .crm-page-header {
             background: var(--card);
-            padding: 26px 28px;
-            border-radius: 16px;
+            padding: 20px 22px;
+            border-radius: 13px;
             box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
-            margin-bottom: 24px;
+            margin-bottom: 18px;
         }
 
-        .crm-page-header h3 { margin: 0 0 4px; font-weight: 700; font-size: 22px; }
+        .crm-page-header h3 { margin: 0 0 4px; font-weight: 700; font-size: 18px; }
         .crm-page-header p { margin: 0; color: var(--muted); font-size: 14px; }
 
         .profile-layout { display: grid; grid-template-columns: 300px 1fr; gap: 24px; }

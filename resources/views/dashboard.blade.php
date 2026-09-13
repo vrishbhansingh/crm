@@ -25,10 +25,10 @@
 
         .dash-header {
             background: #fff;
-            padding: 26px 28px;
-            border-radius: 16px;
+            padding: 20px 22px;
+            border-radius: 13px;
             box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
-            margin-bottom: 24px;
+            margin-bottom: 18px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -56,12 +56,12 @@
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
             gap: 18px;
-            margin-bottom: 24px;
+            margin-bottom: 18px;
         }
 
         .stat-card {
             background: #fff;
-            border-radius: 16px;
+            border-radius: 13px;
             box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
             padding: 20px 22px;
         }
@@ -86,10 +86,10 @@
 
         .dash-card {
             background: #fff;
-            border-radius: 16px;
+            border-radius: 13px;
             box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
             padding: 22px 24px;
-            margin-bottom: 24px;
+            margin-bottom: 18px;
             height: 100%;
         }
 
@@ -185,19 +185,6 @@
         .source-chip-label { font-size: 13px; color: var(--text-dark); font-weight: 600; flex: 1; }
         .source-chip-total { font-size: 13px; font-weight: 700; color: var(--text-dark); }
 
-        /* Win rate gauge */
-        .gauge-wrap { position: relative; height: 150px; }
-        .gauge-wrap canvas { max-height: 150px; }
-        .gauge-center {
-            position: absolute; inset: 0; display: flex; flex-direction: column;
-            align-items: center; justify-content: center; pointer-events: none; top: 14px;
-        }
-        .gauge-center .gauge-value { font-size: 24px; font-weight: 700; color: var(--text-dark); }
-        .gauge-center .gauge-label { font-size: 11.5px; color: var(--text-muted); font-weight: 600; }
-        .gauge-legend { display: flex; justify-content: center; gap: 18px; margin-top: 8px; font-size: 12px; color: var(--text-muted); }
-        .gauge-legend span { display: inline-flex; align-items: center; gap: 6px; }
-        .gauge-legend i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
-
         /* Closing-soon cards */
         .closing-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
         .closing-card { border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; text-decoration: none; color: inherit; display: block; }
@@ -262,35 +249,6 @@
                                     <tbody id="recentLeadsBody"></tbody>
                                 </table>
                             </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row" id="chartsRow">
-                    <div class="col-lg-9" id="teamChartsCols" style="display:none">
-                        <div class="row">
-                            <div class="col-lg-7">
-                                <div class="dash-card">
-                                    <h5><i class="fa fa-line-chart"></i> Leads — last 14 days</h5>
-                                    <div class="chart-box"><canvas id="leadsTrendChart"></canvas></div>
-                                </div>
-                            </div>
-                            <div class="col-lg-5">
-                                <div class="dash-card">
-                                    <h5><i class="fa fa-pie-chart"></i> Leads by Status</h5>
-                                    <div class="chart-box"><canvas id="leadsStatusChart"></canvas></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-3">
-                        <div class="dash-card">
-                            <h5><i class="fa fa-flag-checkered"></i> Win Rate</h5>
-                            <div class="gauge-wrap">
-                                <canvas id="winRateGauge"></canvas>
-                                <div class="gauge-center"><div class="gauge-value" id="winRateValue">—</div><div class="gauge-label">win rate</div></div>
-                            </div>
-                            <div class="gauge-legend"><span><i style="background:#16a34a"></i> Won <b id="winRateWon">0</b></span><span><i style="background:#dc2626"></i> Lost <b id="winRateLost">0</b></span></div>
                         </div>
                     </div>
                 </div>
@@ -418,60 +376,6 @@
             const ctx = document.getElementById(id);
             if (!ctx) return;
             charts[id] = new Chart(ctx, config);
-        }
-
-        function renderCharts(data) {
-            $('#teamChartsCols').show();
-
-            draw('leadsTrendChart', {
-                type: 'line',
-                data: {
-                    labels: data.leadsTrend.labels,
-                    datasets: [{
-                        label: 'Leads created',
-                        data: data.leadsTrend.data,
-                        borderColor: '#2563eb',
-                        backgroundColor: 'rgba(37,99,235,0.08)',
-                        fill: true,
-                        tension: 0.35,
-                        pointRadius: 2,
-                    }]
-                },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
-            });
-
-            const statusColors = data.leadsByStatus.labels.map(statusColor);
-            draw('leadsStatusChart', {
-                type: 'doughnut',
-                data: {
-                    labels: data.leadsByStatus.labels,
-                    datasets: [{ data: data.leadsByStatus.data, backgroundColor: statusColors }]
-                },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } } } }
-            });
-        }
-
-        function renderWinRate(winRate) {
-            if (!winRate) return;
-            $('#winRateValue').text(winRate.rate + '%');
-            $('#winRateWon').text(winRate.won);
-            $('#winRateLost').text(winRate.lost);
-            const hasData = (winRate.won + winRate.lost) > 0;
-            draw('winRateGauge', {
-                type: 'doughnut',
-                data: {
-                    labels: ['Won', 'Lost'],
-                    datasets: [{
-                        data: hasData ? [winRate.won, winRate.lost] : [1, 0],
-                        backgroundColor: hasData ? ['#16a34a', '#dc2626'] : ['#e5e7eb', '#e5e7eb'],
-                        borderWidth: 0,
-                    }]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false, cutout: '72%',
-                    plugins: { legend: { display: false }, tooltip: { enabled: hasData } },
-                }
-            });
         }
 
         function renderPipeline(stages) {
@@ -675,12 +579,7 @@
                     renderRevenue(response.revenue);
                     renderSourceChips(response.leadSources);
                 }
-                if (response.winRate) {
-                    renderWinRate(response.winRate);
-                }
-
-                if (response.scope === 'team' && response.charts) {
-                    renderCharts(response.charts);
+                if (response.scope === 'team' && response.closingSoon) {
                     renderClosingSoon(response.closingSoon);
                 }
             });

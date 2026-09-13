@@ -24,13 +24,13 @@
            Leads / Deals: bigger, roomier white header card. */
         .crm-page-header {
             background: #fff;
-            padding: 26px 28px;
-            border-radius: 16px;
+            padding: 20px 22px;
+            border-radius: 13px;
             box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
             display: flex;
             align-items: center;
             gap: 16px;
-            margin-bottom: 24px;
+            margin-bottom: 18px;
         }
 
         .crm-header-icon {
@@ -47,7 +47,7 @@
 
         .crm-page-header h4 {
             font-weight: 700;
-            font-size: 22px;
+            font-size: 18px;
             color: var(--text-dark);
             margin: 0 0 6px;
         }
