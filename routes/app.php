@@ -32,6 +32,9 @@ use App\Http\Controllers\SecurityController;
 use App\Http\Controllers\User\InvoiceController;
 use App\Http\Controllers\User\ProfileController;
 use App\Http\Controllers\User\QuotationController;
+use App\Http\Controllers\Admin\WhatsAppAccountController;
+use App\Http\Controllers\Admin\WhatsAppCampaignController;
+use App\Http\Controllers\Admin\WhatsAppChatController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -102,6 +105,42 @@ Route::middleware(['admin_middle', 'permission:integrations.edit'])->group(funct
 });
 Route::middleware(['admin_middle', 'permission:integrations.delete'])->group(function () {
     Route::delete('/integrations/{integration}', [LeadIntegrationController::class, 'destroy'])->name('integrations.destroy')->whereNumber('integration');
+});
+
+/*
+|--------------------------------------------------------------------------
+| WhatsApp — chat box, campaigns, and connected-account settings
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['admin_middle', 'permission:whatsapp.view'])->group(function () {
+    Route::get('/whatsapp/chat', [WhatsAppChatController::class, 'index'])->name('whatsapp.chat');
+    Route::get('/whatsapp/chat/conversations', [WhatsAppChatController::class, 'conversations'])->name('whatsapp.chat.conversations');
+    Route::get('/whatsapp/chat/conversations/{id}/messages', [WhatsAppChatController::class, 'messages'])->name('whatsapp.chat.messages')->whereNumber('id');
+
+    Route::get('/whatsapp/campaigns', [WhatsAppCampaignController::class, 'index'])->name('whatsapp.campaigns.index');
+    Route::get('/whatsapp/campaigns/data', [WhatsAppCampaignController::class, 'data'])->name('whatsapp.campaigns.data');
+    Route::post('/whatsapp/campaigns/preview-audience', [WhatsAppCampaignController::class, 'previewAudience'])->name('whatsapp.campaigns.preview_audience');
+});
+Route::middleware(['admin_middle', 'permission:whatsapp.send'])->group(function () {
+    Route::post('/whatsapp/chat/conversations/{id}/send', [WhatsAppChatController::class, 'send'])->name('whatsapp.chat.send')->whereNumber('id');
+    Route::post('/whatsapp/chat/start', [WhatsAppChatController::class, 'start'])->name('whatsapp.chat.start');
+    Route::post('/whatsapp/campaigns/{id}/send', [WhatsAppCampaignController::class, 'send'])->name('whatsapp.campaigns.send')->whereNumber('id');
+});
+Route::middleware(['admin_middle', 'permission:whatsapp.create'])->group(function () {
+    Route::post('/whatsapp/campaigns', [WhatsAppCampaignController::class, 'store'])->name('whatsapp.campaigns.store');
+});
+Route::middleware(['admin_middle', 'permission:whatsapp.delete'])->group(function () {
+    Route::delete('/whatsapp/campaigns/{id}', [WhatsAppCampaignController::class, 'destroy'])->name('whatsapp.campaigns.destroy')->whereNumber('id');
+});
+
+Route::middleware(['admin_middle', 'permission:whatsapp.manage-settings'])->group(function () {
+    Route::get('/whatsapp/settings', [WhatsAppAccountController::class, 'index'])->name('whatsapp.settings.index');
+    Route::get('/whatsapp/settings/{account}', [WhatsAppAccountController::class, 'show'])->name('whatsapp.settings.show')->whereNumber('account');
+    Route::get('/whatsapp/settings/{account}/logs', [WhatsAppAccountController::class, 'logs'])->name('whatsapp.settings.logs')->whereNumber('account');
+    Route::post('/whatsapp/settings', [WhatsAppAccountController::class, 'store'])->name('whatsapp.settings.store');
+    Route::put('/whatsapp/settings/{account}', [WhatsAppAccountController::class, 'update'])->name('whatsapp.settings.update')->whereNumber('account');
+    Route::post('/whatsapp/settings/{account}/regenerate', [WhatsAppAccountController::class, 'regenerate'])->name('whatsapp.settings.regenerate')->whereNumber('account');
+    Route::delete('/whatsapp/settings/{account}', [WhatsAppAccountController::class, 'destroy'])->name('whatsapp.settings.destroy')->whereNumber('account');
 });
 
 /*

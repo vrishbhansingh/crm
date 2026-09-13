@@ -16,5 +16,6 @@ class VerifyCsrfToken extends Middleware
         // never carry a Laravel CSRF token — the URL's own opaque, unguessable
         // token is this endpoint's actual credential instead.
         'webhooks/leads/*',
+        'webhooks/whatsapp/*',
     ];
 }

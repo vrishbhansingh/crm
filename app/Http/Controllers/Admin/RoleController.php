@@ -44,6 +44,7 @@ class RoleController extends Controller
         'roles' => ['view', 'create', 'edit', 'delete'],
         'calendar' => ['view'],
         'integrations' => ['view', 'create', 'edit', 'delete'],
+        'whatsapp' => ['view', 'create', 'send', 'manage-settings', 'delete'],
         // 'users.impersonate' is deliberately excluded from every module
         // list here — it's real and route-enforced, but sensitive enough
         // that it isn't offered as a delegable checkbox at all; only the
@@ -82,6 +83,7 @@ class RoleController extends Controller
         'roles' => 'Roles & Permissions',
         'calendar' => 'Calendar',
         'integrations' => 'Lead Integrations',
+        'whatsapp' => 'WhatsApp',
     ];
 
     public function index()

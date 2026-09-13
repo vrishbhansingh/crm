@@ -164,6 +164,39 @@
             font-size: 12.5px;
             margin-top: 10px;
         }
+
+        /* ===== Lead Detail hero: avatar + subtitle + budget ===== */
+        .lead-hero-top { display: flex; align-items: flex-start; gap: 16px; }
+        .lead-detail-avatar {
+            width: 52px; height: 52px; border-radius: 50%; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-weight: 700; font-size: 18px; margin-top: 2px;
+        }
+        .lead-subtitle { color: var(--text-muted); font-size: 13px; margin-top: 2px; }
+        .lead-hero-budget { text-align: right; flex-shrink: 0; }
+        .lead-hero-budget .value { font-size: 22px; font-weight: 700; color: #16a34a; }
+        .lead-hero-budget .label { font-size: 11.5px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .03em; }
+        .lead-hero-actions { display: flex; gap: 8px; margin-top: 10px; }
+        .lead-hero-actions .btn { border-radius: 10px; font-weight: 600; font-size: 13px; }
+
+        /* ===== Engagement metric tiles ===== */
+        .lead-metric-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px; margin: 18px 0 22px;
+        }
+        .lead-metric-tile {
+            background: #fff; border-radius: 14px; box-shadow: 0 8px 22px rgba(0,0,0,.05);
+            border: 1px solid var(--border); padding: 16px 18px; text-align: center;
+        }
+        .lead-metric-tile .metric-value { font-size: 24px; font-weight: 700; color: var(--text-dark); }
+        .lead-metric-tile .metric-label { font-size: 12px; color: var(--text-muted); margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: .02em; }
+
+        .assignee-inline { display: inline-flex; align-items: center; gap: 6px; }
+        .assignee-inline .assignee-avatar {
+            width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0;
+            display: inline-flex; align-items: center; justify-content: center;
+            color: #fff; font-weight: 700; font-size: 9px;
+        }
     </style>
 </head>
 
@@ -179,15 +212,43 @@
 
             <div class="content-wrapper">
 
-                <div class="crm-page-header d-flex justify-content-between align-items-center">
-                    <div>
-                        <a href="{{ route('leads.index') }}" class="text-muted" style="font-size:12px;">
-                            <i class="fa fa-arrow-left"></i> Back to Leads
-                        </a>
-                        <h4 class="lead-title mt-1" id="leadName">Loading…</h4>
-                        <div class="lead-company" id="leadCompany"></div>
+                <div class="crm-page-header d-flex justify-content-between align-items-start flex-wrap" style="gap:16px;">
+                    <div class="lead-hero-top">
+                        <div class="lead-detail-avatar" id="leadAvatar">?</div>
+                        <div>
+                            <a href="{{ route('leads.index') }}" class="text-muted" style="font-size:12px;">
+                                <i class="fa fa-arrow-left"></i> Back to Leads
+                            </a>
+                            <h4 class="lead-title mt-1" id="leadName">Loading…</h4>
+                            <div class="lead-subtitle" id="leadSubtitle"></div>
+                            <div class="lead-company" id="leadCompany"></div>
+                            <div id="leadBadges" class="mt-2"></div>
+                            <div class="lead-hero-actions">
+                                <a href="#" id="leadCallBtn" class="btn btn-success btn-sm" style="display:none;"><i class="fa fa-phone"></i> Call</a>
+                                <a href="#" id="leadEmailBtn" class="btn btn-outline-secondary btn-sm" style="display:none;"><i class="fa fa-envelope"></i> Email</a>
+                                @can('leads.edit')<a href="{{ route('leads.edit', $leadId) }}" class="btn btn-outline-secondary btn-sm"><i class="fa fa-pencil"></i> Edit</a>@endcan
+                            </div>
+                        </div>
                     </div>
-                    <div id="leadBadges" class="text-right"></div>
+                    <div class="lead-hero-budget">
+                        <div class="value" id="leadBudgetValue">—</div>
+                        <div class="label">Budget</div>
+                    </div>
+                </div>
+
+                <div class="lead-metric-grid">
+                    <div class="lead-metric-tile">
+                        <div class="metric-value" id="metricDaysOpen">—</div>
+                        <div class="metric-label">Days Open</div>
+                    </div>
+                    <div class="lead-metric-tile">
+                        <div class="metric-value" id="metricActivities">—</div>
+                        <div class="metric-label">Activities Logged</div>
+                    </div>
+                    <div class="lead-metric-tile">
+                        <div class="metric-value" id="metricTags">—</div>
+                        <div class="metric-label">Tags</div>
+                    </div>
                 </div>
 
                 <div class="row">
@@ -393,6 +454,29 @@
             }
         });
 
+        const LEAD_PALETTE = ['#2563eb', '#7c3aed', '#0d9488', '#ea580c', '#db2777', '#16a34a', '#4338ca', '#0891b2'];
+        function leadPaletteColor(seed) {
+            let hash = 0;
+            String(seed || '').split('').forEach(ch => { hash = (hash * 31 + ch.charCodeAt(0)) >>> 0; });
+            return LEAD_PALETTE[hash % LEAD_PALETTE.length];
+        }
+        function leadInitials(name) {
+            const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+            if (!parts.length) return '?';
+            return (parts[0][0] + (parts[1] ? parts[1][0] : '')).toUpperCase();
+        }
+        const LEAD_STATUS_COLORS = {
+            'new': '#2563eb', 'hot': '#dc2626', 'warm': '#ea580c', 'cold': '#0891b2',
+            'contacted': '#7c3aed', 'interested': '#7c3aed', 'follow_up': '#ea580c',
+            'converted': '#16a34a', 'not_interested': '#6b7280', 'closed': '#6b7280',
+        };
+        function leadStatusColor(status) {
+            return LEAD_STATUS_COLORS[String(status || '').toLowerCase()] || leadPaletteColor(status);
+        }
+        function pillHtml(text, color) {
+            return `<span class="badge-pill" style="background:${color}1a;color:${color};">${esc(text)}</span>`;
+        }
+
         function scoreBand(score) {
             if (score === null || score === undefined) return { label: 'Unscored', cls: '' };
             if (score >= 70) return { label: `Hot · ${score}`, cls: 'badge-score-hot' };
@@ -406,23 +490,43 @@
                 $('#leadName').text(d.name || '(No name)');
                 $('#leadCompany').text(d.company_name || '');
 
+                const avatarColor = leadPaletteColor(d.name);
+                $('#leadAvatar').text(leadInitials(d.name)).css('background', avatarColor);
+
+                const typeLabel = d.lead_type ? d.lead_type.charAt(0).toUpperCase() + d.lead_type.slice(1) : 'Lead';
+                const sourceLabel = d.lead_source ? d.lead_source.replace(/_/g, ' ') : null;
+                $('#leadSubtitle').text(typeLabel + ' Lead' + (sourceLabel ? ' · ' + sourceLabel.charAt(0).toUpperCase() + sourceLabel.slice(1) : ''));
+
+                $('#leadBudgetValue').text(d.budget ? '₹' + Number(d.budget).toLocaleString('en-IN') : '—');
+
+                if (d.phone) { $('#leadCallBtn').attr('href', 'tel:' + d.phone).show(); }
+                if (d.email) { $('#leadEmailBtn').attr('href', 'mailto:' + d.email).show(); }
+
                 const band = scoreBand(d.score);
                 $('#leadBadges').html(`
-                    <span class="badge-pill">${esc(d.lead_type ?? '-')}</span>
-                    <span class="badge-pill">${esc(d.lead_source ?? '-')}</span>
-                    <span class="badge-pill">${esc(d.lead_status ?? '-')}</span>
-                    <span class="badge-pill">${esc(d.priority ?? '-')}</span>
-                    <span class="badge-pill ${band.cls}">${esc(band.label)}</span>
+                    ${pillHtml(d.lead_status ?? '-', leadStatusColor(d.lead_status))}
+                    ${pillHtml(d.priority ?? '-', leadPaletteColor(d.priority))}
+                    ${band.label ? pillHtml(band.label, band.cls === 'badge-score-hot' ? '#dc2626' : band.cls === 'badge-score-warm' ? '#ea580c' : '#0891b2') : ''}
                 `);
+
+                const assignedHtml = d.assigned_user
+                    ? `<span class="assignee-inline"><span class="assignee-avatar" style="background:${leadPaletteColor(d.assigned_user.name)}">${leadInitials(d.assigned_user.name)}</span>${esc(d.assigned_user.name)}</span>`
+                    : 'Unassigned';
 
                 $('#leadInfoCard').html(`
                     <div class="field-row"><span class="label">Phone</span><span class="value">${esc(d.phone ?? '-')}</span></div>
                     <div class="field-row"><span class="label">Email</span><span class="value">${esc(d.email ?? '-')}</span></div>
-                    <div class="field-row"><span class="label">Budget</span><span class="value">${esc(d.budget ?? '-')}</span></div>
-                    <div class="field-row"><span class="label">Assigned To</span><span class="value">${esc(d.assigned_user ? d.assigned_user.name : 'Unassigned')}</span></div>
+                    <div class="field-row"><span class="label">Budget</span><span class="value">${d.budget ? '₹' + Number(d.budget).toLocaleString('en-IN') : '-'}</span></div>
+                    <div class="field-row"><span class="label">Assigned To</span><span class="value">${assignedHtml}</span></div>
                     <div class="field-row"><span class="label">Follow-up</span><span class="value">${esc(d.follow_up_date ?? '-')} ${esc(d.follow_up_time ?? '')}</span></div>
                     <div class="field-row"><span class="label">City / State</span><span class="value">${esc(d.city ?? '-')} / ${esc(d.state ?? '-')}</span></div>
                 `);
+
+                $('#metricTags').text((d.tags || []).length);
+                if (d.created_at) {
+                    const days = Math.max(0, Math.floor((Date.now() - new Date(d.created_at).getTime()) / 86400000));
+                    $('#metricDaysOpen').text(days);
+                }
 
                 if (d.customer_contact) {
                     const c = d.customer_contact;
@@ -486,6 +590,7 @@
 
         function loadTimeline() {
             $.get("{{ url('leads') }}/" + leadId + "/timeline", function(response) {
+                $('#metricActivities').text(response.data.length);
                 let html = '';
                 response.data.forEach(item => {
                     html += `

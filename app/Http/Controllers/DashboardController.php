@@ -15,6 +15,7 @@ use App\Models\User;
 use App\Support\TenantContext;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 /**
  * One dashboard for every role (unified interface, increment 1) replacing
@@ -40,6 +41,12 @@ class DashboardController extends Controller
                 'charts' => $this->charts(),
                 'followUps' => $this->teamFollowUps(),
                 'closingSoon' => $this->dealsClosingSoon(),
+                'pipeline' => $this->pipelineByStage(),
+                'topPerformers' => $this->topPerformers(),
+                'recentLeads' => $this->recentLeads(),
+                'revenue' => $this->revenueOverview(),
+                'leadSources' => $this->leadSources(),
+                'winRate' => $this->winRate(),
             ]);
         }
 
@@ -48,7 +55,165 @@ class DashboardController extends Controller
             'scope' => 'own',
             'data' => $this->ownData($user->id),
             'followUps' => $this->userFollowUps($user->id),
+            'pipeline' => $this->pipelineByStage($user->id),
+            'recentLeads' => $this->recentLeads($user->id),
+            'revenue' => $this->revenueOverview($user->id),
+            'leadSources' => $this->leadSources($user->id),
+            'winRate' => $this->winRate($user->id),
         ]);
+    }
+
+    /**
+     * Open-deal breakdown per pipeline stage (count + value), same
+     * join/group shape as ReportController's $funnel query but all-time
+     * and open-only — this feeds the dashboard's "Sales Pipeline" widget.
+     */
+    private function pipelineByStage(?int $ownerId = null): array
+    {
+        return Deal::query()
+            ->join('pipeline_stages', 'pipeline_stages.id', '=', 'deals.stage_id')
+            ->where('deals.status', 'open')
+            ->when($ownerId, fn ($q) => $q->where('deals.owner_id', $ownerId))
+            ->groupBy('pipeline_stages.id', 'pipeline_stages.name', 'pipeline_stages.color', 'pipeline_stages.sort_order')
+            ->orderBy('pipeline_stages.sort_order')
+            ->get([
+                'pipeline_stages.name',
+                'pipeline_stages.color',
+                DB::raw('COUNT(deals.id) as deal_count'),
+                DB::raw('COALESCE(SUM(deals.amount), 0) as deal_value'),
+            ])
+            ->map(fn ($row) => [
+                'name' => $row->name,
+                'color' => $row->color,
+                'count' => (int) $row->deal_count,
+                'value' => (float) $row->deal_value,
+            ])
+            ->all();
+    }
+
+    /**
+     * Top 5 deal owners by won value. Deliberately does NOT join `deals` to
+     * `users` in SQL — `deals` lives on the per-tenant `tenant` connection
+     * while `users` only exists on the master connection (see
+     * User::getConnectionName()), so a cross-connection join 42S02s. Owner
+     * names/avatars are resolved with a separate User lookup instead.
+     */
+    private function topPerformers(int $limit = 5): array
+    {
+        $rows = Deal::query()
+            ->whereNotNull('owner_id')
+            ->groupBy('owner_id')
+            ->orderByDesc('won_value')
+            ->limit($limit)
+            ->get([
+                'owner_id',
+                DB::raw('COUNT(id) as deals_count'),
+                DB::raw("SUM(CASE WHEN status = 'won' THEN 1 ELSE 0 END) as won_count"),
+                DB::raw("COALESCE(SUM(CASE WHEN status = 'won' THEN amount ELSE 0 END), 0) as won_value"),
+            ])
+            ->filter(fn ($row) => $row->deals_count > 0);
+
+        $users = User::whereIn('id', $rows->pluck('owner_id'))->get()->keyBy('id');
+
+        return $rows->map(function ($row) use ($users) {
+            $performer = $users->get($row->owner_id);
+
+            return [
+                'id' => $row->owner_id,
+                'name' => $performer?->name ?? 'Unassigned',
+                'avatar' => $performer?->avatar ? asset($performer->avatar) : null,
+                'phone' => $performer?->phone,
+                'role' => $performer?->getRoleNames()->first(),
+                'deals' => (int) $row->deals_count,
+                'won' => (int) $row->won_count,
+                'wonValue' => (float) $row->won_value,
+            ];
+        })->values()->all();
+    }
+
+    private function recentLeads(?int $userId = null, int $limit = 6): array
+    {
+        return Lead::query()
+            ->when($userId, fn ($q) => $q->where('assigned_to', $userId))
+            ->latest()
+            ->limit($limit)
+            ->get(['id', 'name', 'email', 'phone', 'lead_source', 'lead_status', 'created_at'])
+            ->map(fn (Lead $lead) => [
+                'id' => $lead->id,
+                'name' => $lead->name,
+                'email' => $lead->email,
+                'phone' => $lead->phone,
+                'source' => $lead->lead_source ? ucfirst(str_replace('_', ' ', $lead->lead_source)) : 'Unknown',
+                'status' => $lead->lead_status ? ucfirst(str_replace('_', ' ', $lead->lead_status)) : 'New',
+                'created_at' => $lead->created_at?->format('d M Y'),
+                'url' => route('leads.show', $lead->id),
+            ])
+            ->all();
+    }
+
+    /**
+     * Booked revenue (orders) vs cash collected (payments) per month for
+     * the trailing window — the monthly equivalent of ReportController's
+     * daily $trend, feeding the dashboard's "Revenue Overview" bar chart.
+     */
+    private function revenueOverview(?int $userId = null, int $months = 6): array
+    {
+        $start = Carbon::now()->startOfMonth()->subMonths($months - 1);
+
+        $revenueByMonth = Order::query()
+            ->when($userId, fn ($q) => $q->where('user_id', $userId))
+            ->where('invoice_date', '>=', $start)
+            ->selectRaw("DATE_FORMAT(invoice_date, '%Y-%m') as ym, COALESCE(SUM(net_amount), 0) as total")
+            ->groupBy('ym')
+            ->pluck('total', 'ym');
+
+        $cashByMonth = PaymentDetails::query()
+            ->whereHas('order', fn ($q) => $userId ? $q->where('user_id', $userId) : $q)
+            ->where('payment_date', '>=', $start)
+            ->selectRaw("DATE_FORMAT(payment_date, '%Y-%m') as ym, COALESCE(SUM(payment_details.paid_amount), 0) as total")
+            ->groupBy('ym')
+            ->pluck('total', 'ym');
+
+        $months = collect(range($months - 1, 0))->map(fn ($i) => Carbon::now()->startOfMonth()->subMonths($i));
+
+        return [
+            'labels' => $months->map(fn ($m) => $m->format('M Y'))->all(),
+            'revenue' => $months->map(fn ($m) => (float) ($revenueByMonth[$m->format('Y-m')] ?? 0))->all(),
+            'cash' => $months->map(fn ($m) => (float) ($cashByMonth[$m->format('Y-m')] ?? 0))->all(),
+        ];
+    }
+
+    private function leadSources(?int $userId = null): array
+    {
+        return Lead::query()
+            ->when($userId, fn ($q) => $q->where('assigned_to', $userId))
+            ->selectRaw("COALESCE(NULLIF(lead_source, ''), 'Unknown') as label, COUNT(*) as total")
+            ->groupBy('label')
+            ->orderByDesc('total')
+            ->limit(6)
+            ->get()
+            ->map(fn ($row) => [
+                'label' => ucfirst(str_replace('_', ' ', $row->label)),
+                'total' => (int) $row->total,
+            ])
+            ->all();
+    }
+
+    private function winRate(?int $ownerId = null): array
+    {
+        $query = Deal::query()
+            ->whereIn('status', ['won', 'lost'])
+            ->when($ownerId, fn ($q) => $q->where('owner_id', $ownerId));
+
+        $won = (clone $query)->where('status', 'won')->count();
+        $lost = (clone $query)->where('status', 'lost')->count();
+        $total = $won + $lost;
+
+        return [
+            'won' => $won,
+            'lost' => $lost,
+            'rate' => $total ? round(($won / $total) * 100, 1) : 0,
+        ];
     }
 
     private function teamData(): array

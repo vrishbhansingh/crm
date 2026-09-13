@@ -53,6 +53,10 @@ class LeadController extends Controller
         $counts = [
             'active' => (clone $baseQuery)->whereDoesntHave('deal')->count(),
             'converted' => (clone $baseQuery)->whereHas('deal')->count(),
+            'newToday' => (clone $baseQuery)->whereDate('created_at', Carbon::today())->count(),
+            'followUpDue' => (clone $baseQuery)->whereDate('follow_up_date', '<=', Carbon::today())
+                ->whereNotIn('lead_status', ['converted', 'not_interested', 'closed'])
+                ->count(),
         ];
 
         $converted = $request->boolean('converted');

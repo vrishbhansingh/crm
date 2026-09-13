@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\RegistrationController;
 use App\Http\Controllers\WebhookLeadController;
+use App\Http\Controllers\WhatsAppWebhookController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -35,6 +36,11 @@ Route::middleware('throttle:5,1')->group(function () {
 // tenant). GET supports Meta's verification handshake for Facebook/WhatsApp;
 // POST is the actual lead delivery every platform uses.
 Route::middleware('throttle:30,1')->match(['get', 'post'], '/webhooks/leads/{token}', [WebhookLeadController::class, 'handle'])->name('webhooks.leads');
+
+// Public inbound WhatsApp webhook — same pattern as the lead-capture one
+// above: identified only by the account's opaque token, GET for Meta's
+// verification handshake, POST for actual messages/delivery statuses.
+Route::middleware('throttle:60,1')->match(['get', 'post'], '/webhooks/whatsapp/{token}', [WhatsAppWebhookController::class, 'handle'])->name('webhooks.whatsapp');
 
 // Route::get('/about-us', [WebController::class, 'aboutUs'])->name('website.about_us');
 // Route::get('/contact-us', [WebController::class, 'contactUs'])->name('website.contact_us');

@@ -213,8 +213,8 @@
         </div>
         @endcan
 
-        @canany(['templates.view', 'campaigns.view'])
-        <div class="nav-section {{ request()->routeIs(['templates.*','campaigns.*']) ? 'has-active' : '' }}">
+        @canany(['templates.view', 'campaigns.view', 'whatsapp.view', 'whatsapp.manage-settings'])
+        <div class="nav-section {{ request()->routeIs(['templates.*','campaigns.*','whatsapp.*']) ? 'has-active' : '' }}">
             <div class="nav-section-label">Marketing</div>
             <ul class="nav nav-sidebar-menu">
                 @can('templates.view')
@@ -228,6 +228,25 @@
                 <li class="mb-1" data-nav-label="Email Campaigns">
                     <a class="nav-link {{ request()->routeIs('campaigns.*') ? 'active' : '' }}" href="{{ route('campaigns.index') }}" title="Email Campaigns">
                         <i class="fa fa-paper-plane"></i><span>Email Campaigns</span>
+                    </a>
+                </li>
+                @endcan
+                @can('whatsapp.view')
+                <li class="mb-1" data-nav-label="WhatsApp Chat">
+                    <a class="nav-link {{ request()->routeIs('whatsapp.chat*') ? 'active' : '' }}" href="{{ route('whatsapp.chat') }}" title="WhatsApp Chat">
+                        <i class="fa fa-whatsapp"></i><span>WhatsApp Chat</span>
+                    </a>
+                </li>
+                <li class="mb-1" data-nav-label="WhatsApp Campaigns">
+                    <a class="nav-link {{ request()->routeIs('whatsapp.campaigns*') ? 'active' : '' }}" href="{{ route('whatsapp.campaigns.index') }}" title="WhatsApp Campaigns">
+                        <i class="fa fa-comments"></i><span>WhatsApp Campaigns</span>
+                    </a>
+                </li>
+                @endcan
+                @can('whatsapp.manage-settings')
+                <li class="mb-1" data-nav-label="WhatsApp Settings">
+                    <a class="nav-link {{ request()->routeIs('whatsapp.settings*') ? 'active' : '' }}" href="{{ route('whatsapp.settings.index') }}" title="WhatsApp Settings">
+                        <i class="fa fa-cog"></i><span>WhatsApp Settings</span>
                     </a>
                 </li>
                 @endcan

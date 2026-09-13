@@ -492,6 +492,40 @@
                 margin-bottom: 8px;
             }
         }
+
+        /* ===== Lead Stat Tiles ===== */
+        .lead-stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 18px;
+            margin: 20px 0 4px;
+        }
+
+        .lead-stat-card {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+            padding: 20px 22px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+        }
+
+        .lead-stat-card .lead-stat-value { font-size: 26px; font-weight: 700; color: #111827; line-height: 1.15; }
+        .lead-stat-card .lead-stat-label { font-size: 12.5px; color: #6b7280; margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.02em; }
+        .lead-stat-card .lead-stat-icon {
+            width: 42px; height: 42px; border-radius: 12px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center; font-size: 17px;
+        }
+
+        /* ===== Assigned-to avatar ===== */
+        .assignee-cell { display: inline-flex; align-items: center; gap: 8px; }
+        .assignee-avatar {
+            width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
+            display: inline-flex; align-items: center; justify-content: center;
+            color: #fff; font-weight: 700; font-size: 10.5px;
+        }
     </style>
 </head>
 
@@ -535,6 +569,36 @@
 
                 </div>
 
+                <div class="lead-stat-grid" id="leadStatGrid">
+                    <div class="lead-stat-card">
+                        <div>
+                            <div class="lead-stat-value" id="statTotalLeads">0</div>
+                            <div class="lead-stat-label">Total Leads</div>
+                        </div>
+                        <div class="lead-stat-icon" style="background:#eff6ff;color:#2563eb;"><i class="fa fa-bullseye"></i></div>
+                    </div>
+                    <div class="lead-stat-card">
+                        <div>
+                            <div class="lead-stat-value" id="statNewToday">0</div>
+                            <div class="lead-stat-label">New Today</div>
+                        </div>
+                        <div class="lead-stat-icon" style="background:#f5f3ff;color:#7c3aed;"><i class="fa fa-user-plus"></i></div>
+                    </div>
+                    <div class="lead-stat-card">
+                        <div>
+                            <div class="lead-stat-value" id="statConversionRate">0%</div>
+                            <div class="lead-stat-label">Conversion Rate</div>
+                        </div>
+                        <div class="lead-stat-icon" style="background:#ecfdf5;color:#16a34a;"><i class="fa fa-percent"></i></div>
+                    </div>
+                    <div class="lead-stat-card">
+                        <div>
+                            <div class="lead-stat-value" id="statFollowUpDue">0</div>
+                            <div class="lead-stat-label">Follow-up Due</div>
+                        </div>
+                        <div class="lead-stat-icon" style="background:#fff7ed;color:#ea580c;"><i class="fa fa-exclamation-circle"></i></div>
+                    </div>
+                </div>
 
                 <div class="row mb-3 d-none" id="bulkAssignBar">
                     <div class="col-md-8 d-flex align-items-center gap-2">
@@ -858,6 +922,37 @@
 
         const esc = value => $('<div>').text(value ?? '').html();
 
+        const LEAD_PALETTE = ['#2563eb', '#7c3aed', '#0d9488', '#ea580c', '#db2777', '#16a34a', '#4338ca', '#0891b2'];
+        function leadPaletteColor(seed) {
+            let hash = 0;
+            String(seed || '').split('').forEach(ch => { hash = (hash * 31 + ch.charCodeAt(0)) >>> 0; });
+            return LEAD_PALETTE[hash % LEAD_PALETTE.length];
+        }
+        function leadInitials(name) {
+            const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+            if (!parts.length) return '?';
+            return (parts[0][0] + (parts[1] ? parts[1][0] : '')).toUpperCase();
+        }
+
+        const LEAD_STATUS_COLORS = {
+            'new': '#2563eb', 'hot': '#dc2626', 'warm': '#ea580c', 'cold': '#0891b2',
+            'contacted': '#7c3aed', 'interested': '#7c3aed', 'follow_up': '#ea580c',
+            'converted': '#16a34a', 'not_interested': '#6b7280', 'closed': '#6b7280',
+        };
+        function leadStatusColor(status) {
+            return LEAD_STATUS_COLORS[String(status || '').toLowerCase()] || leadPaletteColor(status);
+        }
+
+        function renderLeadStats(counts) {
+            if (!counts) return;
+            const total = (counts.active || 0) + (counts.converted || 0);
+            const rate = total ? Math.round((counts.converted / total) * 1000) / 10 : 0;
+            $('#statTotalLeads').text(total);
+            $('#statNewToday').text(counts.newToday || 0);
+            $('#statConversionRate').text(rate + '%');
+            $('#statFollowUpDue').text(counts.followUpDue || 0);
+        }
+
         let allLeadsData = [];
         let activeLeadTab = 'active';
         let leadCurrentPage = 1;
@@ -882,6 +977,7 @@
                     if (response.counts) {
                         $('#activeLeadCount').text(response.counts.active);
                         $('#convertedLeadCount').text(response.counts.converted);
+                        renderLeadStats(response.counts);
                     }
 
                     renderLeadTab();
@@ -948,16 +1044,12 @@
                                 </td>
 
                              <td class="text-center">
-                                    <span 
+                                    <span
                                         id="leadStatus_${item.id}"
-                                        class="role-status ${
-                                            ['new','contacted','interested','follow_up','converted'].includes(item.lead_status)
-                                                ? 'status-active'
-                                                : 'status-inactive'
-                                        }"
+                                        class="role-status"
                                         data-id="${item.id}"
                                         data-status="${item.lead_status}"
-                                        style="cursor:pointer;"
+                                        style="cursor:pointer;background:${leadStatusColor(item.lead_status)}1a;color:${leadStatusColor(item.lead_status)};"
                                     >
                                         <span class="status-dot"></span>
                                         ${esc(formatLeadStatus(item.lead_status))}
@@ -980,14 +1072,15 @@
                                     }
                                 </td>
                                  <td class="text-center">
-                                    <span 
-                                        class="assign-user ${
+                                    <span
+                                        class="assign-user assignee-cell ${
                                             item.assigned_to ? 'assign-active' : 'assign-unassigned'
                                         }"
                                         data-lead_id="${item.id ?? ''}"
                                         data-assigned-id="${item.assigned_to_id ?? ''}"
                                         style="cursor:pointer;"
                                     >
+                                        ${item.assigned_to ? `<span class="assignee-avatar" style="background:${leadPaletteColor(item.assigned_to)}">${leadInitials(item.assigned_to)}</span>` : ''}
                                         ${esc(item.assigned_to ?? 'Unassigned')}
                                     </span>
                                 </td>
