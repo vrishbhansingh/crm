@@ -132,8 +132,8 @@
                         </div>
 
                         <div class="form-group" id="bodyField">
-                            <label>Message <small class="text-muted">(supports {{'{{'}}lead.name{{'}}'}}, {{'{{'}}lead.company_name{{'}}'}}, {{'{{'}}organization.name{{'}}'}}, etc.)</small></label>
-                            <textarea id="campaign_body" class="form-control" rows="3" placeholder="Hi {{'{{'}}lead.name{{'}}'}}, ..."></textarea>
+                            <label>Message <small class="text-muted">(supports @{{lead.name}}, @{{lead.company_name}}, @{{organization.name}}, etc.)</small></label>
+                            <textarea id="campaign_body" class="form-control" rows="3" placeholder="Hi @{{lead.name}}, ..."></textarea>
                         </div>
                         <div class="form-group" id="templateField" style="display:none;">
                             <label>Approved Template Name</label>

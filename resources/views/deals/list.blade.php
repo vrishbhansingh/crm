@@ -78,6 +78,40 @@
         .page-header .text-muted { font-size: 14px !important; }
 
         .page-header .btn { border-radius: 10px; padding: 10px 18px; font-weight: 600; }
+
+        .deal-stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+            gap: 18px;
+            margin-bottom: 20px;
+        }
+
+        .deal-stat-card {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+            padding: 20px 22px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+        }
+
+        .deal-stat-card .deal-stat-value { font-size: 26px; font-weight: 700; color: #111827; line-height: 1.15; }
+        .deal-stat-card .deal-stat-label { font-size: 12.5px; color: #6b7280; margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.02em; }
+        .deal-stat-card .deal-stat-icon {
+            width: 42px; height: 42px; border-radius: 12px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center; font-size: 17px;
+        }
+
+        .owner-cell { display: inline-flex; align-items: center; gap: 8px; }
+        .owner-avatar {
+            width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
+            display: inline-flex; align-items: center; justify-content: center;
+            color: #fff; font-weight: 700; font-size: 10.5px;
+        }
+
+        .stage-pill { display: inline-block; padding: 4px 11px; border-radius: 999px; font-size: 12px; font-weight: 700; }
     </style>
 </head>
 
@@ -107,6 +141,37 @@
                             <i class="fa fa-plus"></i> New Deal
                         </a>
                         @endcan
+                    </div>
+                </div>
+
+                <div class="deal-stat-grid" id="dealStatGrid">
+                    <div class="deal-stat-card">
+                        <div>
+                            <div class="deal-stat-value" id="statTotalDeals">0</div>
+                            <div class="deal-stat-label">Total Deals</div>
+                        </div>
+                        <div class="deal-stat-icon" style="background:#eff6ff;color:#2563eb;"><i class="fa fa-handshake-o"></i></div>
+                    </div>
+                    <div class="deal-stat-card">
+                        <div>
+                            <div class="deal-stat-value" id="statOpenDeals">0</div>
+                            <div class="deal-stat-label">Open Deals</div>
+                        </div>
+                        <div class="deal-stat-icon" style="background:#eef2ff;color:#4338ca;"><i class="fa fa-folder-open-o"></i></div>
+                    </div>
+                    <div class="deal-stat-card">
+                        <div>
+                            <div class="deal-stat-value" id="statPipelineValue">₹0</div>
+                            <div class="deal-stat-label">Pipeline Value</div>
+                        </div>
+                        <div class="deal-stat-icon" style="background:#ecfdf5;color:#16a34a;"><i class="fa fa-inr"></i></div>
+                    </div>
+                    <div class="deal-stat-card">
+                        <div>
+                            <div class="deal-stat-value" id="statWonDeals">0</div>
+                            <div class="deal-stat-label">Won Deals</div>
+                        </div>
+                        <div class="deal-stat-icon" style="background:#fff7ed;color:#ea580c;"><i class="fa fa-trophy"></i></div>
                     </div>
                 </div>
 
@@ -189,6 +254,33 @@
         const esc = value => $('<div>').text(value ?? '').html();
         const safeToken = value => /^[a-z0-9_-]+$/i.test(value || '') ? value : 'unknown';
 
+        const DEAL_PALETTE = ['#2563eb', '#7c3aed', '#0d9488', '#ea580c', '#db2777', '#16a34a', '#4338ca', '#0891b2'];
+        function dealPaletteColor(seed) {
+            let hash = 0;
+            String(seed || '').split('').forEach(ch => { hash = (hash * 31 + ch.charCodeAt(0)) >>> 0; });
+            return DEAL_PALETTE[hash % DEAL_PALETTE.length];
+        }
+        function dealInitials(name) {
+            const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+            if (!parts.length) return '?';
+            return (parts[0][0] + (parts[1] ? parts[1][0] : '')).toUpperCase();
+        }
+        function stagePillColor(name, color) {
+            if (color && /^#[0-9a-f]{3,8}$/i.test(color)) return color;
+            const lower = String(name || '').toLowerCase();
+            if (lower.includes('won')) return '#16a34a';
+            if (lower.includes('lost')) return '#dc2626';
+            return dealPaletteColor(name);
+        }
+
+        function renderDealStats(summary) {
+            if (!summary) return;
+            $('#statTotalDeals').text(summary.total || 0);
+            $('#statOpenDeals').text(summary.open || 0);
+            $('#statWonDeals').text(summary.won || 0);
+            $('#statPipelineValue').text('₹' + money(summary.pipelineValue));
+        }
+
         function getQueryParam(name) {
             return new URLSearchParams(window.location.search).get(name);
         }
@@ -225,14 +317,19 @@
                                 ? `<a href="{{ url('deals') }}?pipeline_id=${item.pipeline_id}">${esc(dash(item.pipeline_name))}</a>`
                                 : '-';
 
+                            const stageColor = stagePillColor(item.stage_name, item.stage_color);
+                            const ownerCell = item.owner_name
+                                ? `<span class="owner-cell"><span class="owner-avatar" style="background:${dealPaletteColor(item.owner_name)}">${dealInitials(item.owner_name)}</span>${esc(item.owner_name)}</span>`
+                                : '-';
+
                             tbody += `
                     <tr>
                         <td>${item.sl_no}</td>
                         <td><a href="{{ url('deals') }}/${item.id}"><strong>${esc(item.name)}</strong></a></td>
                         <td>${esc(item.currency ?? '')} ${money(item.amount)}</td>
                         <td>${pipelineCell}</td>
-                        <td>${esc(dash(item.stage_name))}</td>
-                        <td>${esc(dash(item.owner_name))}</td>
+                        <td><span class="stage-pill" style="background:${stageColor}1a;color:${stageColor}">${esc(dash(item.stage_name))}</span></td>
+                        <td>${ownerCell}</td>
                         <td>${leadCell}</td>
                         <td>${esc(dash(item.expected_close_date))}</td>
                         <td><span class="status-badge status-${safeToken(item.status)}">${esc(pretty(item.status))}</span></td>
@@ -248,6 +345,7 @@
                     }
 
                     $('#dealTable tbody').html(tbody);
+                    renderDealStats(response.summary);
                     renderCrmPagination('#dealPagination', response.meta, function(page) {
                         dealCurrentPage = page;
                         loadDealList();

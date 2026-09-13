@@ -61,11 +61,23 @@ class DealController extends Controller
     public function data(Request $request)
     {
         $me = Auth::guard('web')->user();
-        $query = $me->hasElevatedAccess() ? Deal::query() : Deal::where('owner_id', $me->id);
+        $baseQuery = $me->hasElevatedAccess() ? Deal::query() : Deal::where('owner_id', $me->id);
 
         if ($request->filled('pipeline_id')) {
-            $query->where('pipeline_id', $request->pipeline_id);
+            $baseQuery->where('pipeline_id', $request->pipeline_id);
         }
+
+        // Summary tiles reflect the pipeline scope (if any) but not the
+        // search/status filter below, same "whole tab, not just the
+        // filtered result" semantics as LeadController::get_lead()'s counts.
+        $summary = [
+            'total' => (clone $baseQuery)->count(),
+            'open' => (clone $baseQuery)->where('status', 'open')->count(),
+            'won' => (clone $baseQuery)->where('status', 'won')->count(),
+            'pipelineValue' => (float) (clone $baseQuery)->where('status', 'open')->sum('amount'),
+        ];
+
+        $query = clone $baseQuery;
         if ($request->filled('status')) {
             $query->where('status', $request->string('status'));
         }
@@ -112,6 +124,7 @@ class DealController extends Controller
                 'total' => $paginator->total(),
                 'per_page' => $paginator->perPage(),
             ],
+            'summary' => $summary,
         ]);
     }
 

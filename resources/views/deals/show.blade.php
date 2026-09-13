@@ -112,6 +112,38 @@
             color: var(--text-muted);
             margin-top: 2px;
         }
+
+        /* ===== Deal Detail hero: avatar + subtitle + amount ===== */
+        .deal-hero-top { display: flex; align-items: flex-start; gap: 16px; }
+        .deal-detail-avatar {
+            width: 52px; height: 52px; border-radius: 50%; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-weight: 700; font-size: 18px; margin-top: 2px;
+        }
+        .deal-subtitle { color: var(--text-muted); font-size: 13px; margin-top: 2px; }
+        .deal-hero-amount { text-align: right; flex-shrink: 0; }
+        .deal-hero-amount .value { font-size: 22px; font-weight: 700; color: #16a34a; }
+        .deal-hero-amount .label { font-size: 11.5px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .03em; }
+        .deal-hero-actions { display: flex; gap: 8px; margin-top: 10px; }
+        .deal-hero-actions .btn { border-radius: 10px; font-weight: 600; font-size: 13px; }
+
+        .deal-metric-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px; margin: 18px 0 22px;
+        }
+        .deal-metric-tile {
+            background: #fff; border-radius: 14px; box-shadow: 0 8px 22px rgba(0,0,0,.05);
+            border: 1px solid var(--border); padding: 16px 18px; text-align: center;
+        }
+        .deal-metric-tile .metric-value { font-size: 24px; font-weight: 700; color: var(--text-dark); }
+        .deal-metric-tile .metric-label { font-size: 12px; color: var(--text-muted); margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: .02em; }
+
+        .owner-inline { display: inline-flex; align-items: center; gap: 6px; }
+        .owner-inline .owner-avatar {
+            width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0;
+            display: inline-flex; align-items: center; justify-content: center;
+            color: #fff; font-weight: 700; font-size: 9px;
+        }
     </style>
 </head>
 
@@ -127,14 +159,41 @@
 
             <div class="content-wrapper">
 
-                <div class="crm-page-header d-flex justify-content-between align-items-center">
-                    <div>
-                        <a href="{{ route('deals.list') }}" class="text-muted" style="font-size:12px;">
-                            <i class="fa fa-arrow-left"></i> Back to Deals
-                        </a>
-                        <h4 class="deal-title mt-1" id="dealName">Loading…</h4>
+                <div class="crm-page-header d-flex justify-content-between align-items-start flex-wrap" style="gap:16px;">
+                    <div class="deal-hero-top">
+                        <div class="deal-detail-avatar" id="dealAvatar">?</div>
+                        <div>
+                            <a href="{{ route('deals.list') }}" class="text-muted" style="font-size:12px;">
+                                <i class="fa fa-arrow-left"></i> Back to Deals
+                            </a>
+                            <h4 class="deal-title mt-1" id="dealName">Loading…</h4>
+                            <div class="deal-subtitle" id="dealSubtitle"></div>
+                            <div id="dealBadges" class="mt-2"></div>
+                            <div class="deal-hero-actions">
+                                <a href="#" id="dealCallBtn" class="btn btn-success btn-sm" style="display:none;"><i class="fa fa-phone"></i> Call Lead</a>
+                                <a href="#" id="dealEmailBtn" class="btn btn-outline-secondary btn-sm" style="display:none;"><i class="fa fa-envelope"></i> Email Lead</a>
+                            </div>
+                        </div>
                     </div>
-                    <div id="dealBadges" class="text-right"></div>
+                    <div class="deal-hero-amount">
+                        <div class="value" id="dealAmountValue">—</div>
+                        <div class="label">Deal Amount</div>
+                    </div>
+                </div>
+
+                <div class="deal-metric-grid">
+                    <div class="deal-metric-tile">
+                        <div class="metric-value" id="metricDaysOpen">—</div>
+                        <div class="metric-label">Days Open</div>
+                    </div>
+                    <div class="deal-metric-tile">
+                        <div class="metric-value" id="metricStageChanges">—</div>
+                        <div class="metric-label">Stage Changes</div>
+                    </div>
+                    <div class="deal-metric-tile">
+                        <div class="metric-value" id="metricDaysToClose">—</div>
+                        <div class="metric-label">Days to Close</div>
+                    </div>
                 </div>
 
                 <div class="row">
@@ -293,21 +352,54 @@
             return { open: 'badge-open', won: 'badge-won', lost: 'badge-lost' }[status] || 'badge-open';
         }
 
+        const DEAL_PALETTE = ['#2563eb', '#7c3aed', '#0d9488', '#ea580c', '#db2777', '#16a34a', '#4338ca', '#0891b2'];
+        function dealPaletteColor(seed) {
+            let hash = 0;
+            String(seed || '').split('').forEach(ch => { hash = (hash * 31 + ch.charCodeAt(0)) >>> 0; });
+            return DEAL_PALETTE[hash % DEAL_PALETTE.length];
+        }
+        function dealInitials(name) {
+            const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+            if (!parts.length) return '?';
+            return (parts[0][0] + (parts[1] ? parts[1][0] : '')).toUpperCase();
+        }
+
         function loadDetail() {
             $.get("{{ url('deals') }}/" + dealId + "/detail", function(response) {
                 const d = response.data;
                 currentDeal = d;
 
                 $('#dealName').text(d.name);
+                $('#dealAvatar').text(dealInitials(d.name)).css('background', dealPaletteColor(d.name));
+                $('#dealSubtitle').text([d.pipeline?.name, d.stage?.name].filter(Boolean).join(' · '));
+                $('#dealAmountValue').text((d.currency ?? '') + ' ' + money(d.amount));
                 $('#dealBadges').html(`<span class="badge-pill ${statusBadgeClass(d.status)}">${esc((d.status || '').toUpperCase())}</span>`);
+
+                if (d.lead && d.lead.phone) { $('#dealCallBtn').attr('href', 'tel:' + d.lead.phone).show(); }
+                if (d.lead && d.lead.email) { $('#dealEmailBtn').attr('href', 'mailto:' + d.lead.email).show(); }
+
+                if (d.created_at) {
+                    const days = Math.max(0, Math.floor((Date.now() - new Date(d.created_at).getTime()) / 86400000));
+                    $('#metricDaysOpen').text(days);
+                }
+                if (d.expected_close_date) {
+                    const daysLeft = Math.ceil((new Date(d.expected_close_date).getTime() - Date.now()) / 86400000);
+                    $('#metricDaysToClose').text(daysLeft >= 0 ? daysLeft : 'Past due');
+                } else {
+                    $('#metricDaysToClose').text('-');
+                }
 
                 const pipelineLink = d.pipeline
                     ? '<a href="' + "{{ url('deals') }}" + '?pipeline_id=' + d.pipeline.id + '">' + esc(d.pipeline.name) + '</a>'
                     : '-';
 
+                const ownerValue = d.owner
+                    ? `<span class="owner-inline"><span class="owner-avatar" style="background:${dealPaletteColor(d.owner.name)}">${dealInitials(d.owner.name)}</span>${esc(d.owner.name)}</span>`
+                    : 'Unassigned';
+
                 $('#dealInfoView').html(`
                     <div class="field-row"><span class="label">Amount</span><span class="value">${esc(d.currency ?? '')} ${money(d.amount)}</span></div>
-                    <div class="field-row"><span class="label">Owner</span><span class="value">${esc(d.owner ? d.owner.name : 'Unassigned')}</span></div>
+                    <div class="field-row"><span class="label">Owner</span><span class="value">${ownerValue}</span></div>
                     <div class="field-row"><span class="label">Pipeline</span><span class="value">${pipelineLink}</span></div>
                     <div class="field-row"><span class="label">Expected Close Date</span><span class="value">${esc(dash(d.expected_close_date))}</span></div>
                     <div class="field-row"><span class="label">Created By</span><span class="value">${esc(d.created_by ? d.created_by.name : '-')}</span></div>
@@ -447,6 +539,7 @@
 
         function loadTimeline() {
             $.get("{{ url('deals') }}/" + dealId + "/timeline", function(response) {
+                $('#metricStageChanges').text(response.data.length);
                 let html = '';
                 response.data.forEach(item => {
                     html += `

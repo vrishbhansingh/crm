@@ -86,17 +86,16 @@ class WhatsAppChatController extends Controller
         ]);
     }
 
-    public function send(Request $request, WhatsAppMessageService $messages)
+    public function send(Request $request, $id, WhatsAppMessageService $messages)
     {
         $data = $request->validate([
-            'conversation_id' => 'required|integer',
             'type' => 'required|in:text,template',
             'body' => 'required_if:type,text|nullable|string|max:4096',
             'template_name' => 'required_if:type,template|nullable|string|max:150',
             'template_params' => 'nullable|array',
         ]);
 
-        $conversation = WhatsappConversation::findOrFail($data['conversation_id']);
+        $conversation = WhatsappConversation::findOrFail($id);
         $account = WhatsappAccount::find($conversation->whatsapp_account_id);
         abort_if(! $account || $account->tenant_id !== TenantContext::id(), 404);
 
