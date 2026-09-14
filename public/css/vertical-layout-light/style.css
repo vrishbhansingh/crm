@@ -28505,6 +28505,17 @@ div.tagsinput span.tag a {
   width: 100%;
   -webkit-flex-grow: 1;
   flex-grow: 1;
+  /* Flex items default to min-width:auto, which floors their width at
+     their content's intrinsic min-content size — for a page with a wide
+     table (many white-space:nowrap columns, e.g. Leads), that floor can
+     exceed the viewport, forcing this whole flex item wider than the
+     screen. html{overflow-x:hidden} elsewhere in this file then clips the
+     excess silently (no scrollbar), so it reads as content just vanishing
+     off the right edge rather than an obvious overflow. min-width:0 lets
+     this shrink to the viewport instead, so a wide table's own
+     .table-responsive{overflow-x:auto} gets to do its job with an
+     internal scrollbar, instead of the whole page layout blowing out. */
+  min-width: 0;
 }
 
 @media (max-width: 767px) {
