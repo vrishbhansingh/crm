@@ -88,29 +88,26 @@ class LeadController extends Controller
             $editUrl = route('leads.edit', $lead->id);
             $dealUrl = $lead->deal ? route('deals.show', $lead->deal->id) : null;
             $action = "
-                <div class='action-stack'>
-                    <a href='{$editUrl}'
-                        class='btn btn-sm btn-success action-status editbtn'
-                        '>
-                        <i class='fa fa-check-circle'></i> Edit
-                    </a>";
+                <div class='row-actions'>
+                    <button type='button' class='row-actions-btn' aria-label='Actions'><i class='fa fa-ellipsis-v'></i></button>
+                    <div class='row-actions-menu'>
+                        <a href='{$editUrl}' class='editbtn'><i class='fa fa-pencil'></i> Edit</a>";
 
             if ($dealUrl) {
                 $action .= "
-                    <a href='{$dealUrl}'
-                        class='btn btn-sm btn-primary action-status'>
-                        <i class='fa fa-briefcase'></i> View Deal
-                    </a>";
+                        <a href='{$dealUrl}'><i class='fa fa-briefcase'></i> View Deal</a>";
             }
 
             $action .= "
-                    <button
-                        class='btn btn-sm btn-danger action-delete delete_data'
-                        data-id='{$lead->id}'
-                        data-toggle='modal'
-                        data-target='#deleteConfirmModal'>
-                        <i class='fa fa-trash'></i> Delete
-                    </button>
+                        <button
+                            type='button'
+                            class='action-delete delete_data text-danger'
+                            data-id='{$lead->id}'
+                            data-toggle='modal'
+                            data-target='#deleteConfirmModal'>
+                            <i class='fa fa-trash'></i> Delete
+                        </button>
+                    </div>
                 </div>";
             $user = User::find($lead->assigned_to);
 

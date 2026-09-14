@@ -122,6 +122,58 @@
             background: #f3f4f6;
             color: #6b7280;
         }
+
+        .row-actions { position: relative; display: inline-block; }
+        .row-actions-btn {
+            width: 32px; height: 32px; border-radius: 8px; border: none; background: transparent;
+            color: #6b7280; display: inline-flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 16px;
+        }
+        .row-actions-btn:hover { background: #f1f3f9; color: #1f2937; }
+        .row-actions-menu {
+            position: absolute; right: 0; top: 100%; margin-top: 4px; min-width: 170px;
+            background: #fff; border-radius: 12px; box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+            padding: 6px; z-index: 50; display: none; text-align: left;
+        }
+        .row-actions-menu.is-open { display: block; }
+        .row-actions-menu a, .row-actions-menu button {
+            display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 12px; border-radius: 8px;
+            font-size: 13px; color: #374151; text-decoration: none; border: none; background: transparent;
+            text-align: left; cursor: pointer;
+        }
+        .row-actions-menu a:hover, .row-actions-menu button:hover { background: #f3f4f6; }
+        .row-actions-menu i { width: 16px; text-align: center; color: #6b7280; }
+        .row-actions-menu .text-danger { color: #dc2626; }
+        .row-actions-menu .text-danger i { color: #dc2626; }
+        .row-actions-menu .text-danger:hover { background: #fef2f2; }
+
+        [data-theme="dark"] {
+            --border: #2a2e40;
+            --text-dark: #eef0f6;
+            --text-muted: #9aa1b5;
+        }
+        [data-theme="dark"] .crm-page-header,
+        [data-theme="dark"] .type-list,
+        [data-theme="dark"] .values-panel {
+            background: #1a1d2b;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+        }
+        [data-theme="dark"] .type-list button.active { background: #232637; color: #93a4fd; }
+        [data-theme="dark"] .type-list button:hover { background: #232637; }
+        [data-theme="dark"] #valuesTable td { color: var(--text-dark); border-color: #2a2e40; }
+        [data-theme="dark"] .status-pill.active { background: rgba(21, 128, 61, 0.25); color: #4ade80; }
+        [data-theme="dark"] .status-pill.inactive { background: #232637; color: #9aa1b5; }
+        [data-theme="dark"] .row-actions-btn { color: #9aa1b5; }
+        [data-theme="dark"] .row-actions-btn:hover { background: #232637; color: #eef0f6; }
+        [data-theme="dark"] .row-actions-menu { background: #1e2233; box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4); }
+        [data-theme="dark"] .row-actions-menu a, [data-theme="dark"] .row-actions-menu button { color: #e2e8f5; }
+        [data-theme="dark"] .row-actions-menu i { color: #93a4fd; }
+        [data-theme="dark"] .row-actions-menu a:hover, [data-theme="dark"] .row-actions-menu button:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
+        [data-theme="dark"] .row-actions-menu .text-danger { color: #fca5a5; }
+        [data-theme="dark"] .row-actions-menu .text-danger i { color: #fca5a5; }
+        [data-theme="dark"] .row-actions-menu .text-danger:hover { background: rgba(239, 68, 68, 0.18); }
+        [data-theme="dark"] .modal-content { background: #1a1d2b; color: var(--text-dark); }
+        [data-theme="dark"] .value-color-dot { border-color: #2a2e40; }
     </style>
 </head>
 
@@ -274,17 +326,22 @@
                             <td><span class="status-pill ${statusClass}">${statusLabel}</span></td>
                             <td><small class="text-muted">${scope}</small></td>
                             <td>
-                                <button class="btn btn-sm btn-outline-primary editValueBtn"
-                                    data-id="${v.id}" data-code="${esc(v.code)}" data-label="${esc(v.label)}"
-                                    data-color="${esc(v.color ?? '')}" data-sort="${v.sort_order}">
-                                    <i class="fa fa-pencil"></i>
-                                </button>
-                                <button class="btn btn-sm btn-outline-secondary toggleStatusBtn" data-id="${v.id}" data-active="${v.is_active ? '1' : '0'}">
-                                    <i class="fa fa-power-off"></i>
-                                </button>
-                                <button class="btn btn-sm btn-outline-danger deleteValueBtn" data-id="${v.id}">
-                                    <i class="fa fa-trash"></i>
-                                </button>
+                                <div class="row-actions">
+                                    <button type="button" class="row-actions-btn" aria-label="Actions"><i class="fa fa-ellipsis-v"></i></button>
+                                    <div class="row-actions-menu">
+                                        <button class="editValueBtn"
+                                            data-id="${v.id}" data-code="${esc(v.code)}" data-label="${esc(v.label)}"
+                                            data-color="${esc(v.color ?? '')}" data-sort="${v.sort_order}">
+                                            <i class="fa fa-pencil"></i> Edit
+                                        </button>
+                                        <button class="toggleStatusBtn" data-id="${v.id}" data-active="${v.is_active ? '1' : '0'}">
+                                            <i class="fa fa-power-off"></i> ${v.is_active ? 'Deactivate' : 'Activate'}
+                                        </button>
+                                        <button class="deleteValueBtn text-danger" data-id="${v.id}">
+                                            <i class="fa fa-trash"></i> Delete
+                                        </button>
+                                    </div>
+                                </div>
                             </td>
                         </tr>`;
                 });
@@ -400,6 +457,19 @@
         $('#valueModal').on('hidden.bs.modal', function() {
             $('#value_code').prop('readonly', false);
         });
+
+        $(document).on('click', '.row-actions-btn', function(e) {
+            e.stopPropagation();
+            const menu = $(this).siblings('.row-actions-menu');
+            const opening = !menu.hasClass('is-open');
+            $('.row-actions-menu').removeClass('is-open');
+            if (opening) {
+                const rect = this.getBoundingClientRect();
+                menu.css({ position: 'fixed', top: rect.bottom + 4, left: 'auto', right: window.innerWidth - rect.right }).addClass('is-open');
+            }
+        });
+        $(document).on('click', '.row-actions-menu', function(e) { e.stopPropagation(); });
+        $(document).on('click', function() { $('.row-actions-menu').removeClass('is-open'); });
 
         $(document).ready(function() {
             loadTypes();

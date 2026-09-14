@@ -110,60 +110,6 @@
             font-weight: 500;
         }
 
-        /* ===== Action Column (Image Match) ===== */
-        .action-stack {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            align-items: center;
-        }
-
-        .action-stack .btn {
-            width: 90px;
-            font-size: 12px;
-            font-weight: 500;
-            padding: 6px 0;
-            border-radius: 6px;
-        }
-
-        .action-stack .btn i {
-            margin-right: 4px;
-            font-size: 13px;
-        }
-
-        /* Subtle hover like image */
-        .action-stack .btn-success:hover {
-            background-color: #218838;
-        }
-
-        .action-stack .btn-danger:hover {
-            background-color: #c82333;
-        }
-
-
-        /* ===== Status Badge ===== */
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 500;
-            cursor: pointer;
-            user-select: none;
-        }
-
-        .status-active {
-            background: #e9f7ef;
-            color: #1e7e34;
-        }
-
-        .status-inactive {
-            background: #fdf1f1;
-            color: #c82333;
-        }
-
         .status-dot {
             width: 7px;
             height: 7px;
@@ -527,6 +473,42 @@
             color: #fff; font-weight: 700; font-size: 10.5px;
         }
 
+        /* ===== Row actions (3-dot menu) — shared pattern, reused across
+           every list page being migrated off inline button pairs. ===== */
+        .row-actions { position: relative; display: inline-block; }
+        .row-actions-btn {
+            width: 32px; height: 32px; border-radius: 8px; border: none; background: transparent;
+            color: #6b7280; display: inline-flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 16px; line-height: 1;
+        }
+        .row-actions-btn:hover { background: #f1f3f9; color: #1f2937; }
+        .row-actions-menu {
+            position: absolute; right: 0; top: 100%; margin-top: 4px; min-width: 150px;
+            background: #fff; border-radius: 12px; box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+            padding: 6px; z-index: 50; display: none; text-align: left;
+        }
+        .row-actions-menu.is-open { display: block; }
+        .row-actions-menu a, .row-actions-menu button {
+            display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 12px; border-radius: 8px;
+            font-size: 13px; color: #374151; text-decoration: none; border: none; background: transparent;
+            text-align: left; cursor: pointer;
+        }
+        .row-actions-menu a:hover, .row-actions-menu button:hover { background: #f3f4f6; }
+        .row-actions-menu i { width: 16px; text-align: center; color: #6b7280; }
+        .row-actions-menu .text-danger { color: #dc2626; }
+        .row-actions-menu .text-danger i { color: #dc2626; }
+        .row-actions-menu .text-danger:hover { background: #fef2f2; }
+
+        [data-theme="dark"] .row-actions-btn { color: #9aa1b5; }
+        [data-theme="dark"] .row-actions-btn:hover { background: #232637; color: #eef0f6; }
+        [data-theme="dark"] .row-actions-menu { background: #1e2233; box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4); }
+        [data-theme="dark"] .row-actions-menu a, [data-theme="dark"] .row-actions-menu button { color: #e2e8f5; }
+        [data-theme="dark"] .row-actions-menu i { color: #93a4fd; }
+        [data-theme="dark"] .row-actions-menu a:hover, [data-theme="dark"] .row-actions-menu button:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
+        [data-theme="dark"] .row-actions-menu .text-danger { color: #fca5a5; }
+        [data-theme="dark"] .row-actions-menu .text-danger i { color: #fca5a5; }
+        [data-theme="dark"] .row-actions-menu .text-danger:hover { background: rgba(239, 68, 68, 0.18); }
+
         /* Dark mode — this page predates the CSS-variable pattern used on
            newer pages (Dashboard, Deal/Lead detail), so every card surface
            and text color needs an explicit override here rather than a
@@ -710,7 +692,6 @@
                                                 <th class="text-center">Priority</th>
                                                 <th class="text-center">Follow Up</th>
                                                 <th class="text-center">Assigned To</th>
-                                                <th class="text-center">Status</th>
                                                 <th class="text-center">Action</th>
                                             </tr>
                                         </thead>
@@ -763,40 +744,6 @@
         </div>
     </div>
 
-    <div class="modal fade" id="statusConfirmModal" tabindex="-1" aria-labelledby="statusConfirmLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-sm">
-            <div class="modal-content">
-
-                <div class="modal-header bg-light">
-                    <h5 class="modal-title mb-0" id="statusConfirmLabel">Confirm Status Update</h5>
-
-                    <button type="button" class="close-btn" data-dismiss="modal" aria-label="Close">
-                        &times;
-                    </button>
-                </div>
-
-
-                <div class="modal-body text-center">
-                    <p class="mb-0">
-                        Are you sure you want to change this user’s status to <strong id="statusConfirmText">Active/Inactive</strong>?
-                    </p>
-                    <small class="text-muted">
-                        This action cannot be undone.
-                    </small>
-                </div>
-
-                <div class="modal-footer justify-content-center">
-                    <button type="button" class="btn btn-dark btn-sm" data-dismiss="modal">
-                        Cancel
-                    </button>
-                    <button type="button" class="btn btn-success btn-sm" id="confirmStatusBtn">
-                        Confirm Update
-                    </button>
-                </div>
-
-            </div>
-        </div>
-    </div>
 
     <div class="modal fade" id="changeLeadStatusModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered modal-sm">
@@ -1123,15 +1070,6 @@
                                         ${esc(item.assigned_to ?? 'Unassigned')}
                                     </span>
                                 </td>
-                                <td class="text-center">
-                                        <span 
-                                            class="status-badge ${item.status === 'Active' ? 'status-active' : 'status-inactive'}"
-                                            data-id="${item.id}"
-                                            data-status="${item.status}">
-                                            <span class="status-dot"></span>
-                                            ${esc(item.status)}
-                                        </span>
-                                    </td>
 
                                 <!-- Action -->
                                 <td class="text-center">
@@ -1334,10 +1272,10 @@
 
         // Clicking anywhere on a lead's row opens its detail page — except
         // when the click is on something interactive within the row
-        // (checkbox, expand icon, status pill, assign badge, action buttons),
+        // (checkbox, expand icon, status pill, assign badge, action menu),
         // which each already handle their own click.
         $(document).on('click', '#userTable tbody tr.lead-row', function(e) {
-            if ($(e.target).closest('a, button, input, .toggle-row, .status-badge, .role-status, .assign-user').length) {
+            if ($(e.target).closest('a, button, input, .toggle-row, .role-status, .assign-user, .row-actions').length) {
                 return;
             }
             const id = $(this).data('lead-id');
@@ -1346,49 +1284,23 @@
             }
         });
 
-
-
-        let selectedUserId = null;
-
-        $(document).on('click', '.status-badge', function() {
-            selectedUserId = $(this).data('id');
-            const currentStatus = $(this).data('status');
-
-            // Update modal text dynamically
-            $('#statusConfirmText').text(
-                ` ${
-            currentStatus === 'Active' ? 'Inactive' : 'Active'
-        }`
-            );
-
-            $('#statusConfirmModal').modal('show');
+        // Row action menus (3-dot Edit/Delete) — shared pattern, one open
+        // at a time, closes on any click elsewhere.
+        $(document).on('click', '.row-actions-btn', function(e) {
+            e.stopPropagation();
+            const menu = $(this).siblings('.row-actions-menu');
+            const opening = !menu.hasClass('is-open');
+            $('.row-actions-menu').removeClass('is-open');
+            if (opening) {
+                // position:fixed from the button's own rect — .table-responsive's
+                // overflow-x:auto implicitly clips overflow-y too, which would
+                // otherwise cut the menu off mid-row.
+                const rect = this.getBoundingClientRect();
+                menu.css({ position: 'fixed', top: rect.bottom + 4, left: 'auto', right: window.innerWidth - rect.right }).addClass('is-open');
+            }
         });
-
-        $('#confirmStatusBtn').on('click', function() {
-
-            if (!selectedUserId) return;
-
-            $.ajax({
-                url: '{{ route("leads.toggle_status") }}',
-                type: 'POST',
-                data: {
-                    _token: '{{ csrf_token() }}',
-                    id: selectedUserId
-                },
-                success: function(res) {
-                    if (res.status) {
-                        showToast(res.message || 'Status updated successfully');
-                        $('#statusConfirmModal').modal('hide');
-                        loadLeadList();
-                    } else {
-                        showToast('Failed to update status', 'error');
-                    }
-                },
-                error: function() {
-                    showToast('Server error', 'error');
-                }
-            });
-        });
+        $(document).on('click', '.row-actions-menu', function(e) { e.stopPropagation(); });
+        $(document).on('click', function() { $('.row-actions-menu').removeClass('is-open'); });
 
         function formatLeadStatus(status) {
             if (!status) return '-';

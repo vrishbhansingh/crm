@@ -14,6 +14,32 @@
         .task-row:hover { background:#f8fbff; } .task-title { font-weight:600;color:#1f2937;font-size:15px}.task-meta{font-size:13px;color:#6b7280}.priority{font-size:12px;font-weight:700;text-transform:uppercase}.overdue{color:#dc2626}.completed .task-title{text-decoration:line-through;color:#9ca3af}
         .filter-grid { display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px }
         @media(max-width:900px){.task-row{grid-template-columns:30px 1fr}.task-cell-secondary{grid-column:2}}
+        .row-actions{position:relative;display:inline-block}
+        .row-actions-btn{width:32px;height:32px;border-radius:8px;border:none;background:transparent;color:#6b7280;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px}
+        .row-actions-btn:hover{background:#f1f3f9;color:#1f2937}
+        .row-actions-menu{position:absolute;right:0;top:100%;margin-top:4px;min-width:150px;background:#fff;border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,.15);padding:6px;z-index:50;display:none;text-align:left}
+        .row-actions-menu.is-open{display:block}
+        .row-actions-menu a,.row-actions-menu button{display:flex;align-items:center;gap:10px;width:100%;padding:9px 12px;border-radius:8px;font-size:13px;color:#374151;text-decoration:none;border:none;background:transparent;text-align:left;cursor:pointer}
+        .row-actions-menu a:hover,.row-actions-menu button:hover{background:#f3f4f6}
+        .row-actions-menu i{width:16px;text-align:center;color:#6b7280}
+        .row-actions-menu .text-danger{color:#dc2626}.row-actions-menu .text-danger i{color:#dc2626}.row-actions-menu .text-danger:hover{background:#fef2f2}
+
+        [data-theme="dark"] .crm-page-header,[data-theme="dark"] .task-shell,[data-theme="dark"] .card{background:#1a1d2b;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+        [data-theme="dark"] .crm-page-header h3{color:#eef0f6}
+        [data-theme="dark"] .crm-page-header p{color:#9aa1b5}
+        [data-theme="dark"] .task-row{border-bottom-color:#2a2e40}
+        [data-theme="dark"] .task-row:hover{background:#20233a}
+        [data-theme="dark"] .task-title{color:#eef0f6}
+        [data-theme="dark"] .task-meta{color:#9aa1b5}
+        [data-theme="dark"] .row-actions-btn{color:#9aa1b5}
+        [data-theme="dark"] .row-actions-btn:hover{background:#232637;color:#eef0f6}
+        [data-theme="dark"] .row-actions-menu{background:#1e2233;box-shadow:0 16px 36px rgba(0,0,0,.4)}
+        [data-theme="dark"] .row-actions-menu a,[data-theme="dark"] .row-actions-menu button{color:#e2e8f5}
+        [data-theme="dark"] .row-actions-menu i{color:#93a4fd}
+        [data-theme="dark"] .row-actions-menu a:hover,[data-theme="dark"] .row-actions-menu button:hover{background:rgba(255,255,255,.08);color:#fff}
+        [data-theme="dark"] .row-actions-menu .text-danger{color:#fca5a5}
+        [data-theme="dark"] .row-actions-menu .text-danger i{color:#fca5a5}
+        [data-theme="dark"] .row-actions-menu .text-danger:hover{background:rgba(239,68,68,.18)}
     </style>
 </head>
 <body><div class="container-scroller">@include('include.header')<div class="container-fluid page-body-wrapper">@include('include.sidebar')<div class="main-panel"><div class="content-wrapper">
@@ -58,7 +84,7 @@
             <div class="task-cell-secondary"><span class="priority text-${t.priority === 'urgent' ? 'danger' : (t.priority === 'high' ? 'warning' : 'primary')}">${esc(t.priority)}</span></div>
             <div class="task-cell-secondary ${t.is_overdue ? 'overdue' : ''}"><i class="fa fa-clock-o"></i> ${esc(localDate(t.due_at))}</div>
             <div class="task-cell-secondary">${esc(t.assignee?.name || 'Unassigned')}</div>
-            <div class="task-cell-secondary">${canEdit ? '<button class="btn btn-sm btn-outline-primary editTask"><i class="fa fa-pencil"></i></button>' : ''} ${canDelete ? '<button class="btn btn-sm btn-outline-danger deleteTask"><i class="fa fa-trash"></i></button>' : ''}</div>
+            <div class="task-cell-secondary">${(canEdit || canDelete) ? `<div class="row-actions"><button type="button" class="row-actions-btn" aria-label="Actions"><i class="fa fa-ellipsis-v"></i></button><div class="row-actions-menu">${canEdit ? '<button class="editTask"><i class="fa fa-pencil"></i> Edit</button>' : ''}${canDelete ? '<button class="deleteTask text-danger"><i class="fa fa-trash"></i> Delete</button>' : ''}</div></div>` : ''}</div>
         </div>`).join(''));
     }
     async function loadRelated(type, selected = '') {
@@ -78,6 +104,9 @@
     $(document).on('click', '.editTask', function(){ openTask(tasks.find(t => t.id === Number($(this).closest('.task-row').data('id')))); });
     $(document).on('click', '.completeTask', function(){ $.ajax({url:`{{ url('/tasks') }}/${$(this).closest('.task-row').data('id')}/complete`,method:'POST',headers:{'X-CSRF-TOKEN':csrf}}).done(loadTasks); });
     $(document).on('click', '.deleteTask', function(){ if(confirm('Delete this task?')) $.ajax({url:`{{ url('/tasks') }}/${$(this).closest('.task-row').data('id')}`,method:'DELETE',headers:{'X-CSRF-TOKEN':csrf}}).done(loadTasks); });
+    $(document).on('click', '.row-actions-btn', function(e){ e.stopPropagation(); const menu=$(this).siblings('.row-actions-menu'); const opening=!menu.hasClass('is-open'); $('.row-actions-menu').removeClass('is-open'); if(opening){ const rect=this.getBoundingClientRect(); menu.css({position:'fixed',top:rect.bottom+4,left:'auto',right:window.innerWidth-rect.right}).addClass('is-open'); } });
+    $(document).on('click', '.row-actions-menu', function(e){ e.stopPropagation(); });
+    $(document).on('click', function(){ $('.row-actions-menu').removeClass('is-open'); });
     $('#taskForm').on('submit', function(e){ e.preventDefault(); const id=$('#taskId').val(); const data=Object.fromEntries(new FormData(this)); if(!data.related_type) delete data.related_id; if(id) data._method='PUT'; $.ajax({url:id ? `{{ url('/tasks') }}/${id}` : `{{ route('tasks.store') }}`,method:'POST',headers:{'X-CSRF-TOKEN':csrf},data}).done(() => {$('#taskModal').modal('hide');loadTasks();}).fail(xhr => $('#taskError').removeClass('d-none').text(xhr.responseJSON?.message || 'Unable to save task.')); });
     loadTasks();
 })();

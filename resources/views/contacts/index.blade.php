@@ -8,6 +8,31 @@
     <style>
         /* Same modernization pattern as Roles & Permissions / Dashboard / Leads / Deals / Companies: bigger, roomier cards. */
         .crm-card,.crm-header{background:#fff;border:none;border-radius:13px;box-shadow:0 8px 24px rgba(15,23,42,.06)}.crm-header{padding:20px 22px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;gap:16px}.crm-header h4{margin:0 0 6px;font-weight:700;font-size:18px}.crm-header p{font-size:14px;color:#64748b;margin:0}.crm-header .btn{border-radius:10px;padding:8px 16px;font-weight:600}.crm-card{padding:20px}.crm-table th{font-size:12.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;background:#f8fafc;border:0;padding:14px 16px}.crm-table td{font-size:14px;vertical-align:middle;padding:16px}.contact-name{font-weight:700;color:#1d4ed8}.status-pill{padding:6px 14px;border-radius:999px;background:#ecfdf5;color:#047857;font-size:12px;font-weight:600;text-transform:capitalize}.primary-star{color:#f59e0b}
+        .row-actions{position:relative;display:inline-block}
+        .row-actions-btn{width:32px;height:32px;border-radius:8px;border:none;background:transparent;color:#6b7280;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px}
+        .row-actions-btn:hover{background:#f1f3f9;color:#1f2937}
+        .row-actions-menu{position:absolute;right:0;top:100%;margin-top:4px;min-width:160px;background:#fff;border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,.15);padding:6px;z-index:50;display:none;text-align:left}
+        .row-actions-menu.is-open{display:block}
+        .row-actions-menu a,.row-actions-menu button{display:flex;align-items:center;gap:10px;width:100%;padding:9px 12px;border-radius:8px;font-size:13px;color:#374151;text-decoration:none;border:none;background:transparent;text-align:left;cursor:pointer}
+        .row-actions-menu a:hover,.row-actions-menu button:hover{background:#f3f4f6}
+        .row-actions-menu i{width:16px;text-align:center;color:#6b7280}
+        .row-actions-menu .text-danger{color:#dc2626}.row-actions-menu .text-danger i{color:#dc2626}.row-actions-menu .text-danger:hover{background:#fef2f2}
+
+        [data-theme="dark"] .crm-card,[data-theme="dark"] .crm-header{background:#1a1d2b;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+        [data-theme="dark"] .crm-header h4,[data-theme="dark"] .crm-table td{color:#eef0f6}
+        [data-theme="dark"] .crm-header p{color:#9aa1b5}
+        [data-theme="dark"] .crm-table th{background:#232637;color:#9aa1b5}
+        [data-theme="dark"] .crm-table td{background:#1a1d2b;border-color:#2a2e40}
+        [data-theme="dark"] .contact-name{color:#93a4fd}
+        [data-theme="dark"] .row-actions-btn{color:#9aa1b5}
+        [data-theme="dark"] .row-actions-btn:hover{background:#232637;color:#eef0f6}
+        [data-theme="dark"] .row-actions-menu{background:#1e2233;box-shadow:0 16px 36px rgba(0,0,0,.4)}
+        [data-theme="dark"] .row-actions-menu a,[data-theme="dark"] .row-actions-menu button{color:#e2e8f5}
+        [data-theme="dark"] .row-actions-menu i{color:#93a4fd}
+        [data-theme="dark"] .row-actions-menu a:hover,[data-theme="dark"] .row-actions-menu button:hover{background:rgba(255,255,255,.08);color:#fff}
+        [data-theme="dark"] .row-actions-menu .text-danger{color:#fca5a5}
+        [data-theme="dark"] .row-actions-menu .text-danger i{color:#fca5a5}
+        [data-theme="dark"] .row-actions-menu .text-danger:hover{background:rgba(239,68,68,.18)}
     </style>
 </head>
 <body><div class="container-scroller">@include('include.header')<div class="container-fluid page-body-wrapper">@include('include.sidebar')<div class="content-wrapper">
@@ -35,12 +60,16 @@
 <script>
     $.ajaxSetup({headers:{'X-CSRF-TOKEN':$('meta[name="csrf-token"]').attr('content')}});
     const canEditContacts={{ Auth::guard('web')->user()->can('contacts.edit') ? 'true' : 'false' }}; const canDeleteContacts={{ Auth::guard('web')->user()->can('contacts.delete') ? 'true' : 'false' }}; const canCreateContactTasks={{ Auth::guard('web')->user()->can('tasks.create') ? 'true' : 'false' }}; let contactsById={}; let contactPage=1; const esc=v=>$('<div>').text(v??'').html();
-    function loadContacts(){ $.get("{{ route('contacts.data') }}",{search:$('#contactSearchInput').val(),page:contactPage},r=>{contactsById={};let html='';r.data.forEach(c=>{contactsById[c.id]=c;const actions=`${canCreateContactTasks?`<button class="btn btn-sm btn-outline-info add-contact-task" data-id="${c.id}" data-name="${esc(c.name)}" title="Add Task"><i class="fa fa-check-square-o"></i></button>`:''} ${canEditContacts?`<button class="btn btn-sm btn-outline-primary edit-contact" data-id="${c.id}"><i class="fa fa-pencil"></i></button>`:''} ${canDeleteContacts?`<button class="btn btn-sm btn-outline-danger delete-contact" data-id="${c.id}"><i class="fa fa-trash"></i></button>`:''}`;html+=`<tr><td><span class="contact-name">${esc(c.name)}</span> ${c.is_primary?'<i class="fa fa-star primary-star" title="Primary"></i>':''}<br><small>${esc(c.phone||'-')} · ${esc(c.email||'')}</small></td><td>${c.company?`<a href="{{ url('companies') }}/${c.company.id}">${esc(c.company.name)}</a>`:'-'}</td><td>${esc(c.designation||'-')}<br><small>${esc(c.department||'')}</small></td><td>${esc([c.city,c.state].filter(Boolean).join(', ')||'-')}</td><td>${esc(c.owner?.name||'Unassigned')}</td><td>${c.leads_count} lead(s) · ${c.deals_count} deal(s)</td><td><span class="status-pill">${esc(c.status)}</span></td><td>${actions}</td></tr>`});$('#contactsTable tbody').html(html||'<tr><td colspan="8" class="text-center text-muted">No contacts found</td></tr>');renderCrmPagination('#contactPagination',r.meta,page=>{contactPage=page;loadContacts()})}).fail(()=>toastr.error('Could not load contacts')); }
+    function loadContacts(){ $.get("{{ route('contacts.data') }}",{search:$('#contactSearchInput').val(),page:contactPage},r=>{contactsById={};let html='';r.data.forEach(c=>{contactsById[c.id]=c;const menuItems=`${canCreateContactTasks?`<button class="add-contact-task" data-id="${c.id}" data-name="${esc(c.name)}"><i class="fa fa-check-square-o"></i> Add Task</button>`:''}${canEditContacts?`<button class="edit-contact" data-id="${c.id}"><i class="fa fa-pencil"></i> Edit</button>`:''}${canDeleteContacts?`<button class="delete-contact text-danger" data-id="${c.id}"><i class="fa fa-trash"></i> Delete</button>`:''}`;const actions=menuItems?`<div class="row-actions"><button type="button" class="row-actions-btn" aria-label="Actions"><i class="fa fa-ellipsis-v"></i></button><div class="row-actions-menu">${menuItems}</div></div>`:'';html+=`<tr><td><span class="contact-name">${esc(c.name)}</span> ${c.is_primary?'<i class="fa fa-star primary-star" title="Primary"></i>':''}<br><small>${esc(c.phone||'-')} · ${esc(c.email||'')}</small></td><td>${c.company?`<a href="{{ url('companies') }}/${c.company.id}">${esc(c.company.name)}</a>`:'-'}</td><td>${esc(c.designation||'-')}<br><small>${esc(c.department||'')}</small></td><td>${esc([c.city,c.state].filter(Boolean).join(', ')||'-')}</td><td>${esc(c.owner?.name||'Unassigned')}</td><td>${c.leads_count} lead(s) · ${c.deals_count} deal(s)</td><td><span class="status-pill">${esc(c.status)}</span></td><td>${actions}</td></tr>`});$('#contactsTable tbody').html(html||'<tr><td colspan="8" class="text-center text-muted">No contacts found</td></tr>');renderCrmPagination('#contactPagination',r.meta,page=>{contactPage=page;loadContacts()})}).fail(()=>toastr.error('Could not load contacts')); }
     let contactSearchTimer;
     $('#contactSearchInput').on('input',function(){clearTimeout(contactSearchTimer);contactSearchTimer=setTimeout(()=>{contactPage=1;loadContacts()},350)});
     function openContact(c=null){$('#contactForm')[0].reset();$('#contactId').val(c?.id||'');if(c){Object.keys(c).forEach(k=>$(`#contactForm [name="${k}"]`).val(c[k]??''));$('#isPrimary').prop('checked',!!c.is_primary)}$('#contactModal').modal('show')}
     $('#newContactBtn').on('click',()=>openContact());$(document).on('click','.edit-contact',function(){openContact(contactsById[$(this).data('id')])});
     $(document).on('click','.add-contact-task',function(){openQuickTask('contact',$(this).data('id'),$(this).data('name'))});
     $('#contactForm').on('submit',function(e){e.preventDefault();const id=$('#contactId').val();$.ajax({url:id?"{{ url('contacts') }}/"+id:"{{ route('contacts.store') }}",type:id?'PUT':'POST',data:$(this).serialize()}).done(r=>{toastr.success(r.message);$('#contactModal').modal('hide');loadContacts()}).fail(x=>toastr.error(x.responseJSON?.message||Object.values(x.responseJSON?.errors||{})[0]?.[0]||'Could not save contact'))});
-    $(document).on('click','.delete-contact',function(){if(!confirm('Delete this contact?'))return;$.ajax({url:"{{ url('contacts') }}/"+$(this).data('id'),type:'DELETE'}).done(r=>{toastr.success(r.message);loadContacts()}).fail(x=>toastr.error(x.responseJSON?.message||'Could not delete contact'))});$(document).ready(loadContacts);
+    $(document).on('click','.delete-contact',function(){if(!confirm('Delete this contact?'))return;$.ajax({url:"{{ url('contacts') }}/"+$(this).data('id'),type:'DELETE'}).done(r=>{toastr.success(r.message);loadContacts()}).fail(x=>toastr.error(x.responseJSON?.message||'Could not delete contact'))});
+    $(document).on('click','.row-actions-btn',function(e){e.stopPropagation();const menu=$(this).siblings('.row-actions-menu');const opening=!menu.hasClass('is-open');$('.row-actions-menu').removeClass('is-open');if(opening){const rect=this.getBoundingClientRect();menu.css({position:'fixed',top:rect.bottom+4,left:'auto',right:window.innerWidth-rect.right}).addClass('is-open')}});
+    $(document).on('click','.row-actions-menu',function(e){e.stopPropagation()});
+    $(document).on('click',function(){$('.row-actions-menu').removeClass('is-open')});
+    $(document).ready(loadContacts);
 </script></body></html>

@@ -28,7 +28,7 @@
             padding: 20px 22px;
             border-radius: 13px;
             box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
-            margin-bottom: 18px;
+            margin-bottom: 28px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -55,8 +55,8 @@
         .stat-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-            gap: 18px;
-            margin-bottom: 18px;
+            gap: 20px;
+            margin-bottom: 28px;
         }
 
         .stat-card {
@@ -100,8 +100,8 @@
             background: #fff;
             border-radius: 13px;
             box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
-            padding: 22px 24px;
-            margin-bottom: 18px;
+            padding: 24px 26px;
+            margin-bottom: 28px;
             height: 100%;
         }
 

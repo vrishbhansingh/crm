@@ -21,6 +21,31 @@
         .status-pill{display:inline-block;padding:6px 14px;border-radius:999px;background:#eef2ff;color:#4338ca;font-size:12px;font-weight:600;text-transform:capitalize}
         .metric{font-size:12px;color:#64748b;margin-right:8px}.company-link{font-weight:700;color:#1d4ed8}
         @media(max-width:768px){.crm-header{align-items:flex-start;flex-direction:column}}
+        .row-actions{position:relative;display:inline-block}
+        .row-actions-btn{width:32px;height:32px;border-radius:8px;border:none;background:transparent;color:#6b7280;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px}
+        .row-actions-btn:hover{background:#f1f3f9;color:#1f2937}
+        .row-actions-menu{position:absolute;right:0;top:100%;margin-top:4px;min-width:150px;background:#fff;border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,.15);padding:6px;z-index:50;display:none;text-align:left}
+        .row-actions-menu.is-open{display:block}
+        .row-actions-menu a,.row-actions-menu button{display:flex;align-items:center;gap:10px;width:100%;padding:9px 12px;border-radius:8px;font-size:13px;color:#374151;text-decoration:none;border:none;background:transparent;text-align:left;cursor:pointer}
+        .row-actions-menu a:hover,.row-actions-menu button:hover{background:#f3f4f6}
+        .row-actions-menu i{width:16px;text-align:center;color:#6b7280}
+        .row-actions-menu .text-danger{color:#dc2626}.row-actions-menu .text-danger i{color:#dc2626}.row-actions-menu .text-danger:hover{background:#fef2f2}
+
+        [data-theme="dark"] .crm-card,[data-theme="dark"] .crm-header{background:#1a1d2b;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+        [data-theme="dark"] .crm-header h4,[data-theme="dark"] .crm-table td{color:#eef0f6}
+        [data-theme="dark"] .crm-header p{color:#9aa1b5}
+        [data-theme="dark"] .crm-table th{background:#232637;color:#9aa1b5}
+        [data-theme="dark"] .crm-table td{background:#1a1d2b;border-color:#2a2e40}
+        [data-theme="dark"] .company-link{color:#93a4fd}
+        [data-theme="dark"] .row-actions-btn{color:#9aa1b5}
+        [data-theme="dark"] .row-actions-btn:hover{background:#232637;color:#eef0f6}
+        [data-theme="dark"] .row-actions-menu{background:#1e2233;box-shadow:0 16px 36px rgba(0,0,0,.4)}
+        [data-theme="dark"] .row-actions-menu a,[data-theme="dark"] .row-actions-menu button{color:#e2e8f5}
+        [data-theme="dark"] .row-actions-menu i{color:#93a4fd}
+        [data-theme="dark"] .row-actions-menu a:hover,[data-theme="dark"] .row-actions-menu button:hover{background:rgba(255,255,255,.08);color:#fff}
+        [data-theme="dark"] .row-actions-menu .text-danger{color:#fca5a5}
+        [data-theme="dark"] .row-actions-menu .text-danger i{color:#fca5a5}
+        [data-theme="dark"] .row-actions-menu .text-danger:hover{background:rgba(239,68,68,.18)}
     </style>
 </head>
 <body>
@@ -114,7 +139,8 @@
             let html = '';
             response.data.forEach(company => {
                 companiesById[company.id] = company;
-                const actions = `${canEditCompanies ? `<button class="btn btn-sm btn-outline-primary edit-company" data-id="${company.id}"><i class="fa fa-pencil"></i></button>` : ''} ${canDeleteCompanies ? `<button class="btn btn-sm btn-outline-danger delete-company" data-id="${company.id}"><i class="fa fa-trash"></i></button>` : ''}`;
+                const menuItems = `${canEditCompanies ? `<button class="edit-company" data-id="${company.id}"><i class="fa fa-pencil"></i> Edit</button>` : ''}${canDeleteCompanies ? `<button class="delete-company text-danger" data-id="${company.id}"><i class="fa fa-trash"></i> Delete</button>` : ''}`;
+                const actions = menuItems ? `<div class="row-actions"><button type="button" class="row-actions-btn" aria-label="Actions"><i class="fa fa-ellipsis-v"></i></button><div class="row-actions-menu">${menuItems}</div></div>` : '';
                 html += `<tr>
                     <td><a class="company-link" href="{{ url('companies') }}/${company.id}">${esc(company.name)}</a><br><small class="text-muted">${esc(company.industry || company.legal_name || '')}</small></td>
                     <td>${esc(company.phone || '-')}<br><small class="text-muted">${esc(company.email || '')}</small></td>
@@ -154,6 +180,25 @@
         $.ajax({url: "{{ url('companies') }}/" + $(this).data('id'), type:'DELETE'})
             .done(r => { toastr.success(r.message); loadCompanies(); }).fail(xhr => toastr.error(xhr.responseJSON?.message || 'Could not delete company'));
     });
+    $(document).on('click', '.row-actions-btn', function(e) {
+        e.stopPropagation();
+        const menu = $(this).siblings('.row-actions-menu');
+        const opening = !menu.hasClass('is-open');
+        $('.row-actions-menu').removeClass('is-open');
+        if (opening) {
+            // position:fixed computed from the button's own rect, not
+            // position:absolute relative to the row — .table-responsive's
+            // overflow-x:auto implicitly clips overflow-y too (per CSS
+            // spec, setting only one axis computes the other to auto),
+            // which would otherwise cut the menu off mid-row near the
+            // bottom of the table.
+            const rect = this.getBoundingClientRect();
+            menu.css({ position: 'fixed', top: rect.bottom + 4, left: 'auto', right: window.innerWidth - rect.right }).addClass('is-open');
+        }
+    });
+    $(document).on('click', '.row-actions-menu', function(e) { e.stopPropagation(); });
+    $(document).on('click', function() { $('.row-actions-menu').removeClass('is-open'); });
+
     $(document).ready(loadCompanies);
 </script>
 </body>

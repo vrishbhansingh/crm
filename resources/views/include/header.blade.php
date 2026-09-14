@@ -241,7 +241,7 @@
 
   .crm-dropdown {
     position: absolute;
-    top: 104px; /* below navbar (64px) + breadcrumb (34px) */
+    top: 88px; /* below navbar (52px) + breadcrumb (28px), plus a small gap */
     right: 20px;
     background: #1e2233;
     border-radius: 14px;

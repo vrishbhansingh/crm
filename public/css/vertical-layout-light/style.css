@@ -8748,6 +8748,13 @@ html {
   color: #eef0f6;
 }
 
+[data-theme="dark"] .footer {
+  background: #0f1117;
+  border-top-color: #2a2e40;
+  color: #9aa1b5;
+}
+[data-theme="dark"] .footer a { color: #93a4fd; }
+
 [data-theme="dark"] .nav-tabs { border-bottom-color: #2a2e40; }
 [data-theme="dark"] .nav-tabs .nav-link { color: #9aa1b5; border-color: transparent; }
 [data-theme="dark"] .nav-tabs .nav-link.active { background: #1a1d2b; color: #eef0f6; border-color: #2a2e40 #2a2e40 #1a1d2b; }
