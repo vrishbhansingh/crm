@@ -1,0 +1,465 @@
+<title>Toast Redesign</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="toastr.min.css">
+<link rel="stylesheet" href="sweetalert2.min.css">
+
+<style>
+  :root {
+    --ground: #f6f4ef;
+    --surface: #ffffff;
+    --ink: #201d18;
+    --ink-muted: #736c5e;
+    --border: #e6e1d6;
+    --accent-new: #2554e8;
+    --accent-new-soft: #e9edfe;
+    --accent-old: #a8541c;
+    --accent-old-soft: #f6e9dd;
+    --good: #1a8449;
+    --bad: #c8341f;
+    --warn: #b3760a;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #161410;
+      --surface: #1f1c17;
+      --ink: #f1ede3;
+      --ink-muted: #a89e8c;
+      --border: #34302a;
+      --accent-new: #6b8cff;
+      --accent-new-soft: #232a4a;
+      --accent-old: #e0975a;
+      --accent-old-soft: #3a2a1c;
+      --good: #4fbf7f;
+      --bad: #ff6a54;
+      --warn: #e0b04a;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #161410;
+    --surface: #1f1c17;
+    --ink: #f1ede3;
+    --ink-muted: #a89e8c;
+    --border: #34302a;
+    --accent-new: #6b8cff;
+    --accent-new-soft: #232a4a;
+    --accent-old: #e0975a;
+    --accent-old-soft: #3a2a1c;
+    --good: #4fbf7f;
+    --bad: #ff6a54;
+    --warn: #e0b04a;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: 'Work Sans', system-ui, sans-serif;
+    padding: 40px 20px 64px;
+    display: flex;
+    justify-content: center;
+  }
+
+  .page { width: 100%; max-width: 900px; }
+
+  .eyebrow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent-new);
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .eyebrow::before {
+    content: '';
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--accent-new);
+  }
+
+  h1 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-optical-sizing: auto;
+    font-weight: 500;
+    font-size: clamp(30px, 5vw, 42px);
+    line-height: 1.08;
+    letter-spacing: -0.01em;
+    margin: 0 0 14px;
+    text-wrap: balance;
+    max-width: 14ch;
+  }
+
+  .lede {
+    font-size: 15.5px;
+    line-height: 1.6;
+    color: var(--ink-muted);
+    max-width: 62ch;
+    margin: 0 0 40px;
+  }
+  .lede code {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.92em;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 1px 5px;
+    border-radius: 4px;
+    color: var(--ink);
+  }
+
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+  @media (max-width: 680px) {
+    .compare { grid-template-columns: 1fr; }
+  }
+
+  .mock-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .mock-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 13px 18px;
+    border-bottom: 1px solid var(--border);
+  }
+  .mock-label .tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-weight: 500;
+    padding: 3px 8px;
+    border-radius: 5px;
+  }
+  .mock-card.old .tag { color: var(--accent-old); background: var(--accent-old-soft); }
+  .mock-card.new .tag { color: var(--accent-new); background: var(--accent-new-soft); }
+  .mock-label .dims {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-muted);
+  }
+
+  /* --- Replica of the CRM's real navbar, at reduced scale --- */
+  .mock-viewport {
+    position: relative;
+    height: 208px;
+    overflow: hidden;
+    background:
+      linear-gradient(var(--surface), var(--surface)) padding-box,
+      repeating-linear-gradient(135deg, var(--border) 0 1px, transparent 1px 13px);
+    background-blend-mode: normal;
+  }
+  .mock-navbar {
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 12px;
+    background: linear-gradient(90deg, #f9fafb 0%, #eef2ff 50%, #f0f9ff 100%);
+    border-bottom: 1px solid #e5e7eb;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .mock-navbar {
+      background: linear-gradient(90deg, #12141d 0%, #161a2c 50%, #12141d 100%);
+      border-bottom-color: #232637;
+    }
+  }
+  :root[data-theme="dark"] .mock-navbar {
+    background: linear-gradient(90deg, #12141d 0%, #161a2c 50%, #12141d 100%);
+    border-bottom-color: #232637;
+  }
+  .mock-brand {
+    display: flex; align-items: center; gap: 6px;
+    background: linear-gradient(180deg, #0c7bfe, #01bdff);
+    padding: 4px 10px 4px 7px;
+    border-radius: 7px;
+  }
+  .mock-brand svg { display: block; }
+  .mock-brand span {
+    color: #fff; font-weight: 700; font-size: 12px; font-family: 'Work Sans', sans-serif;
+    letter-spacing: 0.01em;
+  }
+  .mock-navactions { display: flex; align-items: center; gap: 8px; }
+  .mock-icon-btn {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: #f1f3f9; display: flex; align-items: center; justify-content: center;
+    color: #64748b;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .mock-icon-btn { background: #232637; color: #b8bed2; } }
+  :root[data-theme="dark"] .mock-icon-btn { background: #232637; color: #b8bed2; }
+  .mock-avatar {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: linear-gradient(135deg, #f59e0b, #ef4444);
+  }
+  .mock-breadcrumb {
+    height: 22px; display: flex; align-items: center; padding: 0 12px;
+    font-size: 10px; color: var(--ink-muted); background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+  .mock-body { flex: 1; padding: 16px 14px; }
+  .mock-body .skel {
+    height: 9px; border-radius: 4px; background: var(--border); opacity: 0.7;
+  }
+  .mock-body .skel + .skel { margin-top: 8px; }
+
+  /* toastr (old) scoped into its own mockup instead of the real viewport */
+  #oldMock #oldToastContainer {
+    position: absolute !important;
+  }
+  #oldMock .toast { font-family: 'Work Sans', sans-serif; }
+
+  /* sweetalert2 (new) scoped into its own mockup instead of the real viewport */
+  #newMock .swal2-container { position: absolute !important; }
+  #newMock .swal2-popup.swal2-toast { font-family: 'Work Sans', sans-serif; }
+
+  .mock-controls {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    padding: 14px 16px 16px;
+    border-top: 1px solid var(--border);
+  }
+  .mock-controls button {
+    font-family: 'Work Sans', sans-serif;
+    font-size: 12px; font-weight: 500;
+    border: 1px solid var(--border);
+    background: var(--ground);
+    color: var(--ink);
+    padding: 7px 12px;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: border-color .12s ease, transform .08s ease;
+  }
+  .mock-controls button:hover { border-color: var(--ink-muted); }
+  .mock-controls button:active { transform: scale(0.96); }
+  .mock-controls button .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+  .mock-controls button.success .dot { background: var(--good); }
+  .mock-controls button.error .dot { background: var(--bad); }
+  .mock-controls button.warning .dot { background: var(--warn); }
+  .mock-controls button.info .dot { background: var(--accent-new); }
+
+  .fire-all {
+    display: flex; justify-content: center; margin: 6px 0 40px;
+  }
+  .fire-all button {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px; letter-spacing: 0.03em;
+    background: var(--ink); color: var(--ground);
+    border: none; padding: 11px 22px; border-radius: 8px;
+    cursor: pointer;
+  }
+  :root[data-theme="dark"] .fire-all button,
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .fire-all button { background: var(--ink); color: var(--ground); } }
+  .fire-all button:active { transform: scale(0.97); }
+
+  .diff {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 4px 0;
+  }
+  .diff-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    align-items: center;
+    gap: 18px;
+    padding: 11px 20px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+    border-bottom: 1px solid var(--border);
+  }
+  .diff-row:last-child { border-bottom: none; }
+  .diff-row .label { color: var(--ink-muted); font-family: 'Work Sans', sans-serif; font-size: 13px; }
+  .diff-row .old-val { color: var(--accent-old); text-decoration: line-through; text-decoration-thickness: 1px; opacity: 0.75; text-align: right; }
+  .diff-row .new-val { color: var(--accent-new); font-weight: 500; text-align: right; }
+  .diff-head {
+    display: grid; grid-template-columns: 1fr auto auto; gap: 18px;
+    padding: 12px 20px 8px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--ink-muted);
+  }
+  .diff-head span:nth-child(2), .diff-head span:nth-child(3) { text-align: right; }
+
+  footer {
+    margin-top: 32px;
+    font-size: 13px;
+    color: var(--ink-muted);
+    line-height: 1.6;
+  }
+  footer a { color: var(--accent-new); }
+</style>
+
+<div class="page">
+  <div class="eyebrow">CRM &middot; UI fix</div>
+  <h1>Toast notifications, redrawn</h1>
+  <p class="lede">
+    Every <code>toastr.success(&hellip;)</code> and <code>toastr.error(&hellip;)</code> call across the app used
+    to render through <strong>toastr.js</strong> &mdash; a library last meaningfully updated years ago. It's now
+    backed by <strong>SweetAlert2</strong>, repositioned into the navbar row itself and scaled down to match.
+    No call site changed; only what answers <code>window.toastr</code> did. Click a button below to compare them
+    live, side by side.
+  </p>
+
+  <div class="compare">
+    <div class="mock-card old">
+      <div class="mock-label">
+        <span class="tag">Before</span>
+        <span class="dims">92px offset &middot; 14px type</span>
+      </div>
+      <div class="mock-viewport" id="oldMock">
+        <div class="mock-navbar">
+          <div class="mock-brand">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#fff" fill-opacity="0.35"/></svg>
+            <span>CRMS</span>
+          </div>
+          <div class="mock-navactions">
+            <div class="mock-icon-btn"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a1 1 0 011 1v1.06A8.001 8.001 0 0120 12a8 8 0 01-8 8 1 1 0 010-2 6 6 0 006-6 6 6 0 00-5-5.92V4a1 1 0 011-1z"/></svg></div>
+            <div class="mock-icon-btn"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 22a2 2 0 002-2h-4a2 2 0 002 2zm6-6v-5a6 6 0 00-4-5.66V4a2 2 0 10-4 0v1.34A6 6 0 006 11v5l-2 2v1h16v-1l-2-2z"/></svg></div>
+            <div class="mock-avatar"></div>
+          </div>
+        </div>
+        <div class="mock-breadcrumb">Home / Leads</div>
+        <div class="mock-body">
+          <div class="skel" style="width:70%"></div>
+          <div class="skel" style="width:45%"></div>
+          <div class="skel" style="width:58%"></div>
+        </div>
+      </div>
+      <div class="mock-controls" id="oldControls">
+        <button class="success" data-type="success"><span class="dot"></span>Success</button>
+        <button class="error" data-type="error"><span class="dot"></span>Error</button>
+        <button class="warning" data-type="warning"><span class="dot"></span>Warning</button>
+        <button class="info" data-type="info"><span class="dot"></span>Info</button>
+      </div>
+    </div>
+
+    <div class="mock-card new">
+      <div class="mock-label">
+        <span class="tag">After</span>
+        <span class="dims">6px offset &middot; 12px type</span>
+      </div>
+      <div class="mock-viewport" id="newMock">
+        <div class="mock-navbar">
+          <div class="mock-brand">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#fff" fill-opacity="0.35"/></svg>
+            <span>CRMS</span>
+          </div>
+          <div class="mock-navactions">
+            <div class="mock-icon-btn"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a1 1 0 011 1v1.06A8.001 8.001 0 0120 12a8 8 0 01-8 8 1 1 0 010-2 6 6 0 006-6 6 6 0 00-5-5.92V4a1 1 0 011-1z"/></svg></div>
+            <div class="mock-icon-btn"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 22a2 2 0 002-2h-4a2 2 0 002 2zm6-6v-5a6 6 0 00-4-5.66V4a2 2 0 10-4 0v1.34A6 6 0 006 11v5l-2 2v1h16v-1l-2-2z"/></svg></div>
+            <div class="mock-avatar"></div>
+          </div>
+        </div>
+        <div class="mock-breadcrumb">Home / Leads</div>
+        <div class="mock-body">
+          <div class="skel" style="width:70%"></div>
+          <div class="skel" style="width:45%"></div>
+          <div class="skel" style="width:58%"></div>
+        </div>
+      </div>
+      <div class="mock-controls" id="newControls">
+        <button class="success" data-type="success"><span class="dot"></span>Success</button>
+        <button class="error" data-type="error"><span class="dot"></span>Error</button>
+        <button class="warning" data-type="warning"><span class="dot"></span>Warning</button>
+        <button class="info" data-type="info"><span class="dot"></span>Info</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="fire-all">
+    <button id="fireAllBtn">fire both at once &rarr;</button>
+  </div>
+
+  <div class="diff">
+    <div class="diff-head"><span>Property</span><span>Before</span><span>After</span></div>
+    <div class="diff-row"><span class="label">Vertical offset</span><span class="old-val">top: 92px</span><span class="new-val">top: 6px</span></div>
+    <div class="diff-row"><span class="label">Sits relative to</span><span class="old-val">below the breadcrumb</span><span class="new-val">inside the navbar row</span></div>
+    <div class="diff-row"><span class="label">Message font size</span><span class="old-val">14px</span><span class="new-val">12px</span></div>
+    <div class="diff-row"><span class="label">Padding</span><span class="old-val">15px 15px 15px 50px</span><span class="new-val">6px 10px</span></div>
+    <div class="diff-row"><span class="label">Popup height</span><span class="old-val">~68px</span><span class="new-val">~52px</span></div>
+    <div class="diff-row"><span class="label">Engine</span><span class="old-val">toastr.js</span><span class="new-val">SweetAlert2 11.26</span></div>
+  </div>
+
+  <footer>
+    Backed by <a href="https://sweetalert2.github.io/" target="_blank" rel="noopener">SweetAlert2</a>, wrapped in a
+    shim so every existing <code style="font-family:'IBM Plex Mono',monospace;background:var(--surface);border:1px solid var(--border);padding:1px 5px;border-radius:4px;">toastr.success()</code> /
+    <code style="font-family:'IBM Plex Mono',monospace;background:var(--surface);border:1px solid var(--border);padding:1px 5px;border-radius:4px;">.error()</code> /
+    <code style="font-family:'IBM Plex Mono',monospace;background:var(--surface);border:1px solid var(--border);padding:1px 5px;border-radius:4px;">.warning()</code> /
+    <code style="font-family:'IBM Plex Mono',monospace;background:var(--surface);border:1px solid var(--border);padding:1px 5px;border-radius:4px;">.info()</code>
+    call in the codebase kept working with zero call-site changes &mdash; only what answers behind them did.
+  </footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.26.25/sweetalert2.min.js"></script>
+<script>
+  // --- OLD: real toastr.js, scoped into its own mockup box ---
+  var oldToastr = window.toastr; // capture the real library before the shim below replaces window.toastr
+  oldToastr.options = {
+    closeButton: false,
+    progressBar: true,
+    positionClass: 'toast-top-right',
+    timeOut: 3200,
+    target: '#oldMock',
+  };
+  var oldMessages = {
+    success: 'Saved successfully',
+    error: 'Something went wrong',
+    warning: 'Please review before continuing',
+    info: 'New leads synced',
+  };
+
+  // --- NEW: SweetAlert2, matching the app's real toast-shim.js exactly, scoped into its own mockup box ---
+  var NewToast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    target: '#newMock',
+    showConfirmButton: false,
+    timer: 3200,
+    timerProgressBar: true,
+    didOpen: function (el) {
+      el.addEventListener('mouseenter', Swal.stopTimer);
+      el.addEventListener('mouseleave', Swal.resumeTimer);
+    },
+  });
+  var newMessages = {
+    success: 'Saved successfully',
+    error: 'Something went wrong',
+    warning: 'Please review before continuing',
+    info: 'New leads synced',
+  };
+
+  function fireOld(type) { oldToastr[type](oldMessages[type]); }
+  function fireNew(type) { NewToast.fire({ icon: type, title: newMessages[type] }); }
+
+  document.querySelectorAll('#oldControls button').forEach(function (btn) {
+    btn.addEventListener('click', function () { fireOld(btn.dataset.type); });
+  });
+  document.querySelectorAll('#newControls button').forEach(function (btn) {
+    btn.addEventListener('click', function () { fireNew(btn.dataset.type); });
+  });
+  document.getElementById('fireAllBtn').addEventListener('click', function () {
+    var types = ['success', 'error', 'warning', 'info'];
+    var type = types[Math.floor(Math.random() * types.length)];
+    fireOld(type);
+    fireNew(type);
+  });
+
+  // Show one pair at rest on load so the comparison is visible immediately.
+  window.addEventListener('load', function () {
+    setTimeout(function () { fireOld('success'); fireNew('success'); }, 300);
+  });
+</script>

@@ -6,11 +6,25 @@
  * loaded on the page before this file.
  */
 (function () {
-    // The app's header (navbar + breadcrumb) is a fixed 80px-tall bar at
-    // the very top of every page — SweetAlert2's default top-end toast
-    // position would render right underneath/behind it otherwise.
+    // Sits inside the app's 52px navbar row itself (not below the
+    // breadcrumb underneath it), and noticeably more compact than
+    // SweetAlert2's own toast defaults — smaller padding/icon/font so it
+    // reads as a slim inline notice rather than a full popup card.
+    // Every dimension inside a SweetAlert2 toast (icon, padding, title
+    // text) is sized in em relative to the popup's own font-size, so
+    // shrinking that one value scales the whole thing proportionally
+    // without distorting the icon's internal geometry. A `transform:
+    // scale()` was tried first but SweetAlert2's own show/hide keyframes
+    // also animate `transform` on this element and stomp a static value
+    // back to full size once the animation finishes — font-size has no
+    // such conflict.
     var style = document.createElement('style');
-    style.textContent = '.swal2-container.swal2-top-end { top: 92px !important; }';
+    style.textContent = [
+        '.swal2-container.swal2-top-end { top: 6px !important; padding-right: 18px !important; }',
+        // Fixed px (not em/rem) so this doesn't compound with whatever
+        // root font-size the current page happens to set.
+        '.swal2-popup.swal2-toast { font-size: 12px !important; padding: 6px 10px !important; }',
+    ].join('');
     document.head.appendChild(style);
 
     var Toast = Swal.mixin({

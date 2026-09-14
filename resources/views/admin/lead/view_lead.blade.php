@@ -197,6 +197,27 @@
             display: inline-flex; align-items: center; justify-content: center;
             color: #fff; font-weight: 700; font-size: 9px;
         }
+
+        [data-theme="dark"] {
+            --border: #2a2e40;
+            --text-dark: #eef0f6;
+            --text-muted: #9aa1b5;
+        }
+        [data-theme="dark"] .crm-page-header,
+        [data-theme="dark"] .card-box,
+        [data-theme="dark"] .lead-metric-tile {
+            background: #1a1d2b;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+        }
+        [data-theme="dark"] .tag-chip { background: #232637; color: #d7dbe4; }
+        [data-theme="dark"] .tag-chip button { color: #9aa1b5; }
+        [data-theme="dark"] .timeline-icon { background: #232637; }
+        [data-theme="dark"] .duplicate-warning { background: #2a2410; border-color: #6b5518; color: #fbbf24; }
+        [data-theme="dark"] .field-row { border-bottom-color: #2a2e40; }
+        [data-theme="dark"] .timeline-item, [data-theme="dark"] .attachment-item { border-bottom-color: #2a2e40; }
+        [data-theme="dark"] .form-control, [data-theme="dark"] textarea {
+            background: #232637; border-color: #343850; color: #eef0f6;
+        }
     </style>
 </head>
 
