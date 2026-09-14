@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="{{ asset('vendors/css/vendor.bundle.base.css') }}">
     <link rel="stylesheet" href="{{ asset('css/vertical-layout-light/style.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.26.25/sweetalert2.min.css">
 
     <style>
         :root { --primary: #2563eb; --border: #e5e7eb; --text-dark: #111827; --text-muted: #6b7280; }
@@ -62,6 +62,22 @@
             display: flex; justify-content: flex-end; gap: 10px;
             margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border);
         }
+
+        [data-theme="dark"] {
+            --border: #2a2e40;
+            --text-dark: #eef0f6;
+            --text-muted: #9aa1b5;
+        }
+        [data-theme="dark"] .crm-page-header,
+        [data-theme="dark"] .crm-card {
+            background: #1a1d2b;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+        }
+        [data-theme="dark"] .var-hint-bar {
+            background: #1e2233; border-color: #2a2e40;
+        }
+        [data-theme="dark"] .var-hint-bar .var-hint-text { color: #93a4fd; }
+        [data-theme="dark"] .preview-pane { background: #232637; }
     </style>
 </head>
 
@@ -148,7 +164,8 @@
 
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="{{ asset('vendors/js/vendor.bundle.base.js') }}"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.26.25/sweetalert2.min.js"></script>
+    <script src="{{ asset('js/toast-shim.js') }}"></script>
     <script src="{{ asset('vendors/tinymce/tinymce.min.js') }}"></script>
 
     <script>

@@ -4,7 +4,7 @@
     <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Contacts | CRM</title>
     <link rel="stylesheet" href="{{ asset('vendors/css/vendor.bundle.base.css') }}"><link rel="stylesheet" href="{{ asset('css/vertical-layout-light/style.css') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.26.25/sweetalert2.min.css">
     <style>
         /* Same modernization pattern as Roles & Permissions / Dashboard / Leads / Deals / Companies: bigger, roomier cards. */
         .crm-card,.crm-header{background:#fff;border:none;border-radius:13px;box-shadow:0 8px 24px rgba(15,23,42,.06)}.crm-header{padding:20px 22px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;gap:16px}.crm-header h4{margin:0 0 6px;font-weight:700;font-size:18px}.crm-header p{font-size:14px;color:#64748b;margin:0}.crm-header .btn{border-radius:10px;padding:8px 16px;font-weight:600}.crm-card{padding:20px}.crm-table th{font-size:12.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;background:#f8fafc;border:0;padding:14px 16px}.crm-table td{font-size:14px;vertical-align:middle;padding:16px}.contact-name{font-weight:700;color:#1d4ed8}.status-pill{padding:6px 14px;border-radius:999px;background:#ecfdf5;color:#047857;font-size:12px;font-weight:600;text-transform:capitalize}.primary-star{color:#f59e0b}
@@ -55,7 +55,8 @@
     </div></div><div class="modal-footer"><button type="button" class="btn btn-light" data-dismiss="modal">Cancel</button><button class="btn btn-primary">Save Contact</button></div>
 </form></div></div></div>
 
-<script src="{{ asset('vendors/js/vendor.bundle.base.js') }}"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+<script src="{{ asset('vendors/js/vendor.bundle.base.js') }}"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.26.25/sweetalert2.min.js"></script>
+    <script src="{{ asset('js/toast-shim.js') }}"></script>
 @include('include.quick-task-modal')
 <script>
     $.ajaxSetup({headers:{'X-CSRF-TOKEN':$('meta[name="csrf-token"]').attr('content')}});

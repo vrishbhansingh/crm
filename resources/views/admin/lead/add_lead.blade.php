@@ -24,7 +24,7 @@
 
     <link rel="stylesheet" href="{{asset('vendors/select2/select2.min.css')}}">
     <link rel="stylesheet" href="{{asset('vendors/select2-bootstrap-theme/select2-bootstrap.min.css')}}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.26.25/sweetalert2.min.css">
     <style>
         /* ===== PAGE HEADER ===== */
         .page-header {
@@ -506,7 +506,8 @@
     <script src="{{asset('js/Chart.roundedBarCharts.js')}}"></script>
     <script src="{{asset('js/toast.js')}}"></script>
     <script src="{{asset('js/confirm.js')}}"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.26.25/sweetalert2.min.js"></script>
+    <script src="{{ asset('js/toast-shim.js') }}"></script>
     <script src="{{ asset('vendors/js/vendor.bundle.base.js') }}"></script>
     <script>
         const esc = value => $('<div>').text(value ?? '').html();

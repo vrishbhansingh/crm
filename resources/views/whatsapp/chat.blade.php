@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="{{ asset('vendors/css/vendor.bundle.base.css') }}">
     <link rel="stylesheet" href="{{ asset('css/vertical-layout-light/style.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.26.25/sweetalert2.min.css">
 
     <style>
         :root { --primary: #25d366; --primary-dark: #128c7e; --border: #e5e7eb; --text-dark: #111827; --text-muted: #6b7280; }
@@ -120,7 +120,8 @@
     </div>
 
     <script src="{{ asset('vendors/js/vendor.bundle.base.js') }}"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.26.25/sweetalert2.min.js"></script>
+    <script src="{{ asset('js/toast-shim.js') }}"></script>
     <script>
         $.ajaxSetup({ headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') } });
 

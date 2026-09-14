@@ -23,7 +23,7 @@ class DealDetailController extends Controller
     public function detail($id)
     {
         $deal = $this->findVisibleDeal($id);
-        $deal->load(['pipeline', 'stage', 'owner', 'lead', 'company', 'contact', 'order', 'lostReason', 'createdBy']);
+        $deal->load(['pipeline.stages', 'stage', 'owner', 'lead', 'company', 'contact', 'order', 'lostReason', 'createdBy']);
 
         return response()->json(['status' => true, 'data' => $deal]);
     }

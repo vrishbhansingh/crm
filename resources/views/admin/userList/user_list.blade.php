@@ -25,7 +25,7 @@
 
     <link rel="stylesheet" href="{{asset('vendors/select2/select2.min.css')}}">
     <link rel="stylesheet" href="{{asset('vendors/select2-bootstrap-theme/select2-bootstrap.min.css')}}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.26.25/sweetalert2.min.css">
     <style>
         /* ===== User Table Wrapper ===== */
         .user-table-wrapper {
@@ -690,7 +690,8 @@
 
 
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.26.25/sweetalert2.min.js"></script>
+    <script src="{{ asset('js/toast-shim.js') }}"></script>
     <script src="{{ asset('vendors/js/vendor.bundle.base.js') }}"></script>
 
     <script>

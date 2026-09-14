@@ -17,7 +17,16 @@
        top:98px to the bottom of the current viewport, so there's no "runs
        out before the page ends" gap sticky+capped-height could hit on long
        pages — no separate full-height rail trick needed for that anymore. */
-    .sidebar {
+    /* #sidebar (id) rather than relying on .sidebar (class) alone: the
+       vendor theme ships its own bare `.sidebar { width: 235px; ... }`
+       (public/css/vertical-layout-light/style.css) at equal (0,1,0)
+       specificity, so which one wins was purely a source-order accident —
+       and collapsing the sidebar (which only changes the --sidebar-w
+       custom property, not this rule) silently stopped working once that
+       accident went the vendor's way. Matching/exceeding specificity is
+       the fix that doesn't depend on load order, same lesson as the
+       .sidebar .nav:not(.sub-menu) margin override above. */
+    #sidebar.sidebar {
         position: fixed;
         top: 80px;
         left: 0;
@@ -417,8 +426,20 @@
         // brand column can stay the same width as the sidebar, collapsed or
         // not, without a separate sync mechanism.
         function setSidebarWidth(collapsed) {
-            document.documentElement.style.setProperty("--sidebar-w", collapsed ? "58px" : "200px");
+            var width = collapsed ? "58px" : "200px";
+            document.documentElement.style.setProperty("--sidebar-w", width);
             document.documentElement.classList.toggle("sidebar-collapsed", collapsed);
+            // Belt-and-suspenders: also set the width directly on #sidebar
+            // and .sidebar-rail as inline styles. In testing, changing
+            // --sidebar-w alone sometimes didn't get picked up by
+            // #sidebar's own width:var(--sidebar-w) rule after the first
+            // paint (getComputedStyle confirmed the variable itself updates
+            // correctly, but the element's rendered width didn't follow) —
+            // setting width directly sidesteps that regardless of cause.
+            sidebar.style.width = width;
+            sidebar.style.minWidth = width;
+            var rail = document.querySelector(".sidebar-rail");
+            if (rail) { rail.style.width = width; rail.style.minWidth = width; }
         }
 
         // Apply the saved collapsed preference as early as possible to avoid a flash.
