@@ -123,6 +123,20 @@
         .btn-save-solid:hover {
             background: #1e40af;
         }
+
+        [data-theme="dark"] .page-header,
+        [data-theme="dark"] .lead-card,
+        [data-theme="dark"] .form-footer {
+            background: #1a1d2b;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+        }
+        [data-theme="dark"] .page-header h2 { color: #eef0f6; }
+        [data-theme="dark"] .page-header .breadcrumb { color: #9aa1b5; }
+        [data-theme="dark"] .section-title { color: #93a4fd; border-left-color: #93a4fd; }
+        [data-theme="dark"] .form-group label { color: #d7dbe4; }
+        [data-theme="dark"] .form-divider { background: #2a2e40; }
+        [data-theme="dark"] .form-footer { border-top-color: #2a2e40; }
+        [data-theme="dark"] .btn-back { background: #232637; color: #d7dbe4; }
     </style>
 </head>
 
@@ -402,7 +416,7 @@
     <script src="{{asset('js/toast.js')}}"></script>
     <script src="{{asset('js/confirm.js')}}"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.26.25/sweetalert2.min.js"></script>
-    <script src="{{ asset('js/toast-shim.js') }}"></script>
+    <script src="{{ asset('js/toast-shim.js') }}?v={{ filemtime(public_path('js/toast-shim.js')) }}"></script>
     <script src="{{ asset('vendors/js/vendor.bundle.base.js') }}"></script>
 
 

@@ -221,6 +221,23 @@
             font-size: 13px;
             margin-bottom: 16px;
         }
+
+        [data-theme="dark"] {
+            --border: #2a2e40;
+            --text-dark: #eef0f6;
+            --text-muted: #9aa1b5;
+        }
+        [data-theme="dark"] .page-header { background: #1a1d2b; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35); }
+        [data-theme="dark"] .board-toolbar { border-top-color: #2a2e40; }
+        [data-theme="dark"] .kanban-column { background: #171a26; }
+        [data-theme="dark"] .kanban-column-header { background: #2a2a55; color: #b3baff; }
+        [data-theme="dark"] .kanban-column-header.is-won { background: #16351f; color: #4ade80; }
+        [data-theme="dark"] .kanban-column-header.is-lost { background: #3a1414; color: #fca5a5; }
+        [data-theme="dark"] .kanban-column-count { background: rgba(255, 255, 255, 0.12); }
+        [data-theme="dark"] .kanban-card { background: #1a1d2b; border-color: #2a2e40; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); }
+        [data-theme="dark"] .kanban-card .deal-amount { color: #4ade80; }
+        [data-theme="dark"] .lead-badge { background: #2a2a55; color: #b3baff; }
+        [data-theme="dark"] .empty-pipeline-state { background: #1a1d2b; border-color: #2a2e40; }
     </style>
 </head>
 
@@ -324,7 +341,7 @@
     <script src="{{ asset('vendors/js/vendor.bundle.base.js') }}"></script>
     <script src="{{ asset('vendors/sortablejs/Sortable.min.js') }}"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.26.25/sweetalert2.min.js"></script>
-    <script src="{{ asset('js/toast-shim.js') }}"></script>
+    <script src="{{ asset('js/toast-shim.js') }}?v={{ filemtime(public_path('js/toast-shim.js')) }}"></script>
 
     <script>
         $.ajaxSetup({

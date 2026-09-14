@@ -88,35 +88,48 @@
             font-weight: 500;
         }
 
-        /* ===== Action Column (Image Match) ===== */
-        .action-stack {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
+        /* ===== Row Actions (3-dot menu) ===== */
+        .row-actions { position: relative; display: inline-block; }
+        .row-actions-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            background: #fff;
+            color: #6b7280;
+            display: inline-flex;
             align-items: center;
-        }
-
-        .action-stack .btn {
-            width: 90px;
-            font-size: 12px;
-            font-weight: 500;
-            padding: 6px 0;
-            border-radius: 6px;
-        }
-
-        .action-stack .btn i {
-            margin-right: 4px;
+            justify-content: center;
             font-size: 13px;
+            cursor: pointer;
         }
-
-        /* Subtle hover like image */
-        .action-stack .btn-success:hover {
-            background-color: #218838;
+        .row-actions-btn:hover { background: #f1f5f9; }
+        .row-actions-menu {
+            display: none;
+            position: fixed;
+            z-index: 1050;
+            min-width: 150px;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 12px 32px rgba(15, 23, 42, 0.14);
+            padding: 6px;
         }
-
-        .action-stack .btn-danger:hover {
-            background-color: #c82333;
+        .row-actions-menu.is-open { display: block; }
+        .row-actions-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            border: none;
+            background: transparent;
+            text-align: left;
+            padding: 8px 10px;
+            border-radius: 7px;
+            font-size: 13px;
+            color: #374151;
         }
+        .row-actions-item:hover { background: #f1f5f9; }
+        .row-actions-item.text-danger:hover { background: #fef2f2; }
 
 
         /* ===== Status Badge ===== */
@@ -345,6 +358,50 @@
                 text-align: center;
             }
         }
+
+        [data-theme="dark"] .user-page-header,
+        [data-theme="dark"] .user-table-wrapper,
+        [data-theme="dark"] .card {
+            background: #1a1d2b;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+        }
+        [data-theme="dark"] .user-header-icon { background: rgba(147, 164, 253, 0.16); color: #93a4fd; }
+        [data-theme="dark"] .user-table thead th { background: #232637; color: #d7dbe4; }
+        [data-theme="dark"] .user-table tbody tr { background: #1e2233; }
+        [data-theme="dark"] .user-table tbody tr:hover { box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); }
+        [data-theme="dark"] .user-table tbody td { color: #d7dbe4; border-color: #2a2e40; }
+        [data-theme="dark"] .role-badge { background: rgba(147, 164, 253, 0.16); color: #93a4fd; }
+        [data-theme="dark"] .status-active { background: rgba(74, 222, 128, 0.16); color: #4ade80; }
+        [data-theme="dark"] .status-inactive { background: rgba(154, 161, 181, 0.16); color: #9aa1b5; }
+        [data-theme="dark"] .status-block { background: rgba(239, 68, 68, 0.16); color: #fca5a5; }
+        [data-theme="dark"] .row-actions-btn { background: #232637; border-color: #2a2e40; color: #9aa1b5; }
+        [data-theme="dark"] .row-actions-btn:hover { background: #2a2e40; }
+        [data-theme="dark"] .row-actions-menu { background: #1e2233; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4); }
+        [data-theme="dark"] .row-actions-item { color: #eef0f6; }
+        [data-theme="dark"] .row-actions-item:hover { background: #2a2e40; }
+        [data-theme="dark"] .row-actions-item.text-danger { color: #fca5a5; }
+        [data-theme="dark"] .row-actions-item.text-danger:hover { background: rgba(239, 68, 68, 0.16); }
+        [data-theme="dark"] .add-user-modal,
+        [data-theme="dark"] #statusConfirmModal .modal-content {
+            background: #1a1d2b;
+            box-shadow: 0 18px 45px rgba(0, 0, 0, 0.4);
+        }
+        [data-theme="dark"] .add-user-modal .modal-header,
+        [data-theme="dark"] .add-user-modal .modal-footer {
+            background: #1e2233;
+            border-color: #2a2e40;
+        }
+        [data-theme="dark"] .add-user-modal .modal-title { color: #eef0f6; }
+        [data-theme="dark"] .add-user-modal label { color: #d7dbe4; }
+        [data-theme="dark"] .add-user-modal .form-control {
+            background: #232637;
+            border-color: #2a2e40;
+            color: #eef0f6;
+        }
+        [data-theme="dark"] .add-user-modal .btn-light { background: #232637; color: #d7dbe4; }
+        [data-theme="dark"] .add-user-modal .btn-light:hover { background: #2a2e40; }
+        [data-theme="dark"] #statusConfirmModal .modal-header.bg-light { background: #1e2233 !important; color: #eef0f6; }
+        [data-theme="dark"] #statusConfirmModal .modal-body { color: #d7dbe4; }
     </style>
 </head>
 
@@ -691,7 +748,7 @@
 
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.26.25/sweetalert2.min.js"></script>
-    <script src="{{ asset('js/toast-shim.js') }}"></script>
+    <script src="{{ asset('js/toast-shim.js') }}?v={{ filemtime(public_path('js/toast-shim.js')) }}"></script>
     <script src="{{ asset('vendors/js/vendor.bundle.base.js') }}"></script>
 
     <script>
@@ -791,6 +848,23 @@
         $(document).ready(function() {
             loadUserList();
             loadRoles();
+        });
+
+        $(document).on('click', '.row-actions-btn', function(e) {
+            e.stopPropagation();
+            const menu = $(this).siblings('.row-actions-menu');
+            const opening = !menu.hasClass('is-open');
+            $('.row-actions-menu').removeClass('is-open');
+            if (opening) {
+                const rect = this.getBoundingClientRect();
+                menu.css({ position: 'fixed', top: rect.bottom + 4, left: 'auto', right: window.innerWidth - rect.right }).addClass('is-open');
+            }
+        });
+        $(document).on('click', '.row-actions-menu', function(e) {
+            e.stopPropagation();
+        });
+        $(document).on('click', function() {
+            $('.row-actions-menu').removeClass('is-open');
         });
 
 

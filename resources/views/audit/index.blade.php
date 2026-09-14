@@ -6,6 +6,11 @@
     .crm-page-header{background:#fff;padding:20px 22px;border-radius:13px;box-shadow:0 8px 24px rgba(15,23,42,.06);margin-bottom:18px}
     .crm-page-header h3{margin:0 0 6px;font-weight:700;font-size:18px;color:#111827}.crm-page-header p{margin:0;color:#6b7280;font-size:14px}
     .audit-card{border:0;border-radius:13px;box-shadow:0 8px 24px rgba(15,23,42,.06)}.audit-event{font-size:12px;font-weight:700;text-transform:uppercase}.change-json{white-space:pre-wrap;word-break:break-word;font-size:12px;max-height:180px;overflow:auto;background:#f8fafc;padding:10px;border-radius:8px}.filter-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px}
+[data-theme="dark"] .crm-page-header{background:#1a1d2b;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+[data-theme="dark"] .crm-page-header h3{color:#eef0f6}[data-theme="dark"] .crm-page-header p{color:#9aa1b5}
+[data-theme="dark"] .audit-card{background:#1a1d2b;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+[data-theme="dark"] .change-json{background:#232637;color:#d7dbe4}
+[data-theme="dark"] .table-hover tbody tr:hover{background:#1e2233}
 </style></head>
 <body><div class="container-scroller">@include('include.header')<div class="container-fluid page-body-wrapper">@include('include.sidebar')<div class="main-panel"><div class="content-wrapper">
 <div class="crm-page-header"><h3>Audit Log</h3><p>Immutable history of important CRM data changes.</p></div>

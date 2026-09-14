@@ -520,6 +520,10 @@
         localStorage.setItem('crm-theme', 'dark');
       }
       syncThemeIcon();
+      // Lets pages with Chart.js canvases (dashboard, reports) re-draw with
+      // theme-appropriate text/gridline colors — canvas content can't be
+      // themed with CSS alone.
+      document.dispatchEvent(new CustomEvent('crm-theme-changed', { detail: { dark: !isDark } }));
     });
 
     const profile = document.getElementById("profileToggle");

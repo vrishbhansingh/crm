@@ -8762,6 +8762,24 @@ html {
 [data-theme="dark"] .dropdown-item { color: #d7dbe4; }
 [data-theme="dark"] .dropdown-item:hover { background: #232637; color: #fff; }
 
+/* Common plain-Bootstrap helpers used across many bespoke pages —
+   defined once here so most pages don't need to repeat them in their
+   own [data-theme="dark"] block. */
+[data-theme="dark"] .text-muted { color: #9aa1b5 !important; }
+[data-theme="dark"] label { color: #d7dbe4; }
+[data-theme="dark"] .alert-light { background: #232637; color: #d7dbe4; border-color: #2a2e40; }
+[data-theme="dark"] .alert-info { background: rgba(147, 164, 253, 0.14); color: #c7d0fe; border-color: rgba(147, 164, 253, 0.3); }
+[data-theme="dark"] .alert-success { background: rgba(74, 222, 128, 0.14); color: #bbf7d0; border-color: rgba(74, 222, 128, 0.3); }
+[data-theme="dark"] .alert-warning { background: rgba(250, 204, 21, 0.14); color: #fde68a; border-color: rgba(250, 204, 21, 0.3); }
+[data-theme="dark"] .alert-danger { background: rgba(239, 68, 68, 0.14); color: #fecaca; border-color: rgba(239, 68, 68, 0.3); }
+[data-theme="dark"] .btn-light { background: #232637; color: #d7dbe4; border-color: #2a2e40; }
+[data-theme="dark"] .btn-light:hover { background: #2a2e40; color: #eef0f6; }
+[data-theme="dark"] .close { color: #eef0f6; text-shadow: none; }
+[data-theme="dark"] .modal-header, [data-theme="dark"] .modal-footer { border-color: #2a2e40; }
+[data-theme="dark"] .card-header, [data-theme="dark"] .card-footer { background: #1e2233; border-color: #2a2e40; }
+[data-theme="dark"] .badge-light { background: #232637; color: #d7dbe4; }
+[data-theme="dark"] .list-group-item { background: #1a1d2b; color: #d7dbe4; border-color: #2a2e40; }
+
 article, aside, figcaption, figure, footer, header, hgroup, main, nav, section {
   display: block;
 }

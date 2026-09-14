@@ -121,6 +121,30 @@
             margin-right: 6px;
             border: 1px solid var(--border);
         }
+
+        [data-theme="dark"] {
+            --border: #2a2e40;
+            --text-dark: #eef0f6;
+            --text-muted: #9aa1b5;
+        }
+        [data-theme="dark"] .crm-page-header,
+        [data-theme="dark"] .type-list,
+        [data-theme="dark"] .values-panel {
+            background: #1a1d2b;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+        }
+        [data-theme="dark"] .crm-header-icon { background: rgba(147, 164, 253, 0.16); color: #93a4fd; }
+        [data-theme="dark"] .pipeline-item { color: #eef0f6; }
+        [data-theme="dark"] .pipeline-item:hover { background: #232637; }
+        [data-theme="dark"] .pipeline-item.active { background: rgba(147, 164, 253, 0.16); color: #93a4fd; }
+        [data-theme="dark"] .status-pill.active { background: rgba(74, 222, 128, 0.16); color: #4ade80; }
+        [data-theme="dark"] .status-pill.inactive { background: rgba(154, 161, 181, 0.16); color: #9aa1b5; }
+        [data-theme="dark"] .status-pill.default { background: rgba(147, 164, 253, 0.16); color: #93a4fd; }
+        [data-theme="dark"] .status-pill.is-won { background: rgba(74, 222, 128, 0.16); color: #4ade80; }
+        [data-theme="dark"] .status-pill.is-lost { background: rgba(239, 68, 68, 0.16); color: #fca5a5; }
+        [data-theme="dark"] #stagesTable { color: #eef0f6; }
+        [data-theme="dark"] #stagesTable thead th { color: #d7dbe4; border-color: #2a2e40; }
+        [data-theme="dark"] #stagesTable tbody td { border-color: #2a2e40; }
     </style>
 </head>
 
@@ -272,7 +296,7 @@
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="{{ asset('vendors/js/vendor.bundle.base.js') }}"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.26.25/sweetalert2.min.js"></script>
-    <script src="{{ asset('js/toast-shim.js') }}"></script>
+    <script src="{{ asset('js/toast-shim.js') }}?v={{ filemtime(public_path('js/toast-shim.js')) }}"></script>
 
     <script>
         $.ajaxSetup({

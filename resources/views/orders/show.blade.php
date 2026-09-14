@@ -230,6 +230,48 @@
             .order-hero { box-shadow: none; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .card-box { box-shadow: none; border: 1px solid #e5e7eb; }
         }
+
+        [data-theme="dark"] .card-box {
+            background: #1a1d2b;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+        }
+        [data-theme="dark"] .card-title { color: #eef0f6; }
+        [data-theme="dark"] .info-item .info-label { color: #9aa1b5; }
+        [data-theme="dark"] .info-item .info-value { color: #eef0f6; }
+        [data-theme="dark"] .b-green  { background: rgba(74, 222, 128, 0.16); color: #4ade80; }
+        [data-theme="dark"] .b-amber  { background: rgba(250, 176, 5, 0.16); color: #fbbf24; }
+        [data-theme="dark"] .b-red    { background: rgba(239, 68, 68, 0.16); color: #fca5a5; }
+        [data-theme="dark"] .b-blue   { background: rgba(37, 99, 235, 0.18); color: #93a4fd; }
+        [data-theme="dark"] .b-indigo { background: rgba(99, 102, 241, 0.18); color: #a5b4fc; }
+        [data-theme="dark"] .b-gray   { background: rgba(154, 161, 181, 0.16); color: #9aa1b5; }
+        [data-theme="dark"] .pay-amounts .lbl { color: #9aa1b5; }
+        [data-theme="dark"] .pay-amounts .pp-amount { color: #eef0f6; }
+        [data-theme="dark"] .pay-amounts .pp-amount .rupee { color: #9aa1b5; }
+        [data-theme="dark"] .progress-track { background: #232637; }
+        [data-theme="dark"] .progress-meta { color: #9aa1b5; }
+        [data-theme="dark"] .due-chip { color: #fca5a5; }
+        [data-theme="dark"] .summary-table td:last-child { color: #eef0f6; }
+        [data-theme="dark"] .summary-table td:first-child { color: #9aa1b5; }
+        [data-theme="dark"] .summary-table tr.divider td { border-top-color: #2a2e40; }
+        [data-theme="dark"] .summary-table tr.grand td { border-top-color: #2a2e40; color: #eef0f6; }
+        [data-theme="dark"] .summary-table .neg { color: #fca5a5 !important; }
+        [data-theme="dark"] .pay-table th { color: #9aa1b5; }
+        [data-theme="dark"] .pay-table td { background: #232637; color: #eef0f6; }
+        [data-theme="dark"] .pay-mode { background: rgba(99, 102, 241, 0.18); color: #a5b4fc; }
+        [data-theme="dark"] .empty-row { color: #9aa1b5; }
+        [data-theme="dark"] label { color: #d7dbe4; }
+        [data-theme="dark"] #paidAmount { color: #4ade80 !important; }
+        [data-theme="dark"] #dueAmount { color: #fca5a5 !important; }
+        [data-theme="dark"] .modal-content .alert-light {
+            background: #232637;
+            border-color: #2a2e40 !important;
+        }
+        [data-theme="dark"] .modal-content .alert-light .text-dark { color: #eef0f6 !important; }
+        [data-theme="dark"] .modal-content .alert-danger {
+            background: rgba(239, 68, 68, 0.14);
+            border-color: rgba(239, 68, 68, 0.35) !important;
+            color: #fca5a5;
+        }
     </style>
 </head>
 
@@ -561,7 +603,7 @@
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="{{ asset('vendors/js/vendor.bundle.base.js') }}"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.26.25/sweetalert2.min.js"></script>
-    <script src="{{ asset('js/toast-shim.js') }}"></script>
+    <script src="{{ asset('js/toast-shim.js') }}?v={{ filemtime(public_path('js/toast-shim.js')) }}"></script>
 
     @include('include.quick-task-modal')
 

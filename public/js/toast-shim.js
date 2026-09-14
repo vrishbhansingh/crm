@@ -23,7 +23,12 @@
         '.swal2-container.swal2-top-end { top: 6px !important; padding-right: 18px !important; }',
         // Fixed px (not em/rem) so this doesn't compound with whatever
         // root font-size the current page happens to set.
-        '.swal2-popup.swal2-toast { font-size: 12px !important; padding: 6px 10px !important; }',
+        '.swal2-popup.swal2-toast { font-size: 12px !important; padding: 6px 10px !important; max-width: 300px !important; }',
+        // The icon's own default right-margin is the biggest single
+        // contributor to the toast reading as "wide" — tightening it (and
+        // the icon's own footprint) is what actually narrows the popup,
+        // since the title text already wraps within max-width above.
+        '.swal2-popup.swal2-toast .swal2-icon { margin: 0 8px 0 0 !important; }',
     ].join('');
     document.head.appendChild(style);
 

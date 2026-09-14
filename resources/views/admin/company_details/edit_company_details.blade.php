@@ -108,6 +108,20 @@
             font-weight: 600;
             color: var(--muted);
         }
+
+        [data-theme="dark"] {
+            --bg: #0f1117;
+            --card: #1a1d2b;
+            --border: #2a2e40;
+            --text: #eef0f6;
+            --muted: #9aa1b5;
+        }
+        [data-theme="dark"] .crm-page-header,
+        [data-theme="dark"] .panel {
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+        }
+        [data-theme="dark"] .company-logo-wrapper { background: rgba(147, 164, 253, 0.16); }
+        [data-theme="dark"] .crm-page-header h3 { color: #eef0f6; }
     </style>
 </head>
 
@@ -310,7 +324,7 @@
 
     <!-- Toastr -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.26.25/sweetalert2.min.js"></script>
-    <script src="{{ asset('js/toast-shim.js') }}"></script>
+    <script src="{{ asset('js/toast-shim.js') }}?v={{ filemtime(public_path('js/toast-shim.js')) }}"></script>
     <script src="{{ asset('vendors/js/vendor.bundle.base.js') }}"></script>
 
 

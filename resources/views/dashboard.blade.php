@@ -345,7 +345,7 @@
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="{{ asset('vendors/js/vendor.bundle.base.js') }}"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.26.25/sweetalert2.min.js"></script>
-    <script src="{{ asset('js/toast-shim.js') }}"></script>
+    <script src="{{ asset('js/toast-shim.js') }}?v={{ filemtime(public_path('js/toast-shim.js')) }}"></script>
     <script src="{{ asset('vendors/chart.js/Chart.min.js') }}"></script>
 
     <script>
@@ -427,6 +427,20 @@
             if (!ctx) return;
             charts[id] = new Chart(ctx, config);
         }
+
+        // Chart.js draws to a <canvas> — CSS can't reach its text/gridline
+        // colors, so they're set here from the current theme instead.
+        function applyChartTheme() {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            Chart.defaults.global.defaultFontColor = isDark ? '#9aa1b5' : '#6b7280';
+            Chart.defaults.scale.gridLines.color = isDark ? '#2a2e40' : 'rgba(0,0,0,.1)';
+            Chart.defaults.scale.gridLines.zeroLineColor = isDark ? '#2a2e40' : 'rgba(0,0,0,.25)';
+        }
+        applyChartTheme();
+        document.addEventListener('crm-theme-changed', function() {
+            applyChartTheme();
+            loadDashboardData();
+        });
 
         function renderPipeline(stages) {
             if (!stages || !stages.length) {

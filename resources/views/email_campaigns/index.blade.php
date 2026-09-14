@@ -43,6 +43,23 @@
 
         #audienceFilters .form-group { margin-bottom: 10px; }
         #audiencePreviewCount { font-weight: 700; color: var(--primary); }
+
+        [data-theme="dark"] {
+            --border: #2a2e40;
+            --text-dark: #eef0f6;
+            --text-muted: #9aa1b5;
+        }
+        [data-theme="dark"] .crm-page-header,
+        [data-theme="dark"] .crm-card {
+            background: #1a1d2b;
+            box-shadow: 0 8px 22px rgba(0, 0, 0, 0.3);
+        }
+        [data-theme="dark"] .crm-header-icon { color: #fff; }
+        [data-theme="dark"] .status-pill.draft { background: rgba(154, 161, 181, 0.16); color: #9aa1b5; }
+        [data-theme="dark"] .status-pill.scheduled { background: rgba(250, 204, 21, 0.16); color: #facc15; }
+        [data-theme="dark"] .status-pill.sending { background: rgba(147, 164, 253, 0.16); color: #93a4fd; }
+        [data-theme="dark"] .status-pill.sent { background: rgba(74, 222, 128, 0.16); color: #4ade80; }
+        [data-theme="dark"] .status-pill.failed { background: rgba(239, 68, 68, 0.16); color: #fca5a5; }
     </style>
 </head>
 
@@ -172,7 +189,7 @@
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="{{ asset('vendors/js/vendor.bundle.base.js') }}"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.26.25/sweetalert2.min.js"></script>
-    <script src="{{ asset('js/toast-shim.js') }}"></script>
+    <script src="{{ asset('js/toast-shim.js') }}?v={{ filemtime(public_path('js/toast-shim.js')) }}"></script>
 
     <script>
         $.ajaxSetup({

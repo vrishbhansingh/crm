@@ -186,6 +186,38 @@
            silently do nothing if unchecked. */
         .perm-item-locked { color: #92400e; font-weight: 600; }
         .perm-item-locked input:disabled { cursor: not-allowed; }
+
+        [data-theme="dark"] {
+            --border: #2a2e40;
+            --text-dark: #eef0f6;
+            --text-muted: #9aa1b5;
+            --surface: #232637;
+        }
+        [data-theme="dark"] .rp-header,
+        [data-theme="dark"] .rp-card {
+            background: #1a1d2b;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+        }
+        [data-theme="dark"] .rp-note {
+            background: rgba(147, 164, 253, 0.12);
+            border-color: rgba(147, 164, 253, 0.3);
+            color: #c7d0fe;
+        }
+        [data-theme="dark"] .rp-note i { color: #93a4fd; }
+        [data-theme="dark"] .rp-pill.protected { background: rgba(74, 222, 128, 0.16); color: #4ade80; }
+        [data-theme="dark"] .rp-pill.count { background: #232637; color: #d7dbe4; }
+        [data-theme="dark"] .rp-actions-btn { background: #232637; color: #9aa1b5; }
+        [data-theme="dark"] .rp-actions-btn:hover { background: #2a2e40; }
+        [data-theme="dark"] .rp-dropdown-menu { background: #1e2233; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4); }
+        [data-theme="dark"] .rp-dropdown-menu .dropdown-item { color: #eef0f6; }
+        [data-theme="dark"] .rp-dropdown-menu .dropdown-item:hover { background: #2a2e40; }
+        [data-theme="dark"] .rp-dropdown-menu .dropdown-item.text-danger { color: #fca5a5; }
+        [data-theme="dark"] .rp-dropdown-menu .dropdown-item.text-danger:hover { background: rgba(239, 68, 68, 0.16); }
+        [data-theme="dark"] .perm-group { background: #232637; }
+        [data-theme="dark"] .perm-group-head .perm-group-count { background: #1a1d2b; border-color: #2a2e40; color: #9aa1b5; }
+        [data-theme="dark"] .perm-select-all-row { border-bottom-color: #2a2e40; }
+        [data-theme="dark"] .perm-item { color: #d7dbe4; }
+        [data-theme="dark"] .perm-item-locked { color: #fbbf24; }
     </style>
 </head>
 
@@ -344,7 +376,7 @@
          again), and modal backdrops from the orphaned instance never got
          cleaned up on hide. Only toastr is genuinely not loaded elsewhere. -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.26.25/sweetalert2.min.js"></script>
-    <script src="{{ asset('js/toast-shim.js') }}"></script>
+    <script src="{{ asset('js/toast-shim.js') }}?v={{ filemtime(public_path('js/toast-shim.js')) }}"></script>
 
     <script>
         $.ajaxSetup({

@@ -37,6 +37,16 @@
             font-size: 18px;
             margin: 0;
         }
+
+        [data-theme="dark"] .card-box,
+        [data-theme="dark"] .page-header {
+            background: #1a1d2b;
+            border-color: #2a2e40;
+            color: #eef0f6;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+        }
+        [data-theme="dark"] .page-header h4 { color: #eef0f6; }
+        [data-theme="dark"] .card-box label { color: #d7dbe4; }
     </style>
 </head>
 
@@ -179,7 +189,7 @@
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="{{ asset('vendors/js/vendor.bundle.base.js') }}"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.26.25/sweetalert2.min.js"></script>
-    <script src="{{ asset('js/toast-shim.js') }}"></script>
+    <script src="{{ asset('js/toast-shim.js') }}?v={{ filemtime(public_path('js/toast-shim.js')) }}"></script>
 
     <script>
         $.ajaxSetup({

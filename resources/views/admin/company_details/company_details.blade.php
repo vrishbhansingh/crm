@@ -183,6 +183,25 @@
             font-weight: 700;
             color: var(--primary);
         }
+
+        [data-theme="dark"] {
+            --bg: #0f1117;
+            --card: #1a1d2b;
+            --border: #2a2e40;
+            --text: #eef0f6;
+            --muted: #9aa1b5;
+        }
+        [data-theme="dark"] .crm-page-header,
+        [data-theme="dark"] .panel {
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+        }
+        [data-theme="dark"] .company-logo,
+        [data-theme="dark"] .company-logo-wrapper,
+        [data-theme="dark"] .company-logo-placeholder {
+            background: rgba(147, 164, 253, 0.16);
+        }
+        [data-theme="dark"] .company-status { background: rgba(74, 222, 128, 0.16); color: #4ade80; }
+        [data-theme="dark"] .company-actions a { color: var(--text); }
     </style>
 </head>
 

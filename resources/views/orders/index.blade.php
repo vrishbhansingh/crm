@@ -120,6 +120,32 @@
             color: var(--text-muted);
             margin: 0;
         }
+
+        [data-theme="dark"] {
+            --text-dark: #eef0f6;
+            --text-muted: #9aa1b5;
+        }
+        [data-theme="dark"] .order-table-wrapper,
+        [data-theme="dark"] .page-header {
+            background: #1a1d2b;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+        }
+        [data-theme="dark"] .order-table thead th {
+            background: #232637;
+            color: #d7dbe4;
+        }
+        [data-theme="dark"] .order-table tbody td { color: #eef0f6; border-color: #2a2e40; }
+        [data-theme="dark"] .status-approved { background: rgba(74, 222, 128, 0.16); color: #4ade80; }
+        [data-theme="dark"] .status-new { background: rgba(250, 204, 21, 0.16); color: #facc15; }
+        [data-theme="dark"] .payment-badge { background: rgba(147, 164, 253, 0.16); color: #93a4fd; }
+        [data-theme="dark"] .pay-paid { background: rgba(74, 222, 128, 0.16); color: #4ade80; }
+        [data-theme="dark"] .pay-partial { background: rgba(250, 176, 5, 0.16); color: #fbbf24; }
+        [data-theme="dark"] .pay-pending { background: rgba(239, 68, 68, 0.16); color: #fca5a5; }
+        [data-theme="dark"] .status-in_progress { background: rgba(147, 164, 253, 0.16); color: #93a4fd; }
+        [data-theme="dark"] .status-on_hold { background: rgba(154, 161, 181, 0.16); color: #9aa1b5; }
+        [data-theme="dark"] .status-delivered { background: rgba(74, 222, 128, 0.16); color: #4ade80; }
+        [data-theme="dark"] .status-closed { background: rgba(154, 161, 181, 0.16); color: #9aa1b5; }
+        [data-theme="dark"] .status-cancelled { background: rgba(239, 68, 68, 0.16); color: #fca5a5; }
     </style>
 </head>
 

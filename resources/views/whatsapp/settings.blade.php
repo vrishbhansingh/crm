@@ -55,6 +55,24 @@
             font-family: monospace; font-size: 12px; word-break: break-all; margin-top: 8px;
         }
         .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); }
+
+        [data-theme="dark"] {
+            --border: #2a2e40;
+            --text-dark: #eef0f6;
+            --text-muted: #9aa1b5;
+        }
+        [data-theme="dark"] .crm-page-header,
+        [data-theme="dark"] .channel-pick-card,
+        [data-theme="dark"] .account-card {
+            background: #1a1d2b;
+            box-shadow: 0 8px 22px rgba(0, 0, 0, 0.3);
+        }
+        [data-theme="dark"] .channel-pick-card:hover { box-shadow: 0 8px 22px rgba(0, 0, 0, 0.4); }
+        [data-theme="dark"] .channel-pick-card h6 { color: #eef0f6; }
+        [data-theme="dark"] .webhook-url-box { background: #232637; border-color: #2a2e40; color: #d7dbe4; }
+        [data-theme="dark"] .account-badge.meta_cloud { background: rgba(147, 164, 253, 0.16); color: #93a4fd; }
+        [data-theme="dark"] .account-badge.unofficial { background: rgba(250, 204, 21, 0.16); color: #facc15; }
+        [data-theme="dark"] .status-dot.off { background: #6b7280; }
     </style>
 </head>
 
@@ -195,7 +213,7 @@
 
     <script src="{{ asset('vendors/js/vendor.bundle.base.js') }}"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.26.25/sweetalert2.min.js"></script>
-    <script src="{{ asset('js/toast-shim.js') }}"></script>
+    <script src="{{ asset('js/toast-shim.js') }}?v={{ filemtime(public_path('js/toast-shim.js')) }}"></script>
     <script>
         $.ajaxSetup({ headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') } });
 

@@ -52,6 +52,35 @@
            an explicit override back to a normal readable color. */
         .fc-list-event-title a, .fc-list-event-time { color: var(--text-dark) !important; }
         .fc-list-day-cushion { background: #f8fafc !important; }
+
+        [data-theme="dark"] {
+            --text-dark: #eef0f6;
+            --text-muted: #9aa1b5;
+        }
+        [data-theme="dark"] .crm-page-header,
+        [data-theme="dark"] .crm-card {
+            background: #1a1d2b;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+        }
+        [data-theme="dark"] .fc-list-day-cushion { background: #232637 !important; }
+        [data-theme="dark"] .fc-theme-standard .fc-scrollgrid,
+        [data-theme="dark"] .fc-theme-standard td,
+        [data-theme="dark"] .fc-theme-standard th {
+            border-color: #2a2e40;
+        }
+        [data-theme="dark"] .fc-col-header-cell { background: #232637; color: #d7dbe4; }
+        [data-theme="dark"] .fc-daygrid-day { background: #1a1d2b; }
+        [data-theme="dark"] .fc-daygrid-day.fc-day-today { background: rgba(147, 164, 253, 0.12) !important; }
+        [data-theme="dark"] .fc-daygrid-day-number,
+        [data-theme="dark"] .fc-list-day-text,
+        [data-theme="dark"] .fc-list-day-side-text {
+            color: #d7dbe4;
+        }
+        [data-theme="dark"] .fc-list-empty { background: #1a1d2b; color: #9aa1b5; }
+        [data-theme="dark"] .fc-timegrid-slot-label,
+        [data-theme="dark"] .fc-timegrid-axis {
+            color: #9aa1b5;
+        }
     </style>
 </head>
 

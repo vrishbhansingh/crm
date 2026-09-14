@@ -91,6 +91,25 @@
 
         .activity { display: flex; justify-content: space-between; padding: 10px 0; font-size: 14px; }
         .activity time { color: var(--muted); font-size: 13px; }
+
+        [data-theme="dark"] {
+            --bg: #0f1117;
+            --card: #1a1d2b;
+            --border: #2a2e40;
+            --text: #eef0f6;
+            --muted: #9aa1b5;
+        }
+        [data-theme="dark"] .crm-page-header,
+        [data-theme="dark"] .panel {
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+        }
+        [data-theme="dark"] .avatar { border-color: #232637; background: #232637; }
+        [data-theme="dark"] .avatar-edit-btn { border-color: #1a1d2b; }
+        [data-theme="dark"] .status-pill { background: rgba(147, 164, 253, 0.16); color: #93a4fd; }
+        [data-theme="dark"] .form-control:disabled, [data-theme="dark"] .form-control[readonly] {
+            background: #1e2233;
+            color: #9aa1b5;
+        }
     </style>
 </head>
 
@@ -179,7 +198,7 @@
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="{{ asset('vendors/js/vendor.bundle.base.js') }}"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.26.25/sweetalert2.min.js"></script>
-    <script src="{{ asset('js/toast-shim.js') }}"></script>
+    <script src="{{ asset('js/toast-shim.js') }}?v={{ filemtime(public_path('js/toast-shim.js')) }}"></script>
 
     <script>
         $.ajaxSetup({

@@ -7,6 +7,7 @@ use App\Models\Deal;
 use App\Models\Lead;
 use App\Models\Order;
 use App\Models\PaymentDetails;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -64,17 +65,28 @@ class ReportController extends Controller
             ->selectRaw("COALESCE(NULLIF(lead_source, ''), 'Unknown') as label, COUNT(*) as total")
             ->groupBy('label')->orderByDesc('total')->limit(10)->get();
 
-        $owners = $this->dealQuery()
-            ->leftJoin('users', 'users.id', '=', 'deals.owner_id')
+        // Deals live on the tenant connection, users on the master
+        // connection — a SQL join across them isn't possible, so aggregate
+        // on deals alone and resolve owner names separately (same fix as
+        // DashboardController::topPerformers()).
+        $ownerRows = $this->dealQuery()
             ->whereBetween('deals.created_at', [$from, $to])
-            ->groupBy('users.id', 'users.name')
+            ->groupBy('owner_id')
             ->orderByDesc('won_value')
             ->get([
-                DB::raw("COALESCE(users.name, 'Unassigned') as name"),
+                'owner_id',
                 DB::raw('COUNT(deals.id) as deals'),
                 DB::raw("SUM(CASE WHEN deals.status = 'won' THEN 1 ELSE 0 END) as won"),
                 DB::raw("COALESCE(SUM(CASE WHEN deals.status = 'won' THEN deals.amount ELSE 0 END), 0) as won_value"),
             ]);
+
+        $ownerNames = User::whereIn('id', $ownerRows->pluck('owner_id')->filter())->get()->keyBy('id');
+        $owners = $ownerRows->map(fn ($row) => [
+            'name' => $ownerNames->get($row->owner_id)?->name ?? 'Unassigned',
+            'deals' => $row->deals,
+            'won' => $row->won,
+            'won_value' => $row->won_value,
+        ]);
 
         $revenueByDay = (clone $orderQuery)
             ->selectRaw('DATE(invoice_date) as day, COALESCE(SUM(net_amount), 0) as total')

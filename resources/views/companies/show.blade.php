@@ -6,6 +6,15 @@
     <style>
         /* Same modernization pattern as the rest of this pass: bigger, roomier cards. */
         .hero,.panel{background:#fff;border:none;border-radius:13px;box-shadow:0 8px 24px rgba(15,23,42,.06)}.hero{padding:20px 22px;margin-bottom:18px}.hero h3{font-weight:750;font-size:24px;margin:6px 0}.panel{padding:20px;margin-bottom:20px}.panel h5{font-weight:700;font-size:15.5px;margin-bottom:16px}.meta{color:#64748b;font-size:13.5px}.field{display:flex;justify-content:space-between;gap:15px;padding:11px 0;border-bottom:1px solid #f1f5f9;font-size:14px}.field:last-child{border:0}.field span:first-child{color:#64748b}.metric-card{background:#f8fafc;border-radius:12px;padding:18px;text-align:center}.metric-card strong{display:block;font-size:26px;color:#1d4ed8}.related-row{padding:12px 0;border-bottom:1px solid #f1f5f9;font-size:14px}.related-row:last-child{border:0}
+        [data-theme="dark"] .hero,[data-theme="dark"] .panel{background:#1a1d2b;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+        [data-theme="dark"] .hero h3,[data-theme="dark"] .panel h5{color:#eef0f6}
+        [data-theme="dark"] .meta{color:#9aa1b5}
+        [data-theme="dark"] .field{border-bottom-color:#2a2e40}
+        [data-theme="dark"] .field span:first-child{color:#9aa1b5}
+        [data-theme="dark"] .field span:last-child,[data-theme="dark"] .field strong{color:#eef0f6}
+        [data-theme="dark"] .metric-card{background:#232637}
+        [data-theme="dark"] .metric-card strong{color:#93a4fd}
+        [data-theme="dark"] .related-row{border-bottom-color:#2a2e40;color:#eef0f6}
     </style>
 </head>
 <body><div class="container-scroller">@include('include.header')<div class="container-fluid page-body-wrapper">@include('include.sidebar')<div class="content-wrapper">

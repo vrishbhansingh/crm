@@ -39,6 +39,25 @@
         .chat-compose { padding: 12px 16px; background: #fff; border-top: 1px solid var(--border); }
         .window-banner { background: #fef3c7; color: #92400e; padding: 6px 16px; font-size: 12px; }
         .chat-empty { display: flex; align-items: center; justify-content: center; height: 100%; color: var(--text-muted); flex-direction: column; }
+
+        [data-theme="dark"] {
+            --border: #2a2e40;
+            --text-dark: #eef0f6;
+            --text-muted: #9aa1b5;
+        }
+        [data-theme="dark"] .chat-shell { background: #1a1d2b; }
+        [data-theme="dark"] .chat-item { border-bottom-color: #2a2e40; }
+        [data-theme="dark"] .chat-item:hover, [data-theme="dark"] .chat-item.active { background: rgba(74, 222, 128, 0.1); }
+        [data-theme="dark"] .chat-item .ci-time { color: #6b7280; }
+        [data-theme="dark"] .chat-thread { background: #0b141a; }
+        [data-theme="dark"] .chat-thread-header { background: #1a1d2b; }
+        [data-theme="dark"] .msg-bubble.out { background: #075e54; color: #e9edef; }
+        [data-theme="dark"] .msg-bubble.in { background: #202c33; color: #e9edef; }
+        [data-theme="dark"] .msg-bubble .msg-meta { color: #8696a0; }
+        [data-theme="dark"] .msg-bubble.failed { border-color: #7f1d1d; }
+        [data-theme="dark"] .msg-bubble .msg-error { color: #fca5a5; }
+        [data-theme="dark"] .chat-compose { background: #1a1d2b; }
+        [data-theme="dark"] .window-banner { background: rgba(250, 204, 21, 0.14); color: #facc15; }
     </style>
 </head>
 
@@ -121,7 +140,7 @@
 
     <script src="{{ asset('vendors/js/vendor.bundle.base.js') }}"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.26.25/sweetalert2.min.js"></script>
-    <script src="{{ asset('js/toast-shim.js') }}"></script>
+    <script src="{{ asset('js/toast-shim.js') }}?v={{ filemtime(public_path('js/toast-shim.js')) }}"></script>
     <script>
         $.ajaxSetup({ headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') } });
 

@@ -91,6 +91,37 @@
         .li-log-status.ignored { background: #f1f5f9; color: #64748b; }
         .li-log-status.failed { background: #fee2e2; color: #991b1b; }
         .li-log-payload { font-family: monospace; font-size: 10.5px; color: #64748b; background: var(--surface); border-radius: 6px; padding: 6px 8px; margin-top: 4px; white-space: pre-wrap; word-break: break-all; max-height: 120px; overflow-y: auto; }
+
+        [data-theme="dark"] {
+            --border: #2a2e40;
+            --text-dark: #eef0f6;
+            --text-muted: #9aa1b5;
+            --surface: #232637;
+        }
+        [data-theme="dark"] .li-header,
+        [data-theme="dark"] .li-pick-tile,
+        [data-theme="dark"] .li-group {
+            background: #1a1d2b;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+        }
+        [data-theme="dark"] .li-icon { background: rgba(147, 164, 253, 0.16); color: #93a4fd; }
+        [data-theme="dark"] .li-pick-count.has-some { color: #4ade80; }
+        [data-theme="dark"] .li-count-badge.has-some { background: rgba(74, 222, 128, 0.16); color: #4ade80; }
+        [data-theme="dark"] .li-table th { background: #232637; }
+        [data-theme="dark"] .li-pill { color: #d7dbe4; }
+        [data-theme="dark"] .li-pill.muted { color: #6b7280; }
+        [data-theme="dark"] .li-actions-btn { background: #232637; color: #9aa1b5; }
+        [data-theme="dark"] .li-dropdown-menu { background: #1e2233; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4); }
+        [data-theme="dark"] .li-dropdown-menu .dropdown-item { color: #eef0f6; }
+        [data-theme="dark"] .li-dropdown-menu .dropdown-item:hover { background: #2a2e40; }
+        [data-theme="dark"] .li-dropdown-menu .dropdown-item.text-danger { color: #fca5a5; }
+        [data-theme="dark"] .li-dropdown-menu .dropdown-item.text-danger:hover { background: rgba(239, 68, 68, 0.16); }
+        [data-theme="dark"] .guide-steps li::before { background: rgba(147, 164, 253, 0.16); color: #93a4fd; }
+        [data-theme="dark"] .li-verify-note { background: rgba(147, 164, 253, 0.12); border-color: rgba(147, 164, 253, 0.3); color: #c7d0fe; }
+        [data-theme="dark"] .li-log-status.created { background: rgba(74, 222, 128, 0.16); color: #4ade80; }
+        [data-theme="dark"] .li-log-status.duplicate { background: rgba(250, 204, 21, 0.16); color: #facc15; }
+        [data-theme="dark"] .li-log-status.ignored { background: rgba(154, 161, 181, 0.16); color: #9aa1b5; }
+        [data-theme="dark"] .li-log-status.failed { background: rgba(239, 68, 68, 0.16); color: #fca5a5; }
     </style>
 </head>
 
@@ -345,7 +376,7 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.26.25/sweetalert2.min.js"></script>
-    <script src="{{ asset('js/toast-shim.js') }}"></script>
+    <script src="{{ asset('js/toast-shim.js') }}?v={{ filemtime(public_path('js/toast-shim.js')) }}"></script>
 
     <script>
         $.ajaxSetup({ headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content } });

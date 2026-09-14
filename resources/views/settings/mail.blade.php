@@ -37,6 +37,23 @@
         .badge-active-smtp { background: #dcfce7; color: #166534; font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .03em; padding: 3px 9px; border-radius: 999px; }
 
         #smtpModal .modal-dialog { max-width: 640px; }
+
+        [data-theme="dark"] {
+            --bg: #0f1117;
+            --card: #1a1d2b;
+            --border: #2a2e40;
+            --text: #eef0f6;
+            --muted: #9aa1b5;
+        }
+        [data-theme="dark"] .crm-page-header,
+        [data-theme="dark"] .panel {
+            background: #1a1d2b;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+        }
+        [data-theme="dark"] .crm-page-header h3 { color: #eef0f6; }
+        [data-theme="dark"] .crm-page-header p { color: #9aa1b5; }
+        [data-theme="dark"] .smtp-empty i { color: #343850; }
+        [data-theme="dark"] .badge-active-smtp { background: rgba(74, 222, 128, 0.16); color: #4ade80; }
     </style>
 </head>
 
@@ -177,7 +194,7 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.26.25/sweetalert2.min.js"></script>
-    <script src="{{ asset('js/toast-shim.js') }}"></script>
+    <script src="{{ asset('js/toast-shim.js') }}?v={{ filemtime(public_path('js/toast-shim.js')) }}"></script>
     <script src="{{ asset('vendors/js/vendor.bundle.base.js') }}"></script>
 
     <script>

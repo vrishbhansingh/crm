@@ -160,6 +160,24 @@
     transition: all 0.2s ease-in-out;
         }
 
+        [data-theme="dark"] {
+            --text-dark: #eef0f6;
+            --text-muted: #9aa1b5;
+        }
+        [data-theme="dark"] .project-table-wrapper,
+        [data-theme="dark"] .page-header {
+            background: #1a1d2b;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+        }
+        [data-theme="dark"] .project-table thead th { background: #232637; color: #d7dbe4; }
+        [data-theme="dark"] .project-table tbody td { color: #eef0f6; border-color: #2a2e40; }
+        [data-theme="dark"] .priority-low { background: rgba(154, 161, 181, 0.16); color: #d7dbe4; }
+        [data-theme="dark"] .priority-medium { background: rgba(250, 204, 21, 0.16); color: #facc15; }
+        [data-theme="dark"] .priority-high { background: rgba(239, 68, 68, 0.16); color: #fca5a5; }
+        [data-theme="dark"] .priority-urgent { background: #dc3545; color: #fff; }
+        [data-theme="dark"] .tech-badge { background: rgba(147, 164, 253, 0.16); color: #93a4fd; }
+        [data-theme="dark"] .project-edit-btn { background: rgba(147, 164, 253, 0.16); color: #93a4fd; border-color: #93a4fd; }
+        [data-theme="dark"] .project-edit-btn:hover { background: #93a4fd; color: #0f1117; }
     </style>
 </head>
 
@@ -296,7 +314,7 @@
     <script src="{{ asset('vendors/datatables.net/jquery.dataTables.js') }}"></script>
     <script src="{{ asset('vendors/datatables.net-bs4/dataTables.bootstrap4.js') }}"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.26.25/sweetalert2.min.js"></script>
-    <script src="{{ asset('js/toast-shim.js') }}"></script>
+    <script src="{{ asset('js/toast-shim.js') }}?v={{ filemtime(public_path('js/toast-shim.js')) }}"></script>
 
 
     <script>

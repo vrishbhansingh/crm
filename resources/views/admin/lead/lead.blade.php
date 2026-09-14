@@ -880,7 +880,7 @@
     <script src="{{asset('js/toast.js')}}"></script>
     <script src="{{asset('js/confirm.js')}}"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.26.25/sweetalert2.min.js"></script>
-    <script src="{{ asset('js/toast-shim.js') }}"></script>
+    <script src="{{ asset('js/toast-shim.js') }}?v={{ filemtime(public_path('js/toast-shim.js')) }}"></script>
     <script src="{{ asset('vendors/js/vendor.bundle.base.js') }}"></script>
     <script>
         function showToast(message, type = 'success') {

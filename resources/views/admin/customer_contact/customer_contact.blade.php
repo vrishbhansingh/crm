@@ -243,6 +243,27 @@
                 padding: 18px 20px;
             }
         }
+
+        [data-theme="dark"] {
+            --primary-light: rgba(147, 164, 253, 0.16);
+            --bg-soft: #0f1117;
+            --text-dark: #eef0f6;
+            --text-muted: #9aa1b5;
+            --border: #2a2e40;
+        }
+        [data-theme="dark"] .page-header,
+        [data-theme="dark"] .crm-page-header,
+        [data-theme="dark"] .table-wrapper {
+            background: #1a1d2b;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+        }
+        [data-theme="dark"] .crm-header-icon { background: rgba(147, 164, 253, 0.16); color: #93a4fd; }
+        [data-theme="dark"] table thead th { background: #232637; color: #d7dbe4; }
+        [data-theme="dark"] table tbody tr { background: #1e2233; }
+        [data-theme="dark"] table tbody tr:hover { box-shadow: 0 6px 18px rgba(147, 164, 253, 0.16); }
+        [data-theme="dark"] table tbody td { color: #d7dbe4; border-color: #2a2e40; }
+        [data-theme="dark"] .contact-name { color: #eef0f6; }
+        [data-theme="dark"] .budget-badge { background: rgba(147, 164, 253, 0.16); color: #93a4fd; }
     </style>
 
 </head>

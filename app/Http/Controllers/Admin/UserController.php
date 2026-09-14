@@ -62,20 +62,24 @@ class UserController extends Controller
             $safeRole = e($roleName);
             $safeStatus = e($user->status);
 
-            $action = "<div class='action-stack'>";
+            $menuItems = '';
             if ($actingUser->can('users.edit')) {
-                $action .= "
-                    <button
-                        class='btn btn-sm btn-success action-status editbtn'
+                $menuItems .= "
+                    <button type='button' class='row-actions-item editbtn'
                         data-id='{$user->id}' data-name='{$safeName}' data-email='{$safeEmail}' data-phone='{$safePhone}' data-role='{$safeRole}'
                         data-status='{$safeStatus}'>
-                        <i class='fa fa-check-circle'></i> Edit
+                        <i class='fa fa-pencil'></i> Edit
                     </button>";
             }
             if ($actingUser->can('users.delete') && $user->id !== $actingUser->id) {
-                $action .= "<button class='btn btn-sm btn-danger delete_data' data-id='{$user->id}'><i class='fa fa-trash'></i> Delete</button>";
+                $menuItems .= "<button type='button' class='row-actions-item text-danger delete_data' data-id='{$user->id}'><i class='fa fa-trash'></i> Delete</button>";
             }
-            $action .= '</div>';
+            $action = $menuItems
+                ? "<div class='row-actions'>
+                    <button type='button' class='row-actions-btn'><i class='fa fa-ellipsis-v'></i></button>
+                    <div class='row-actions-menu'>{$menuItems}</div>
+                </div>"
+                : '';
 
             $data[] = [
                 'id' => $user->id,
