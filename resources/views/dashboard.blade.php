@@ -27,8 +27,8 @@
             background: #fff;
             padding: 20px 22px;
             border-radius: 13px;
-            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
-            margin-bottom: 28px;
+            box-shadow: 0 4px 14px rgba(15, 23, 42, 0.07);
+            margin-bottom: 40px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -56,13 +56,13 @@
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
             gap: 20px;
-            margin-bottom: 28px;
+            margin-bottom: 40px;
         }
 
         .stat-card {
             background: #fff;
             border-radius: 13px;
-            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+            box-shadow: 0 4px 14px rgba(15, 23, 42, 0.07);
             padding: 18px 20px;
         }
 
@@ -96,12 +96,28 @@
         .icon-pink { background: #fdf2f8; color: #db2777; }
         .icon-indigo { background: #eef2ff; color: #4338ca; }
 
+        /* Row-to-row spacing lives on the .row itself, not on .dash-card's
+           own margin-bottom: .content-wrapper is a column flexbox (see
+           include/footer.blade.php), so each .row is a flex item, and
+           .dash-card's height:100% (for equal-height side-by-side cards)
+           gets cross-axis stretched to fill its column — that stretch
+           resolution silently drops a percentage-height item's own
+           margin-bottom, so it never reaches the row's outer edge even
+           though the card's own computed margin is genuinely 40px. Putting
+           the gap on .row (which has no percentage-height self-reference)
+           sidesteps that entirely; row-gap covers cards that wrap onto a
+           second line at narrow widths, where .dash-card's margin-bottom
+           would hit the same stretch-collapse issue between the two lines. */
+        .dash-wrap > .row {
+            margin-bottom: 40px;
+            row-gap: 40px;
+        }
+
         .dash-card {
             background: #fff;
             border-radius: 13px;
-            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+            box-shadow: 0 4px 14px rgba(15, 23, 42, 0.07);
             padding: 24px 26px;
-            margin-bottom: 28px;
             height: 100%;
         }
 
