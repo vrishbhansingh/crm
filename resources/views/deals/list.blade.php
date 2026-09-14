@@ -112,6 +112,23 @@
         }
 
         .stage-pill { display: inline-block; padding: 4px 11px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+
+        /* Dark mode overrides — see admin/lead/lead.blade.php for why this
+           page needs explicit per-selector rules rather than variables. */
+        [data-theme="dark"] .page-header,
+        [data-theme="dark"] .deal-stat-card,
+        [data-theme="dark"] .order-table-wrapper {
+            background: #1a1d2b;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+        }
+        [data-theme="dark"] .page-header h4,
+        [data-theme="dark"] .deal-stat-card .deal-stat-value,
+        [data-theme="dark"] .order-table tbody td a {
+            color: #eef0f6;
+        }
+        [data-theme="dark"] .deal-stat-card .deal-stat-label { color: #9aa1b5; }
+        [data-theme="dark"] .order-table thead th { background: #232637; color: #9aa1b5; }
+        [data-theme="dark"] .order-table tbody td { color: #d7dbe4; border-color: #2a2e40; }
     </style>
 </head>
 

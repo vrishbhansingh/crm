@@ -205,6 +205,9 @@ class DashboardController extends Controller
             'newLeadToday' => Lead::where('lead_type', 'new')
                 ->whereDate('created_at', Carbon::today())
                 ->count(),
+            'newLeadYesterday' => Lead::where('lead_type', 'new')
+                ->whereDate('created_at', Carbon::yesterday())
+                ->count(),
             'hotLead' => Lead::where('lead_type', 'hot')->count(),
             'webLead' => Lead::where('lead_source', 'website')->count(),
             'tasksDueToday' => Task::whereDate('due_at', $today)

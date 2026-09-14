@@ -48,6 +48,25 @@
   .crm-breadcrumb i.fa-home { color: #9ca3af; font-size: 12px; }
   @media (max-width: 991px) { .crm-breadcrumb { display: none; } }
 
+  [data-theme="dark"] .crm-navbar {
+    background: linear-gradient(90deg, #12141d 0%, #161a2c 50%, #12141d 100%);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+  }
+  [data-theme="dark"] .crm-breadcrumb {
+    background: linear-gradient(to right, #0c7bfe 0, #0c7bfe var(--sidebar-w, 200px), #12141d var(--sidebar-w, 200px), #12141d 100%);
+    border-top-color: #232637;
+    color: #9aa1b5;
+  }
+  [data-theme="dark"] .crm-breadcrumb a { color: #9aa1b5; }
+  [data-theme="dark"] .crm-breadcrumb .current { color: #eef0f6; }
+  [data-theme="dark"] .crm-toggle { color: #93a4fd; }
+  [data-theme="dark"] .icon-btn { background: #232637; color: #b8bed2; }
+  [data-theme="dark"] .icon-btn:hover { background: #2c3049; color: #ffffff; }
+  [data-theme="dark"] .crm-profile:hover { background: rgba(255, 255, 255, 0.06); }
+  [data-theme="dark"] .crm-profile-text span { color: #eef0f6; }
+  [data-theme="dark"] .crm-profile-text small { color: #9aa1b5; }
+  [data-theme="dark"] .crm-profile-avatar { border-color: #343850; }
+
   .crm-brand-wrapper {
     /* Tracks the sidebar's own width exactly, so the blue brand column and
        the icon rail beneath it shrink together instead of the column
@@ -189,8 +208,17 @@
     object-fit: cover; flex-shrink: 0; border: 1px solid #e5e7eb;
   }
 
-  .notification-link { position: relative; color:#475569; font-size:19px; }
-  .notification-count { position:absolute; top:-8px; right:-10px; min-width:17px; height:17px; border-radius:10px; background:#ef4444; color:#fff; font-size:10px; line-height:17px; text-align:center; }
+  .icon-btn {
+    width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: #f1f3f9; color: #475569; border: none; font-size: 15px;
+    cursor: pointer; transition: background 0.15s ease, color 0.15s ease;
+    text-decoration: none;
+  }
+  .icon-btn:hover { background: #e5e9f5; color: #1e293b; }
+
+  .notification-link { position: relative; }
+  .notification-count { position:absolute; top:-2px; right:-4px; min-width:17px; height:17px; border-radius:10px; background:#ef4444; color:#fff; font-size:10px; line-height:17px; text-align:center; padding:0 3px; }
 
   .crm-profile-caret { font-size: 10px; color: #9ca3af; margin-left: 2px; }
 
@@ -215,10 +243,11 @@
     position: absolute;
     top: 104px; /* below navbar (64px) + breadcrumb (34px) */
     right: 20px;
-    background: #ffffff;
-    border-radius: 10px;
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
-    width: 180px;
+    background: #1e2233;
+    border-radius: 14px;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.28);
+    width: 200px;
+    padding: 8px;
     display: none;
     overflow: hidden;
   }
@@ -226,46 +255,57 @@
   .crm-dropdown a {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 12px 16px;
-    font-size: 13px;
-    color: #374151;
+    gap: 12px;
+    padding: 11px 12px;
+    margin: 2px 0;
+    border-radius: 10px;
+    font-size: 13.5px;
+    color: #e2e8f5;
     text-decoration: none;
   }
 
   .crm-dropdown a:hover {
-    background: #f3f4f6;
+    background: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
   }
 
   .crm-dropdown i {
-    color: #4b49ac;
+    color: #93a4fd;
+    width: 16px;
+    text-align: center;
   }
 
   .crm-dropdown form {
-    margin: 0;
+    margin: 6px 0 0;
+    padding-top: 6px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
   }
 
   .crm-dropdown .logout-btn {
     width: 100%;
     background: transparent;
     border: none;
-    padding: 10px 15px;
-    font-size: 14px;
-    color: #333;
+    padding: 11px 12px;
+    margin: 2px 0;
+    border-radius: 10px;
+    font-size: 13.5px;
+    color: #e2e8f5;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     cursor: pointer;
     text-align: left;
   }
 
+  .crm-dropdown .logout-btn i { color: #93a4fd; width: 16px; text-align: center; }
+
   .crm-dropdown .logout-btn:hover {
-    background: #f8f9fa;
-    color: #dc3545;
+    background: rgba(239, 68, 68, 0.15);
+    color: #fca5a5;
   }
 
   .crm-dropdown .logout-btn:hover i {
-    color: #dc3545;
+    color: #fca5a5;
   }
 
   @media (max-width: 945px) {
@@ -395,7 +435,10 @@
       @if(session('impersonator_id'))
         <form method="post" action="{{ route('impersonation.stop') }}">@csrf<button class="btn btn-sm btn-warning">End support session</button></form>
       @endif
-      <a class="notification-link" href="{{ route('notifications.index') }}" title="Notifications">
+      <button type="button" class="icon-btn" id="themeToggleBtn" title="Toggle dark / light mode" aria-label="Toggle dark / light mode">
+        <i class="fa fa-moon-o" id="themeToggleIcon"></i>
+      </button>
+      <a class="icon-btn notification-link" href="{{ route('notifications.index') }}" title="Notifications">
         <i class="fa fa-bell-o"></i>
         @php $unreadNotificationCount = Auth::guard('web')->user()->unreadNotifications()->count(); @endphp
         @if($unreadNotificationCount)<span class="notification-count">{{ $unreadNotificationCount > 99 ? '99+' : $unreadNotificationCount }}</span>@endif
@@ -444,7 +487,41 @@
 </div>
 
 <script>
+  // Applied synchronously (not inside DOMContentLoaded) so everything the
+  // parser hasn't reached yet (sidebar, content-wrapper) picks up the right
+  // theme on first paint instead of flashing light-then-dark. Only the
+  // header markup already parsed above this point can't benefit — there's
+  // no shared <head> across pages in this app to run this earlier.
+  (function() {
+    const stored = localStorage.getItem('crm-theme');
+    if (stored === 'dark') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
+  })();
+
   document.addEventListener("DOMContentLoaded", function() {
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
+    const themeToggleIcon = document.getElementById('themeToggleIcon');
+
+    function syncThemeIcon() {
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      themeToggleIcon.className = isDark ? 'fa fa-sun-o' : 'fa fa-moon-o';
+    }
+    syncThemeIcon();
+
+    themeToggleBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      if (isDark) {
+        document.documentElement.removeAttribute('data-theme');
+        localStorage.setItem('crm-theme', 'light');
+      } else {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        localStorage.setItem('crm-theme', 'dark');
+      }
+      syncThemeIcon();
+    });
+
     const profile = document.getElementById("profileToggle");
     const dropdown = document.getElementById("profileDropdown");
 

@@ -28,9 +28,13 @@ class DashboardTest extends TestCase
             ->assertJsonPath('scope', 'team')
             ->assertJsonStructure([
                 'data' => ['totalLead', 'tasksDueToday', 'openDeals', 'pipelineValue', 'totalCompanies', 'activeCampaigns', 'totalTemplates', 'totalUsers'],
-                'charts' => ['leadsTrend', 'leadsByStatus', 'dealsByStage'],
                 'followUps',
                 'closingSoon',
+                'pipeline',
+                'topPerformers',
+                'recentLeads',
+                'revenue' => ['labels', 'revenue', 'cash'],
+                'leadSources',
             ]);
     }
 

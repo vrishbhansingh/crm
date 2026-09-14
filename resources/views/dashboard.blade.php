@@ -63,17 +63,29 @@
             background: #fff;
             border-radius: 13px;
             box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
-            padding: 20px 22px;
+            padding: 18px 20px;
         }
+
+        .stat-card .stat-top {
+            display: flex; align-items: flex-start; justify-content: space-between; gap: 10px;
+        }
+
+        .stat-card .label { font-size: 12.5px; color: var(--text-muted); font-weight: 600; }
 
         .stat-card .icon {
-            width: 42px; height: 42px; border-radius: 12px;
+            width: 38px; height: 38px; border-radius: 10px; flex-shrink: 0;
             display: flex; align-items: center; justify-content: center;
-            font-size: 17px; margin-bottom: 14px;
+            font-size: 15px;
         }
 
-        .stat-card .value { font-size: 26px; font-weight: 700; color: var(--text-dark); line-height: 1.15; }
-        .stat-card .label { font-size: 13px; color: var(--text-muted); margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.02em; }
+        .stat-card .stat-bottom {
+            display: flex; align-items: baseline; gap: 8px; margin-top: 10px;
+        }
+
+        .stat-card .value { font-size: 22px; font-weight: 700; color: var(--text-dark); line-height: 1.15; }
+        .stat-card .change { font-size: 12.5px; font-weight: 700; }
+        .stat-card .change.is-up { color: #16a34a; }
+        .stat-card .change.is-down { color: #dc2626; }
 
         .icon-blue { background: #eff6ff; color: #2563eb; }
         .icon-orange { background: #fff7ed; color: #ea580c; }
@@ -192,6 +204,30 @@
         .closing-card .closing-name { font-size: 13.5px; font-weight: 700; color: var(--text-dark); margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .closing-card .closing-amount { font-size: 15px; font-weight: 700; color: #16a34a; margin-bottom: 8px; }
         .closing-card .closing-date { font-size: 11.5px; font-weight: 700; padding: 3px 9px; border-radius: 999px; display: inline-block; }
+
+        /* Dark mode — variables cover most text color via var(--text-dark)/
+           var(--text-muted) already used throughout above; only the
+           hardcoded white card backgrounds and light hairlines need
+           explicit overrides here. */
+        [data-theme="dark"] {
+            --border: #2a2e40;
+            --text-dark: #eef0f6;
+            --text-muted: #9aa1b5;
+            --surface: #232637;
+        }
+        [data-theme="dark"] .dash-header,
+        [data-theme="dark"] .stat-card,
+        [data-theme="dark"] .dash-card,
+        [data-theme="dark"] .lead-metric-tile,
+        [data-theme="dark"] .closing-card {
+            background: #1a1d2b;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+        }
+        [data-theme="dark"] .dash-action-btn { background: #1a1d2b; color: var(--text-dark); }
+        [data-theme="dark"] .dash-action-btn.is-primary { background: var(--primary); color: #fff; }
+        [data-theme="dark"] .followup-item, [data-theme="dark"] .performer-row { border-bottom-color: #2a2e40; }
+        [data-theme="dark"] .followup-item:hover, [data-theme="dark"] .closing-card:hover { background: #202333; }
+        [data-theme="dark"] .lead-row-actions a, [data-theme="dark"] .performer-actions a { background: #232637; }
     </style>
 </head>
 
@@ -257,7 +293,8 @@
                     <div class="col-lg-8">
                         <div class="dash-card">
                             <h5><i class="fa fa-inr"></i> Revenue Overview</h5>
-                            <div class="chart-box"><canvas id="revenueChart"></canvas></div>
+                            <div class="chart-box" id="revenueChartBox"><canvas id="revenueChart"></canvas></div>
+                            <div class="pipeline-empty" id="revenueEmpty" style="display:none;">No revenue recorded yet.</div>
                         </div>
                     </div>
                     <div class="col-lg-4">
@@ -347,10 +384,6 @@
             { key: 'tasksDueToday', label: 'Tasks Due Today', icon: 'fa-check-square-o', color: 'icon-teal' },
             { key: 'openDeals', label: 'Open Deals', icon: 'fa-handshake-o', color: 'icon-indigo' },
             { key: 'pipelineValue', label: 'Pipeline Value', icon: 'fa-inr', color: 'icon-green', money: true },
-            { key: 'totalCompanies', label: 'Companies', icon: 'fa-building-o', color: 'icon-orange' },
-            { key: 'activeCampaigns', label: 'Active Campaigns', icon: 'fa-paper-plane-o', color: 'icon-pink' },
-            { key: 'totalTemplates', label: 'Email Templates', icon: 'fa-file-text-o', color: 'icon-blue' },
-            { key: 'totalUsers', label: 'Team Members', icon: 'fa-users', color: 'icon-teal' },
         ];
 
         const ownCards = [
@@ -464,6 +497,16 @@
 
         function renderRevenue(revenue) {
             if (!revenue) return;
+
+            const hasData = revenue.revenue.some(v => v > 0) || revenue.cash.some(v => v > 0);
+            if (!hasData) {
+                $('#revenueChartBox').hide();
+                $('#revenueEmpty').show();
+                return;
+            }
+            $('#revenueChartBox').show();
+            $('#revenueEmpty').hide();
+
             draw('revenueChart', {
                 type: 'bar',
                 data: {
@@ -547,11 +590,28 @@
                 const cards = response.scope === 'team' ? teamCards : ownCards;
                 let html = '';
                 cards.forEach(c => {
+                    let changeHtml = '';
+                    if (c.key === 'newLeadToday' && response.data.newLeadYesterday !== undefined) {
+                        const today = Number(response.data.newLeadToday || 0);
+                        const yesterday = Number(response.data.newLeadYesterday || 0);
+                        if (yesterday > 0) {
+                            const pct = Math.round(((today - yesterday) / yesterday) * 100);
+                            const up = pct >= 0;
+                            changeHtml = `<span class="change ${up ? 'is-up' : 'is-down'}"><i class="fa fa-arrow-${up ? 'up' : 'down'}"></i> ${Math.abs(pct)}%</span>`;
+                        } else if (today > 0) {
+                            changeHtml = `<span class="change is-up"><i class="fa fa-arrow-up"></i> new</span>`;
+                        }
+                    }
                     html += `
                         <div class="stat-card">
-                            <div class="icon ${c.color}"><i class="fa ${c.icon}"></i></div>
-                            <div class="value">${fmt(response.data[c.key], c.money)}</div>
-                            <div class="label">${c.label}</div>
+                            <div class="stat-top">
+                                <div class="label">${c.label}</div>
+                                <div class="icon ${c.color}"><i class="fa ${c.icon}"></i></div>
+                            </div>
+                            <div class="stat-bottom">
+                                <div class="value">${fmt(response.data[c.key], c.money)}</div>
+                                ${changeHtml}
+                            </div>
                         </div>`;
                 });
                 $('#statGrid').html(html);

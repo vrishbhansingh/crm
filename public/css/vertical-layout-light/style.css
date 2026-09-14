@@ -8713,6 +8713,48 @@ html {
   font-size: 80%;
 }
 
+/* ============================================================
+   Dark mode base layer, toggled via [data-theme="dark"] on <html>
+   (see include/header.blade.php for the toggle button + JS).
+   This covers the app-wide canvas and plain Bootstrap components;
+   pages with their own bespoke card/table CSS (dashboard, leads,
+   deals, etc.) layer their own [data-theme="dark"] overrides in
+   their own <style> block on top of this base.
+   ============================================================ */
+[data-theme="dark"] body { background: #0f1117; color: #d7dbe4; }
+[data-theme="dark"] .content-wrapper { background: #0f1117 !important; }
+
+[data-theme="dark"] .card,
+[data-theme="dark"] .modal-content {
+  background: #1a1d2b;
+  color: #d7dbe4;
+  border-color: #2a2e40;
+}
+
+[data-theme="dark"] .table th, [data-theme="dark"] .table td {
+  color: #d7dbe4;
+  border-color: #2a2e40;
+}
+
+[data-theme="dark"] .form-control,
+[data-theme="dark"] .select2-container--default .select2-selection--single {
+  background: #232637;
+  border-color: #343850;
+  color: #d7dbe4;
+}
+
+[data-theme="dark"] h1, [data-theme="dark"] h2, [data-theme="dark"] h3,
+[data-theme="dark"] h4, [data-theme="dark"] h5, [data-theme="dark"] h6 {
+  color: #eef0f6;
+}
+
+[data-theme="dark"] .nav-tabs { border-bottom-color: #2a2e40; }
+[data-theme="dark"] .nav-tabs .nav-link { color: #9aa1b5; border-color: transparent; }
+[data-theme="dark"] .nav-tabs .nav-link.active { background: #1a1d2b; color: #eef0f6; border-color: #2a2e40 #2a2e40 #1a1d2b; }
+[data-theme="dark"] .dropdown-menu { background: #1a1d2b; border-color: #2a2e40; }
+[data-theme="dark"] .dropdown-item { color: #d7dbe4; }
+[data-theme="dark"] .dropdown-item:hover { background: #232637; color: #fff; }
+
 article, aside, figcaption, figure, footer, header, hgroup, main, nav, section {
   display: block;
 }

@@ -526,6 +526,45 @@
             display: inline-flex; align-items: center; justify-content: center;
             color: #fff; font-weight: 700; font-size: 10.5px;
         }
+
+        /* Dark mode — this page predates the CSS-variable pattern used on
+           newer pages (Dashboard, Deal/Lead detail), so every card surface
+           and text color needs an explicit override here rather than a
+           handful of variable redefinitions. */
+        [data-theme="dark"] .lead-hero-header,
+        [data-theme="dark"] .lead-stat-card,
+        [data-theme="dark"] .user-table-wrapper,
+        [data-theme="dark"] .lead-expand-card,
+        [data-theme="dark"] .add-user-modal {
+            background: #1a1d2b;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+        }
+        [data-theme="dark"] .lead-hero-header h4,
+        [data-theme="dark"] .lead-stat-card .lead-stat-value,
+        [data-theme="dark"] .user-table tbody td,
+        [data-theme="dark"] .lead-name-link,
+        [data-theme="dark"] .add-user-modal .modal-title {
+            color: #eef0f6;
+        }
+        [data-theme="dark"] .lead-hero-header small,
+        [data-theme="dark"] .lead-stat-card .lead-stat-label {
+            color: #9aa1b5;
+        }
+        [data-theme="dark"] .user-table thead th {
+            background: #232637; color: #9aa1b5;
+        }
+        [data-theme="dark"] .user-table tbody tr,
+        [data-theme="dark"] .user-table tbody td:first-child,
+        [data-theme="dark"] .user-table tbody td:last-child {
+            background: #1a1d2b; border-color: #2a2e40;
+        }
+        [data-theme="dark"] .lead-expand-card { border-color: #2a2e40; }
+        [data-theme="dark"] .lead-highlight { background: #232637; border-color: #2a2e40; }
+        [data-theme="dark"] .lead-expand-label { color: #9aa1b5; }
+        [data-theme="dark"] .lead-expand-value { color: #eef0f6; }
+        [data-theme="dark"] .add-user-modal .modal-header,
+        [data-theme="dark"] .add-user-modal .modal-footer { background: #171a26; border-color: #2a2e40; }
+        [data-theme="dark"] .add-user-modal .form-control { background: #232637; border-color: #343850; color: #eef0f6; }
     </style>
 </head>
 
