@@ -185,6 +185,24 @@
     @media (max-width: 768px) {
         .sidebar { top: 56px; height: calc(100vh - 56px); }
     }
+
+    /* Dark mode: the sidebar keeps its own colorful identity (a deep
+       indigo gradient, not the flat card-gray used elsewhere) rather than
+       going plain black — same white/rgba(255,255,255,...) text already
+       used above still reads fine against it. */
+    [data-theme="dark"] #sidebar.sidebar,
+    [data-theme="dark"] .sidebar {
+        background: linear-gradient(180deg, #14172e, #1a1e3d);
+    }
+    [data-theme="dark"] .nav-sidebar-menu .nav-link.active {
+        background: rgba(147, 164, 253, 0.22);
+    }
+    [data-theme="dark"] .sidebar-search input {
+        background: rgba(255, 255, 255, 0.08);
+    }
+    [data-theme="dark"] .sidebar-search input:focus {
+        background: rgba(255, 255, 255, 0.14);
+    }
 </style>
 
 <div class="sidebar-rail">

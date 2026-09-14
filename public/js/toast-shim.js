@@ -29,6 +29,14 @@
         // the icon's own footprint) is what actually narrows the popup,
         // since the title text already wraps within max-width above.
         '.swal2-popup.swal2-toast .swal2-icon { margin: 0 8px 0 0 !important; }',
+        // Dark mode: SweetAlert2 ships no dark variant of its own, so the
+        // toast otherwise stays a plain white card regardless of theme.
+        '[data-theme="dark"] .swal2-popup.swal2-toast { background: #1a1d2b !important; color: #eef0f6 !important; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important; }',
+        '[data-theme="dark"] .swal2-popup.swal2-toast .swal2-title { color: #eef0f6 !important; }',
+        '[data-theme="dark"] .swal2-popup.swal2-toast .swal2-html-container { color: #eef0f6 !important; }',
+        '[data-theme="dark"] .swal2-popup.swal2-toast .swal2-timer-progress-bar { background: rgba(147, 164, 253, 0.7) !important; }',
+        '[data-theme="dark"] .swal2-popup.swal2-toast .swal2-close { color: #9aa1b5 !important; }',
+        '[data-theme="dark"] .swal2-popup.swal2-toast .swal2-close:hover { color: #eef0f6 !important; }',
     ].join('');
     document.head.appendChild(style);
 
