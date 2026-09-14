@@ -14,6 +14,7 @@ use App\Support\TenantContext;
 use App\Tenancy\TenantConnectionManager;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Populates tenant 5 ("Wonder Technologies" — the only tenant with real
@@ -38,16 +39,24 @@ class DemoDataSeeder extends Seeder
 
     public function run(): void
     {
-        app(TenantConnectionManager::class)->activate(self::TENANT_ID);
+        $connectionManager = app(TenantConnectionManager::class);
+        $connectionManager->activate(self::TENANT_ID);
+        $connectionName = $connectionManager->connectionName();
         TenantContext::set(self::TENANT_ID);
 
-        $companies = $this->seedCompanies();
-        $contacts = $this->seedContacts($companies);
-        $this->seedLeads($contacts);
-        $stageIds = PipelineStage::where('pipeline_id', 1)->pluck('id', 'name');
-        $deals = $this->seedDeals($stageIds, $companies, $contacts);
-        $this->seedOrdersAndPayments();
-        $this->seedTasks($deals);
+        // Wrapped in a transaction so a failure partway through (like the
+        // Collection/array type mismatch this hit on the first run) can't
+        // leave half-seeded rows behind — either all of this commits, or
+        // none of it does, and the seeder is safe to just re-run.
+        DB::connection($connectionName)->transaction(function () {
+            $companies = $this->seedCompanies();
+            $contacts = $this->seedContacts($companies);
+            $this->seedLeads($contacts);
+            $stageIds = PipelineStage::where('pipeline_id', 1)->pluck('id', 'name')->all();
+            $deals = $this->seedDeals($stageIds, $companies, $contacts);
+            $this->seedOrdersAndPayments();
+            $this->seedTasks($deals);
+        });
 
         $this->command?->info('Demo data seeded into tenant 5 (Wonder Technologies).');
     }
