@@ -225,6 +225,37 @@ class LeadDetailController extends Controller
     }
 
     /**
+     * "Mark done" quick action — used by the Dashboard's follow-ups widget,
+     * where asking someone to fill out the full call-outcome form just to
+     * clear an item would defeat the point of a one-click action. Still logs
+     * a real Leadfollowup row (so it counts toward the Reports > Follow-ups
+     * agent stats), and clears the lead's own pending follow_up_date/time so
+     * it actually drops off every "still due" list instead of merely being
+     * acknowledged.
+     */
+    public function completeFollowUp($id)
+    {
+        $lead = $this->findEditableLead($id);
+        $userId = Auth::guard('web')->id();
+
+        Leadfollowup::create([
+            'tenant_id' => $lead->tenant_id,
+            'user_id' => $userId,
+            'lead_id' => $id,
+            'call_note' => 'Marked done from the dashboard.',
+        ]);
+
+        $lead->update([
+            'follow_up_date' => null,
+            'follow_up_time' => null,
+            'last_contacted_at' => now(),
+            'last_contacted_by' => $userId,
+        ]);
+
+        return response()->json(['status' => true, 'message' => 'Follow-up marked done']);
+    }
+
+    /**
      * Convert a lead into a Deal (Phase 5) — replaces the old direct
      * Lead -> Order conversion (`convertToOrder`). An Order is now only
      * created once the deal reaches a Won stage (see

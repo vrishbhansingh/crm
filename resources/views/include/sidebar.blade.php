@@ -364,28 +364,6 @@
         </div>
         @endcanany
 
-        @canany(['reports.view', 'audit.view'])
-        <div class="nav-section {{ request()->routeIs(['reports.*','audit.*']) ? 'has-active' : '' }}">
-            <div class="nav-section-label">Insights</div>
-            <ul class="nav nav-sidebar-menu">
-                @can('reports.view')
-                <li class="mb-1" data-nav-label="Reports & Analytics">
-                    <a class="nav-link {{ request()->routeIs('reports.*') ? 'active' : '' }}" href="{{ route('reports.index') }}" title="Reports">
-                        <i class="fa fa-line-chart"></i><span>Reports &amp; Analytics</span>
-                    </a>
-                </li>
-                @endcan
-                @can('audit.view')
-                <li class="mb-1" data-nav-label="Audit Log">
-                    <a class="nav-link {{ request()->routeIs('audit.*') ? 'active' : '' }}" href="{{ route('audit.index') }}" title="Audit Log">
-                        <i class="fa fa-history"></i><span>Audit Log</span>
-                    </a>
-                </li>
-                @endcan
-            </ul>
-        </div>
-        @endcanany
-
         @canany(['users.view', 'roles.view', 'company.view', 'masters.view', 'deals.manage-settings', 'company.manage-settings'])
         <div class="nav-section {{ request()->routeIs(['users.*','roles.*','company.*','pipelines.*','stages.*','settings.mail.*']) ? 'has-active' : '' }}">
             <div class="nav-section-label">Administration</div>
@@ -422,6 +400,33 @@
                 <li class="mb-1" data-nav-label="Mail Settings">
                     <a class="nav-link {{ request()->routeIs('settings.mail.*') ? 'active' : '' }}" href="{{ route('settings.mail.edit') }}" title="Mail Settings">
                         <i class="fa fa-envelope"></i><span>Mail Settings</span>
+                    </a>
+                </li>
+                @endcan
+            </ul>
+        </div>
+        @endcanany
+
+        {{-- Reports sits last on purpose — every other section is
+             something an agent DOES day to day; this is where an admin
+             steps back to review what happened, so it reads as the final
+             stop in the sidebar rather than competing with daily-use tools
+             for a spot near the top. --}}
+        @canany(['reports.view', 'audit.view'])
+        <div class="nav-section {{ request()->routeIs(['reports.*','audit.*']) ? 'has-active' : '' }}">
+            <div class="nav-section-label">Insights</div>
+            <ul class="nav nav-sidebar-menu">
+                @can('reports.view')
+                <li class="mb-1" data-nav-label="Reports & Analytics">
+                    <a class="nav-link {{ request()->routeIs('reports.*') ? 'active' : '' }}" href="{{ route('reports.index') }}" title="Reports">
+                        <i class="fa fa-line-chart"></i><span>Reports &amp; Analytics</span>
+                    </a>
+                </li>
+                @endcan
+                @can('audit.view')
+                <li class="mb-1" data-nav-label="Audit Log">
+                    <a class="nav-link {{ request()->routeIs('audit.*') ? 'active' : '' }}" href="{{ route('audit.index') }}" title="Audit Log">
+                        <i class="fa fa-history"></i><span>Audit Log</span>
                     </a>
                 </li>
                 @endcan

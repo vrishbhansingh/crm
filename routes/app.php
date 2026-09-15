@@ -89,6 +89,11 @@ Route::middleware(['admin_middle', 'permission:audit.view'])->group(function () 
 Route::middleware(['admin_middle', 'permission:reports.view'])->group(function () {
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
     Route::get('/reports/data', [ReportController::class, 'data'])->name('reports.data');
+    Route::get('/reports/leads', [ReportController::class, 'leads'])->name('reports.leads');
+    Route::get('/reports/follow-ups', [ReportController::class, 'followUps'])->name('reports.follow_ups');
+    Route::get('/reports/agents', [ReportController::class, 'agents'])->name('reports.agents');
+    Route::get('/reports/communications', [ReportController::class, 'communications'])->name('reports.communications');
+    Route::get('/reports/automation', [ReportController::class, 'automation'])->name('reports.automation');
 });
 
 Route::middleware(['admin_middle', 'permission:integrations.view'])->group(function () {
@@ -183,6 +188,7 @@ Route::middleware(['admin_middle', 'permission:leads.edit'])->group(function () 
     Route::delete('/leads/{id}/tags/{tagId}', [LeadDetailController::class, 'removeTag'])->name('leads.tags.destroy');
     Route::post('/leads/{id}/attachments', [LeadDetailController::class, 'uploadAttachment'])->name('leads.attachments.store');
     Route::post('/leads/{id}/follow-up', [LeadDetailController::class, 'storeFollowUp'])->name('leads.follow_up.store');
+    Route::post('/leads/{id}/follow-up/complete', [LeadDetailController::class, 'completeFollowUp'])->name('leads.follow_up.complete');
 });
 
 Route::middleware(['admin_middle', 'permission:leads.delete'])->group(function () {

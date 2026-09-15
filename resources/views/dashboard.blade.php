@@ -156,33 +156,85 @@
 
         .followup-item {
             display: flex; align-items: center; justify-content: space-between;
-            gap: 12px; padding: 10px 8px; border-radius: 10px;
-            text-decoration: none; color: inherit; transition: background .12s ease;
+            gap: 10px; padding: 10px 8px; border-radius: 10px;
+            transition: background .12s ease;
         }
         .followup-item:hover { background: var(--surface); }
         .followup-group.grp-overdue .followup-item { background: #fef2f2; }
         .followup-group.grp-overdue .followup-item:hover { background: #fee2e2; }
-        .followup-main { display: flex; align-items: center; gap: 11px; min-width: 0; }
+        .followup-main { display: flex; align-items: center; gap: 11px; min-width: 0; flex: 1; text-decoration: none; color: inherit; }
         .followup-badge {
             flex-shrink: 0; width: 34px; height: 34px; border-radius: 10px;
             display: flex; align-items: center; justify-content: center; font-size: 13px;
         }
         .followup-title { font-size: 13.5px; font-weight: 600; color: var(--text-dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .followup-sub { font-size: 11.5px; color: var(--text-muted); }
+        .followup-item-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
         .followup-pill {
             font-size: 11px; font-weight: 700; white-space: nowrap; flex-shrink: 0;
             padding: 4px 10px; border-radius: 999px; background: #f1f5f9; color: var(--text-muted);
         }
         .followup-pill.overdue { background: #fee2e2; color: #b91c1c; }
         .followup-pill.today { background: #fef3c7; color: #92400e; }
+        .followup-pill.is-done { background: #dcfce7; color: #15803d; display: inline-flex; align-items: center; gap: 5px; }
+        .followup-done-btn {
+            flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%;
+            border: 1px solid var(--border); background: #fff; color: var(--text-muted);
+            display: flex; align-items: center; justify-content: center; font-size: 11px; cursor: pointer;
+            transition: background .12s ease, color .12s ease, border-color .12s ease;
+        }
+        .followup-done-btn:hover { background: #16a34a; border-color: #16a34a; color: #fff; }
+        .followup-done-btn:disabled { opacity: .5; cursor: default; }
         .followup-empty { text-align: center; color: var(--text-muted); padding: 28px 0; font-size: 13.5px; }
         .followup-empty i { font-size: 24px; opacity: .5; display: block; margin-bottom: 8px; }
+
+        /* Current / Upcoming / Past tabs */
+        .followup-tabs { display: flex; gap: 4px; background: var(--surface); border-radius: 10px; padding: 4px; margin: -6px 0 14px; }
+        .followup-tab-btn {
+            flex: 1; border: none; background: transparent; padding: 7px 10px; border-radius: 8px;
+            font-size: 12.5px; font-weight: 600; color: var(--text-muted); cursor: pointer;
+        }
+        .followup-tab-btn:hover { color: var(--text-dark); }
+        .followup-tab-btn.active { background: #fff; color: var(--primary); box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08); }
+
+        /* Mini calendar beside the list */
+        .followup-layout { display: flex; gap: 18px; align-items: flex-start; }
+        .followup-mini-cal { flex: 0 0 176px; }
+        .followup-list { flex: 1; min-width: 0; }
+        .mini-cal-header { font-size: 12px; font-weight: 700; color: var(--text-dark); text-align: center; margin-bottom: 8px; }
+        .mini-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+        .mini-cal-weekday { font-size: 9.5px; font-weight: 700; color: var(--text-muted); text-align: center; padding-bottom: 4px; }
+        .mini-cal-cell {
+            position: relative; aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+            font-size: 10.5px; color: var(--text-dark); border-radius: 50%;
+        }
+        .mini-cal-cell.is-today { background: var(--primary); color: #fff; font-weight: 700; }
+        .mini-cal-cell.has-due::after {
+            content: ''; position: absolute; bottom: 1px; left: 50%; transform: translateX(-50%);
+            width: 4px; height: 4px; border-radius: 50%; background: #f59e0b;
+        }
+        .mini-cal-cell.is-today.has-due::after { background: #fff; }
+        @media (max-width: 480px) {
+            .followup-layout { flex-direction: column; }
+            .followup-mini-cal { flex: 0 0 auto; width: 100%; }
+        }
 
         [data-theme="dark"] .followup-group.grp-overdue .followup-item { background: rgba(220, 38, 38, 0.12); }
         [data-theme="dark"] .followup-group.grp-overdue .followup-item:hover { background: rgba(220, 38, 38, 0.2); }
         [data-theme="dark"] .followup-pill { background: #232637; color: var(--text-muted); }
         [data-theme="dark"] .followup-pill.overdue { background: rgba(220, 38, 38, 0.22); color: #fca5a5; }
         [data-theme="dark"] .followup-pill.today { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+        [data-theme="dark"] .followup-pill.is-done { background: rgba(74, 222, 128, 0.16); color: #4ade80; }
+        [data-theme="dark"] .followup-done-btn { background: #232637; border-color: #2a2e40; color: #9aa1b5; }
+        [data-theme="dark"] .followup-done-btn:hover { background: #16a34a; border-color: #16a34a; color: #fff; }
+        [data-theme="dark"] .followup-tabs { background: #232637; }
+        [data-theme="dark"] .followup-tab-btn { color: #9aa1b5; }
+        [data-theme="dark"] .followup-tab-btn:hover { color: #eef0f6; }
+        [data-theme="dark"] .followup-tab-btn.active { background: #1a1d2b; color: #93a4fd; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3); }
+        [data-theme="dark"] .mini-cal-header { color: #eef0f6; }
+        [data-theme="dark"] .mini-cal-weekday { color: #9aa1b5; }
+        [data-theme="dark"] .mini-cal-cell { color: #d7dbe4; }
+        [data-theme="dark"] .mini-cal-cell.is-today { background: #93a4fd; color: #0f1117; }
 
         /* Sales Pipeline */
         .pipeline-list { display: flex; flex-direction: column; gap: 12px; }
@@ -355,7 +407,17 @@
                     <div class="col-lg-6">
                         <div class="dash-card">
                             <h5><i class="fa fa-bell-o"></i> Upcoming Follow-ups &amp; Reminders @can('calendar.view')<a href="{{ route('calendar.index') }}">Open calendar</a>@endcan</h5>
-                            <ul class="followup-list" id="followUpList"></ul>
+
+                            <div class="followup-tabs" id="followupTabs">
+                                <button type="button" class="followup-tab-btn active" data-tab="current">Current</button>
+                                <button type="button" class="followup-tab-btn" data-tab="upcoming">Upcoming</button>
+                                <button type="button" class="followup-tab-btn" data-tab="past">Past</button>
+                            </div>
+
+                            <div class="followup-layout">
+                                <div class="followup-mini-cal" id="followupMiniCal"></div>
+                                <ul class="followup-list" id="followUpList"></ul>
+                            </div>
                         </div>
                     </div>
                     <div class="col-lg-6" id="closingSoonWrap" style="display:none">
@@ -656,49 +718,168 @@
             { key: 'soon', cls: 'grp-soon', label: 'Coming up' },
         ];
 
+        let currentFollowUps = [];
+        let pastFollowUps = [];
+        let activeFollowTab = 'current';
+
         function followUpItemHtml(item) {
             const meta = followTypeMeta[item.type] || followTypeMeta.lead;
             const parsed = parseWhen(item.when);
             const pillCls = item.overdue ? 'overdue' : (parsed && parsed.date.toDateString() === new Date().toDateString() ? 'today' : '');
             return `
-                <a class="followup-item" href="${item.url}">
-                    <div class="followup-main">
+                <li class="followup-item">
+                    <a class="followup-main" href="${item.url}">
                         <div class="followup-badge ${meta.color}"><i class="fa ${meta.icon}"></i></div>
                         <div>
                             <div class="followup-title">${esc(item.title)}</div>
                             <div class="followup-sub">${meta.label}</div>
                         </div>
+                    </a>
+                    <div class="followup-item-actions">
+                        <div class="followup-pill ${pillCls}">${formatRelative(parsed, item.overdue)}</div>
+                        <button type="button" class="followup-done-btn" title="Mark done"
+                            data-source="${item.source}" data-id="${item.id}" data-task-id="${item.task_id ?? ''}">
+                            <i class="fa fa-check"></i>
+                        </button>
                     </div>
-                    <div class="followup-pill ${pillCls}">${formatRelative(parsed, item.overdue)}</div>
-                </a>`;
+                </li>`;
         }
 
-        function renderFollowUps(items) {
-            if (!items || !items.length) {
-                $('#followUpList').html('<div class="followup-empty"><i class="fa fa-check-circle-o"></i>Nothing due in the next few days — you\'re all caught up.</div>');
-                return;
-            }
+        function formatPastWhen(when) {
+            const parsed = parseWhen(when);
+            if (!parsed) return '';
+            const { date, hasTime } = parsed;
+            const now = new Date();
+            const timeStr = hasTime ? date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '';
+            if (date.toDateString() === now.toDateString()) return timeStr ? ('Today, ' + timeStr) : 'Today';
+            const yesterday = new Date(now);
+            yesterday.setDate(now.getDate() - 1);
+            if (date.toDateString() === yesterday.toDateString()) return 'Yesterday';
+            return date.toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short' });
+        }
 
+        function pastItemHtml(item) {
+            const meta = followTypeMeta[item.type] || followTypeMeta.lead;
+            return `
+                <li class="followup-item">
+                    <a class="followup-main" href="${item.url}">
+                        <div class="followup-badge ${meta.color}"><i class="fa ${meta.icon}"></i></div>
+                        <div>
+                            <div class="followup-title">${esc(item.title)}</div>
+                            <div class="followup-sub">${meta.label}</div>
+                        </div>
+                    </a>
+                    <div class="followup-item-actions">
+                        <div class="followup-pill is-done"><i class="fa fa-check"></i> ${formatPastWhen(item.when)}</div>
+                    </div>
+                </li>`;
+        }
+
+        function bucketFollowUps(items) {
             const now = new Date();
             const buckets = { overdue: [], today: [], soon: [] };
-            items.forEach(item => {
+            (items || []).forEach(item => {
                 const parsed = parseWhen(item.when);
                 if (item.overdue) buckets.overdue.push(item);
                 else if (parsed && parsed.date.toDateString() === now.toDateString()) buckets.today.push(item);
                 else buckets.soon.push(item);
             });
-
-            const html = FOLLOWUP_GROUPS
-                .filter(g => buckets[g.key].length)
-                .map(g => `
-                    <div class="followup-group ${g.cls}">
-                        <div class="followup-group-label"><span class="grp-dot"></span>${g.label} &middot; ${buckets[g.key].length}</div>
-                        ${buckets[g.key].map(followUpItemHtml).join('')}
-                    </div>`)
-                .join('');
-
-            $('#followUpList').html(html);
+            return buckets;
         }
+
+        function renderFollowTab() {
+            if (activeFollowTab === 'past') {
+                $('#followUpList').html(
+                    pastFollowUps.length
+                        ? pastFollowUps.map(pastItemHtml).join('')
+                        : '<div class="followup-empty"><i class="fa fa-history"></i>Nothing marked done in the last 7 days yet.</div>'
+                );
+                return;
+            }
+
+            const buckets = bucketFollowUps(currentFollowUps);
+            const groupKeys = activeFollowTab === 'current' ? ['overdue', 'today'] : ['soon'];
+            const groups = FOLLOWUP_GROUPS.filter(g => groupKeys.includes(g.key) && buckets[g.key].length);
+
+            if (!groups.length) {
+                const msg = activeFollowTab === 'current'
+                    ? "Nothing needs attention right now — you're all caught up."
+                    : 'Nothing coming up in the next few days.';
+                $('#followUpList').html(`<div class="followup-empty"><i class="fa fa-check-circle-o"></i>${msg}</div>`);
+                return;
+            }
+
+            $('#followUpList').html(groups.map(g => `
+                <div class="followup-group ${g.cls}">
+                    <div class="followup-group-label"><span class="grp-dot"></span>${g.label} &middot; ${buckets[g.key].length}</div>
+                    ${buckets[g.key].map(followUpItemHtml).join('')}
+                </div>`).join(''));
+        }
+
+        function renderMiniCalendar() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth();
+            const firstDay = new Date(year, month, 1);
+            const startWeekday = firstDay.getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            const dueDays = new Set();
+            currentFollowUps.forEach(item => {
+                const parsed = parseWhen(item.when);
+                if (parsed && parsed.date.getMonth() === month && parsed.date.getFullYear() === year) {
+                    dueDays.add(parsed.date.getDate());
+                }
+            });
+
+            let html = `<div class="mini-cal-header">${firstDay.toLocaleDateString([], { month: 'long', year: 'numeric' })}</div><div class="mini-cal-grid">`;
+            ['S', 'M', 'T', 'W', 'T', 'F', 'S'].forEach(w => html += `<div class="mini-cal-weekday">${w}</div>`);
+            for (let i = 0; i < startWeekday; i++) html += `<div class="mini-cal-cell"></div>`;
+            for (let d = 1; d <= daysInMonth; d++) {
+                const cls = [d === now.getDate() ? 'is-today' : '', dueDays.has(d) ? 'has-due' : ''].filter(Boolean).join(' ');
+                html += `<div class="mini-cal-cell ${cls}">${d}</div>`;
+            }
+            html += `</div>`;
+            $('#followupMiniCal').html(html);
+        }
+
+        function renderFollowUps(items) {
+            currentFollowUps = items || [];
+            renderMiniCalendar();
+            renderFollowTab();
+        }
+
+        function renderPastFollowUps(items) {
+            pastFollowUps = items || [];
+            if (activeFollowTab === 'past') renderFollowTab();
+        }
+
+        $('#followupTabs').on('click', '.followup-tab-btn', function() {
+            activeFollowTab = $(this).data('tab');
+            $('.followup-tab-btn').removeClass('active');
+            $(this).addClass('active');
+            renderFollowTab();
+        });
+
+        $(document).on('click', '.followup-done-btn', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const $btn = $(this).prop('disabled', true);
+            const source = $btn.data('source');
+            const id = $btn.data('id');
+            const taskId = $btn.data('task-id');
+            const url = source === 'task'
+                ? "{{ url('tasks') }}/" + taskId + "/complete"
+                : "{{ url('leads') }}/" + id + "/follow-up/complete";
+
+            $.post(url, {}).done(function(res) {
+                toastr.success(res.message || 'Marked done');
+                loadDashboardData();
+            }).fail(function(xhr) {
+                toastr.error(xhr.responseJSON?.message || 'Something went wrong');
+                $btn.prop('disabled', false);
+            });
+        });
 
         function loadDashboardData() {
             $.get("{{ route('dashboard.data') }}", function(response) {
@@ -732,6 +913,7 @@
                 $('#statGrid').html(html);
 
                 renderFollowUps(response.followUps);
+                renderPastFollowUps(response.pastFollowUps);
 
                 if (response.pipeline) {
                     $('#pipelinePerformersRow').show();

@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Leadfollowup extends Model
 {
@@ -21,4 +22,9 @@ class Leadfollowup extends Model
         'call_note',
         'status',
     ];
+
+    public function lead(): BelongsTo
+    {
+        return $this->belongsTo(Lead::class);
+    }
 }

@@ -39,6 +39,7 @@ class DashboardController extends Controller
                 'scope' => 'team',
                 'data' => $this->teamData(),
                 'followUps' => $this->teamFollowUps(),
+                'pastFollowUps' => $this->recentFollowUpActivity(),
                 'closingSoon' => $this->dealsClosingSoon(),
                 'pipeline' => $this->pipelineByStage(),
                 'topPerformers' => $this->topPerformers(),
@@ -53,6 +54,7 @@ class DashboardController extends Controller
             'scope' => 'own',
             'data' => $this->ownData($user->id),
             'followUps' => $this->userFollowUps($user->id),
+            'pastFollowUps' => $this->recentFollowUpActivity($user->id),
             'pipeline' => $this->pipelineByStage($user->id),
             'recentLeads' => $this->recentLeads($user->id),
             'revenue' => $this->revenueOverview($user->id),
@@ -280,20 +282,27 @@ class DashboardController extends Controller
             ->orderBy('due_at')
             ->limit(15)
             ->get(['id', 'title', 'due_at', 'related_type', 'related_id'])
-            ->map(fn (Task $task) => [
-                'type' => $task->related_type,
-                'id' => $task->related_id,
-                'title' => $task->title,
-                'when' => $task->due_at?->format('Y-m-d H:i'),
-                'overdue' => $task->due_at && $task->due_at->isPast(),
-                'url' => $task->related_type === 'deal' ? route('deals.show', $task->related_id) : route('leads.show', $task->related_id),
-            ]);
+            ->map(fn (Task $task) => $this->taskFollowUpEntry($task));
 
         return $leadFollowUps->concat($taskFollowUps)
             ->sortBy('when')
             ->values()
             ->take(10)
             ->all();
+    }
+
+    private function taskFollowUpEntry(Task $task): array
+    {
+        return [
+            'source' => 'task',
+            'task_id' => $task->id,
+            'type' => $task->related_type,
+            'id' => $task->related_id,
+            'title' => $task->title,
+            'when' => $task->due_at?->format('Y-m-d H:i'),
+            'overdue' => $task->due_at && $task->due_at->isPast(),
+            'url' => $task->related_type === 'deal' ? route('deals.show', $task->related_id) : route('leads.show', $task->related_id),
+        ];
     }
 
     private function dealsClosingSoon(): array
@@ -336,6 +345,8 @@ class DashboardController extends Controller
         $followUpAt = Carbon::parse($lead->follow_up_date.($lead->follow_up_time ? ' '.$lead->follow_up_time : ''));
 
         return [
+            'source' => 'lead_followup',
+            'task_id' => null,
             'type' => 'lead',
             'id' => $lead->id,
             'title' => $lead->name,
@@ -366,17 +377,57 @@ class DashboardController extends Controller
             ->orderBy('due_at')
             ->limit(10)
             ->get(['id', 'title', 'due_at', 'related_type', 'related_id'])
+            ->map(fn (Task $task) => $this->taskFollowUpEntry($task));
+
+        return $leadFollowUps->concat($taskFollowUps)
+            ->sortBy('when')
+            ->values()
+            ->take(10)
+            ->all();
+    }
+
+    /**
+     * "Past" tab of the follow-ups widget — a short recent history of what
+     * was actually marked done, so completing an item isn't a dead end
+     * (it moves here instead of just disappearing). Team scope sees every
+     * agent's completions; personal scope only the current user's own.
+     */
+    private function recentFollowUpActivity(?int $userId = null): array
+    {
+        $since = Carbon::now()->subDays(7);
+
+        $completedFollowUps = Leadfollowup::with('lead:id,name')
+            ->where('created_at', '>=', $since)
+            ->when($userId, fn ($q) => $q->where('user_id', $userId))
+            ->orderByDesc('created_at')
+            ->limit(15)
+            ->get()
+            ->filter(fn (Leadfollowup $f) => $f->lead !== null)
+            ->map(fn (Leadfollowup $f) => [
+                'type' => 'lead',
+                'id' => $f->lead_id,
+                'title' => $f->lead->name,
+                'when' => $f->created_at->format('Y-m-d H:i'),
+                'url' => route('leads.show', $f->lead_id),
+            ]);
+
+        $completedTasks = Task::whereIn('related_type', ['lead', 'deal'])
+            ->where('status', 'completed')
+            ->where('completed_at', '>=', $since)
+            ->when($userId, fn ($q) => $q->where(fn ($q2) => $q2->where('assigned_to', $userId)->orWhere('created_by', $userId)))
+            ->orderByDesc('completed_at')
+            ->limit(15)
+            ->get(['title', 'completed_at', 'related_type', 'related_id'])
             ->map(fn (Task $task) => [
                 'type' => $task->related_type,
                 'id' => $task->related_id,
                 'title' => $task->title,
-                'when' => $task->due_at?->format('Y-m-d H:i'),
-                'overdue' => $task->due_at && $task->due_at->isPast(),
+                'when' => $task->completed_at?->format('Y-m-d H:i'),
                 'url' => $task->related_type === 'deal' ? route('deals.show', $task->related_id) : route('leads.show', $task->related_id),
             ]);
 
-        return $leadFollowUps->concat($taskFollowUps)
-            ->sortBy('when')
+        return $completedFollowUps->concat($completedTasks)
+            ->sortByDesc('when')
             ->values()
             ->take(10)
             ->all();
