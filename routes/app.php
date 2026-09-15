@@ -9,6 +9,8 @@ use App\Http\Controllers\Admin\DealController;
 use App\Http\Controllers\Admin\DealDetailController;
 use App\Http\Controllers\Admin\EmailCampaignController;
 use App\Http\Controllers\Admin\EmailTemplateController;
+use App\Http\Controllers\Admin\DealAssignmentController;
+use App\Http\Controllers\Admin\LeadAssignmentController;
 use App\Http\Controllers\Admin\LeadDetailController;
 use App\Http\Controllers\Admin\MailSettingsController;
 use App\Http\Controllers\Admin\MasterDataController;
@@ -96,6 +98,22 @@ Route::middleware(['admin_middle', 'permission:reports.view'])->group(function (
     Route::get('/reports/automation', [ReportController::class, 'automation'])->name('reports.automation');
 });
 
+Route::middleware(['admin_middle', 'permission:leads.manage-settings'])->group(function () {
+    Route::get('/settings/lead-assignment', [LeadAssignmentController::class, 'index'])->name('lead_assignment.index');
+    Route::get('/settings/lead-assignment/data', [LeadAssignmentController::class, 'data'])->name('lead_assignment.data');
+    Route::post('/settings/lead-assignment', [LeadAssignmentController::class, 'store'])->name('lead_assignment.store');
+    Route::put('/settings/lead-assignment/{id}', [LeadAssignmentController::class, 'update'])->name('lead_assignment.update')->whereNumber('id');
+    Route::delete('/settings/lead-assignment/{id}', [LeadAssignmentController::class, 'destroy'])->name('lead_assignment.destroy')->whereNumber('id');
+});
+
+Route::middleware(['admin_middle', 'permission:deals.manage-settings'])->group(function () {
+    Route::get('/settings/deal-assignment', [DealAssignmentController::class, 'index'])->name('deal_assignment.index');
+    Route::get('/settings/deal-assignment/data', [DealAssignmentController::class, 'data'])->name('deal_assignment.data');
+    Route::post('/settings/deal-assignment', [DealAssignmentController::class, 'store'])->name('deal_assignment.store');
+    Route::put('/settings/deal-assignment/{id}', [DealAssignmentController::class, 'update'])->name('deal_assignment.update')->whereNumber('id');
+    Route::delete('/settings/deal-assignment/{id}', [DealAssignmentController::class, 'destroy'])->name('deal_assignment.destroy')->whereNumber('id');
+});
+
 Route::middleware(['admin_middle', 'permission:integrations.view'])->group(function () {
     Route::get('/integrations', [LeadIntegrationController::class, 'index'])->name('integrations.index');
     Route::get('/integrations/{integration}', [LeadIntegrationController::class, 'show'])->name('integrations.show')->whereNumber('integration');
@@ -175,6 +193,7 @@ Route::middleware(['admin_middle', 'permission:leads.create'])->group(function (
 
 Route::middleware(['admin_middle', 'permission:leads.import'])->group(function () {
     Route::post('/leads/import', [LeadController::class, 'leads_import'])->name('leads.import');
+    Route::get('/leads/import-report/{filename}', [LeadController::class, 'downloadImportReport'])->name('leads.import_report.download');
 });
 
 Route::middleware(['admin_middle', 'permission:leads.edit'])->group(function () {

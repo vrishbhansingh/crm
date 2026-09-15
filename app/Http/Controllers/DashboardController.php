@@ -41,6 +41,7 @@ class DashboardController extends Controller
                 'followUps' => $this->teamFollowUps(),
                 'pastFollowUps' => $this->recentFollowUpActivity(),
                 'closingSoon' => $this->dealsClosingSoon(),
+                'leadsByState' => $this->leadsByState(),
                 'pipeline' => $this->pipelineByStage(),
                 'topPerformers' => $this->topPerformers(),
                 'recentLeads' => $this->recentLeads(),
@@ -55,6 +56,7 @@ class DashboardController extends Controller
             'data' => $this->ownData($user->id),
             'followUps' => $this->userFollowUps($user->id),
             'pastFollowUps' => $this->recentFollowUpActivity($user->id),
+            'leadsByState' => $this->leadsByState($user->id),
             'pipeline' => $this->pipelineByStage($user->id),
             'recentLeads' => $this->recentLeads($user->id),
             'revenue' => $this->revenueOverview($user->id),
@@ -303,6 +305,35 @@ class DashboardController extends Controller
             'overdue' => $task->due_at && $task->due_at->isPast(),
             'url' => $task->related_type === 'deal' ? route('deals.show', $task->related_id) : route('leads.show', $task->related_id),
         ];
+    }
+
+    /**
+     * Leads by State — ranked breakdown (not a literal India map: this app
+     * has no geographic boundary data, and drawing state shapes from memory
+     * would risk getting the geography wrong) of how many leads come from
+     * each state, so a manager can see where demand is concentrated.
+     */
+    private function leadsByState(?int $userId = null): array
+    {
+        $query = Lead::query();
+        if ($userId) {
+            $query->where('assigned_to', $userId);
+        }
+
+        $rows = $query->whereNotNull('state')->where('state', '!=', '')
+            ->selectRaw('state, COUNT(*) as total')
+            ->groupBy('state')
+            ->orderByDesc('total')
+            ->limit(10)
+            ->get();
+
+        $grandTotal = $rows->sum('total');
+
+        return $rows->map(fn ($row) => [
+            'state' => $row->state,
+            'total' => (int) $row->total,
+            'pct' => $grandTotal ? round(($row->total / $grandTotal) * 100, 1) : 0,
+        ])->all();
     }
 
     private function dealsClosingSoon(): array

@@ -482,6 +482,8 @@
     'company.edit' => ['Administration', 'Organization Profile', 'Edit'],
     'master_data.index' => ['Administration', 'Master Data'],
     'pipelines.index' => ['Administration', 'Pipelines'],
+    'lead_assignment.index' => ['Administration', 'Lead Assignment'],
+    'deal_assignment.index' => ['Administration', 'Deal Assignment'],
     'settings.mail.edit' => ['Administration', 'Mail Settings'],
     'profile.show' => [null, 'My Profile'],
     'security.show' => [null, 'Security'],

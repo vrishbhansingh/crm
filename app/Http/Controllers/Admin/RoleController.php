@@ -28,7 +28,7 @@ class RoleController extends Controller
      *   grep -oE "permission:[a-z_-]+\.[a-z_-]+" routes/app.php | sort -u
      */
     private const MODULE_ACTIONS = [
-        'leads' => ['view', 'create', 'edit', 'delete', 'assign', 'import'],
+        'leads' => ['view', 'create', 'edit', 'delete', 'assign', 'import', 'manage-settings'],
         'deals' => ['view', 'create', 'edit', 'delete', 'assign', 'manage-settings'],
         'companies' => ['view', 'create', 'edit', 'delete'],
         'contacts' => ['view', 'create', 'edit', 'delete'],

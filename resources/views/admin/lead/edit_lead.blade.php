@@ -194,14 +194,14 @@
                         <!-- ================= CONTACT ================= -->
                         <div class="form-row">
                             <div class="form-group col-md-6">
-                                <label>Name</label>
-                                <input type="text" name="name" id="name"
+                                <label>Name <span class="text-danger">*</span></label>
+                                <input type="text" name="name" id="name" required
                                     class="form-control" placeholder="Full name">
                             </div>
 
                             <div class="form-group col-md-6">
-                                <label>Phone</label>
-                                <input type="text" name="phone" id="phone"
+                                <label>Phone <span class="text-danger">*</span></label>
+                                <input type="text" name="phone" id="phone" required
                                     class="form-control" placeholder="Primary contact number">
                             </div>
 
@@ -212,8 +212,8 @@
                             </div>
 
                             <div class="form-group col-md-6">
-                                <label>Email</label>
-                                <input type="email" name="email" id="email"
+                                <label>Email <span class="text-danger">*</span></label>
+                                <input type="email" name="email" id="email" required
                                     class="form-control" placeholder="Email address">
                             </div>
                         </div>
@@ -582,8 +582,8 @@
                         toastr.error(response.message);
                     }
                 },
-                error: function(err) {
-                    toastr.error(err.message);
+                error: function(xhr) {
+                    toastr.error(xhr.responseJSON?.message || 'Something went wrong');
                 }
             });
         });

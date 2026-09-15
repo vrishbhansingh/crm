@@ -197,27 +197,54 @@
         .followup-tab-btn:hover { color: var(--text-dark); }
         .followup-tab-btn.active { background: #fff; color: var(--primary); box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08); }
 
-        /* Mini calendar beside the list */
-        .followup-layout { display: flex; gap: 18px; align-items: flex-start; }
-        .followup-mini-cal { flex: 0 0 176px; }
-        .followup-list { flex: 1; min-width: 0; }
-        .mini-cal-header { font-size: 12px; font-weight: 700; color: var(--text-dark); text-align: center; margin-bottom: 8px; }
-        .mini-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
-        .mini-cal-weekday { font-size: 9.5px; font-weight: 700; color: var(--text-muted); text-align: center; padding-bottom: 4px; }
+        /* Proper calendar on the left, tabs + list on the right — this
+           card is full-width now, so the calendar gets real room instead
+           of being squeezed into a sidebar-sized sliver. */
+        .followup-layout { display: flex; gap: 28px; align-items: flex-start; }
+        .followup-cal-col { flex: 0 0 300px; }
+        .followup-list-col { flex: 1; min-width: 0; }
+        .mini-cal-header {
+            font-size: 14px; font-weight: 700; color: var(--text-dark); text-align: center;
+            margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;
+        }
+        .mini-cal-header .mini-cal-nav {
+            border: none; background: var(--surface); color: var(--text-muted); width: 26px; height: 26px;
+            border-radius: 50%; cursor: pointer; font-size: 11px;
+        }
+        .mini-cal-header .mini-cal-nav:hover { background: #eff6ff; color: var(--primary); }
+        .mini-cal-clear {
+            display: block; text-align: center; font-size: 11.5px; font-weight: 600; color: var(--primary);
+            cursor: pointer; margin-top: 10px;
+        }
+        .mini-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+        .mini-cal-weekday { font-size: 11px; font-weight: 700; color: var(--text-muted); text-align: center; padding-bottom: 6px; }
         .mini-cal-cell {
             position: relative; aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
-            font-size: 10.5px; color: var(--text-dark); border-radius: 50%;
+            font-size: 12.5px; color: var(--text-dark); border-radius: 50%; cursor: default;
         }
+        .mini-cal-cell.is-day { cursor: pointer; transition: background .12s ease; }
+        .mini-cal-cell.is-day:hover { background: var(--surface); }
         .mini-cal-cell.is-today { background: var(--primary); color: #fff; font-weight: 700; }
+        .mini-cal-cell.is-selected { box-shadow: inset 0 0 0 2px var(--primary); font-weight: 700; }
         .mini-cal-cell.has-due::after {
-            content: ''; position: absolute; bottom: 1px; left: 50%; transform: translateX(-50%);
-            width: 4px; height: 4px; border-radius: 50%; background: #f59e0b;
+            content: ''; position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%);
+            width: 5px; height: 5px; border-radius: 50%; background: #f59e0b;
         }
         .mini-cal-cell.is-today.has-due::after { background: #fff; }
-        @media (max-width: 480px) {
+        @media (max-width: 700px) {
             .followup-layout { flex-direction: column; }
-            .followup-mini-cal { flex: 0 0 auto; width: 100%; }
+            .followup-cal-col { flex: 0 0 auto; width: 100%; max-width: 320px; margin: 0 auto; }
         }
+
+        /* Leads by State (Geographic Lead Intelligence) */
+        .geo-row { display: flex; align-items: center; gap: 12px; padding: 9px 0; border-bottom: 1px solid #f1f5f9; }
+        .geo-row:last-child { border-bottom: none; }
+        .geo-rank { width: 20px; font-size: 11.5px; font-weight: 700; color: var(--text-muted); flex-shrink: 0; }
+        .geo-name { flex: 0 0 110px; font-size: 13px; font-weight: 600; color: var(--text-dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .geo-bar-wrap { flex: 1; height: 8px; border-radius: 99px; background: var(--surface); overflow: hidden; }
+        .geo-bar { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, #2563eb, #6366f1); }
+        .geo-count { flex-shrink: 0; font-size: 12.5px; font-weight: 700; color: var(--text-dark); width: 34px; text-align: right; }
+        .geo-empty { text-align: center; color: var(--text-muted); padding: 24px 0; font-size: 13.5px; }
 
         [data-theme="dark"] .followup-group.grp-overdue .followup-item { background: rgba(220, 38, 38, 0.12); }
         [data-theme="dark"] .followup-group.grp-overdue .followup-item:hover { background: rgba(220, 38, 38, 0.2); }
@@ -232,9 +259,18 @@
         [data-theme="dark"] .followup-tab-btn:hover { color: #eef0f6; }
         [data-theme="dark"] .followup-tab-btn.active { background: #1a1d2b; color: #93a4fd; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3); }
         [data-theme="dark"] .mini-cal-header { color: #eef0f6; }
+        [data-theme="dark"] .mini-cal-header .mini-cal-nav { background: #232637; color: #9aa1b5; }
+        [data-theme="dark"] .mini-cal-header .mini-cal-nav:hover { background: #2a2e40; color: #93a4fd; }
         [data-theme="dark"] .mini-cal-weekday { color: #9aa1b5; }
         [data-theme="dark"] .mini-cal-cell { color: #d7dbe4; }
+        [data-theme="dark"] .mini-cal-cell.is-day:hover { background: #232637; }
         [data-theme="dark"] .mini-cal-cell.is-today { background: #93a4fd; color: #0f1117; }
+        [data-theme="dark"] .mini-cal-cell.is-selected { box-shadow: inset 0 0 0 2px #93a4fd; }
+        [data-theme="dark"] .mini-cal-clear { color: #93a4fd; }
+        [data-theme="dark"] .geo-row { border-bottom-color: #2a2e40; }
+        [data-theme="dark"] .geo-name, [data-theme="dark"] .geo-count { color: #eef0f6; }
+        [data-theme="dark"] .geo-bar-wrap { background: #232637; }
+        [data-theme="dark"] .geo-empty { color: #9aa1b5; }
 
         /* Sales Pipeline */
         .pipeline-list { display: flex; flex-direction: column; gap: 12px; }
@@ -403,27 +439,40 @@
                     </div>
                 </div>
 
-                <div class="row">
-                    <div class="col-lg-6">
-                        <div class="dash-card">
-                            <h5><i class="fa fa-bell-o"></i> Upcoming Follow-ups &amp; Reminders @can('calendar.view')<a href="{{ route('calendar.index') }}">Open calendar</a>@endcan</h5>
-
-                            <div class="followup-tabs" id="followupTabs">
-                                <button type="button" class="followup-tab-btn active" data-tab="current">Current</button>
-                                <button type="button" class="followup-tab-btn" data-tab="upcoming">Upcoming</button>
-                                <button type="button" class="followup-tab-btn" data-tab="past">Past</button>
-                            </div>
-
-                            <div class="followup-layout">
-                                <div class="followup-mini-cal" id="followupMiniCal"></div>
-                                <ul class="followup-list" id="followUpList"></ul>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-6" id="closingSoonWrap" style="display:none">
+                <div class="row" id="closingSoonRow" style="display:none">
+                    <div class="col-lg-6" id="closingSoonWrap">
                         <div class="dash-card">
                             <h5><i class="fa fa-clock-o"></i> Deals Closing Soon</h5>
                             <div class="closing-grid" id="closingSoonList"></div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6" id="geoWrap">
+                        <div class="dash-card">
+                            <h5><i class="fa fa-globe"></i> Leads by State</h5>
+                            <p class="dash-card-sub">Where your leads are coming from, geographically.</p>
+                            <div id="geoList"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12">
+                        <div class="dash-card">
+                            <h5><i class="fa fa-bell-o"></i> Upcoming Follow-ups &amp; Reminders @can('calendar.view')<a href="{{ route('calendar.index') }}">Open calendar</a>@endcan</h5>
+
+                            <div class="followup-layout">
+                                <div class="followup-cal-col">
+                                    <div class="followup-mini-cal" id="followupMiniCal"></div>
+                                </div>
+                                <div class="followup-list-col">
+                                    <div class="followup-tabs" id="followupTabs">
+                                        <button type="button" class="followup-tab-btn active" data-tab="current">Current</button>
+                                        <button type="button" class="followup-tab-btn" data-tab="upcoming">Upcoming</button>
+                                        <button type="button" class="followup-tab-btn" data-tab="past">Past</button>
+                                    </div>
+                                    <ul class="followup-list" id="followUpList"></ul>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -671,7 +720,7 @@
 
         function renderClosingSoon(deals) {
             if (!deals || !deals.length) return;
-            $('#closingSoonWrap').show();
+            $('#closingSoonRow').show();
             let html = '';
             deals.forEach(d => {
                 const overdue = d.overdue;
@@ -683,6 +732,21 @@
                     </a>`;
             });
             $('#closingSoonList').html(html);
+        }
+
+        function renderGeoIntelligence(states) {
+            if (!states || !states.length) {
+                $('#geoList').html('<div class="geo-empty">No state information recorded on leads yet.</div>');
+                return;
+            }
+            $('#closingSoonRow').show();
+            $('#geoList').html(states.map((s, i) => `
+                <div class="geo-row">
+                    <div class="geo-rank">#${i + 1}</div>
+                    <div class="geo-name">${esc(s.state)}</div>
+                    <div class="geo-bar-wrap"><span class="geo-bar" style="width:${s.pct}%"></span></div>
+                    <div class="geo-count">${s.total}</div>
+                </div>`).join(''));
         }
 
         function parseWhen(when) {
@@ -787,7 +851,34 @@
             return buckets;
         }
 
+        let calMonthOffset = 0;
+        let selectedFollowDate = null;
+
+        function renderDateFilteredList() {
+            const dateStr = selectedFollowDate.toDateString();
+            const items = currentFollowUps.filter(item => {
+                const parsed = parseWhen(item.when);
+                return parsed && parsed.date.toDateString() === dateStr;
+            });
+            const label = selectedFollowDate.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'short' });
+
+            if (!items.length) {
+                $('#followUpList').html(`<div class="followup-empty"><i class="fa fa-calendar-o"></i>Nothing due on ${label}.</div>`);
+                return;
+            }
+            $('#followUpList').html(`
+                <div class="followup-group">
+                    <div class="followup-group-label"><span class="grp-dot"></span>${label} &middot; ${items.length}</div>
+                    ${items.map(followUpItemHtml).join('')}
+                </div>`);
+        }
+
         function renderFollowTab() {
+            if (selectedFollowDate) {
+                renderDateFilteredList();
+                return;
+            }
+
             if (activeFollowTab === 'past') {
                 $('#followUpList').html(
                     pastFollowUps.length
@@ -818,10 +909,10 @@
 
         function renderMiniCalendar() {
             const now = new Date();
-            const year = now.getFullYear();
-            const month = now.getMonth();
-            const firstDay = new Date(year, month, 1);
-            const startWeekday = firstDay.getDay();
+            const shown = new Date(now.getFullYear(), now.getMonth() + calMonthOffset, 1);
+            const year = shown.getFullYear();
+            const month = shown.getMonth();
+            const startWeekday = shown.getDay();
             const daysInMonth = new Date(year, month + 1, 0).getDate();
 
             const dueDays = new Set();
@@ -832,14 +923,26 @@
                 }
             });
 
-            let html = `<div class="mini-cal-header">${firstDay.toLocaleDateString([], { month: 'long', year: 'numeric' })}</div><div class="mini-cal-grid">`;
+            let html = `<div class="mini-cal-header">
+                <button type="button" class="mini-cal-nav" data-dir="-1"><i class="fa fa-chevron-left"></i></button>
+                <span>${shown.toLocaleDateString([], { month: 'long', year: 'numeric' })}</span>
+                <button type="button" class="mini-cal-nav" data-dir="1"><i class="fa fa-chevron-right"></i></button>
+            </div><div class="mini-cal-grid">`;
             ['S', 'M', 'T', 'W', 'T', 'F', 'S'].forEach(w => html += `<div class="mini-cal-weekday">${w}</div>`);
             for (let i = 0; i < startWeekday; i++) html += `<div class="mini-cal-cell"></div>`;
             for (let d = 1; d <= daysInMonth; d++) {
-                const cls = [d === now.getDate() ? 'is-today' : '', dueDays.has(d) ? 'has-due' : ''].filter(Boolean).join(' ');
-                html += `<div class="mini-cal-cell ${cls}">${d}</div>`;
+                const cellDate = new Date(year, month, d);
+                const cls = [
+                    'is-day',
+                    d === now.getDate() && month === now.getMonth() && year === now.getFullYear() ? 'is-today' : '',
+                    dueDays.has(d) ? 'has-due' : '',
+                    selectedFollowDate && cellDate.toDateString() === selectedFollowDate.toDateString() ? 'is-selected' : '',
+                ].filter(Boolean).join(' ');
+                const iso = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                html += `<div class="mini-cal-cell ${cls}" data-date="${iso}">${d}</div>`;
             }
             html += `</div>`;
+            if (selectedFollowDate) html += `<a class="mini-cal-clear" id="clearFollowDate">&times; Clear date filter</a>`;
             $('#followupMiniCal').html(html);
         }
 
@@ -856,8 +959,30 @@
 
         $('#followupTabs').on('click', '.followup-tab-btn', function() {
             activeFollowTab = $(this).data('tab');
+            selectedFollowDate = null;
             $('.followup-tab-btn').removeClass('active');
             $(this).addClass('active');
+            renderMiniCalendar();
+            renderFollowTab();
+        });
+
+        $(document).on('click', '.mini-cal-nav', function() {
+            calMonthOffset += Number($(this).data('dir'));
+            renderMiniCalendar();
+        });
+
+        $(document).on('click', '.mini-cal-cell.is-day', function() {
+            const clicked = new Date($(this).data('date') + 'T00:00:00');
+            selectedFollowDate = (selectedFollowDate && selectedFollowDate.toDateString() === clicked.toDateString())
+                ? null
+                : clicked;
+            renderMiniCalendar();
+            renderFollowTab();
+        });
+
+        $(document).on('click', '#clearFollowDate', function() {
+            selectedFollowDate = null;
+            renderMiniCalendar();
             renderFollowTab();
         });
 
@@ -938,6 +1063,9 @@
                 }
                 if (response.scope === 'team' && response.closingSoon) {
                     renderClosingSoon(response.closingSoon);
+                }
+                if (response.leadsByState) {
+                    renderGeoIntelligence(response.leadsByState);
                 }
             });
         }

@@ -216,6 +216,7 @@ class DealController extends Controller
             'contact_id' => 'nullable|integer',
             'expected_close_date' => 'nullable|date',
             'notes' => 'nullable|string',
+            'source' => 'nullable|string|max:60',
         ]);
 
         $pipeline = Pipeline::findOrFail($request->pipeline_id);
@@ -223,6 +224,16 @@ class DealController extends Controller
 
         $deal = DB::connection($pipeline->getConnectionName())->transaction(function () use ($request, $pipeline) {
             $lead = $request->lead_id ? Lead::findOrFail($request->lead_id) : null;
+            $source = $lead?->lead_source ?? $request->source;
+
+            // Nobody picked an owner: try the tenant's deal assignment
+            // rules (pipeline > source > round robin) before leaving it
+            // unassigned — a linked lead's own assignee still wins first,
+            // since that's the person who's already been working it.
+            $ownerId = $request->owner_id ?: $lead?->assigned_to ?: app(\App\Services\DealAssignmentService::class)->resolve($pipeline->tenant_id, [
+                'pipeline_id' => $pipeline->id, 'source' => $source,
+            ]);
+
             $deal = Deal::create([
                 'tenant_id' => $pipeline->tenant_id,
                 'pipeline_id' => $pipeline->id,
@@ -233,7 +244,8 @@ class DealController extends Controller
                 // existing company/contact directly via the form's pickers.
                 'company_id' => $lead?->company_id ?? $request->company_id,
                 'contact_id' => $lead?->contact_id ?? $request->contact_id,
-                'owner_id' => $request->owner_id,
+                'source' => $source,
+                'owner_id' => $ownerId,
                 'created_by' => Auth::guard('web')->id(),
                 'name' => $request->name,
                 'amount' => $request->amount ?? 0,

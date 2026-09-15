@@ -364,8 +364,8 @@
         </div>
         @endcanany
 
-        @canany(['users.view', 'roles.view', 'company.view', 'masters.view', 'deals.manage-settings', 'company.manage-settings'])
-        <div class="nav-section {{ request()->routeIs(['users.*','roles.*','company.*','pipelines.*','stages.*','settings.mail.*']) ? 'has-active' : '' }}">
+        @canany(['users.view', 'roles.view', 'company.view', 'masters.view', 'deals.manage-settings', 'company.manage-settings', 'leads.manage-settings'])
+        <div class="nav-section {{ request()->routeIs(['users.*','roles.*','company.*','pipelines.*','stages.*','settings.mail.*','lead_assignment.*','deal_assignment.*']) ? 'has-active' : '' }}">
             <div class="nav-section-label">Administration</div>
             <ul class="nav nav-sidebar-menu">
                 @can('users.view')
@@ -393,6 +393,20 @@
                 <li class="mb-1" data-nav-label="Pipelines">
                     <a class="nav-link {{ request()->routeIs(['pipelines.*','stages.*']) ? 'active' : '' }}" href="{{ route('pipelines.index') }}" title="Pipelines">
                         <i class="fa fa-random"></i><span>Pipelines</span>
+                    </a>
+                </li>
+                @endcan
+                @can('leads.manage-settings')
+                <li class="mb-1" data-nav-label="Lead Assignment">
+                    <a class="nav-link {{ request()->routeIs('lead_assignment.*') ? 'active' : '' }}" href="{{ route('lead_assignment.index') }}" title="Lead Assignment">
+                        <i class="fa fa-exchange"></i><span>Lead Assignment</span>
+                    </a>
+                </li>
+                @endcan
+                @can('deals.manage-settings')
+                <li class="mb-1" data-nav-label="Deal Assignment">
+                    <a class="nav-link {{ request()->routeIs('deal_assignment.*') ? 'active' : '' }}" href="{{ route('deal_assignment.index') }}" title="Deal Assignment">
+                        <i class="fa fa-share-square-o"></i><span>Deal Assignment</span>
                     </a>
                 </li>
                 @endcan

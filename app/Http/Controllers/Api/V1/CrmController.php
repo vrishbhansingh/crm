@@ -10,6 +10,7 @@ use App\Models\Lead;
 use App\Models\LeadActivity;
 use App\Models\Task;
 use App\Services\LeadNumberService;
+use App\Services\LeadUniquenessService;
 use App\Support\TenantContext;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -84,9 +85,10 @@ class CrmController extends Controller
         abort_if($tenantId === null, 422, 'A tenant context is required.');
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['nullable', 'email', 'max:255'],
-            'phone' => ['nullable', 'string', 'max:50'],
+            'email' => ['required', 'email', 'max:255'],
+            'phone' => ['required', 'string', 'max:50'],
             'company_name' => ['nullable', 'string', 'max:255'],
+            'state' => ['nullable', 'string', 'max:255'],
             'lead_source' => ['nullable', 'string', 'max:100'],
             'lead_type' => ['nullable', 'string', 'max:100'],
             'lead_status' => ['nullable', 'string', 'max:100'],
@@ -94,6 +96,18 @@ class CrmController extends Controller
             'budget' => ['nullable', 'numeric', 'min:0'],
             'requirement' => ['nullable', 'string', 'max:5000'],
         ]);
+
+        $emailNormalized = LeadUniquenessService::normalizeEmail($data['email']);
+        $phoneNormalized = LeadUniquenessService::normalizePhone($data['phone']);
+        $duplicate = LeadUniquenessService::findDuplicate($emailNormalized, $phoneNormalized);
+        if ($duplicate) {
+            $field = LeadUniquenessService::duplicateField($duplicate, $emailNormalized, $phoneNormalized);
+
+            return response()->json([
+                'message' => "A lead with this {$field} already exists.",
+                'errors' => [$field => ["A lead with this {$field} already exists (lead #{$duplicate->lead_number})."]],
+            ], 422);
+        }
 
         $lead = new Lead(array_merge($data, [
                 'tenant_id' => $tenantId,

@@ -302,6 +302,14 @@ class LeadDetailController extends Controller
 
             $amount = $lead->conversion_value ?? $request->amount ?? 0;
 
+            // The lead's own assignee always wins (they've already been
+            // working it) — the tenant's deal assignment rules only kick
+            // in for the rare case of an unassigned lead, ahead of
+            // defaulting to whoever clicked convert.
+            $ownerId = $lead->assigned_to
+                ?: app(\App\Services\DealAssignmentService::class)->resolve($lead->tenant_id, ['pipeline_id' => $pipeline->id, 'source' => $lead->lead_source])
+                ?: $user->id;
+
             $deal = Deal::create([
                 'tenant_id' => $lead->tenant_id,
                 'pipeline_id' => $pipeline->id,
@@ -309,7 +317,8 @@ class LeadDetailController extends Controller
                 'lead_id' => $lead->id,
                 'company_id' => $lead->company_id,
                 'contact_id' => $lead->contact_id,
-                'owner_id' => $lead->assigned_to ?? $user->id,
+                'source' => $lead->lead_source,
+                'owner_id' => $ownerId,
                 'created_by' => $user->id,
                 'name' => trim(($lead->company_name ?: $lead->name).' - Deal'),
                 'amount' => $amount,

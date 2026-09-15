@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Domain\Leads\LeadScoringService;
 use App\Models\Concerns\BelongsToTenant;
+use App\Services\LeadUniquenessService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -61,6 +62,14 @@ class Lead extends Model
     {
         static::saving(function (Lead $lead) {
             $lead->score = app(LeadScoringService::class)->score($lead);
+
+            // Kept in sync automatically (never set directly by a
+            // controller/API caller) so every write path — manual form,
+            // edit form, API, webhook, bulk import — gets the same
+            // normalized values for duplicate detection, with no chance of
+            // one path forgetting to normalize.
+            $lead->email_normalized = LeadUniquenessService::normalizeEmail($lead->email);
+            $lead->phone_normalized = LeadUniquenessService::normalizePhone($lead->phone);
 
             // Re-scheduling a follow-up (a new date and/or time) means any
             // reminder already sent for the old one no longer applies —

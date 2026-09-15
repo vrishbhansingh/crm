@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\LeadImportReportExport;
+use App\Imports\LeadsImport;
 use App\Models\Company;
 use App\Models\Contact;
 use App\Models\Lead;
@@ -9,17 +11,15 @@ use App\Models\LeadActivity;
 use App\Models\MasterValue;
 use App\Models\User;
 use App\Services\LeadNumberService;
+use App\Services\LeadUniquenessService;
 use App\Support\TenantContext;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
-use Maatwebsite\Excel\Concerns\ToCollection;
-use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Facades\Excel;
-use PhpOffice\PhpSpreadsheet\Shared\Date;
 
 class LeadController extends Controller
 {
@@ -424,6 +424,43 @@ class LeadController extends Controller
                 'message' => $validator->errors()->first(),
             ], 422);
         }
+
+        // What this lead's own name/phone/email will actually be — either
+        // an existing contact's (contact_id) or the form's own fields for a
+        // brand-new one — resolved *before* anything is created, so the
+        // mandatory-field and duplicate checks below run against real,
+        // final values and reject before a Company/Contact/Lead row is
+        // ever written (not after, which would leave orphans behind).
+        if ($request->filled('contact_id')) {
+            $pickedContact = Contact::where('tenant_id', $tenantId)->findOrFail($request->integer('contact_id'));
+            $leadName = $pickedContact->name;
+            $leadPhone = $pickedContact->phone;
+            $leadEmail = $pickedContact->email;
+        } else {
+            $leadName = $request->name;
+            $leadPhone = $request->phone;
+            $leadEmail = $request->email;
+        }
+
+        if (! $leadName || ! $leadPhone || ! $leadEmail) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Name, email, and phone number are all required to create a lead.',
+            ], 422);
+        }
+
+        $emailNormalized = LeadUniquenessService::normalizeEmail($leadEmail);
+        $phoneNormalized = LeadUniquenessService::normalizePhone($leadPhone);
+        $duplicate = LeadUniquenessService::findDuplicate($emailNormalized, $phoneNormalized);
+        if ($duplicate) {
+            $field = LeadUniquenessService::duplicateField($duplicate, $emailNormalized, $phoneNormalized);
+
+            return response()->json([
+                'status' => false,
+                'message' => "A lead with this {$field} already exists (\"{$duplicate->name}\", lead #{$duplicate->lead_number}).",
+            ], 422);
+        }
+
         $lead = new Lead();
         // A platform Super Admin has no tenant context (TenantContext::id()
         // is null for them), so BelongsToTenant's creating hook can't infer
@@ -447,13 +484,18 @@ class LeadController extends Controller
         $lead->follow_up_note = $request->follow_up_note;
         $lead->requirement = $request->requirement;
 
-        // Auto-assignment: if nobody was explicitly picked, hand the lead to
-        // whichever active sales-role user in this tenant currently has the
-        // fewest assigned leads, instead of leaving it unassigned.
+        // Auto-assignment: if nobody was explicitly picked, try the
+        // tenant's configured assignment rules (product/state/source/round
+        // robin, in that order) first; if none match or none are
+        // configured, fall back to whichever active sales-role user
+        // currently has the fewest assigned leads, instead of leaving the
+        // lead unassigned.
         $wasAutoAssigned = false;
         $assignedTo = $request->assigned_to;
         if (empty($assignedTo)) {
-            $assignedTo = $this->leastLoadedSalesUserId($lead->tenant_id);
+            $assignedTo = app(\App\Services\LeadAssignmentService::class)->resolve($lead->tenant_id, [
+                'product' => $lead->product, 'state' => $lead->state, 'lead_source' => $lead->lead_source,
+            ]) ?: $this->leastLoadedSalesUserId($lead->tenant_id);
             $wasAutoAssigned = (bool) $assignedTo;
         }
 
@@ -643,8 +685,8 @@ class LeadController extends Controller
         $lead = $this->findEditableLead($request->integer('id'));
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['nullable', 'email', 'max:255'],
-            'phone' => ['nullable', 'string', 'max:50'],
+            'email' => ['required', 'email', 'max:255'],
+            'phone' => ['required', 'string', 'max:50'],
             'alternate_phone' => ['nullable', 'string', 'max:50'],
             'company_name' => ['nullable', 'string', 'max:255'],
             'budget' => ['nullable', 'numeric', 'min:0'],
@@ -653,6 +695,19 @@ class LeadController extends Controller
             'assigned_by' => ['nullable', Rule::exists('users', 'id')->where('tenant_id', $lead->tenant_id)],
             'last_contacted_by' => ['nullable', Rule::exists('users', 'id')->where('tenant_id', $lead->tenant_id)],
         ]);
+
+        $emailNormalized = LeadUniquenessService::normalizeEmail($request->email);
+        $phoneNormalized = LeadUniquenessService::normalizePhone($request->phone);
+        $duplicate = LeadUniquenessService::findDuplicate($emailNormalized, $phoneNormalized, $lead->id);
+        if ($duplicate) {
+            $field = LeadUniquenessService::duplicateField($duplicate, $emailNormalized, $phoneNormalized);
+
+            return response()->json([
+                'status' => false,
+                'message' => "Another lead already uses this {$field} (\"{$duplicate->name}\", lead #{$duplicate->lead_number}).",
+            ], 422);
+        }
+
         $previousStatus = $lead->lead_status;
         $previousAssignee = $lead->assigned_to;
 
@@ -787,91 +842,55 @@ class LeadController extends Controller
         $tenantId = TenantContext::id();
         abort_if($tenantId === null, 422, 'Select a tenant before importing leads.');
 
-        Excel::import(new class($tenantId) implements ToCollection, WithHeadingRow
-        {
-            public function __construct(private readonly int $tenantId) {}
+        $importer = new LeadsImport($tenantId);
+        Excel::import($importer, $request->file('file'));
 
-            public function collection(Collection $rows)
-            {
-                foreach ($rows as $row) {
-                    $lead = new Lead();
-                    $lead->tenant_id = $this->tenantId;
-                    $lead->lead_type = $row['lead_type'] ?? 'inquiry';
-                    $lead->lead_source = $row['lead_source'] ?? null;
-                    $lead->name = $row['name'] ?? null;
-                    $lead->phone = $row['phone'] ?? null;
-                    $lead->alternate_phone = $row['alternate_phone'] ?? null;
-                    $lead->email = $row['email'] ?? null;
-                    $lead->city = $row['city'] ?? null;
-                    $lead->state = $row['state'] ?? null;
-                    $lead->country = $row['country'] ?? null;
-                    $lead->product = $row['product'] ?? null;
-                    $lead->service = $row['service'] ?? null;
-                    $lead->budget = $row['budget'] ?? null;
-                    $lead->lead_status = $row['lead_status'] ?? 'new';
-                    $lead->priority = $row['priority'] ?? 'high';
-                    $lead->status_reason = $row['status_reason'] ?? null;
+        $summary = $importer->summary();
+        $problemRows = $importer->problemRows();
 
-                    if (! empty($row['follow_up_date'])) {
-
-                        if (is_numeric($row['follow_up_date'])) {
-
-                            $lead->follow_up_date = Date::excelToDateTimeObject(
-                                $row['follow_up_date']
-                            )->format('Y-m-d');
-                        } else {
-
-                            $lead->follow_up_date = Carbon::createFromFormat(
-                                'd-m-Y',
-                                $row['follow_up_date']
-                            )->format('Y-m-d');
-                        }
-                    }
-
-                    // ===== TIME =====
-                    if (! empty($row['follow_up_time'])) {
-
-                        if (is_numeric($row['follow_up_time'])) {
-                            // Excel time comes as decimal (like 0.5 = 12:00 PM)
-                            $lead->follow_up_time = Carbon::instance(
-                                Date::excelToDateTimeObject($row['follow_up_time'])
-                            )->format('H:i:s');
-                        } else {
-                            $lead->follow_up_time = Carbon::parse($row['follow_up_time'])
-                                ->format('H:i:s');
-                        }
-                    }
-                    $lead->follow_up_note = $row['follow_up_note'] ?? null;
-                    $lead->requirement = $row['requirement'] ?? null;
-                    $lead->assigned_to = $this->tenantUserId($row['assigned_to'] ?? null);
-                    $lead->assigned_by = $this->tenantUserId($row['assigned_by'] ?? null);
-                    $lead->assigned_at = $row['assigned_at'] ?? null;
-                    $lead->last_contacted_at = $row['last_contacted_at'] ?? null;
-                    $lead->last_contacted_by = $this->tenantUserId($row['last_contacted_by'] ?? null);
-                    $lead->is_converted = 'No';
-                    $lead->converted_at = null;
-                    $lead->conversion_value = null;
-                    $lead->remarks = $row['remarks'] ?? null;
-                    $lead->internal_note = $row['internal_note'] ?? null;
-                    $lead->status = $row['status'] ?? 'Active';
-                    LeadNumberService::saveNew($lead);
-                }
-            }
-
-            private function tenantUserId($id): ?int
-            {
-                if (! $id) {
-                    return null;
-                }
-
-                return User::where('tenant_id', $this->tenantId)->whereKey($id)->value('id');
-            }
-        }, $request->file('file'));
+        $reportUrl = null;
+        if ($problemRows) {
+            $filename = 'lead-import-report-'.now()->format('Ymd-His').'-'.substr(md5(uniqid('', true)), 0, 8).'.xlsx';
+            $relativePath = 'lead-import-reports/'.$tenantId.'/'.$filename;
+            Excel::store(new LeadImportReportExport($problemRows), $relativePath, 'local');
+            $reportUrl = route('leads.import_report.download', ['filename' => $filename]);
+        }
 
         return response()->json([
             'status' => true,
-            'message' => 'Leads imported successfully',
+            'message' => "Lead import completed — {$summary['success']} uploaded, {$summary['skipped']} skipped, {$summary['failed']} failed.",
+            'summary' => $summary,
+            // Capped so a huge file can't blow up the response payload — the
+            // downloadable report (when $reportUrl is set) always has every
+            // problem row, not just this preview slice.
+            'rows' => array_slice($problemRows, 0, 200),
+            'rows_truncated' => count($problemRows) > 200,
+            'report_url' => $reportUrl,
         ]);
+    }
+
+    /**
+     * The downloadable Import Report generated by leads_import() above —
+     * every skipped/failed row with its reason, so a user can fix those
+     * specific rows and re-upload instead of re-checking the whole file.
+     * Filename embeds the tenant id in its storage path (not the URL
+     * itself), and is re-checked here so one tenant can't download
+     * another's report even by guessing a filename.
+     */
+    public function downloadImportReport(string $filename)
+    {
+        $tenantId = TenantContext::id();
+        abort_if($tenantId === null, 422, 'Select a tenant first.');
+
+        // Defends against path traversal in the filename segment — it's
+        // always machine-generated (see leads_import()), so a legitimate
+        // request never contains anything outside this pattern.
+        abort_unless(preg_match('/^lead-import-report-[\w-]+\.xlsx$/', $filename), 404);
+
+        $relativePath = 'lead-import-reports/'.$tenantId.'/'.$filename;
+        abort_unless(Storage::disk('local')->exists($relativePath), 404);
+
+        return Storage::disk('local')->download($relativePath, 'lead-import-report.xlsx');
     }
 
     public function downloadFormat()

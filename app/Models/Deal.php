@@ -21,6 +21,7 @@ class Deal extends Model
         'lead_id',
         'company_id',
         'contact_id',
+        'source',
         'order_id',
         'owner_id',
         'lost_reason_id',

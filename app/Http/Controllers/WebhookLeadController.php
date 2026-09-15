@@ -14,6 +14,7 @@ use App\Models\Pipeline;
 use App\Models\User;
 use App\Services\LeadIntegrations\LeadPayloadNormalizer;
 use App\Services\LeadNumberService;
+use App\Services\LeadUniquenessService;
 use App\Support\TenantContext;
 use App\Tenancy\TenantConnectionManager;
 use Illuminate\Http\Request;
@@ -87,8 +88,15 @@ class WebhookLeadController extends Controller
             [$lead, $deal] = TenantContext::run($integration->tenant_id, function () use ($integration, $normalized) {
                 $lead = $this->createLead($integration, $normalized);
 
-                return [$lead, $this->maybeCreateDeal($integration, $lead)];
+                return [$lead, $lead ? $this->maybeCreateDeal($integration, $lead) : null];
             });
+
+            if (! $lead) {
+                $integration->update(['last_received_at' => now()]);
+                $this->log($integration, 'duplicate', $payload, $normalized['external_ref'] ?? null, null, 'A lead with this email or phone number already exists — skipped to avoid a duplicate.');
+
+                return response()->json(['status' => 'duplicate']);
+            }
 
             $integration->increment('leads_created_count');
             $integration->update(['last_received_at' => now()]);
@@ -151,13 +159,32 @@ class WebhookLeadController extends Controller
         return hash_equals($expected, $header);
     }
 
-    private function createLead(LeadIntegration $integration, array $normalized): Lead
+    private function createLead(LeadIntegration $integration, array $normalized): ?Lead
     {
         $tenant = $integration->tenant;
 
+        // Same "email/phone can only be used once" rule as every other
+        // creation path — a repeat inbound webhook lead for a contact who
+        // already has a Lead record is a duplicate, not a second Lead,
+        // even though its external_ref differs from anything seen before
+        // (the check above this method only catches an exact re-send of
+        // the same external_ref, not a genuinely new submission from an
+        // already-known contact).
+        $emailNormalized = LeadUniquenessService::normalizeEmail($normalized['email'] ?? null);
+        $phoneNormalized = LeadUniquenessService::normalizePhone($normalized['phone'] ?? null);
+        if (LeadUniquenessService::findDuplicate($emailNormalized, $phoneNormalized)) {
+            return null;
+        }
+
         // A specific default assignee on the integration always wins over
-        // round-robin — that's the whole point of setting one.
-        $assignedTo = $integration->default_assigned_to ?: $this->leastLoadedSalesUserId($tenant->id);
+        // the tenant's assignment rules — that's the whole point of setting
+        // one. Otherwise try the configured rules (product/state/source/
+        // round robin), then fall back to whoever has the fewest leads.
+        $assignedTo = $integration->default_assigned_to
+            ?: app(\App\Services\LeadAssignmentService::class)->resolve($tenant->id, [
+                'product' => $normalized['product'] ?? null, 'state' => $normalized['state'] ?? null, 'lead_source' => self::LEAD_SOURCE_BY_PLATFORM[$integration->platform] ?? null,
+            ])
+            ?: $this->leastLoadedSalesUserId($tenant->id);
 
         $company = null;
         if (! empty($normalized['company'])) {
@@ -251,6 +278,9 @@ class WebhookLeadController extends Controller
             return null;
         }
 
+        $ownerId = $lead->assigned_to
+            ?: app(\App\Services\DealAssignmentService::class)->resolve($lead->tenant_id, ['pipeline_id' => $pipeline->id, 'source' => $lead->lead_source]);
+
         $deal = Deal::create([
             'tenant_id' => $lead->tenant_id,
             'pipeline_id' => $pipeline->id,
@@ -258,7 +288,8 @@ class WebhookLeadController extends Controller
             'lead_id' => $lead->id,
             'company_id' => $lead->company_id,
             'contact_id' => $lead->contact_id,
-            'owner_id' => $lead->assigned_to,
+            'source' => $lead->lead_source,
+            'owner_id' => $ownerId,
             'name' => trim(($lead->company_name ?: $lead->name).' - Deal'),
             'amount' => 0,
         ]);
