@@ -53,10 +53,19 @@
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
   }
   [data-theme="dark"] .crm-breadcrumb {
-    background: linear-gradient(to right, #0c7bfe 0, #0c7bfe var(--sidebar-w, 200px), #12141d var(--sidebar-w, 200px), #12141d 100%);
+    background: linear-gradient(to right, #14172e 0, #14172e var(--sidebar-w, 200px), #12141d var(--sidebar-w, 200px), #12141d 100%);
     border-top-color: #232637;
     color: #9aa1b5;
   }
+  [data-theme="dark"] .crm-brand-wrapper {
+    background: linear-gradient(180deg, #14172e, #1a1e3d);
+  }
+  [data-theme="dark"] .sidebar-collapse-btn {
+    background: #232637;
+    color: #93a4fd;
+    border-color: #2a2e40;
+  }
+  [data-theme="dark"] .sidebar-collapse-btn:hover { background: #2a2e40; }
   [data-theme="dark"] .crm-breadcrumb a { color: #9aa1b5; }
   [data-theme="dark"] .crm-breadcrumb .current { color: #eef0f6; }
   [data-theme="dark"] .crm-toggle { color: #93a4fd; }
@@ -308,6 +317,89 @@
     color: #fca5a5;
   }
 
+  /* Notification bell dropdown — a light content-dense panel (unlike the
+     always-dark profile menu above) since it needs to carry an icon,
+     title, message and timestamp per row rather than a single link label. */
+  .crm-notif-dropdown {
+    position: absolute;
+    top: 88px;
+    right: 68px;
+    width: 340px;
+    max-width: calc(100vw - 32px);
+    background: #ffffff;
+    border-radius: 14px;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.16);
+    border: 1px solid #eef0f5;
+    display: none;
+    overflow: hidden;
+    z-index: 1001;
+  }
+  .crm-notif-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px 12px;
+    border-bottom: 1px solid #f1f3f9;
+  }
+  .crm-notif-head strong { font-size: 14px; color: #111827; }
+  .crm-notif-head button {
+    background: none; border: none; padding: 0;
+    font-size: 12px; font-weight: 600; color: #2563eb; cursor: pointer;
+  }
+  .crm-notif-head button:hover { text-decoration: underline; }
+  .crm-notif-list { max-height: 360px; overflow-y: auto; }
+  .crm-notif-item {
+    display: flex; gap: 12px; padding: 12px 16px;
+    border-bottom: 1px solid #f6f7fb;
+    cursor: pointer; text-decoration: none; color: inherit;
+  }
+  .crm-notif-item:last-child { border-bottom: none; }
+  .crm-notif-item:hover { background: #f8fafc; }
+  .crm-notif-item.is-unread { background: #f5f8ff; }
+  .crm-notif-item.is-unread:hover { background: #eef3ff; }
+  .crm-notif-icon {
+    width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 13px;
+  }
+  .crm-notif-icon.type-lead { background: #f3e8ff; color: #9333ea; }
+  .crm-notif-icon.type-task { background: #e0e7ff; color: #4338ca; }
+  .crm-notif-body { min-width: 0; flex: 1; }
+  .crm-notif-title {
+    font-size: 13px; font-weight: 700; color: #1f2937;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .crm-notif-dot { width: 7px; height: 7px; border-radius: 50%; background: #2563eb; flex-shrink: 0; }
+  .crm-notif-message {
+    font-size: 12.5px; color: #4b5563; margin-top: 1px;
+    overflow: hidden; text-overflow: ellipsis; display: -webkit-box;
+    -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  }
+  .crm-notif-time { font-size: 11px; color: #9ca3af; margin-top: 4px; }
+  .crm-notif-empty { padding: 36px 16px; text-align: center; color: #9ca3af; font-size: 13px; }
+  .crm-notif-foot {
+    padding: 10px 16px; text-align: center; border-top: 1px solid #f1f3f9;
+  }
+  .crm-notif-foot a { font-size: 12.5px; font-weight: 600; color: #2563eb; text-decoration: none; }
+  .crm-notif-foot a:hover { text-decoration: underline; }
+
+  [data-theme="dark"] .crm-notif-dropdown { background: #1a1d2b; border-color: #262a3a; box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4); }
+  [data-theme="dark"] .crm-notif-head { border-bottom-color: #262a3a; }
+  [data-theme="dark"] .crm-notif-head strong { color: #eef0f6; }
+  [data-theme="dark"] .crm-notif-item { border-bottom-color: #232637; }
+  [data-theme="dark"] .crm-notif-item:hover { background: #202333; }
+  [data-theme="dark"] .crm-notif-item.is-unread { background: rgba(147, 164, 253, 0.08); }
+  [data-theme="dark"] .crm-notif-item.is-unread:hover { background: rgba(147, 164, 253, 0.14); }
+  [data-theme="dark"] .crm-notif-title { color: #eef0f6; }
+  [data-theme="dark"] .crm-notif-message { color: #b8bed2; }
+  [data-theme="dark"] .crm-notif-time { color: #6b7280; }
+  [data-theme="dark"] .crm-notif-icon.type-lead { background: rgba(147, 51, 234, 0.18); color: #c084fc; }
+  [data-theme="dark"] .crm-notif-icon.type-task { background: rgba(67, 56, 202, 0.22); color: #93a4fd; }
+  [data-theme="dark"] .crm-notif-foot { border-top-color: #262a3a; }
+
+  @media (max-width: 768px) {
+    .crm-notif-dropdown { right: 10px; top: 60px; width: calc(100vw - 20px); }
+  }
+
   @media (max-width: 945px) {
     .crm-left {
       visibility: visible;
@@ -319,6 +411,7 @@
     /* Breadcrumb bar is hidden below this width, so the dropdown only
        needs to clear the 64px navbar, not the breadcrumb too. */
     .crm-dropdown { top: 70px; }
+    .crm-notif-dropdown { top: 70px; }
     /* Sidebar becomes a fixed overlay drawer below this width, toggled by
        .crm-toggle instead — the desktop collapse pill has nothing to do. */
     .sidebar-collapse-btn { display: none; }
@@ -438,11 +531,22 @@
       <button type="button" class="icon-btn" id="themeToggleBtn" title="Toggle dark / light mode" aria-label="Toggle dark / light mode">
         <i class="fa fa-moon-o" id="themeToggleIcon"></i>
       </button>
-      <a class="icon-btn notification-link" href="{{ route('notifications.index') }}" title="Notifications">
+      <button type="button" class="icon-btn notification-link" id="notifToggle" title="Notifications" aria-label="Notifications">
         <i class="fa fa-bell-o"></i>
         @php $unreadNotificationCount = Auth::guard('web')->user()->unreadNotifications()->count(); @endphp
-        @if($unreadNotificationCount)<span class="notification-count">{{ $unreadNotificationCount > 99 ? '99+' : $unreadNotificationCount }}</span>@endif
-      </a>
+        @if($unreadNotificationCount)<span class="notification-count" id="notifCount">{{ $unreadNotificationCount > 99 ? '99+' : $unreadNotificationCount }}</span>@endif
+      </button>
+
+      <div class="crm-notif-dropdown" id="notifDropdown">
+        <div class="crm-notif-head">
+          <strong>Notifications</strong>
+          <button type="button" id="notifReadAll">Mark all read</button>
+        </div>
+        <div class="crm-notif-list" id="notifList">
+          <div class="crm-notif-empty">Loading&hellip;</div>
+        </div>
+        <div class="crm-notif-foot"><a href="{{ route('notifications.index') }}">View all notifications</a></div>
+      </div>
       <div class="crm-profile" id="profileToggle">
         <img src="{{ $avatarUrl }}" class="crm-profile-avatar" alt="">
         <div class="crm-profile-text">
@@ -531,6 +635,8 @@
 
     profile.addEventListener("click", function(e) {
       e.stopPropagation();
+      const notifPanel = document.getElementById("notifDropdown");
+      if (notifPanel) notifPanel.style.display = "none";
       dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
     });
 
@@ -541,5 +647,121 @@
     document.addEventListener("click", function() {
       dropdown.style.display = "none";
     });
+
+    // --- Notification bell dropdown ---
+    const notifToggle = document.getElementById("notifToggle");
+    const notifDropdown = document.getElementById("notifDropdown");
+    const notifList = document.getElementById("notifList");
+    const notifReadAll = document.getElementById("notifReadAll");
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+    function escapeHtml(value) {
+      const div = document.createElement("div");
+      div.textContent = value ?? "";
+      return div.innerHTML;
+    }
+
+    function timeAgo(dateStr) {
+      const diffMs = Date.now() - new Date(dateStr).getTime();
+      const mins = Math.round(diffMs / 60000);
+      if (mins < 1) return "just now";
+      if (mins < 60) return mins + "m ago";
+      const hours = Math.round(mins / 60);
+      if (hours < 24) return hours + "h ago";
+      const days = Math.round(hours / 24);
+      if (days < 7) return days + "d ago";
+      return new Date(dateStr).toLocaleDateString();
+    }
+
+    function setNotifBadge(count) {
+      let badge = document.getElementById("notifCount");
+      if (count > 0) {
+        if (!badge) {
+          badge = document.createElement("span");
+          badge.className = "notification-count";
+          badge.id = "notifCount";
+          notifToggle.appendChild(badge);
+        }
+        badge.textContent = count > 99 ? "99+" : String(count);
+      } else if (badge) {
+        badge.remove();
+      }
+    }
+
+    function renderNotifications(items) {
+      if (!items.length) {
+        notifList.innerHTML = '<div class="crm-notif-empty"><i class="fa fa-bell-slash-o" style="font-size:22px;"></i><div style="margin-top:8px;">Nothing yet — reminders and updates will show up here.</div></div>';
+        return;
+      }
+      notifList.innerHTML = items.slice(0, 8).map(function (n) {
+        const isTask = !!n.data.task_id;
+        const iconClass = isTask ? "type-task" : "type-lead";
+        const icon = isTask ? "fa-check-square-o" : "fa-phone";
+        const unread = !n.read_at;
+        return '<a href="#" class="crm-notif-item' + (unread ? ' is-unread' : '') + '" data-id="' + n.id + '" data-url="' + escapeHtml(n.data.url || '') + '">'
+          + '<div class="crm-notif-icon ' + iconClass + '"><i class="fa ' + icon + '"></i></div>'
+          + '<div class="crm-notif-body">'
+          + '<div class="crm-notif-title">' + (unread ? '<span class="crm-notif-dot"></span>' : '') + escapeHtml(n.data.title || 'Notification') + '</div>'
+          + '<div class="crm-notif-message">' + escapeHtml(n.data.message || '') + '</div>'
+          + '<div class="crm-notif-time">' + timeAgo(n.created_at) + '</div>'
+          + '</div></a>';
+      }).join("");
+    }
+
+    function loadNotifications() {
+      fetch("{{ route('notifications.data') }}")
+        .then(function (r) { return r.json(); })
+        .then(function (r) {
+          renderNotifications(r.data || []);
+          setNotifBadge(r.unread || 0);
+        })
+        .catch(function () {
+          notifList.innerHTML = '<div class="crm-notif-empty">Could not load notifications.</div>';
+        });
+    }
+
+    if (notifToggle) {
+      notifToggle.addEventListener("click", function (e) {
+        e.stopPropagation();
+        dropdown.style.display = "none";
+        const opening = notifDropdown.style.display !== "block";
+        notifDropdown.style.display = opening ? "block" : "none";
+        if (opening) loadNotifications();
+      });
+
+      notifDropdown.addEventListener("click", function (e) { e.stopPropagation(); });
+
+      notifDropdown.addEventListener("click", function (e) {
+        const item = e.target.closest(".crm-notif-item");
+        if (!item) return;
+        e.preventDefault();
+        const id = item.dataset.id;
+        const url = item.dataset.url || "{{ route('notifications.index') }}";
+        fetch("{{ url('/notifications') }}/" + id + "/read", {
+          method: "POST",
+          headers: { "X-CSRF-TOKEN": csrfToken },
+        }).finally(function () { window.location.href = url; });
+      });
+
+      notifReadAll.addEventListener("click", function (e) {
+        e.stopPropagation();
+        fetch("{{ route('notifications.read_all') }}", {
+          method: "POST",
+          headers: { "X-CSRF-TOKEN": csrfToken },
+        }).then(loadNotifications);
+      });
+
+      document.addEventListener("click", function () {
+        notifDropdown.style.display = "none";
+      });
+
+      // Keep the badge fresh without a full reload — cheap enough (count
+      // only) to poll while the tab is open.
+      setInterval(function () {
+        fetch("{{ route('notifications.data') }}")
+          .then(function (r) { return r.json(); })
+          .then(function (r) { setNotifBadge(r.unread || 0); })
+          .catch(function () {});
+      }, 60000);
+    }
   });
 </script>

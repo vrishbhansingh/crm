@@ -135,24 +135,54 @@
         .chart-box.is-short { height: 190px; }
         .chart-box.is-short canvas { max-height: 190px; }
 
+        /* Upcoming Follow-ups & Reminders — grouped by urgency (Overdue /
+           Today / Tomorrow / This Week / Later) with a countdown pill per
+           row instead of a flat list + plain red-text date, so the admin
+           can tell what needs attention right now at a glance rather than
+           having to read every date. */
         .followup-list { list-style: none; margin: 0; padding: 0; }
+        .followup-group + .followup-group { margin-top: 16px; }
+        .followup-group-label {
+            font-size: 10.5px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase;
+            color: var(--text-muted); padding: 0 0 8px; display: flex; align-items: center; gap: 6px;
+        }
+        .followup-group-label .grp-dot { width: 6px; height: 6px; border-radius: 50%; }
+        .followup-group.grp-overdue .followup-group-label { color: #dc2626; }
+        .followup-group.grp-overdue .grp-dot { background: #dc2626; }
+        .followup-group.grp-today .followup-group-label { color: #b45309; }
+        .followup-group.grp-today .grp-dot { background: #f59e0b; }
+        .followup-group.grp-soon .followup-group-label { color: var(--text-muted); }
+        .followup-group.grp-soon .grp-dot { background: #94a3b8; }
+
         .followup-item {
             display: flex; align-items: center; justify-content: space-between;
-            gap: 12px; padding: 11px 0; border-bottom: 1px solid #f1f5f9;
-            text-decoration: none; color: inherit;
+            gap: 12px; padding: 10px 8px; border-radius: 10px;
+            text-decoration: none; color: inherit; transition: background .12s ease;
         }
-        .followup-item:last-child { border-bottom: none; }
-        .followup-item:hover { background: #fafbff; }
-        .followup-main { display: flex; align-items: center; gap: 10px; min-width: 0; }
+        .followup-item:hover { background: var(--surface); }
+        .followup-group.grp-overdue .followup-item { background: #fef2f2; }
+        .followup-group.grp-overdue .followup-item:hover { background: #fee2e2; }
+        .followup-main { display: flex; align-items: center; gap: 11px; min-width: 0; }
         .followup-badge {
-            flex-shrink: 0; width: 30px; height: 30px; border-radius: 9px;
-            display: flex; align-items: center; justify-content: center; font-size: 12.5px;
+            flex-shrink: 0; width: 34px; height: 34px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center; font-size: 13px;
         }
         .followup-title { font-size: 13.5px; font-weight: 600; color: var(--text-dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .followup-sub { font-size: 12px; color: var(--text-muted); }
-        .followup-when { font-size: 12px; font-weight: 600; white-space: nowrap; flex-shrink: 0; }
-        .followup-when.overdue { color: #dc2626; }
-        .followup-empty { text-align: center; color: var(--text-muted); padding: 24px 0; font-size: 13.5px; }
+        .followup-sub { font-size: 11.5px; color: var(--text-muted); }
+        .followup-pill {
+            font-size: 11px; font-weight: 700; white-space: nowrap; flex-shrink: 0;
+            padding: 4px 10px; border-radius: 999px; background: #f1f5f9; color: var(--text-muted);
+        }
+        .followup-pill.overdue { background: #fee2e2; color: #b91c1c; }
+        .followup-pill.today { background: #fef3c7; color: #92400e; }
+        .followup-empty { text-align: center; color: var(--text-muted); padding: 28px 0; font-size: 13.5px; }
+        .followup-empty i { font-size: 24px; opacity: .5; display: block; margin-bottom: 8px; }
+
+        [data-theme="dark"] .followup-group.grp-overdue .followup-item { background: rgba(220, 38, 38, 0.12); }
+        [data-theme="dark"] .followup-group.grp-overdue .followup-item:hover { background: rgba(220, 38, 38, 0.2); }
+        [data-theme="dark"] .followup-pill { background: #232637; color: var(--text-muted); }
+        [data-theme="dark"] .followup-pill.overdue { background: rgba(220, 38, 38, 0.22); color: #fca5a5; }
+        [data-theme="dark"] .followup-pill.today { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
 
         /* Sales Pipeline */
         .pipeline-list { display: flex; flex-direction: column; gap: 12px; }
@@ -593,26 +623,80 @@
             $('#closingSoonList').html(html);
         }
 
+        function parseWhen(when) {
+            if (!when) return null;
+            const hasTime = when.includes(':');
+            const d = new Date(when.replace(' ', 'T'));
+            return isNaN(d) ? null : { date: d, hasTime };
+        }
+
+        function formatRelative(parsed, overdue) {
+            if (!parsed) return '';
+            const { date, hasTime } = parsed;
+            const now = new Date();
+            const timeStr = hasTime ? date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '';
+
+            if (overdue) {
+                const hours = Math.floor((now - date) / 3600000);
+                if (hours < 1) return 'Overdue';
+                if (hours < 24) return 'Overdue ' + hours + 'h';
+                return 'Overdue ' + Math.floor(hours / 24) + 'd';
+            }
+            if (date.toDateString() === now.toDateString()) return timeStr ? ('Today, ' + timeStr) : 'Today';
+            const tomorrow = new Date(now);
+            tomorrow.setDate(now.getDate() + 1);
+            if (date.toDateString() === tomorrow.toDateString()) return timeStr ? ('Tomorrow, ' + timeStr) : 'Tomorrow';
+            const dayLabel = date.toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short' });
+            return timeStr ? (dayLabel + ', ' + timeStr) : dayLabel;
+        }
+
+        const FOLLOWUP_GROUPS = [
+            { key: 'overdue', cls: 'grp-overdue', label: 'Needs attention' },
+            { key: 'today', cls: 'grp-today', label: 'Today' },
+            { key: 'soon', cls: 'grp-soon', label: 'Coming up' },
+        ];
+
+        function followUpItemHtml(item) {
+            const meta = followTypeMeta[item.type] || followTypeMeta.lead;
+            const parsed = parseWhen(item.when);
+            const pillCls = item.overdue ? 'overdue' : (parsed && parsed.date.toDateString() === new Date().toDateString() ? 'today' : '');
+            return `
+                <a class="followup-item" href="${item.url}">
+                    <div class="followup-main">
+                        <div class="followup-badge ${meta.color}"><i class="fa ${meta.icon}"></i></div>
+                        <div>
+                            <div class="followup-title">${esc(item.title)}</div>
+                            <div class="followup-sub">${meta.label}</div>
+                        </div>
+                    </div>
+                    <div class="followup-pill ${pillCls}">${formatRelative(parsed, item.overdue)}</div>
+                </a>`;
+        }
+
         function renderFollowUps(items) {
             if (!items || !items.length) {
-                $('#followUpList').html('<div class="followup-empty">Nothing due in the next few days.</div>');
+                $('#followUpList').html('<div class="followup-empty"><i class="fa fa-check-circle-o"></i>Nothing due in the next few days — you\'re all caught up.</div>');
                 return;
             }
-            let html = '';
+
+            const now = new Date();
+            const buckets = { overdue: [], today: [], soon: [] };
             items.forEach(item => {
-                const meta = followTypeMeta[item.type] || followTypeMeta.lead;
-                html += `
-                    <a class="followup-item" href="${item.url}">
-                        <div class="followup-main">
-                            <div class="followup-badge ${meta.color}"><i class="fa ${meta.icon}"></i></div>
-                            <div>
-                                <div class="followup-title">${esc(item.title)}</div>
-                                <div class="followup-sub">${meta.label}</div>
-                            </div>
-                        </div>
-                        <div class="followup-when ${item.overdue ? 'overdue' : ''}">${item.when ?? ''}</div>
-                    </a>`;
+                const parsed = parseWhen(item.when);
+                if (item.overdue) buckets.overdue.push(item);
+                else if (parsed && parsed.date.toDateString() === now.toDateString()) buckets.today.push(item);
+                else buckets.soon.push(item);
             });
+
+            const html = FOLLOWUP_GROUPS
+                .filter(g => buckets[g.key].length)
+                .map(g => `
+                    <div class="followup-group ${g.cls}">
+                        <div class="followup-group-label"><span class="grp-dot"></span>${g.label} &middot; ${buckets[g.key].length}</div>
+                        ${buckets[g.key].map(followUpItemHtml).join('')}
+                    </div>`)
+                .join('');
+
             $('#followUpList').html(html);
         }
 

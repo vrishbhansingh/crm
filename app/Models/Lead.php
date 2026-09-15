@@ -61,6 +61,14 @@ class Lead extends Model
     {
         static::saving(function (Lead $lead) {
             $lead->score = app(LeadScoringService::class)->score($lead);
+
+            // Re-scheduling a follow-up (a new date and/or time) means any
+            // reminder already sent for the old one no longer applies —
+            // clear the flag so SendLeadFollowUpReminders fires again for
+            // the new date instead of silently skipping it.
+            if ($lead->isDirty(['follow_up_date', 'follow_up_time']) && ! $lead->isDirty('follow_up_notified_at')) {
+                $lead->follow_up_notified_at = null;
+            }
         });
     }
 

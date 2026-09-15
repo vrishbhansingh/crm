@@ -96,11 +96,43 @@ class ReportController extends Controller
             ->groupBy('day')->orderBy('day')->pluck('total', 'day');
         $days = collect($revenueByDay->keys())->merge($cashByDay->keys())->unique()->sort()->values();
 
+        // Monthly Summary — same booked-revenue / cash-collected figures as
+        // the trend chart above, just bucketed by month instead of by day,
+        // plus month-over-month revenue growth. No "expenses" column here:
+        // this app doesn't track expenses, so showing one would mean making
+        // up a number rather than reporting real data.
+        $revenueByMonth = (clone $orderQuery)
+            ->selectRaw("DATE_FORMAT(invoice_date, '%Y-%m') as ym, COALESCE(SUM(net_amount), 0) as total")
+            ->groupBy('ym')->orderBy('ym')->pluck('total', 'ym');
+        $cashByMonth = (clone $paymentQuery)
+            ->selectRaw("DATE_FORMAT(payment_date, '%Y-%m') as ym, COALESCE(SUM(payment_details.paid_amount), 0) as total")
+            ->groupBy('ym')->orderBy('ym')->pluck('total', 'ym');
+        $months = collect($revenueByMonth->keys())->merge($cashByMonth->keys())->unique()->sort()->values();
+
+        $monthlySummary = $months->map(function ($ym, $i) use ($revenueByMonth, $cashByMonth, $months) {
+            $revenue = (float) ($revenueByMonth[$ym] ?? 0);
+            $cash = (float) ($cashByMonth[$ym] ?? 0);
+            $prevYm = $i > 0 ? $months[$i - 1] : null;
+            $prevRevenue = $prevYm ? (float) ($revenueByMonth[$prevYm] ?? 0) : null;
+            $growth = ($prevRevenue !== null && $prevRevenue > 0)
+                ? round((($revenue - $prevRevenue) / $prevRevenue) * 100, 1)
+                : null;
+
+            return [
+                'month' => Carbon::createFromFormat('Y-m', $ym)->format('F Y'),
+                'revenue' => $revenue,
+                'cash_collected' => $cash,
+                'outstanding' => max($revenue - $cash, 0),
+                'growth' => $growth,
+            ];
+        })->reverse()->values();
+
         return response()->json([
             'summary' => $summary,
             'funnel' => $funnel,
             'sources' => $sources,
             'owners' => $owners,
+            'monthlySummary' => $monthlySummary,
             'trend' => [
                 'labels' => $days,
                 'revenue' => $days->map(fn ($day) => (float) ($revenueByDay[$day] ?? 0)),
