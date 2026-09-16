@@ -30,6 +30,7 @@ use App\Http\Controllers\LeadController;
 use App\Http\Controllers\LeadIntegrationController;
 use App\Http\Controllers\MasterValueLookupController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SecurityController;
 use App\Http\Controllers\User\InvoiceController;
 use App\Http\Controllers\User\ProfileController;
@@ -56,6 +57,7 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('admin_middle')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard/data', [DashboardController::class, 'data'])->name('dashboard.data');
+    Route::get('/search', [SearchController::class, 'search'])->name('search');
 });
 
 Route::middleware(['admin_middle', 'permission:tasks.view'])->group(function () {

@@ -185,14 +185,125 @@
   .crm-left {
     display: flex;
     align-items: center;
-    gap: 18px;
-    visibility: hidden;
+    gap: 14px;
+    flex: 1;
+    min-width: 0;
   }
 
   .crm-toggle {
+    display: none;
     font-size: 18px;
     color: #4b49ac;
     cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 945px) {
+    .crm-toggle { display: block; }
+  }
+
+  /* Universal search — left side of the top bar, next to the sidebar
+     toggle. A single input rather than a full search page, in keeping
+     with this app's low-click-count design: type, see grouped results,
+     click one. */
+  .crm-search-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 280px;
+    max-width: 100%;
+    background: #ffffff;
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: 10px;
+    padding: 0 12px;
+    height: 36px;
+    transition: width 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  }
+  .crm-search-wrapper:focus-within {
+    width: 340px;
+    border-color: #4b49ac;
+    box-shadow: 0 0 0 3px rgba(75, 73, 172, 0.12);
+  }
+  .crm-search-icon { color: #9ca3af; font-size: 13px; flex-shrink: 0; }
+  .crm-search-input {
+    border: none;
+    outline: none;
+    background: transparent;
+    flex: 1;
+    min-width: 0;
+    margin-left: 8px;
+    font-size: 13px;
+    color: #374151;
+  }
+  .crm-search-input::placeholder { color: #9ca3af; }
+  .crm-search-clear {
+    display: none;
+    border: none;
+    background: transparent;
+    color: #9ca3af;
+    cursor: pointer;
+    font-size: 12px;
+    padding: 4px;
+    flex-shrink: 0;
+  }
+  .crm-search-wrapper.has-value .crm-search-clear { display: block; }
+
+  .crm-search-results {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    width: 380px;
+    max-width: calc(100vw - 32px);
+    max-height: 420px;
+    overflow-y: auto;
+    background: #ffffff;
+    border-radius: 14px;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.16);
+    display: none;
+    z-index: 1200;
+  }
+  .crm-search-results.is-open { display: block; }
+
+  .crm-search-group-label {
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #9ca3af;
+    padding: 10px 14px 4px;
+  }
+  .crm-search-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 14px;
+    text-decoration: none;
+    color: inherit;
+  }
+  .crm-search-item:hover { background: #f5f6fb; }
+  .crm-search-item-icon {
+    width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0;
+    background: #eef0fb; color: #4b49ac;
+    display: flex; align-items: center; justify-content: center; font-size: 13px;
+  }
+  .crm-search-item-title { font-size: 13px; font-weight: 600; color: #1f2937; line-height: 1.3; }
+  .crm-search-item-subtitle { font-size: 11.5px; color: #9ca3af; line-height: 1.3; }
+  .crm-search-empty, .crm-search-hint {
+    padding: 24px 14px;
+    text-align: center;
+    color: #9ca3af;
+    font-size: 12.5px;
+  }
+
+  [data-theme="dark"] .crm-search-wrapper { background: #232637; border-color: #2a2e40; }
+  [data-theme="dark"] .crm-search-input { color: #eef0f6; }
+  [data-theme="dark"] .crm-search-results { background: #1e2233; box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4); }
+  [data-theme="dark"] .crm-search-item:hover { background: rgba(255, 255, 255, 0.06); }
+  [data-theme="dark"] .crm-search-item-title { color: #eef0f6; }
+  [data-theme="dark"] .crm-search-item-icon { background: rgba(147, 164, 253, 0.16); color: #93a4fd; }
+
+  @media (max-width: 768px) {
+    .crm-search-wrapper { display: none; }
   }
 
   .crm-right {
@@ -400,13 +511,6 @@
     .crm-notif-dropdown { right: 10px; top: 60px; width: calc(100vw - 20px); }
   }
 
-  @media (max-width: 945px) {
-    .crm-left {
-      visibility: visible;
-      gap: 12px;
-    }
-  }
-
   @media (max-width: 991px) {
     /* Breadcrumb bar is hidden below this width, so the dropdown only
        needs to clear the 64px navbar, not the breadcrumb too. */
@@ -524,6 +628,12 @@
   <div class="crm-menu-wrapper">
     <div class="crm-left">
       <i class="fa fa-bars crm-toggle" data-toggle="minimize"></i>
+      <div class="crm-search-wrapper" id="globalSearchWrapper">
+        <i class="fa fa-search crm-search-icon"></i>
+        <input type="text" class="crm-search-input" id="globalSearchInput" placeholder="Search leads, deals, companies…" autocomplete="off">
+        <button type="button" class="crm-search-clear" id="globalSearchClear" title="Clear" aria-label="Clear search"><i class="fa fa-times"></i></button>
+        <div class="crm-search-results" id="globalSearchResults"></div>
+      </div>
     </div>
 
     <div class="crm-right">
@@ -764,6 +874,100 @@
           .then(function (r) { setNotifBadge(r.unread || 0); })
           .catch(function () {});
       }, 60000);
+    }
+
+    // --- Universal search ---
+    const searchWrapper = document.getElementById("globalSearchWrapper");
+    const searchInput = document.getElementById("globalSearchInput");
+    const searchClear = document.getElementById("globalSearchClear");
+    const searchResults = document.getElementById("globalSearchResults");
+
+    if (searchWrapper && searchInput) {
+      let searchTimer = null;
+      let searchSeq = 0;
+
+      function closeSearchResults() {
+        searchResults.classList.remove("is-open");
+      }
+
+      function renderSearchResults(items, term) {
+        if (!items.length) {
+          searchResults.innerHTML = '<div class="crm-search-empty">No matches for "' + escapeHtml(term) + '"</div>';
+          searchResults.classList.add("is-open");
+          return;
+        }
+
+        const groups = {};
+        items.forEach(function (item) {
+          (groups[item.type] = groups[item.type] || []).push(item);
+        });
+
+        searchResults.innerHTML = Object.keys(groups).map(function (type) {
+          return '<div class="crm-search-group-label">' + escapeHtml(type) + (groups[type].length > 1 ? 's' : '') + '</div>'
+            + groups[type].map(function (item) {
+              return '<a href="' + item.url + '" class="crm-search-item">'
+                + '<div class="crm-search-item-icon"><i class="fa ' + item.icon + '"></i></div>'
+                + '<div><div class="crm-search-item-title">' + escapeHtml(item.title || '') + '</div>'
+                + (item.subtitle ? '<div class="crm-search-item-subtitle">' + escapeHtml(item.subtitle) + '</div>' : '')
+                + '</div></a>';
+            }).join("");
+        }).join("");
+        searchResults.classList.add("is-open");
+      }
+
+      function runSearch(term) {
+        const seq = ++searchSeq;
+        fetch("{{ route('search') }}?q=" + encodeURIComponent(term))
+          .then(function (r) { return r.json(); })
+          .then(function (r) {
+            if (seq !== searchSeq) return; // a newer keystroke already fired
+            renderSearchResults(r.results || [], term);
+          })
+          .catch(function () {
+            if (seq !== searchSeq) return;
+            searchResults.innerHTML = '<div class="crm-search-empty">Search failed — try again.</div>';
+            searchResults.classList.add("is-open");
+          });
+      }
+
+      searchInput.addEventListener("input", function () {
+        const term = searchInput.value.trim();
+        searchWrapper.classList.toggle("has-value", term.length > 0);
+        clearTimeout(searchTimer);
+
+        if (term.length < 2) {
+          closeSearchResults();
+          return;
+        }
+
+        searchTimer = setTimeout(function () { runSearch(term); }, 300);
+      });
+
+      searchInput.addEventListener("focus", function () {
+        if (searchInput.value.trim().length >= 2 && searchResults.innerHTML) {
+          searchResults.classList.add("is-open");
+        }
+      });
+
+      searchInput.addEventListener("keydown", function (e) {
+        if (e.key === "Escape") {
+          searchInput.value = "";
+          searchWrapper.classList.remove("has-value");
+          closeSearchResults();
+          searchInput.blur();
+        }
+      });
+
+      searchClear.addEventListener("click", function () {
+        searchInput.value = "";
+        searchWrapper.classList.remove("has-value");
+        closeSearchResults();
+        searchInput.focus();
+      });
+
+      searchWrapper.addEventListener("click", function (e) { e.stopPropagation(); });
+
+      document.addEventListener("click", closeSearchResults);
     }
   });
 </script>

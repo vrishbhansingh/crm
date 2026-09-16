@@ -547,6 +547,26 @@
         [data-theme="dark"] .add-user-modal .modal-header,
         [data-theme="dark"] .add-user-modal .modal-footer { background: #171a26; border-color: #2a2e40; }
         [data-theme="dark"] .add-user-modal .form-control { background: #232637; border-color: #343850; color: #eef0f6; }
+
+        /* Bulk-import results — summary tiles + detail table inside the upload modal */
+        .import-summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+        .import-stat { background: #f8fafc; border-radius: 10px; padding: 12px 8px; text-align: center; }
+        .import-stat-value { font-size: 22px; font-weight: 700; color: #1f2937; }
+        .import-stat-label { font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: .03em; margin-top: 2px; }
+        .import-stat.is-success .import-stat-value { color: #16a34a; }
+        .import-stat.is-skipped .import-stat-value { color: #b45309; }
+        .import-stat.is-failed .import-stat-value { color: #dc2626; }
+        .import-result-table th { font-size: 11px; text-transform: uppercase; color: #6b7280; }
+        .import-result-table td { font-size: 12.5px; vertical-align: middle; }
+
+        [data-theme="dark"] .import-stat { background: #232637; }
+        [data-theme="dark"] .import-stat-value { color: #eef0f6; }
+        [data-theme="dark"] .import-stat-label { color: #9aa1b5; }
+        [data-theme="dark"] .import-stat.is-success .import-stat-value { color: #4ade80; }
+        [data-theme="dark"] .import-stat.is-skipped .import-stat-value { color: #fbbf24; }
+        [data-theme="dark"] .import-stat.is-failed .import-stat-value { color: #fca5a5; }
+        [data-theme="dark"] .import-result-table th { color: #9aa1b5; border-color: #2a2e40; }
+        [data-theme="dark"] .import-result-table td { color: #eef0f6; border-color: #2a2e40; }
     </style>
 </head>
 
@@ -804,28 +824,85 @@
 
                 <!-- Modal Body -->
                 <div class="modal-body">
-                    <form id="uploadLeadsForm" enctype="multipart/form-data">
-                        @csrf
+                    <div id="uploadStep">
+                        <form id="uploadLeadsForm" enctype="multipart/form-data">
+                            @csrf
 
-                        <div class="form-group">
-                            <label>Select Excel File (.xlsx)</label>
-                            <input type="file" name="file" id="excelFile" class="form-control" accept=".xlsx,.xls">
+                            <div class="form-group">
+                                <label>Select Excel File (.xlsx)</label>
+                                <input type="file" name="file" id="excelFile" class="form-control" accept=".xlsx,.xls">
+                            </div>
+
+                            <small class="text-muted">
+                                File must contain headers like:
+                                <br>
+                                <b>lead_type, name, phone, email, city, product, budget</b>
+                                <br>
+                                Name, Email, and Phone are required for every row. A row whose email or phone
+                                already exists — in the system, or earlier in the same file — is skipped, not
+                                imported twice.
+                            </small>
+                        </form>
+
+                        <div id="uploadProgressWrap" style="display:none;" class="mt-3">
+                            <div class="progress" style="height:8px;">
+                                <div class="progress-bar bg-success" id="uploadProgressBar" role="progressbar" style="width:0%"></div>
+                            </div>
+                            <small class="text-muted" id="uploadProgressText">Uploading… 0%</small>
+                        </div>
+                    </div>
+
+                    <div id="importResults" style="display:none;">
+                        <h6 class="mb-3"><i class="fa fa-check-circle text-success"></i> Lead Import Completed</h6>
+
+                        <div class="import-summary-grid mb-3">
+                            <div class="import-stat">
+                                <div class="import-stat-value" id="resTotal">0</div>
+                                <div class="import-stat-label">Total rows</div>
+                            </div>
+                            <div class="import-stat is-success">
+                                <div class="import-stat-value" id="resSuccess">0</div>
+                                <div class="import-stat-label">Uploaded</div>
+                            </div>
+                            <div class="import-stat is-skipped">
+                                <div class="import-stat-value" id="resSkipped">0</div>
+                                <div class="import-stat-label">Skipped</div>
+                            </div>
+                            <div class="import-stat is-failed">
+                                <div class="import-stat-value" id="resFailed">0</div>
+                                <div class="import-stat-label">Failed</div>
+                            </div>
                         </div>
 
-                        <small class="text-muted">
-                            File must contain headers like:
-                            <br>
-                            <b>lead_type, name, phone, email, city, product, budget</b>
-                        </small>
-                    </form>
+                        <div id="importReportDownloadWrap" style="display:none;" class="mb-3">
+                            <a href="#" id="importReportDownloadLink" class="btn btn-outline-primary btn-sm">
+                                <i class="fa fa-download"></i> Download Import Report
+                            </a>
+                        </div>
+
+                        <div id="importRowsWrap" style="display:none;">
+                            <div class="table-responsive" style="max-height:280px;overflow-y:auto;">
+                                <table class="table table-sm import-result-table">
+                                    <thead>
+                                        <tr><th>Row</th><th>Name</th><th>Email</th><th>Phone</th><th>Status</th><th>Reason</th></tr>
+                                    </thead>
+                                    <tbody id="importRowsBody"></tbody>
+                                </table>
+                            </div>
+                            <small class="text-muted" id="importRowsTruncatedNote" style="display:none;">
+                                Showing the first 200 problem rows — download the full report above for the rest.
+                            </small>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Modal Footer -->
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-success btn-sm" onclick="uploadLeads()">
+                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal" id="uploadCancelBtn">Cancel</button>
+                    <button type="button" class="btn btn-success btn-sm" id="uploadSubmitBtn" onclick="uploadLeads()">
                         <i class="fa fa-upload"></i> Upload
                     </button>
+                    <button type="button" class="btn btn-primary btn-sm" data-dismiss="modal" id="uploadDoneBtn" style="display:none;">Done</button>
                 </div>
 
             </div>
@@ -1390,6 +1467,62 @@
 
         })
 
+        function resetUploadModal() {
+            $('#uploadStep').show();
+            $('#importResults').hide();
+            $('#uploadProgressWrap').hide();
+            $('#uploadProgressBar').css('width', '0%');
+            $('#uploadProgressText').text('Uploading… 0%');
+            $('#excelFile').val('');
+            $('#uploadSubmitBtn').show().prop('disabled', false);
+            $('#uploadCancelBtn').show();
+            $('#uploadDoneBtn').hide();
+            $('#importReportDownloadWrap').hide();
+            $('#importRowsWrap').hide();
+            $('#importRowsTruncatedNote').hide();
+        }
+        $('#uploadLeadsModal').on('show.bs.modal', resetUploadModal);
+
+        function importStatusBadge(status) {
+            const cls = status === 'Failed' ? 'badge-danger' : 'badge-warning';
+            return `<span class="badge ${cls}">${esc(status)}</span>`;
+        }
+
+        function renderImportResults(response) {
+            const s = response.summary;
+            $('#resTotal').text(s.total);
+            $('#resSuccess').text(s.success);
+            $('#resSkipped').text(s.skipped);
+            $('#resFailed').text(s.failed);
+
+            if (response.report_url) {
+                $('#importReportDownloadLink').attr('href', response.report_url);
+                $('#importReportDownloadWrap').show();
+            }
+
+            if (response.rows && response.rows.length) {
+                $('#importRowsBody').html(response.rows.map(r => `
+                    <tr>
+                        <td>${r.row}</td>
+                        <td>${esc(r.name ?? '—')}</td>
+                        <td>${esc(r.email ?? '—')}</td>
+                        <td>${esc(r.phone ?? '—')}</td>
+                        <td>${importStatusBadge(r.status)}</td>
+                        <td>${esc(r.reason ?? '')}</td>
+                    </tr>`).join(''));
+                $('#importRowsWrap').show();
+                if (response.rows_truncated) $('#importRowsTruncatedNote').show();
+            }
+
+            $('#uploadStep').hide();
+            $('#importResults').show();
+            $('#uploadSubmitBtn').hide();
+            $('#uploadCancelBtn').hide();
+            $('#uploadDoneBtn').show();
+
+            toastr.success(response.message);
+        }
+
         function uploadLeads() {
 
             let input = $('#excelFile')[0];
@@ -1401,14 +1534,12 @@
 
             let file = input.files[0];
 
-            console.log("File Object:", file);
-            console.log("File Name:", file.name);
-            console.log("File Type:", file.type);
-            console.log("File Size:", file.size);
-
             let formData = new FormData();
-            formData.append('file', file); // ✅ send actual file
+            formData.append('file', file);
             formData.append('_token', '{{ csrf_token() }}');
+
+            $('#uploadSubmitBtn').prop('disabled', true);
+            $('#uploadProgressWrap').show();
 
             $.ajax({
                 url: "{{ route('leads.import') }}",
@@ -1416,21 +1547,39 @@
                 data: formData,
                 processData: false,
                 contentType: false,
+                // Genuine upload-progress feedback for large files — jQuery
+                // doesn't expose this itself, so the underlying XHR's own
+                // upload.progress event is wired up by hand here.
+                xhr: function() {
+                    const xhr = $.ajaxSettings.xhr();
+                    if (xhr.upload) {
+                        xhr.upload.addEventListener('progress', function(e) {
+                            if (e.lengthComputable) {
+                                const pct = Math.round((e.loaded / e.total) * 100);
+                                $('#uploadProgressBar').css('width', pct + '%');
+                                $('#uploadProgressText').text(pct < 100 ? ('Uploading… ' + pct + '%') : 'Processing rows…');
+                            }
+                        });
+                    }
+                    return xhr;
+                },
 
                 success: function(response) {
-                    console.log(response);
-
-                    if (response.status) {
-                        toastr.success(response.message);
-                        $('#excelFile').val(''); // reset file
-                        $('#uploadLeadsModal').modal('hide');
-                        location.reload();
+                    if (!response.status) {
+                        toastr.error(response.message || 'Upload failed.');
+                        $('#uploadSubmitBtn').prop('disabled', false);
+                        $('#uploadProgressWrap').hide();
+                        return;
                     }
+
+                    renderImportResults(response);
+                    loadLeadList();
                 },
 
                 error: function(xhr) {
-                    console.log(xhr.responseText);
                     toastr.error(xhr.responseJSON?.message || 'Upload failed.');
+                    $('#uploadSubmitBtn').prop('disabled', false);
+                    $('#uploadProgressWrap').hide();
                 }
             });
         }
