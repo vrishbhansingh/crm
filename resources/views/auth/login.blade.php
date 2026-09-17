@@ -48,64 +48,166 @@
       grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
     }
 
-    /* ===== LEFT: brand / visual panel ===== */
+    /* ===== LEFT: brand / visual panel — rotating photo slideshow ===== */
     .auth-visual {
       position: relative;
       overflow: hidden;
+    }
+
+    .auth-slide {
+      position: absolute;
+      inset: 0;
       display: flex;
       flex-direction: column;
       justify-content: center;
       padding: 56px 64px;
-      color: #fff;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.9s ease;
     }
-    .auth-visual-bg {
+    .auth-slide.is-active { opacity: 1; visibility: visible; }
+
+    .auth-slide-bg {
       position: absolute;
       inset: 0;
       width: 100%;
       height: 100%;
       object-fit: cover;
     }
-    .auth-visual-overlay {
+    /* Soft light scrim behind the copy only (upper-left) — keeps the photo
+       bright like the reference mockups instead of the old dark overlay,
+       while still guaranteeing the headline stays legible over any photo. */
+    .auth-slide-scrim {
       position: absolute;
       inset: 0;
-      background: linear-gradient(160deg, rgba(15, 23, 42, 0.88), rgba(37, 64, 175, 0.72));
+      background: linear-gradient(115deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0.16) 34%, rgba(255, 255, 255, 0) 56%);
     }
-    html[data-theme="dark"] .auth-visual-overlay {
-      background: linear-gradient(160deg, rgba(10, 12, 20, 0.92), rgba(30, 33, 74, 0.82));
+    html[data-theme="dark"] .auth-slide-scrim {
+      background: linear-gradient(115deg, rgba(10, 12, 20, 0.72) 0%, rgba(10, 12, 20, 0.34) 34%, rgba(10, 12, 20, 0) 56%);
     }
-    .auth-visual-content { position: relative; z-index: 1; max-width: 460px; }
+
+    .auth-slide-content { position: relative; z-index: 1; max-width: 400px; }
 
     .auth-visual-logo {
       display: inline-flex;
       align-items: center;
       gap: 10px;
-      margin-bottom: 40px;
-    }
-    .auth-visual-logo img { height: 30px; width: auto; }
-    .auth-visual-logo span { font-size: 20px; font-weight: 800; letter-spacing: 0.02em; }
-
-    .auth-visual-content h2 {
-      font-size: 32px;
-      font-weight: 800;
-      line-height: 1.28;
-      margin-bottom: 14px;
-    }
-    .auth-visual-content > p {
-      font-size: 15px;
-      color: rgba(255, 255, 255, 0.82);
-      line-height: 1.6;
       margin-bottom: 32px;
     }
+    .auth-visual-logo img { height: 28px; width: auto; }
+    .auth-visual-logo span { font-size: 19px; font-weight: 800; letter-spacing: 0.02em; color: #0f172a; }
+    html[data-theme="dark"] .auth-visual-logo span { color: #eef0f6; }
 
-    .auth-visual-points { list-style: none; display: flex; flex-direction: column; gap: 14px; }
-    .auth-visual-points li {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-size: 14px;
-      color: rgba(255, 255, 255, 0.92);
+    .auth-slide-eyebrow {
+      display: block;
+      font-size: 11.5px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #475569;
+      margin-bottom: 14px;
     }
-    .auth-visual-points i { color: #4ade80; font-size: 15px; }
+    html[data-theme="dark"] .auth-slide-eyebrow { color: #cbd5e1; }
+
+    .auth-slide-content h2 {
+      font-size: 32px;
+      font-weight: 800;
+      line-height: 1.25;
+      color: #0f172a;
+      margin-bottom: 12px;
+    }
+    .auth-slide-content > p {
+      font-size: 14.5px;
+      color: #334155;
+      line-height: 1.6;
+      max-width: 320px;
+    }
+    html[data-theme="dark"] .auth-slide-content h2,
+    html[data-theme="dark"] .auth-slide-content > p { color: #f1f5f9; }
+
+    /* Floating KPI / stat cards, stacked vertically over the photo */
+    .auth-card-stack {
+      position: absolute;
+      z-index: 1;
+      top: 12%;
+      right: 6%;
+      width: 240px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .auth-slide-card {
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(6px);
+      border-radius: 14px;
+      box-shadow: 0 14px 34px rgba(15, 23, 42, 0.16);
+      padding: 14px 16px;
+    }
+    html[data-theme="dark"] .auth-slide-card { background: rgba(26, 29, 43, 0.92); }
+
+    .auth-card-kpi-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+    .auth-card-kpi-label { display: block; font-size: 13px; font-weight: 700; color: #0f172a; }
+    .auth-card-kpi-top small { display: block; font-size: 10.5px; color: #94a3b8; margin-top: 1px; }
+    html[data-theme="dark"] .auth-card-kpi-label { color: #eef0f6; }
+    .auth-card-badge { font-size: 10.5px; font-weight: 700; padding: 2px 7px; border-radius: 999px; white-space: nowrap; }
+    .auth-card-kpi-value { font-size: 21px; font-weight: 800; color: #0f172a; margin-bottom: 8px; }
+    html[data-theme="dark"] .auth-card-kpi-value { color: #eef0f6; }
+    .auth-sparkline { width: 100%; height: 30px; display: block; }
+    .auth-sparkline polyline { fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .auth-sparkline path { stroke: none; }
+
+    /* Lead-sources donut card */
+    .auth-card-donut-head { font-size: 12.5px; font-weight: 700; color: #0f172a; margin-bottom: 12px; }
+    html[data-theme="dark"] .auth-card-donut-head { color: #eef0f6; }
+    .auth-card-donut { display: flex; align-items: center; gap: 14px; }
+    .auth-donut-ring { position: relative; width: 72px; height: 72px; border-radius: 50%; flex-shrink: 0; }
+    .auth-donut-ring::before {
+      content: ""; position: absolute; inset: 12px; border-radius: 50%; background: #ffffff;
+    }
+    html[data-theme="dark"] .auth-donut-ring::before { background: #1a1d2b; }
+    .auth-donut-center {
+      position: absolute; inset: 12px; z-index: 1;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .auth-donut-center strong { font-size: 13px; font-weight: 800; color: #0f172a; line-height: 1.1; }
+    html[data-theme="dark"] .auth-donut-center strong { color: #eef0f6; }
+    .auth-donut-center span { font-size: 7.5px; color: #94a3b8; text-align: center; }
+    .auth-donut-legend { flex: 1; display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+    .auth-donut-legend-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; font-size: 10px; color: #475569; }
+    html[data-theme="dark"] .auth-donut-legend-row { color: #cbd5e1; }
+    .auth-donut-legend-row .dot-label { display: flex; align-items: center; gap: 6px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .auth-donut-legend-row i { width: 7px; height: 7px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+    .auth-donut-legend-row b { font-weight: 700; color: #0f172a; flex-shrink: 0; }
+    html[data-theme="dark"] .auth-donut-legend-row b { color: #eef0f6; }
+
+    .auth-card-tiles { display: flex; gap: 10px; }
+    .auth-tile { flex: 1; text-align: left; }
+    .auth-tile-icon {
+      width: 26px; height: 26px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+      font-size: 11px; margin-bottom: 8px;
+    }
+    .auth-tile-value { font-size: 15px; font-weight: 800; color: #0f172a; }
+    html[data-theme="dark"] .auth-tile-value { color: #eef0f6; }
+    .auth-tile-label { font-size: 10px; color: #94a3b8; margin-top: 2px; }
+    .auth-tile-trend { font-size: 10px; font-weight: 700; margin-top: 3px; }
+
+    /* Persistent feature row — identical on every slide, so it lives once
+       above the crossfading backgrounds rather than being duplicated per slide. */
+    .auth-visual-features {
+      position: absolute;
+      z-index: 2;
+      left: 64px;
+      bottom: 32px;
+      display: flex;
+      gap: 32px;
+    }
+    .auth-feature { display: flex; flex-direction: column; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: #1e293b; }
+    html[data-theme="dark"] .auth-feature { color: #f1f5f9; }
+    .auth-feature-icon {
+      width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      background: rgba(255, 255, 255, 0.85); color: #2563eb; font-size: 15px; box-shadow: 0 6px 16px rgba(15, 23, 42, 0.12);
+    }
+    html[data-theme="dark"] .auth-feature-icon { background: rgba(30, 33, 45, 0.85); }
 
     /* ===== RIGHT: form panel ===== */
     .auth-form-panel {
@@ -117,25 +219,6 @@
       justify-content: center;
       padding: 40px 28px;
     }
-
-    .auth-theme-toggle {
-      position: absolute;
-      top: 24px;
-      right: 28px;
-      width: 38px;
-      height: 38px;
-      border-radius: 50%;
-      border: 1px solid var(--border);
-      background: transparent;
-      color: var(--muted);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      font-size: 15px;
-      transition: background 0.15s ease, color 0.15s ease;
-    }
-    .auth-theme-toggle:hover { background: rgba(99, 102, 241, 0.1); color: var(--primary); }
 
     .auth-form-wrap {
       width: 100%;
@@ -149,13 +232,13 @@
     }
 
     .auth-form-logo {
-      display: none;
+      display: flex;
       align-items: center;
       gap: 8px;
-      margin-bottom: 28px;
+      margin-bottom: 6px;
     }
     .auth-form-logo img { height: 26px; }
-    .auth-form-logo span { font-size: 17px; font-weight: 800; color: var(--text); }
+    .auth-form-tagline { font-size: 12px; color: var(--muted); margin-bottom: 24px; }
 
     .auth-title {
       font-size: 26px;
@@ -237,6 +320,18 @@
     .password-wrapper { position: relative; }
     .password-wrapper .form-control { padding-right: 42px; }
 
+    .form-input-icon { position: relative; }
+    .form-input-icon .form-control { padding-left: 42px; }
+    .form-input-icon .field-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      font-size: 14px;
+      pointer-events: none;
+    }
+
     .eye-btn {
       position: absolute;
       right: 12px;
@@ -257,7 +352,6 @@
     @media (max-width: 900px) {
       .auth-shell { grid-template-columns: 1fr; }
       .auth-visual { display: none; }
-      .auth-form-logo { display: flex; }
     }
   </style>
 </head>
@@ -267,47 +361,234 @@
   <div class="auth-shell">
 
     <div class="auth-visual">
-      <img class="auth-visual-bg" src="{{ asset('images/login_bg.avif') }}" alt="">
-      <div class="auth-visual-overlay"></div>
-      <div class="auth-visual-content">
-        <div class="auth-visual-logo">
-          <img src="{{ asset('images/logo.svg') }}" alt="Logo" onerror="this.style.display='none'">
-          <span>CRMS</span>
+
+      <div class="auth-slide is-active">
+        <img class="auth-slide-bg" src="{{ asset('images/login_bg.avif') }}" alt="">
+        <div class="auth-slide-scrim"></div>
+        <div class="auth-slide-content">
+          <div class="auth-visual-logo">
+            <img src="{{ asset('images/favicon.svg') }}" alt="" onerror="this.style.display='none'">
+            <span>CRMS</span>
+          </div>
+          <span class="auth-slide-eyebrow">Customer relationships<br>for a brighter tomorrow</span>
+          <h2>Your CRM,<br>Smarter and Simpler</h2>
+          <p>Manage leads, track performance, and grow your business — all in one powerful yet intuitive platform.</p>
         </div>
-        <h2>Run your whole sales pipeline from one place.</h2>
-        <p>Leads, deals, orders and your team — organized, tracked and always up to date.</p>
-        <ul class="auth-visual-points">
-          <li><i class="fa fa-circle-check"></i> A private, secure workspace for your company</li>
-          <li><i class="fa fa-circle-check"></i> Pipelines, tasks and follow-up reminders built in</li>
-          <li><i class="fa fa-circle-check"></i> Dashboards that stay up to date in real time</li>
-        </ul>
+
+        <div class="auth-card-stack">
+          <div class="auth-slide-card auth-card-kpi">
+            <div class="auth-card-kpi-top">
+              <div><span class="auth-card-kpi-label">Sales</span><small>This Month</small></div>
+              <span class="auth-card-badge" style="background:#dcfce7;color:#16a34a;">&uarr; 12%</span>
+            </div>
+            <div class="auth-card-kpi-value">$6,324</div>
+            <svg class="auth-sparkline" viewBox="0 0 100 30" preserveAspectRatio="none">
+              <path d="M0,24 L15,20 L30,22 L45,14 L60,16 L75,6 L100,4 L100,30 L0,30 Z" style="fill:#16a34a;opacity:.12;"></path>
+              <polyline points="0,24 15,20 30,22 45,14 60,16 75,6 100,4" style="stroke:#16a34a;"></polyline>
+            </svg>
+          </div>
+
+          <div class="auth-slide-card auth-card-donut">
+            <div>
+              <div class="auth-card-donut-head">Lead Sources</div>
+              <div class="auth-donut-ring" style="background: conic-gradient(#14b8a6 0% 38%, #3b82f6 38% 62%, #8b5cf6 62% 82%, #ec4899 82% 94%, #e2e8f0 94% 100%);">
+                <div class="auth-donut-center"><strong>1,428</strong><span>Total Leads</span></div>
+              </div>
+            </div>
+            <div class="auth-donut-legend">
+              <div class="auth-donut-legend-row"><span class="dot-label"><i style="background:#14b8a6"></i>Website</span><b>38%</b></div>
+              <div class="auth-donut-legend-row"><span class="dot-label"><i style="background:#3b82f6"></i>Referral</span><b>24%</b></div>
+              <div class="auth-donut-legend-row"><span class="dot-label"><i style="background:#8b5cf6"></i>Social Media</span><b>20%</b></div>
+              <div class="auth-donut-legend-row"><span class="dot-label"><i style="background:#ec4899"></i>Campaign</span><b>12%</b></div>
+              <div class="auth-donut-legend-row"><span class="dot-label"><i style="background:#e2e8f0"></i>Other</span><b>6%</b></div>
+            </div>
+          </div>
+
+          <div class="auth-slide-card auth-card-tiles">
+            <div class="auth-tile">
+              <div class="auth-tile-icon" style="background:#dcfce7;color:#16a34a;"><i class="fa fa-users"></i></div>
+              <div class="auth-tile-value">1,428</div>
+              <div class="auth-tile-label">Active Leads</div>
+              <div class="auth-tile-trend" style="color:#16a34a;">&uarr; 8%</div>
+            </div>
+            <div class="auth-tile">
+              <div class="auth-tile-icon" style="background:#dcfce7;color:#16a34a;"><i class="fa fa-bullseye"></i></div>
+              <div class="auth-tile-value">24.5%</div>
+              <div class="auth-tile-label">Conversion Rate</div>
+              <div class="auth-tile-trend" style="color:#16a34a;">&uarr; 3%</div>
+            </div>
+            <div class="auth-tile">
+              <div class="auth-tile-icon" style="background:#dcfce7;color:#16a34a;"><i class="fa fa-chart-line"></i></div>
+              <div class="auth-tile-value">$12,430</div>
+              <div class="auth-tile-label">Total Revenue</div>
+              <div class="auth-tile-trend" style="color:#16a34a;">&uarr; 11%</div>
+            </div>
+          </div>
+        </div>
       </div>
+
+      <div class="auth-slide">
+        <img class="auth-slide-bg" src="{{ asset('images/login_bg.avif') }}" alt="">
+        <div class="auth-slide-scrim"></div>
+        <div class="auth-slide-content">
+          <div class="auth-visual-logo">
+            <img src="{{ asset('images/favicon.svg') }}" alt="" onerror="this.style.display='none'">
+            <span>CRMS</span>
+          </div>
+          <span class="auth-slide-eyebrow">Turn conversations<br>into opportunities</span>
+          <h2>Your CRM,<br>Smarter and Simpler</h2>
+          <p>Manage leads, track performance, and grow your business — all in one powerful yet intuitive platform.</p>
+        </div>
+
+        <div class="auth-card-stack">
+          <div class="auth-slide-card auth-card-kpi">
+            <div class="auth-card-kpi-top">
+              <div><span class="auth-card-kpi-label">Total Leads</span><small>This Month</small></div>
+              <span class="auth-card-badge" style="background:#ede9fe;color:#7c3aed;">&uarr; 18%</span>
+            </div>
+            <div class="auth-card-kpi-value">2,428</div>
+            <svg class="auth-sparkline" viewBox="0 0 100 30" preserveAspectRatio="none">
+              <path d="M0,26 L15,22 L30,24 L45,12 L60,18 L75,8 L100,6 L100,30 L0,30 Z" style="fill:#7c3aed;opacity:.12;"></path>
+              <polyline points="0,26 15,22 30,24 45,12 60,18 75,8 100,6" style="stroke:#7c3aed;"></polyline>
+            </svg>
+          </div>
+
+          <div class="auth-slide-card auth-card-donut">
+            <div>
+              <div class="auth-card-donut-head">Lead Sources</div>
+              <div class="auth-donut-ring" style="background: conic-gradient(#14b8a6 0% 38%, #3b82f6 38% 62%, #8b5cf6 62% 82%, #ec4899 82% 94%, #e2e8f0 94% 100%);">
+                <div class="auth-donut-center"><strong>1,760</strong><span>Total Leads</span></div>
+              </div>
+            </div>
+            <div class="auth-donut-legend">
+              <div class="auth-donut-legend-row"><span class="dot-label"><i style="background:#14b8a6"></i>Website</span><b>38%</b></div>
+              <div class="auth-donut-legend-row"><span class="dot-label"><i style="background:#3b82f6"></i>Referral</span><b>24%</b></div>
+              <div class="auth-donut-legend-row"><span class="dot-label"><i style="background:#8b5cf6"></i>Social Media</span><b>20%</b></div>
+              <div class="auth-donut-legend-row"><span class="dot-label"><i style="background:#ec4899"></i>Campaign</span><b>12%</b></div>
+              <div class="auth-donut-legend-row"><span class="dot-label"><i style="background:#e2e8f0"></i>Other</span><b>6%</b></div>
+            </div>
+          </div>
+
+          <div class="auth-slide-card auth-card-tiles">
+            <div class="auth-tile">
+              <div class="auth-tile-icon" style="background:#ede9fe;color:#7c3aed;"><i class="fa fa-users"></i></div>
+              <div class="auth-tile-value">1,428</div>
+              <div class="auth-tile-label">Active Leads</div>
+              <div class="auth-tile-trend" style="color:#7c3aed;">&uarr; 8%</div>
+            </div>
+            <div class="auth-tile">
+              <div class="auth-tile-icon" style="background:#ede9fe;color:#7c3aed;"><i class="fa fa-bullseye"></i></div>
+              <div class="auth-tile-value">24.5%</div>
+              <div class="auth-tile-label">Conversion Rate</div>
+              <div class="auth-tile-trend" style="color:#7c3aed;">&uarr; 3%</div>
+            </div>
+            <div class="auth-tile">
+              <div class="auth-tile-icon" style="background:#ede9fe;color:#7c3aed;"><i class="fa fa-chart-line"></i></div>
+              <div class="auth-tile-value">$12,430</div>
+              <div class="auth-tile-label">Total Revenue</div>
+              <div class="auth-tile-trend" style="color:#7c3aed;">&uarr; 11%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="auth-slide">
+        <img class="auth-slide-bg" src="{{ asset('images/login_bg.avif') }}" alt="">
+        <div class="auth-slide-scrim"></div>
+        <div class="auth-slide-content">
+          <div class="auth-visual-logo">
+            <img src="{{ asset('images/favicon.svg') }}" alt="" onerror="this.style.display='none'">
+            <span>CRMS</span>
+          </div>
+          <span class="auth-slide-eyebrow">Build lasting relationships<br>drive real growth</span>
+          <h2>Your CRM,<br>Smarter and Simpler</h2>
+          <p>Manage leads, track performance, and grow your business — all in one powerful yet intuitive platform.</p>
+        </div>
+
+        <div class="auth-card-stack">
+          <div class="auth-slide-card auth-card-kpi">
+            <div class="auth-card-kpi-top">
+              <div><span class="auth-card-kpi-label">Revenue</span><small>This Month</small></div>
+              <span class="auth-card-badge" style="background:#dbeafe;color:#2563eb;">&uarr; 15%</span>
+            </div>
+            <div class="auth-card-kpi-value">$24,580</div>
+            <svg class="auth-sparkline" viewBox="0 0 100 30" preserveAspectRatio="none">
+              <path d="M0,25 L15,21 L30,23 L45,15 L60,17 L75,7 L100,5 L100,30 L0,30 Z" style="fill:#2563eb;opacity:.12;"></path>
+              <polyline points="0,25 15,21 30,23 45,15 60,17 75,7 100,5" style="stroke:#2563eb;"></polyline>
+            </svg>
+          </div>
+
+          <div class="auth-slide-card auth-card-donut">
+            <div>
+              <div class="auth-card-donut-head">Lead Sources</div>
+              <div class="auth-donut-ring" style="background: conic-gradient(#14b8a6 0% 38%, #3b82f6 38% 62%, #8b5cf6 62% 82%, #ec4899 82% 94%, #e2e8f0 94% 100%);">
+                <div class="auth-donut-center"><strong>2,050</strong><span>Total Leads</span></div>
+              </div>
+            </div>
+            <div class="auth-donut-legend">
+              <div class="auth-donut-legend-row"><span class="dot-label"><i style="background:#14b8a6"></i>Website</span><b>38%</b></div>
+              <div class="auth-donut-legend-row"><span class="dot-label"><i style="background:#3b82f6"></i>Referral</span><b>24%</b></div>
+              <div class="auth-donut-legend-row"><span class="dot-label"><i style="background:#8b5cf6"></i>Social Media</span><b>20%</b></div>
+              <div class="auth-donut-legend-row"><span class="dot-label"><i style="background:#ec4899"></i>Campaign</span><b>12%</b></div>
+              <div class="auth-donut-legend-row"><span class="dot-label"><i style="background:#e2e8f0"></i>Other</span><b>6%</b></div>
+            </div>
+          </div>
+
+          <div class="auth-slide-card auth-card-tiles">
+            <div class="auth-tile">
+              <div class="auth-tile-icon" style="background:#dbeafe;color:#2563eb;"><i class="fa fa-file-lines"></i></div>
+              <div class="auth-tile-value">892</div>
+              <div class="auth-tile-label">New Leads</div>
+              <div class="auth-tile-trend" style="color:#2563eb;">&uarr; 12%</div>
+            </div>
+            <div class="auth-tile">
+              <div class="auth-tile-icon" style="background:#dbeafe;color:#2563eb;"><i class="fa fa-users"></i></div>
+              <div class="auth-tile-value">650</div>
+              <div class="auth-tile-label">Active Clients</div>
+              <div class="auth-tile-trend" style="color:#2563eb;">&uarr; 8%</div>
+            </div>
+            <div class="auth-tile">
+              <div class="auth-tile-icon" style="background:#dbeafe;color:#2563eb;"><i class="fa fa-trophy"></i></div>
+              <div class="auth-tile-value">320</div>
+              <div class="auth-tile-label">Deals Won</div>
+              <div class="auth-tile-trend" style="color:#2563eb;">&uarr; 20%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="auth-visual-features">
+        <div class="auth-feature"><span class="auth-feature-icon"><i class="fa fa-user-group"></i></span>More Leads</div>
+        <div class="auth-feature"><span class="auth-feature-icon"><i class="fa fa-chart-line"></i></span>Better Insights</div>
+        <div class="auth-feature"><span class="auth-feature-icon"><i class="fa fa-rocket"></i></span>Greater Growth</div>
+      </div>
+
     </div>
 
     <div class="auth-form-panel">
-      <button type="button" class="auth-theme-toggle" id="authThemeToggleBtn" title="Toggle dark / light mode" aria-label="Toggle dark / light mode">
-        <i class="fa fa-moon" id="authThemeToggleIcon"></i>
-      </button>
-
       <div class="auth-form-wrap">
 
         <div class="auth-form-logo">
-          <img src="{{ asset('images/logo.svg') }}" alt="Logo" onerror="this.style.display='none'">
-          <span>CRMS</span>
+          <img src="{{ asset('images/logo.svg') }}" alt="CRMS" onerror="this.style.display='none'">
         </div>
+        <p class="auth-form-tagline">Smarter and Simpler CRM</p>
 
-        <h1 class="auth-title">Welcome back</h1>
-        <p class="auth-subtitle">Sign in to access your CRM dashboard</p>
+        <h1 class="auth-title">Welcome Back</h1>
+        <p class="auth-subtitle">Sign in to continue to your CRM account.</p>
 
         <form id="loginSubmit" method="POST" action="{{ $submitRoute }}">
           @csrf
           <div class="form-group">
-            <label class="form-label">Email</label>
-            <input type="email" name="email" class="form-control" placeholder="Enter your email" required autofocus>
+            <label class="form-label">Email Address</label>
+            <div class="form-input-icon">
+              <i class="fa fa-envelope field-icon"></i>
+              <input type="email" name="email" class="form-control" placeholder="you@company.com" required autofocus>
+            </div>
           </div>
           <div class="form-group">
             <label class="form-label">Password</label>
-            <div class="password-wrapper">
+            <div class="password-wrapper form-input-icon">
+              <i class="fa fa-lock field-icon"></i>
               <input
                 type="password"
                 name="password"
@@ -326,7 +607,8 @@
 
           <button type="submit" class="login-btn">
             <i id="fa_spinner" class="fa fa-spinner fa-spin" style="display:none;"></i>
-            <span id="btn-text">Sign in</span>
+            <span id="btn-text">Sign In</span>
+            <i class="fa fa-arrow-right"></i>
           </button>
         </form>
 
@@ -416,27 +698,19 @@
     });
 
     (function() {
-      const btn = document.getElementById('authThemeToggleBtn');
-      const icon = document.getElementById('authThemeToggleIcon');
+      const slides = document.querySelectorAll('.auth-slide');
+      if (!slides.length) return;
 
-      function sync() {
-        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-        icon.className = isDark ? 'fa fa-sun' : 'fa fa-moon';
+      let index = 0;
+
+      function show(i) {
+        index = (i + slides.length) % slides.length;
+        slides.forEach((s, n) => s.classList.toggle('is-active', n === index));
       }
-      sync();
 
-      btn.addEventListener('click', function() {
-        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-        if (isDark) {
-          document.documentElement.removeAttribute('data-theme');
-          localStorage.setItem('crm-theme', 'light');
-        } else {
-          document.documentElement.setAttribute('data-theme', 'dark');
-          localStorage.setItem('crm-theme', 'dark');
-        }
-        sync();
-      });
+      setInterval(() => show(index + 1), 5000);
     })();
+
   </script>
 
 </body>
