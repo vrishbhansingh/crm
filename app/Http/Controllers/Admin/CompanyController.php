@@ -39,6 +39,7 @@ class CompanyController extends Controller
             'bank_name' => 'nullable|string|max:255',
             'account_name' => 'nullable|string|max:255',
             'ifsc_code' => 'nullable|string|max:30',
+            'default_quotation_terms' => 'nullable|string|max:5000',
             'status' => 'required|in:Active,Inactive',
             'company_logo' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
@@ -63,6 +64,7 @@ class CompanyController extends Controller
         $company->bank_name = $request->bank_name;
         $company->account_name = $request->account_name;
         $company->ifsc_code = $request->ifsc_code;
+        $company->default_quotation_terms = $request->default_quotation_terms;
         $company->status = $request->status;
 
         // 🔹 Handle logo upload (OPTIONAL)

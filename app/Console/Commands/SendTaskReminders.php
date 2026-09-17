@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\Task;
 use App\Models\Tenant;
 use App\Notifications\TaskDueReminder;
+use App\Services\MailConfigurator;
 use App\Support\TenantContext;
 use App\Tenancy\TenantConnectionManager;
 use App\Support\PermissionTeam;
@@ -14,7 +15,7 @@ class SendTaskReminders extends Command
 {
     protected $signature = 'crm:send-task-reminders';
 
-    protected $description = 'Send due in-app reminders for assigned CRM tasks';
+    protected $description = 'Send due in-app and email reminders for assigned CRM tasks';
 
     public function handle(TenantConnectionManager $connections): int
     {
@@ -64,6 +65,11 @@ class SendTaskReminders extends Command
                         continue;
                     }
 
+                    // The mail channel needs the assignee's own tenant's SMTP
+                    // config active — set per task rather than once per
+                    // outer tenant loop, since "shared" tenancy mode has no
+                    // such loop and calls this without one.
+                    app(MailConfigurator::class)->configureFor($task->assignee->tenant);
                     $task->assignee->notify(new TaskDueReminder($task));
                     $task->forceFill(['notification_sent_at' => now()])->save();
                     $sent++;

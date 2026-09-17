@@ -18,7 +18,7 @@ class TenantDatabaseProvisioner
         'company_details', 'companies', 'contacts', 'customer_contact', 'leads',
         'lead_follow_up', 'lead_activities', 'lead_attachments', 'tags', 'pipelines',
         'pipeline_stages', 'deals', 'project_info', 'orders', 'payment_details',
-        'tasks', 'user_attendance', 'audit_logs',
+        'tasks', 'user_attendance', 'audit_logs', 'tax_rates', 'products',
     ];
 
     public function __construct(private readonly TenantConnectionManager $connections) {}

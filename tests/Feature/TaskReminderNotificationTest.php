@@ -5,8 +5,10 @@ namespace Tests\Feature;
 use App\Models\Task;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Notifications\TaskDueReminder;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -31,5 +33,21 @@ class TaskReminderNotificationTest extends TestCase
             ->postJson("/notifications/{$notification->id}/read")
             ->assertOk();
         $this->assertNotNull($notification->fresh()->read_at);
+    }
+
+    public function test_due_task_reminder_also_goes_out_by_mail(): void
+    {
+        Notification::fake();
+
+        $suffix = Str::lower(Str::random(8));
+        $tenant = Tenant::create(['name' => 'Reminder Mail Tenant', 'slug' => 'reminder-mail-'.$suffix, 'status' => 'Active']);
+        $user = User::create(['tenant_id' => $tenant->id, 'name' => 'Reminder Mail User', 'email' => "reminder-mail-{$suffix}@example.test", 'password' => Hash::make('password'), 'status' => 'Active', 'session_token' => 'reminder-mail-'.$suffix]);
+        Task::create(['tenant_id' => $tenant->id, 'assigned_to' => $user->id, 'created_by' => $user->id, 'title' => 'Mailed reminder', 'priority' => 'high', 'status' => 'todo', 'due_at' => now()->addHour(), 'remind_at' => now()->subMinute()]);
+
+        $this->artisan('crm:send-task-reminders')->assertSuccessful();
+
+        Notification::assertSentTo($user, TaskDueReminder::class, function (TaskDueReminder $notification) use ($user) {
+            return in_array('mail', $notification->via($user), true);
+        });
     }
 }

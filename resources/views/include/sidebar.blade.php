@@ -324,23 +324,41 @@
         </div>
         @endcanany
 
-        @can('orders.view')
-        <div class="nav-section {{ request()->routeIs(['orders.*','projects.*','invoice.*','quotation.*']) ? 'has-active' : '' }}">
+        @canany(['orders.view', 'products.view', 'quotations.view'])
+        <div class="nav-section {{ request()->routeIs(['orders.*','projects.*','invoice.*','products.*','quotations.*']) ? 'has-active' : '' }}">
             <div class="nav-section-label">Delivery &amp; Billing</div>
             <ul class="nav nav-sidebar-menu">
+                @can('quotations.view')
+                <li class="mb-1" data-nav-label="Quotations">
+                    <a class="nav-link {{ request()->routeIs('quotations.*') ? 'active' : '' }}" href="{{ route('quotations.index') }}" title="Quotations">
+                        <i class="fa fa-file-text-o"></i><span>Quotations</span>
+                    </a>
+                </li>
+                @endcan
+                @can('orders.view')
                 <li class="mb-1" data-nav-label="Orders">
-                    <a class="nav-link {{ request()->routeIs(['orders.*','invoice.*','quotation.*']) ? 'active' : '' }}" href="{{ route('orders.index') }}" title="Orders">
+                    <a class="nav-link {{ request()->routeIs(['orders.*','invoice.*']) ? 'active' : '' }}" href="{{ route('orders.index') }}" title="Orders">
                         <i class="fa fa-shopping-cart"></i><span>Orders</span>
                     </a>
                 </li>
+                @endcan
+                @can('products.view')
+                <li class="mb-1" data-nav-label="Products">
+                    <a class="nav-link {{ request()->routeIs('products.*') ? 'active' : '' }}" href="{{ route('products.index') }}" title="Products">
+                        <i class="fa fa-cubes"></i><span>Products</span>
+                    </a>
+                </li>
+                @endcan
+                @can('orders.view')
                 <li class="mb-1" data-nav-label="Projects">
                     <a class="nav-link {{ request()->routeIs('projects.*') ? 'active' : '' }}" href="{{ route('projects.index') }}" title="Projects">
                         <i class="fa fa-check-circle"></i><span>Projects</span>
                     </a>
                 </li>
+                @endcan
             </ul>
         </div>
-        @endcan
+        @endcanany
 
         @canany(['tasks.view', 'calendar.view'])
         <div class="nav-section {{ request()->routeIs(['tasks.*','calendar.*']) ? 'has-active' : '' }}">

@@ -388,16 +388,27 @@
                         </div>
                         @endcan
 
-                        @can('orders.view')
+                        @can('quotations.view')
                         <div class="card-box">
-                            <h5><i class="fa fa-file-text-o"></i> Quotation</h5>
-                            <p class="text-muted" style="font-size:12.5px;">Generate a printable quotation for this lead.</p>
-                            <div class="btn-group btn-block" role="group">
-                                <a class="btn btn-outline-primary btn-sm" target="_blank" href="{{ route('quotation.template1', base64_encode($leadId)) }}">Template 1</a>
-                                <a class="btn btn-outline-primary btn-sm" target="_blank" href="{{ route('quotation.template2', base64_encode($leadId)) }}">Template 2</a>
-                                <a class="btn btn-outline-primary btn-sm" target="_blank" href="{{ route('quotation.template3', base64_encode($leadId)) }}">Template 3</a>
-                            </div>
+                            <h5><i class="fa fa-file-text-o"></i> Quotations</h5>
+                            <div id="leadQuotationsList" class="mb-2"><p class="text-muted" style="font-size:12.5px;">Loading…</p></div>
+                            @can('quotations.create')
+                            <a class="btn btn-primary btn-sm btn-block" href="{{ url('/quotations/create') }}?lead_id={{ $leadId }}"><i class="fa fa-plus"></i> New Quotation</a>
+                            @endcan
                         </div>
+                        <script>
+                        (() => {
+                            const esc = value => $('<div>').text(value ?? '').html();
+                            $.get(`{{ url('/quotations/data') }}?lead_id={{ $leadId }}`, response => {
+                                if (!response.data.length) { $('#leadQuotationsList').html('<p class="text-muted" style="font-size:12.5px;">No quotations yet.</p>'); return; }
+                                $('#leadQuotationsList').html(response.data.map(q => `
+                                    <a href="{{ url('/quotations') }}/${q.id}" class="d-flex justify-content-between align-items-center mb-2" style="font-size:13px;">
+                                        <span>${esc(q.quotation_number)} <span class="text-muted">v${q.version}</span></span>
+                                        <span class="badge badge-light">${esc(q.status)}</span>
+                                    </a>`).join(''));
+                            });
+                        })();
+                        </script>
                         @endcan
 
                         @can('tasks.create')

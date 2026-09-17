@@ -133,6 +133,32 @@ class MasterDataSeeder extends Seeder
                 'other' => 'Other',
             ],
         ],
+        'uom' => [
+            'name' => 'Unit of Measure',
+            'values' => [
+                'nos' => 'Nos',
+                'pcs' => 'Pieces',
+                'set' => 'Set',
+                'box' => 'Box',
+                'kg' => 'Kilogram',
+                'gm' => 'Gram',
+                'ltr' => 'Litre',
+                'mtr' => 'Metre',
+                'hrs' => 'Hours',
+                'days' => 'Days',
+            ],
+        ],
+        'product_category' => [
+            'name' => 'Product Category',
+            'values' => [
+                'general' => 'General',
+                'hardware' => 'Hardware',
+                'software' => 'Software',
+                'service' => 'Service',
+                'subscription' => 'Subscription',
+                'accessory' => 'Accessory',
+            ],
+        ],
     ];
 
     public function run(): void

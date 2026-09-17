@@ -43,7 +43,7 @@
     </style>
 </head>
 <body><div class="container-scroller">@include('include.header')<div class="container-fluid page-body-wrapper">@include('include.sidebar')<div class="main-panel"><div class="content-wrapper">
-    <div class="crm-page-header"><div><h3>Tasks & Reminders</h3><p>Keep every follow-up and commitment visible.</p></div>@can('tasks.create')<button class="btn btn-primary" id="newTaskBtn"><i class="fa fa-plus"></i> New Task</button>@endcan</div>
+    <div class="crm-page-header"><div><h3>Tasks & Reminders</h3><p>Keep every follow-up and commitment visible.</p></div><div style="display:flex;gap:10px;flex-wrap:wrap"><a href="{{ route('tasks.workload') }}" class="btn btn-light"><i class="fa fa-bar-chart"></i> Workload</a>@can('tasks.create')<button class="btn btn-light" id="bulkCreateBtn"><i class="fa fa-clone"></i> Bulk Create</button><button class="btn btn-primary" id="newTaskBtn"><i class="fa fa-plus"></i> New Task</button>@endcan</div></div>
     <div class="card mb-3" style="border-radius:13px;box-shadow:0 8px 24px rgba(15,23,42,.06);border:none"><div class="card-body filter-grid">
         <select id="filterStatus" class="form-control"><option value="">All statuses</option><option value="todo">To do</option><option value="in_progress">In progress</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select>
         <select id="filterPriority" class="form-control"><option value="">All priorities</option><option value="urgent">Urgent</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select>
@@ -60,7 +60,42 @@
     <div class="form-group col-md-3"><label>Status</label><select class="form-control" name="status" id="taskStatus"><option value="todo">To do</option><option value="in_progress">In progress</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select></div>
     <div class="form-group col-md-3"><label>Due</label><input class="form-control" type="datetime-local" name="due_at" id="taskDue"></div><div class="form-group col-md-3"><label>Remind at</label><input class="form-control" type="datetime-local" name="remind_at" id="taskRemind"></div>
     <div class="form-group col-md-4"><label>Link type</label><select class="form-control" name="related_type" id="taskRelatedType"><option value="">No link</option><option value="lead">Lead</option><option value="deal">Deal</option><option value="company">Company</option><option value="contact">Contact</option><option value="order">Order</option></select></div><div class="form-group col-md-8"><label>Linked record</label><select class="form-control" name="related_id" id="taskRelatedId" disabled><option value="">Select a type first</option></select></div>
+
+    <div class="form-group col-md-4"><label>Activity type</label><select class="form-control" name="activity_type" id="taskActivityType"><option value="task">Task</option><option value="call">Call</option><option value="meeting">Meeting</option></select></div>
+    <div class="form-group col-md-4"><label>Depends on</label><select class="form-control" id="taskDependsOn"><option value="">No dependency</option></select></div>
+    <div class="form-group col-md-4"></div>
+
+    <div id="callFields" class="col-md-12 d-none"><div class="form-row">
+        <div class="form-group col-md-3"><label>Direction</label><select class="form-control" id="callDirection"><option value="outbound">Outbound</option><option value="inbound">Inbound</option></select></div>
+        <div class="form-group col-md-3"><label>Disposition</label><select class="form-control" id="callDisposition"><option value="connected">Connected</option><option value="no_answer">No answer</option><option value="busy">Busy</option><option value="voicemail">Voicemail</option><option value="wrong_number">Wrong number</option></select></div>
+        <div class="form-group col-md-3"><label>Duration (min)</label><input type="number" min="0" class="form-control" id="callDuration"></div>
+        <div class="form-group col-md-3"><label>Recording/reference link</label><input type="url" class="form-control" id="callReferenceLink" placeholder="https://…"></div>
+    </div></div>
+
+    <div id="meetingFields" class="col-md-12 d-none"><div class="form-row">
+        <div class="form-group col-md-4"><label>Location</label><input class="form-control" id="meetingLocation"></div>
+        <div class="form-group col-md-4"><label>Video link</label><input type="url" class="form-control" id="meetingVideoLink" placeholder="https://…"></div>
+        <div class="form-group col-md-4"><label>Outcome</label><input class="form-control" id="meetingOutcome"></div>
+        <div class="form-group col-md-12"><label>Agenda</label><textarea class="form-control" id="meetingAgenda" rows="2"></textarea></div>
+        <div class="form-group col-md-12"><label>Attendees</label><div id="attendeeRows"></div><button type="button" class="btn btn-sm btn-light" id="addAttendeeBtn"><i class="fa fa-plus"></i> Add attendee</button></div>
+    </div></div>
+
+    <div class="form-group col-md-3"><label>Repeat</label><select class="form-control" id="taskRecurrenceRule"><option value="">Does not repeat</option><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select></div>
+    <div class="form-group col-md-2"><label>Every</label><input type="number" min="1" max="365" class="form-control" id="taskRecurrenceInterval" placeholder="1"></div>
+    <div class="form-group col-md-3"><label>Repeat until</label><input type="date" class="form-control" id="taskRecurrenceEnd"></div>
+
+    <div class="form-group col-md-12"><label>Checklist</label><div id="checklistRows"></div><button type="button" class="btn btn-sm btn-light" id="addChecklistBtn"><i class="fa fa-plus"></i> Add item</button></div>
 </div><div class="alert alert-danger d-none" id="taskError"></div></div><div class="modal-footer"><button type="button" class="btn btn-light" data-dismiss="modal">Cancel</button><button class="btn btn-primary">Save Task</button></div></form></div></div>
+
+<div class="modal fade" id="bulkCreateModal"><div class="modal-dialog modal-lg"><form class="modal-content" id="bulkCreateForm"><div class="modal-header"><h5>Bulk Create Tasks</h5><button type="button" class="close" data-dismiss="modal">&times;</button></div><div class="modal-body"><div class="form-row">
+    <div class="form-group col-md-4"><label>Record type</label><select class="form-control" name="related_type" id="bulkRelatedType" required><option value="lead">Lead</option><option value="deal">Deal</option><option value="company">Company</option><option value="contact">Contact</option><option value="order">Order</option></select></div>
+    <div class="form-group col-md-4"><label>Activity type</label><select class="form-control" name="activity_type" id="bulkActivityType"><option value="task">Task</option><option value="call">Call</option><option value="meeting">Meeting</option></select></div>
+    <div class="form-group col-md-4"><label>Assignee</label><select class="form-control" name="assigned_to" id="bulkAssignee"><option value="">Unassigned</option>@foreach($users as $user)<option value="{{ $user->id }}">{{ $user->name }}</option>@endforeach</select></div>
+    <div class="form-group col-md-12"><label>Records <span class="text-muted">(hold Ctrl/Cmd to pick several)</span></label><select class="form-control" name="related_ids[]" id="bulkRelatedIds" multiple size="6" required></select></div>
+    <div class="form-group col-md-8"><label>Title</label><input class="form-control" name="title" id="bulkTitle" maxlength="255" required></div>
+    <div class="form-group col-md-4"><label>Priority</label><select class="form-control" name="priority" id="bulkPriority"><option value="medium">Medium</option><option value="low">Low</option><option value="high">High</option><option value="urgent">Urgent</option></select></div>
+    <div class="form-group col-md-6"><label>Due</label><input class="form-control" type="datetime-local" name="due_at" id="bulkDue"></div>
+</div><div class="alert alert-danger d-none" id="bulkCreateError"></div></div><div class="modal-footer"><button type="button" class="btn btn-light" data-dismiss="modal">Cancel</button><button class="btn btn-primary">Create Tasks</button></div></form></div></div>
 <script src="{{ asset('vendors/js/vendor.bundle.base.js') }}"></script>
 <script>
 (() => {
@@ -76,11 +111,17 @@
         const params = new URLSearchParams({status:$('#filterStatus').val(),priority:$('#filterPriority').val(),due:$('#filterDue').val(),assigned_to:$('#filterAssignee').val()});
         $.get(`{{ route('tasks.data') }}?${params}`, response => { tasks = response.data; render(); });
     }
+    const typeIcon = t => t === 'call' ? 'fa-phone' : (t === 'meeting' ? 'fa-users' : 'fa-check-square-o');
+
     function render() {
         if (!tasks.length) { $('#taskList').html('<div class="p-5 text-center text-muted"><i class="fa fa-check-circle-o fa-2x mb-2"></i><br>No tasks match these filters.</div>'); return; }
         $('#taskList').html(tasks.map(t => `<div class="task-row ${t.status === 'completed' ? 'completed' : ''}" data-id="${t.id}">
-            <div>${canEdit && t.status !== 'completed' ? `<button class="btn btn-sm btn-link completeTask" title="Complete"><i class="fa fa-circle-o"></i></button>` : '<i class="fa fa-check-circle text-success"></i>'}</div>
-            <div><div class="task-title">${esc(t.title)}</div><div class="task-meta">${esc(t.description || '')}${t.related_label ? ` · ${esc(t.related_type)}: ${esc(t.related_label)}` : ''}</div></div>
+            <div>${canEdit && t.status !== 'completed' ? `<button class="btn btn-sm btn-link completeTask" title="Complete" ${t.is_blocked ? 'disabled' : ''}><i class="fa fa-circle-o"></i></button>` : '<i class="fa fa-check-circle text-success"></i>'}</div>
+            <div><div class="task-title"><i class="fa ${typeIcon(t.activity_type)} text-muted" title="${esc(t.activity_type)}"></i> ${esc(t.title)}
+                ${t.is_blocked ? ' <span class="badge badge-secondary" title="Waiting on another task">Blocked</span>' : ''}
+                ${t.recurrence_rule ? ` <i class="fa fa-repeat text-muted" title="Repeats ${esc(t.recurrence_rule)}"></i>` : ''}
+                ${t.checklist_total ? ` <span class="task-meta">${t.checklist_done}/${t.checklist_total} done</span>` : ''}
+            </div><div class="task-meta">${esc(t.description || '')}${t.related_label ? ` · ${esc(t.related_type)}: ${esc(t.related_label)}` : ''}</div></div>
             <div class="task-cell-secondary"><span class="priority text-${t.priority === 'urgent' ? 'danger' : (t.priority === 'high' ? 'warning' : 'primary')}">${esc(t.priority)}</span></div>
             <div class="task-cell-secondary ${t.is_overdue ? 'overdue' : ''}"><i class="fa fa-clock-o"></i> ${esc(localDate(t.due_at))}</div>
             <div class="task-cell-secondary">${esc(t.assignee?.name || 'Unassigned')}</div>
@@ -93,21 +134,129 @@
         const response = await $.get(`{{ url('/tasks/related-options') }}/${type}`);
         select.prop('disabled', false).html('<option value="">Choose record</option>' + response.data.map(r => `<option value="${r.id}">${esc(r.label)}</option>`).join('')).val(String(selected || ''));
     }
-    function openTask(task = null) {
+
+    function toggleActivityFields() {
+        const type = $('#taskActivityType').val();
+        $('#callFields').toggleClass('d-none', type !== 'call');
+        $('#meetingFields').toggleClass('d-none', type !== 'meeting');
+    }
+
+    function attendeeRow(name = '', email = '') {
+        return `<div class="form-row attendee-row mb-2"><div class="col-5"><input class="form-control form-control-sm" placeholder="Name" value="${esc(name)}"></div><div class="col-6"><input type="email" class="form-control form-control-sm" placeholder="Email" value="${esc(email)}"></div><div class="col-1"><button type="button" class="btn btn-sm btn-link text-danger removeRow"><i class="fa fa-times"></i></button></div></div>`;
+    }
+    function checklistRow(text = '', done = false) {
+        return `<div class="form-row checklist-row mb-2"><div class="col-1 d-flex align-items-center"><input type="checkbox" class="checklistDone" ${done ? 'checked' : ''}></div><div class="col-10"><input class="form-control form-control-sm checklistText" placeholder="Checklist item" value="${esc(text)}"></div><div class="col-1"><button type="button" class="btn btn-sm btn-link text-danger removeRow"><i class="fa fa-times"></i></button></div></div>`;
+    }
+    $('#addAttendeeBtn').on('click', () => $('#attendeeRows').append(attendeeRow()));
+    $('#addChecklistBtn').on('click', () => $('#checklistRows').append(checklistRow()));
+    $(document).on('click', '.removeRow', function(){ $(this).closest('.attendee-row, .checklist-row').remove(); });
+    $('#taskActivityType').on('change', toggleActivityFields);
+
+    function collectChecklist() {
+        return $('#checklistRows .checklist-row').map(function(){
+            const text = $(this).find('.checklistText').val();
+            return text ? { text, done: $(this).find('.checklistDone').is(':checked') } : null;
+        }).get().filter(Boolean);
+    }
+    function collectActivityDetails() {
+        const type = $('#taskActivityType').val();
+        if (type === 'call') {
+            return { direction: $('#callDirection').val(), disposition: $('#callDisposition').val(), duration_minutes: $('#callDuration').val() || null, reference_link: $('#callReferenceLink').val() || null };
+        }
+        if (type === 'meeting') {
+            const attendees = $('#attendeeRows .attendee-row').map(function(){
+                const inputs = $(this).find('input');
+                const name = $(inputs[0]).val();
+                return name ? { name, email: $(inputs[1]).val() } : null;
+            }).get().filter(Boolean);
+            return { location: $('#meetingLocation').val() || null, video_link: $('#meetingVideoLink').val() || null, agenda: $('#meetingAgenda').val() || null, outcome: $('#meetingOutcome').val() || null, attendees };
+        }
+        return null;
+    }
+
+    async function loadDependsOnOptions(excludeId) {
+        const response = await $.get(`{{ route('tasks.data') }}`);
+        const select = $('#taskDependsOn');
+        const open = response.data.filter(t => !['completed', 'cancelled'].includes(t.status) && t.id !== Number(excludeId));
+        select.html('<option value="">No dependency</option>' + open.map(t => `<option value="${t.id}">${esc(t.title)}</option>`).join(''));
+    }
+
+    async function openTask(task = null) {
         $('#taskForm')[0].reset(); $('#taskError').addClass('d-none'); $('#taskId').val(task?.id || ''); $('#taskModalTitle').text(task ? 'Edit Task' : 'New Task');
-        if (task) { $('#taskTitle').val(task.title); $('#taskDescription').val(task.description); $('#taskAssignee').val(task.assigned_to || ''); $('#taskPriority').val(task.priority); $('#taskStatus').val(task.status); $('#taskDue').val(inputDate(task.due_at)); $('#taskRemind').val(inputDate(task.remind_at)); $('#taskRelatedType').val(task.related_type || ''); loadRelated(task.related_type, task.related_id); } else { loadRelated(''); }
+        $('#attendeeRows').empty(); $('#checklistRows').empty();
+        await loadDependsOnOptions(task?.id || '');
+        if (task) {
+            $('#taskTitle').val(task.title); $('#taskDescription').val(task.description); $('#taskAssignee').val(task.assigned_to || ''); $('#taskPriority').val(task.priority); $('#taskStatus').val(task.status); $('#taskDue').val(inputDate(task.due_at)); $('#taskRemind').val(inputDate(task.remind_at)); $('#taskRelatedType').val(task.related_type || ''); loadRelated(task.related_type, task.related_id);
+            $('#taskActivityType').val(task.activity_type || 'task');
+            $('#taskDependsOn').val(task.depends_on_task_id || '');
+            $('#taskRecurrenceRule').val(task.recurrence_rule || '');
+            $('#taskRecurrenceInterval').val(task.recurrence_interval || '');
+            $('#taskRecurrenceEnd').val(task.recurrence_end_date ? task.recurrence_end_date.slice(0, 10) : '');
+            const details = task.activity_details || {};
+            $('#callDirection').val(details.direction || 'outbound'); $('#callDisposition').val(details.disposition || 'connected'); $('#callDuration').val(details.duration_minutes || ''); $('#callReferenceLink').val(details.reference_link || '');
+            $('#meetingLocation').val(details.location || ''); $('#meetingVideoLink').val(details.video_link || ''); $('#meetingAgenda').val(details.agenda || ''); $('#meetingOutcome').val(details.outcome || '');
+            (details.attendees || []).forEach(a => $('#attendeeRows').append(attendeeRow(a.name, a.email)));
+            (task.checklist || []).forEach(c => $('#checklistRows').append(checklistRow(c.text, c.done)));
+        } else {
+            loadRelated(''); $('#taskActivityType').val('task');
+        }
+        toggleActivityFields();
         $('#taskModal').modal('show');
     }
     $('#newTaskBtn').on('click', () => openTask());
     $('#taskRelatedType').on('change', function(){ loadRelated(this.value); });
     $('.filter-grid select').on('change', loadTasks);
     $(document).on('click', '.editTask', function(){ openTask(tasks.find(t => t.id === Number($(this).closest('.task-row').data('id')))); });
-    $(document).on('click', '.completeTask', function(){ $.ajax({url:`{{ url('/tasks') }}/${$(this).closest('.task-row').data('id')}/complete`,method:'POST',headers:{'X-CSRF-TOKEN':csrf}}).done(loadTasks); });
+    $(document).on('click', '.completeTask', function(){ $.ajax({url:`{{ url('/tasks') }}/${$(this).closest('.task-row').data('id')}/complete`,method:'POST',headers:{'X-CSRF-TOKEN':csrf}}).done(loadTasks).fail(xhr => alert(xhr.responseJSON?.message || 'Unable to complete task.')); });
     $(document).on('click', '.deleteTask', function(){ if(confirm('Delete this task?')) $.ajax({url:`{{ url('/tasks') }}/${$(this).closest('.task-row').data('id')}`,method:'DELETE',headers:{'X-CSRF-TOKEN':csrf}}).done(loadTasks); });
     $(document).on('click', '.row-actions-btn', function(e){ e.stopPropagation(); const menu=$(this).siblings('.row-actions-menu'); const opening=!menu.hasClass('is-open'); $('.row-actions-menu').removeClass('is-open'); if(opening){ const rect=this.getBoundingClientRect(); menu.css({position:'fixed',top:rect.bottom+4,left:'auto',right:window.innerWidth-rect.right}).addClass('is-open'); } });
     $(document).on('click', '.row-actions-menu', function(e){ e.stopPropagation(); });
     $(document).on('click', function(){ $('.row-actions-menu').removeClass('is-open'); });
-    $('#taskForm').on('submit', function(e){ e.preventDefault(); const id=$('#taskId').val(); const data=Object.fromEntries(new FormData(this)); if(!data.related_type) delete data.related_id; if(id) data._method='PUT'; $.ajax({url:id ? `{{ url('/tasks') }}/${id}` : `{{ route('tasks.store') }}`,method:'POST',headers:{'X-CSRF-TOKEN':csrf},data}).done(() => {$('#taskModal').modal('hide');loadTasks();}).fail(xhr => $('#taskError').removeClass('d-none').text(xhr.responseJSON?.message || 'Unable to save task.')); });
+    $('#taskForm').on('submit', function(e){
+        e.preventDefault();
+        const id = $('#taskId').val();
+        const data = Object.fromEntries(new FormData(this));
+        if (!data.related_type) delete data.related_id;
+        data.activity_type = $('#taskActivityType').val();
+        data.activity_details = collectActivityDetails();
+        data.checklist = collectChecklist();
+        data.depends_on_task_id = $('#taskDependsOn').val() || '';
+        data.recurrence_rule = $('#taskRecurrenceRule').val();
+        data.recurrence_interval = $('#taskRecurrenceInterval').val() || '';
+        data.recurrence_end_date = $('#taskRecurrenceEnd').val() || '';
+        if (id) data._method = 'PUT';
+        $.ajax({url: id ? `{{ url('/tasks') }}/${id}` : `{{ route('tasks.store') }}`, method: 'POST', headers: {'X-CSRF-TOKEN': csrf}, data})
+            .done(() => { $('#taskModal').modal('hide'); loadTasks(); })
+            .fail(xhr => $('#taskError').removeClass('d-none').text(xhr.responseJSON?.message || 'Unable to save task.'));
+    });
+
+    // Bulk create
+    $('#bulkCreateBtn').on('click', async function(){
+        $('#bulkCreateForm')[0].reset(); $('#bulkCreateError').addClass('d-none'); $('#bulkRelatedIds').empty();
+        await loadBulkOptions($('#bulkRelatedType').val());
+        $('#bulkCreateModal').modal('show');
+    });
+    async function loadBulkOptions(type) {
+        const response = await $.get(`{{ url('/tasks/related-options') }}/${type}`);
+        $('#bulkRelatedIds').html(response.data.map(r => `<option value="${r.id}">${esc(r.label)}</option>`).join(''));
+    }
+    $('#bulkRelatedType').on('change', function(){ loadBulkOptions(this.value); });
+    $('#bulkCreateForm').on('submit', function(e){
+        e.preventDefault();
+        const data = {
+            related_type: $('#bulkRelatedType').val(),
+            related_ids: $('#bulkRelatedIds').val() || [],
+            activity_type: $('#bulkActivityType').val(),
+            assigned_to: $('#bulkAssignee').val() || '',
+            title: $('#bulkTitle').val(),
+            priority: $('#bulkPriority').val(),
+            due_at: $('#bulkDue').val(),
+        };
+        $.ajax({url: `{{ route('tasks.bulk_create') }}`, method: 'POST', headers: {'X-CSRF-TOKEN': csrf}, data})
+            .done(() => { $('#bulkCreateModal').modal('hide'); loadTasks(); })
+            .fail(xhr => $('#bulkCreateError').removeClass('d-none').text(xhr.responseJSON?.message || 'Unable to create tasks.'));
+    });
+
     loadTasks();
 })();
 </script></body></html>

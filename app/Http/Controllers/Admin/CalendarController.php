@@ -41,11 +41,17 @@ class CalendarController extends Controller
             ->whereBetween('due_at', [$start, $end])
             ->whereNotIn('status', ['completed', 'cancelled'])
             ->when(! $elevated, fn ($q) => $q->where(fn ($qq) => $qq->where('assigned_to', $user->id)->orWhere('created_by', $user->id)))
-            ->get(['id', 'title', 'due_at', 'priority', 'related_type', 'related_id'])
+            ->get(['id', 'title', 'due_at', 'priority', 'related_type', 'related_id', 'activity_type'])
             ->each(function (Task $task) use ($events) {
+                $prefix = match ($task->activity_type) {
+                    'call' => 'Call: ',
+                    'meeting' => 'Meeting: ',
+                    default => '',
+                };
+
                 $events->push([
                     'id' => 'task-'.$task->id,
-                    'title' => $task->title,
+                    'title' => $prefix.$task->title,
                     'start' => $task->due_at->toIso8601String(),
                     'color' => match ($task->priority) {
                         'urgent' => '#dc2626',
@@ -56,7 +62,11 @@ class CalendarController extends Controller
                     'url' => $task->related_type === 'deal'
                         ? route('deals.show', $task->related_id)
                         : ($task->related_type === 'lead' ? route('leads.show', $task->related_id) : route('tasks.index')),
-                    'extendedProps' => ['type' => 'Task reminder'],
+                    'extendedProps' => ['type' => match ($task->activity_type) {
+                        'call' => 'Call',
+                        'meeting' => 'Meeting',
+                        default => 'Task reminder',
+                    }],
                 ]);
             });
 

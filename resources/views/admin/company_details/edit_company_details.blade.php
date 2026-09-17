@@ -298,6 +298,18 @@
                                 </div>
                             </div>
 
+                            <!-- QUOTATION DEFAULTS -->
+                            <div class="panel section">
+                                <div class="section-title">Quotation Defaults</div>
+
+                                <div class="row">
+                                    <div class="col-md-12 form-group">
+                                        <label>Default Terms &amp; Conditions</label>
+                                        <textarea name="default_quotation_terms" class="form-control" rows="5" placeholder="Pre-fills every new quotation — editable per quotation afterward.">{{ $company->default_quotation_terms }}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- ACTION -->
                             <div class="text-right mb-4">
                                 <a href="" class="btn btn-light">Cancel</a>
