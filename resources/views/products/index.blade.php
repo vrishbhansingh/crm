@@ -4,65 +4,134 @@
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}"><title>Products</title>
     <link rel="stylesheet" href="{{ asset('vendors/feather/feather.css') }}"><link rel="stylesheet" href="{{ asset('vendors/ti-icons/css/themify-icons.css') }}"><link rel="stylesheet" href="{{ asset('vendors/css/vendor.bundle.base.css') }}"><link rel="stylesheet" href="{{ asset('css/vertical-layout-light/style.css') }}"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        .crm-page-header{background:#fff;padding:20px 22px;border-radius:13px;box-shadow:0 8px 24px rgba(15,23,42,.06);margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}
-        .crm-page-header h3{margin:0 0 6px;font-weight:700;font-size:18px;color:#111827}.crm-page-header p{margin:0;color:#6b7280;font-size:14px}
-        .crm-page-header .btn{border-radius:10px;padding:8px 16px;font-weight:600}
-        .product-shell{background:#fff;border-radius:13px;box-shadow:0 8px 24px rgba(15,23,42,.06);overflow:hidden}
-        .product-row{display:grid;grid-template-columns:minmax(200px,1fr) 110px 130px 120px 110px 90px;gap:14px;align-items:center;padding:16px 22px;border-bottom:1px solid #edf2f7;font-size:14.5px}
-        .product-row:hover{background:#f8fbff}.product-name{font-weight:600;color:#1f2937;font-size:15px}.product-meta{font-size:12.5px;color:#6b7280}
-        .filter-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
-        .status-pill{padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600}
-        .status-pill.active{background:#dcfce7;color:#15803d}.status-pill.inactive{background:#f3f4f6;color:#6b7280}
-        @media(max-width:900px){.product-row{grid-template-columns:1fr}.product-cell-secondary{grid-column:1}}
-        .row-actions{position:relative;display:inline-block}
-        .row-actions-btn{width:32px;height:32px;border-radius:8px;border:none;background:transparent;color:#6b7280;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px}
-        .row-actions-btn:hover{background:#f1f3f9;color:#1f2937}
-        .row-actions-menu{position:absolute;right:0;top:100%;margin-top:4px;min-width:150px;background:#fff;border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,.15);padding:6px;z-index:50;display:none;text-align:left}
-        .row-actions-menu.is-open{display:block}
-        .row-actions-menu a,.row-actions-menu button{display:flex;align-items:center;gap:10px;width:100%;padding:9px 12px;border-radius:8px;font-size:13px;color:#374151;text-decoration:none;border:none;background:transparent;text-align:left;cursor:pointer}
-        .row-actions-menu a:hover,.row-actions-menu button:hover{background:#f3f4f6}
-        .row-actions-menu i{width:16px;text-align:center;color:#6b7280}
-        .row-actions-menu .text-danger{color:#dc2626}.row-actions-menu .text-danger i{color:#dc2626}.row-actions-menu .text-danger:hover{background:#fef2f2}
+        :root{
+            --ink:#101828; --muted:#667085; --faint:#98a2b3; --border:#e4e7ec; --line:#eef1f5;
+            --bg:#f5f6fa; --card:#fff; --accent:#4f46e5; --accent-soft:#eef2ff; --accent-dark:#4338ca;
+            --active-bg:#e7f7ef; --active-fg:#087443; --inactive-bg:#f2f4f7; --inactive-fg:#667085;
+        }
+        [data-theme="dark"]{
+            --ink:#eef0f6; --muted:#9aa1b5; --faint:#71798f; --border:#2a2e40; --line:#252838;
+            --bg:#11131c; --card:#181b28; --accent:#818cf8; --accent-soft:#252a4a; --accent-dark:#a5b0ff;
+            --active-bg:#173428; --active-fg:#5fd394; --inactive-bg:#242838; --inactive-fg:#9aa1b5;
+        }
+        body{font-family:"Inter",ui-sans-serif,system-ui,sans-serif;}
+        .content-wrapper{background:var(--bg);}
 
-        [data-theme="dark"] .crm-page-header,[data-theme="dark"] .product-shell,[data-theme="dark"] .card{background:#1a1d2b;box-shadow:0 8px 24px rgba(0,0,0,.35)}
-        [data-theme="dark"] .crm-page-header h3{color:#eef0f6}
-        [data-theme="dark"] .crm-page-header p{color:#9aa1b5}
-        [data-theme="dark"] .product-row{border-bottom-color:#2a2e40}
-        [data-theme="dark"] .product-row:hover{background:#20233a}
-        [data-theme="dark"] .product-name{color:#eef0f6}
-        [data-theme="dark"] .product-meta{color:#9aa1b5}
-        [data-theme="dark"] .status-pill.active{background:rgba(21,128,61,.25);color:#4ade80}
-        [data-theme="dark"] .status-pill.inactive{background:#232637;color:#9aa1b5}
-        [data-theme="dark"] .row-actions-btn{color:#9aa1b5}
-        [data-theme="dark"] .row-actions-btn:hover{background:#232637;color:#eef0f6}
-        [data-theme="dark"] .row-actions-menu{background:#1e2233;box-shadow:0 16px 36px rgba(0,0,0,.4)}
-        [data-theme="dark"] .row-actions-menu a,[data-theme="dark"] .row-actions-menu button{color:#e2e8f5}
-        [data-theme="dark"] .row-actions-menu i{color:#93a4fd}
-        [data-theme="dark"] .row-actions-menu a:hover,[data-theme="dark"] .row-actions-menu button:hover{background:rgba(255,255,255,.08);color:#fff}
-        [data-theme="dark"] .row-actions-menu .text-danger{color:#fca5a5}
+        .page-head{display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap; margin-bottom:20px;}
+        .page-head h1{font-size:24px; font-weight:800; color:var(--ink); margin:0 0 4px; letter-spacing:-.01em;}
+        .page-head p{color:var(--muted); font-size:14px; margin:0;}
+        .btn-accent{
+            background:var(--accent); border:1px solid var(--accent); color:#fff; border-radius:10px;
+            padding:11px 20px; font-weight:600; font-size:14px; display:inline-flex; align-items:center; gap:8px;
+        }
+        .btn-accent:hover{background:var(--accent-dark); border-color:var(--accent-dark); color:#fff;}
+
+        .filter-bar{display:flex; gap:12px; flex-wrap:wrap; margin-bottom:16px;}
+        .filter-bar input, .filter-bar select{
+            border-radius:10px; border:1px solid var(--border); font-size:13.5px; padding:9px 13px;
+            background:var(--card); color:var(--ink);
+        }
+        .filter-bar input{flex:1; min-width:220px;}
+        .filter-bar select{min-width:160px;}
+        .filter-bar input:focus, .filter-bar select:focus{border-color:var(--accent); outline:none; box-shadow:0 0 0 3px var(--accent-soft);}
+
+        .product-shell{background:var(--card); border-radius:14px; border:1px solid var(--border); box-shadow:0 1px 2px rgba(16,24,40,.04); overflow:hidden;}
+        .product-row{
+            display:grid; grid-template-columns:minmax(200px,1.4fr) 90px 120px 150px 90px 40px;
+            gap:14px; align-items:center; padding:15px 22px; border-bottom:1px solid var(--line);
+        }
+        .product-row:last-child{border-bottom:none;}
+        .product-row:hover{background:var(--line);}
+        .product-icon{
+            width:38px; height:38px; border-radius:9px; background:var(--accent-soft); color:var(--accent-dark);
+            display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0;
+        }
+        .product-main{display:flex; align-items:center; gap:12px; min-width:0;}
+        .product-name{font-weight:600; color:var(--ink); font-size:14.5px;}
+        .product-meta{font-size:12px; color:var(--muted);}
+        .cell{color:var(--muted); font-size:13.5px;}
+        .cell.amount{font-variant-numeric:tabular-nums; font-weight:600; color:var(--ink);}
+        .status-pill{padding:4px 11px; border-radius:999px; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.03em;}
+        .status-pill.active{background:var(--active-bg); color:var(--active-fg);}
+        .status-pill.inactive{background:var(--inactive-bg); color:var(--inactive-fg);}
+
+        .row-actions{position:relative; display:inline-block;}
+        .row-actions-btn{width:32px; height:32px; border-radius:8px; border:none; background:transparent; color:var(--faint); display:inline-flex; align-items:center; justify-content:center; cursor:pointer; font-size:15px;}
+        .row-actions-btn:hover{background:var(--line); color:var(--ink);}
+        .row-actions-menu{position:absolute; right:0; top:100%; margin-top:4px; min-width:150px; background:var(--card); border:1px solid var(--border); border-radius:10px; box-shadow:0 12px 30px rgba(16,24,40,.15); padding:6px; z-index:50; display:none; text-align:left;}
+        .row-actions-menu.is-open{display:block;}
+        .row-actions-menu button{display:flex; align-items:center; gap:10px; width:100%; padding:9px 12px; border-radius:8px; font-size:13px; color:var(--ink); border:none; background:transparent; text-align:left; cursor:pointer;}
+        .row-actions-menu button:hover{background:var(--line);}
+        .row-actions-menu .text-danger{color:#dc2626;}
+        .row-actions-menu .text-danger:hover{background:#fef1f1;}
+
+        .empty-state{padding:60px 20px; text-align:center; color:var(--muted);}
+        .empty-state i{font-size:34px; color:var(--faint); display:block; margin-bottom:12px;}
+        .empty-state .t{font-weight:600; color:var(--ink); margin-bottom:4px;}
+        .empty-state .d{font-size:13.5px;}
+
+        /* modal */
+        #productModal .modal-content{border-radius:16px; border:none; overflow:hidden;}
+        #productModal .modal-header{border-bottom:1px solid var(--border); padding:20px 24px;}
+        #productModal .modal-header h5{font-weight:700; font-size:17px; color:var(--ink);}
+        #productModal .modal-body{padding:24px; background:var(--card);}
+        #productModal .modal-footer{border-top:1px solid var(--border); padding:16px 24px;}
+        #productModal label{font-size:11.5px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.03em; margin-bottom:6px;}
+        #productModal .form-control{border-radius:9px; border:1px solid var(--border); font-size:14px; padding:9px 12px; height:auto; background:var(--card); color:var(--ink);}
+        #productModal .form-control:focus{border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); outline:none;}
+        #productModal .section-divider{border-top:1px solid var(--line); margin:6px 0 16px; grid-column:1/-1;}
+        [data-theme="dark"] #productModal .modal-content{background:var(--card);}
+
+        @media(max-width:900px){
+            .product-row{grid-template-columns:1fr; gap:4px;}
+            .product-row > div::before{content:attr(data-label); display:block; font-size:10px; text-transform:uppercase; color:var(--faint); letter-spacing:.03em;}
+        }
     </style>
 </head>
 <body><div class="container-scroller">@include('include.header')<div class="container-fluid page-body-wrapper">@include('include.sidebar')<div class="main-panel"><div class="content-wrapper">
-    <div class="crm-page-header"><div><h3>Products</h3><p>Catalog used to build quotations — price, tax and unit are set once here.</p></div>@can('products.create')<button class="btn btn-primary" id="newProductBtn"><i class="fa fa-plus"></i> New Product</button>@endcan</div>
-    <div class="card mb-3" style="border-radius:13px;box-shadow:0 8px 24px rgba(15,23,42,.06);border:none"><div class="card-body filter-grid">
-        <input type="text" id="filterSearch" class="form-control" placeholder="Search name or SKU…">
-        <select id="filterStatus" class="form-control"><option value="">All statuses</option><option value="Active">Active</option><option value="Inactive">Inactive</option></select>
-    </div></div>
-    <div class="product-shell" id="productList"><div class="p-4 text-center text-muted">Loading products…</div></div>
+    <div class="page-head">
+        <div>
+            <h1>Products</h1>
+            <p>Catalog used to build quotations — price, tax and unit are set once here.</p>
+        </div>
+        @can('products.create')
+        <button class="btn-accent" id="newProductBtn"><i class="fa fa-plus"></i> New Product</button>
+        @endcan
+    </div>
+
+    <div class="filter-bar">
+        <input type="text" id="filterSearch" placeholder="Search name or SKU…">
+        <select id="filterStatus">
+            <option value="">All statuses</option>
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+        </select>
+    </div>
+
+    <div class="product-shell" id="productList"><div class="empty-state"><i class="fa fa-spinner fa-spin"></i><div class="t">Loading products…</div></div></div>
 </div>@include('include.footer')</div></div></div>
 
-<div class="modal fade" id="productModal"><div class="modal-dialog modal-lg"><form class="modal-content" id="productForm"><div class="modal-header"><h5 id="productModalTitle">New Product</h5><button type="button" class="close" data-dismiss="modal">&times;</button></div><div class="modal-body"><input type="hidden" id="productId"><div class="form-row">
-    <div class="form-group col-md-8"><label>Name</label><input class="form-control" name="name" id="productName" maxlength="255" required></div>
-    <div class="form-group col-md-4"><label>SKU</label><input class="form-control" name="sku" id="productSku" maxlength="100"></div>
-    <div class="form-group col-md-4"><label>Category</label><select class="form-control" name="category" id="productCategory"><option value="">None</option></select></div>
-    <div class="form-group col-md-4"><label>Unit of Measure</label><select class="form-control" name="uom" id="productUom"><option value="">None</option></select></div>
-    <div class="form-group col-md-4"><label>HSN/SAC</label><input class="form-control" name="hsn_sac" id="productHsnSac" maxlength="50"></div>
-    <div class="form-group col-md-4"><label>Unit Price</label><input type="number" step="0.01" min="0" class="form-control" name="unit_price" id="productUnitPrice" required></div>
-    <div class="form-group col-md-4"><label>Tax Rate</label><select class="form-control" name="tax_rate_id" id="productTaxRate"><option value="">No tax</option></select></div>
-    <div class="form-group col-md-8"><label>Status</label><select class="form-control" name="status" id="productStatus"><option value="Active">Active</option><option value="Inactive">Inactive</option></select></div>
-    <div class="form-group col-md-12"><label>Description</label><textarea class="form-control" name="description" id="productDescription" rows="3"></textarea></div>
-</div><div class="alert alert-danger d-none" id="productError"></div></div><div class="modal-footer"><button type="button" class="btn btn-light" data-dismiss="modal">Cancel</button><button class="btn btn-primary">Save Product</button></div></form></div></div>
+<div class="modal fade" id="productModal"><div class="modal-dialog modal-lg"><form class="modal-content" id="productForm">
+    <div class="modal-header"><h5 id="productModalTitle">New Product</h5><button type="button" class="close" data-dismiss="modal">&times;</button></div>
+    <div class="modal-body">
+        <input type="hidden" id="productId">
+        <div class="form-row">
+            <div class="form-group col-md-8"><label>Name</label><input class="form-control" name="name" id="productName" maxlength="255" required placeholder="e.g. Enterprise License"></div>
+            <div class="form-group col-md-4"><label>SKU</label><input class="form-control" name="sku" id="productSku" maxlength="100" placeholder="Optional"></div>
+            <div class="form-group col-md-4"><label>Category</label><select class="form-control" name="category" id="productCategory"><option value="">None</option></select></div>
+            <div class="form-group col-md-4"><label>Unit of Measure</label><select class="form-control" name="uom" id="productUom"><option value="">None</option></select></div>
+            <div class="form-group col-md-4"><label>HSN / SAC</label><input class="form-control" name="hsn_sac" id="productHsnSac" maxlength="50" placeholder="Optional"></div>
+            <div class="form-group col-md-4"><label>Unit Price</label><input type="number" step="0.01" min="0" class="form-control" name="unit_price" id="productUnitPrice" required placeholder="0.00"></div>
+            <div class="form-group col-md-4"><label>Tax Rate</label><select class="form-control" name="tax_rate_id" id="productTaxRate"><option value="">No tax</option></select></div>
+            <div class="form-group col-md-4"><label>Status</label><select class="form-control" name="status" id="productStatus"><option value="Active">Active</option><option value="Inactive">Inactive</option></select></div>
+            <div class="form-group col-md-12"><label>Description</label><textarea class="form-control" name="description" id="productDescription" rows="3" placeholder="Shown on quotations when relevant"></textarea></div>
+        </div>
+        <div class="alert alert-danger d-none" id="productError"></div>
+    </div>
+    <div class="modal-footer"><button type="button" class="btn btn-light" data-dismiss="modal">Cancel</button><button class="btn btn-primary" style="background:#4f46e5;border-color:#4f46e5;">Save Product</button></div>
+</form></div></div>
 <script src="{{ asset('vendors/js/vendor.bundle.base.js') }}"></script>
 <script>
 (() => {
@@ -72,20 +141,30 @@
     const canDelete = @json(auth()->user()->can('products.delete'));
     const esc = value => $('<div>').text(value ?? '').html();
     const money = value => Number(value ?? 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    const initials = name => (name || '?').trim().split(/\s+/).slice(0, 2).map(w => w[0]?.toUpperCase() || '').join('');
 
     function loadProducts() {
         const params = new URLSearchParams({search: $('#filterSearch').val(), status: $('#filterStatus').val()});
         $.get(`{{ route('products.data') }}?${params}`, response => { products = response.data; render(); });
     }
     function render() {
-        if (!products.length) { $('#productList').html('<div class="p-5 text-center text-muted"><i class="fa fa-cubes fa-2x mb-2"></i><br>No products match these filters.</div>'); return; }
+        if (!products.length) {
+            $('#productList').html(`<div class="empty-state"><i class="fa fa-cubes"></i><div class="t">No products yet</div><div class="d">Add your catalog to start building quotations faster.</div></div>`);
+            return;
+        }
         $('#productList').html(products.map(p => `<div class="product-row" data-id="${p.id}">
-            <div><div class="product-name">${esc(p.name)}</div><div class="product-meta">${p.sku ? 'SKU: '+esc(p.sku) : ''}${p.category ? (p.sku ? ' · ' : '')+esc(p.category) : ''}</div></div>
-            <div class="product-cell-secondary">${esc(p.uom || '—')}</div>
-            <div class="product-cell-secondary">₹${money(p.unit_price)}</div>
-            <div class="product-cell-secondary">${p.tax_rate ? esc(p.tax_rate.name) : 'No tax'}</div>
-            <div class="product-cell-secondary"><span class="status-pill ${p.status === 'Active' ? 'active' : 'inactive'}">${esc(p.status)}</span></div>
-            <div class="product-cell-secondary">${(canEdit || canDelete) ? `<div class="row-actions"><button type="button" class="row-actions-btn" aria-label="Actions"><i class="fa fa-ellipsis-v"></i></button><div class="row-actions-menu">${canEdit ? '<button class="editProduct"><i class="fa fa-pencil"></i> Edit</button>' : ''}${canDelete ? '<button class="deleteProduct text-danger"><i class="fa fa-trash"></i> Delete</button>' : ''}</div></div>` : ''}</div>
+            <div class="product-main" data-label="Product">
+                <div class="product-icon">${esc(initials(p.name))}</div>
+                <div style="min-width:0;">
+                    <div class="product-name">${esc(p.name)}</div>
+                    <div class="product-meta">${p.sku ? 'SKU '+esc(p.sku) : ''}${p.category ? (p.sku ? ' · ' : '')+esc(p.category) : ''}</div>
+                </div>
+            </div>
+            <div class="cell" data-label="UOM">${esc(p.uom || '—')}</div>
+            <div class="cell amount" data-label="Price">₹${money(p.unit_price)}</div>
+            <div class="cell" data-label="Tax">${p.tax_rate ? esc(p.tax_rate.name) : 'No tax'}</div>
+            <div data-label="Status"><span class="status-pill ${p.status === 'Active' ? 'active' : 'inactive'}">${esc(p.status)}</span></div>
+            <div>${(canEdit || canDelete) ? `<div class="row-actions"><button type="button" class="row-actions-btn" aria-label="Actions"><i class="fa fa-ellipsis-v"></i></button><div class="row-actions-menu">${canEdit ? '<button class="editProduct"><i class="fa fa-pencil"></i> Edit</button>' : ''}${canDelete ? '<button class="deleteProduct text-danger"><i class="fa fa-trash"></i> Delete</button>' : ''}</div></div>` : ''}</div>
         </div>`).join(''));
     }
 
@@ -110,7 +189,7 @@
         $('#productModal').modal('show');
     }
     $('#newProductBtn').on('click', () => openProduct());
-    $('.filter-grid #filterStatus').on('change', loadProducts);
+    $('#filterStatus').on('change', loadProducts);
     let searchTimer;
     $('#filterSearch').on('input', () => { clearTimeout(searchTimer); searchTimer = setTimeout(loadProducts, 300); });
     $(document).on('click', '.editProduct', function(){ openProduct(products.find(p => p.id === Number($(this).closest('.product-row').data('id')))); });
