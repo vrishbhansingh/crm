@@ -4,6 +4,7 @@ namespace App\Notifications;
 
 use App\Models\Task;
 use Illuminate\Bus\Queueable;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class TaskDueReminder extends Notification
@@ -16,7 +17,25 @@ class TaskDueReminder extends Notification
 
     public function via(object $notifiable): array
     {
-        return ['database'];
+        return ['database', 'mail'];
+    }
+
+    public function toMail(object $notifiable): MailMessage
+    {
+        $typeLabel = match ($this->task->activity_type) {
+            'call' => 'call',
+            'meeting' => 'meeting',
+            default => 'task',
+        };
+
+        return (new MailMessage)
+            ->subject('Reminder: '.$this->task->title)
+            ->greeting('Hi '.$notifiable->name.',')
+            ->line("You have a {$typeLabel} due".($this->task->due_at ? ' on '.$this->task->due_at->format('d M Y, h:i A') : '').'.')
+            ->line($this->task->title)
+            ->when($this->task->description, fn ($mail) => $mail->line($this->task->description))
+            ->action('View task', route('tasks.index', ['task' => $this->task->id]))
+            ->line('This is an automated reminder from your CRM.');
     }
 
     public function toArray(object $notifiable): array

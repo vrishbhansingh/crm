@@ -18,10 +18,12 @@ use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\OrderDetailController;
 use App\Http\Controllers\Admin\PipelineController;
 use App\Http\Controllers\Admin\PipelineStageController;
+use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\ProjectDetailsController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\TaskController;
+use App\Http\Controllers\Admin\TaxRateController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\ApiTokenController;
 use App\Http\Controllers\AuthController;
@@ -34,7 +36,7 @@ use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SecurityController;
 use App\Http\Controllers\User\InvoiceController;
 use App\Http\Controllers\User\ProfileController;
-use App\Http\Controllers\User\QuotationController;
+use App\Http\Controllers\Admin\QuotationController as QuotationRecordController;
 use App\Http\Controllers\Admin\WhatsAppAccountController;
 use App\Http\Controllers\Admin\WhatsAppCampaignController;
 use App\Http\Controllers\Admin\WhatsAppChatController;
@@ -64,16 +66,20 @@ Route::middleware(['admin_middle', 'permission:tasks.view'])->group(function () 
     Route::get('/tasks', [TaskController::class, 'index'])->name('tasks.index');
     Route::get('/tasks/data', [TaskController::class, 'data'])->name('tasks.data');
     Route::get('/tasks/related-options/{type}', [TaskController::class, 'relatedOptions'])->name('tasks.related_options');
+    Route::get('/tasks/workload', [TaskController::class, 'workload'])->name('tasks.workload');
+    Route::get('/tasks/workload/data', [TaskController::class, 'workloadData'])->name('tasks.workload_data');
 });
 
 Route::middleware(['admin_middle', 'permission:tasks.create'])->group(function () {
     Route::post('/tasks', [TaskController::class, 'store'])->name('tasks.store');
     Route::get('/tasks/assignable-users', [TaskController::class, 'assignableUsers'])->name('tasks.assignable_users');
+    Route::post('/tasks/bulk', [TaskController::class, 'bulkCreate'])->name('tasks.bulk_create');
 });
 
 Route::middleware(['admin_middle', 'permission:tasks.edit'])->group(function () {
     Route::put('/tasks/{id}', [TaskController::class, 'update'])->name('tasks.update')->whereNumber('id');
     Route::post('/tasks/{id}/complete', [TaskController::class, 'complete'])->name('tasks.complete')->whereNumber('id');
+    Route::post('/tasks/{id}/checklist-toggle', [TaskController::class, 'checklistToggle'])->name('tasks.checklist_toggle')->whereNumber('id');
 });
 
 Route::middleware(['admin_middle', 'permission:tasks.delete'])->group(function () {
@@ -379,19 +385,24 @@ Route::middleware(['admin_middle', 'permission:masters.view'])->group(function (
     Route::get('/master-data', [MasterDataController::class, 'index'])->name('master_data.index');
     Route::get('/master-data/types', [MasterDataController::class, 'getTypes'])->name('master_data.types');
     Route::get('/master-data/values', [MasterDataController::class, 'getValues'])->name('master_data.values');
+    Route::get('/master-data/tax-rates', [TaxRateController::class, 'data'])->name('master_data.tax_rates.data');
 });
 
 Route::middleware(['admin_middle', 'permission:masters.create'])->group(function () {
     Route::post('/master-data/values', [MasterDataController::class, 'store'])->name('master_data.values.store');
+    Route::post('/master-data/tax-rates', [TaxRateController::class, 'store'])->name('master_data.tax_rates.store');
 });
 
 Route::middleware(['admin_middle', 'permission:masters.edit'])->group(function () {
     Route::put('/master-data/values/{id}', [MasterDataController::class, 'update'])->name('master_data.values.update');
     Route::post('/master-data/values/{id}/toggle-status', [MasterDataController::class, 'toggleStatus'])->name('master_data.values.toggle');
+    Route::put('/master-data/tax-rates/{id}', [TaxRateController::class, 'update'])->name('master_data.tax_rates.update');
+    Route::post('/master-data/tax-rates/{id}/toggle-status', [TaxRateController::class, 'toggleStatus'])->name('master_data.tax_rates.toggle');
 });
 
 Route::middleware(['admin_middle', 'permission:masters.delete'])->group(function () {
     Route::delete('/master-data/values/{id}', [MasterDataController::class, 'destroy'])->name('master_data.values.destroy');
+    Route::delete('/master-data/tax-rates/{id}', [TaxRateController::class, 'destroy'])->name('master_data.tax_rates.destroy');
 });
 
 Route::middleware(['admin_middle', 'permission:contacts.view'])->group(function () {
@@ -430,6 +441,24 @@ Route::middleware(['admin_middle', 'permission:companies.edit'])->group(function
 
 Route::middleware(['admin_middle', 'permission:companies.delete'])->group(function () {
     Route::delete('/companies/{id}', [CrmCompanyController::class, 'destroy'])->name('companies.destroy')->where('id', '[0-9]+');
+});
+
+Route::middleware(['admin_middle', 'permission:products.view'])->group(function () {
+    Route::get('/products', [ProductController::class, 'index'])->name('products.index');
+    Route::get('/products/data', [ProductController::class, 'data'])->name('products.data');
+    Route::get('/products/options', [ProductController::class, 'options'])->name('products.options');
+});
+
+Route::middleware(['admin_middle', 'permission:products.create'])->group(function () {
+    Route::post('/products', [ProductController::class, 'store'])->name('products.store');
+});
+
+Route::middleware(['admin_middle', 'permission:products.edit'])->group(function () {
+    Route::put('/products/{id}', [ProductController::class, 'update'])->name('products.update')->whereNumber('id');
+});
+
+Route::middleware(['admin_middle', 'permission:products.delete'])->group(function () {
+    Route::delete('/products/{id}', [ProductController::class, 'destroy'])->name('products.destroy')->whereNumber('id');
 });
 
 Route::middleware(['admin_middle', 'permission:users.view'])->group(function () {
@@ -498,11 +527,42 @@ Route::middleware(['admin_middle', 'permission:orders.view'])->group(function ()
     Route::get('/projects', [ProjectDetailsController::class, 'project_details'])->name('projects.index');
     Route::get('/projects/data', [ProjectDetailsController::class, 'get_project_details'])->name('projects.data');
 
-    Route::get('/quotation/template-1/{id}', [QuotationController::class, 'quotation_template_1'])->name('quotation.template1');
-    Route::get('/quotation/template-2/{id}', [QuotationController::class, 'quotation_template_2'])->name('quotation.template2');
-    Route::get('/quotation/template-3/{id}', [QuotationController::class, 'quotation_template_3'])->name('quotation.template3');
-
     Route::get('/orders/{id}/invoice', [InvoiceController::class, 'invoice'])->name('invoice.show')->where('id', '[0-9]+');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Quotations — a real, versioned Quotation entity, quotable from either a
+| Lead or a Deal. Route names deliberately plural ('quotations.*') and the
+| controller namespaced under Admin — replaces the old singular
+| 'quotation.*' routes (3 static, unpersisted print templates driven off a
+| Lead + Order) formerly registered here.
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['admin_middle', 'permission:quotations.view'])->group(function () {
+    Route::get('/quotations', [QuotationRecordController::class, 'index'])->name('quotations.index');
+    Route::get('/quotations/data', [QuotationRecordController::class, 'data'])->name('quotations.data');
+    Route::get('/quotations/create', [QuotationRecordController::class, 'create'])->name('quotations.create_form');
+    Route::get('/quotations/link-options/{type}', [QuotationRecordController::class, 'linkOptions'])->name('quotations.link_options');
+    Route::get('/quotations/{id}/detail', [QuotationRecordController::class, 'detail'])->name('quotations.detail')->whereNumber('id');
+    Route::get('/quotations/{id}/pdf', [QuotationRecordController::class, 'pdf'])->name('quotations.pdf')->whereNumber('id');
+    Route::get('/quotations/{id}', [QuotationRecordController::class, 'show'])->name('quotations.show')->whereNumber('id');
+});
+
+Route::middleware(['admin_middle', 'permission:quotations.create'])->group(function () {
+    Route::post('/quotations', [QuotationRecordController::class, 'store'])->name('quotations.store');
+});
+
+Route::middleware(['admin_middle', 'permission:quotations.edit'])->group(function () {
+    Route::put('/quotations/{id}', [QuotationRecordController::class, 'update'])->name('quotations.update')->whereNumber('id');
+    Route::post('/quotations/{id}/items', [QuotationRecordController::class, 'addItem'])->name('quotations.items.store')->whereNumber('id');
+    Route::put('/quotations/{id}/items/{itemId}', [QuotationRecordController::class, 'updateItem'])->name('quotations.items.update')->whereNumber('id')->whereNumber('itemId');
+    Route::delete('/quotations/{id}/items/{itemId}', [QuotationRecordController::class, 'removeItem'])->name('quotations.items.destroy')->whereNumber('id')->whereNumber('itemId');
+});
+
+Route::middleware(['admin_middle', 'permission:quotations.delete'])->group(function () {
+    Route::delete('/quotations/{id}', [QuotationRecordController::class, 'destroy'])->name('quotations.destroy')->whereNumber('id');
 });
 
 Route::middleware(['admin_middle', 'permission:orders.edit'])->group(function () {

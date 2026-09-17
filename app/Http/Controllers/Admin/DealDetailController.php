@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Deal;
 use App\Models\DealStageHistory;
+use App\Models\Task;
 use Illuminate\Support\Facades\Auth;
 
 /**
@@ -37,7 +38,22 @@ class DealDetailController extends Controller
             ->latest()
             ->get();
 
-        return response()->json(['status' => true, 'data' => $history]);
+        // Kept separate from stage-history $data (the UI's "Stage Timeline"
+        // widget reads that shape specifically) — these are the deal's
+        // linked tasks/calls/meetings, for a companion "Activities" panel.
+        $tasks = Task::with('assignee:id,name')
+            ->where('related_type', 'deal')->where('related_id', $id)
+            ->latest('id')
+            ->get()
+            ->map(fn (Task $task) => [
+                'activity_type' => $task->activity_type,
+                'title' => $task->title,
+                'status' => $task->status,
+                'assignee_name' => $task->assignee->name ?? 'Unassigned',
+                'touched_at' => $task->completed_at ?? $task->due_at ?? $task->created_at,
+            ]);
+
+        return response()->json(['status' => true, 'data' => $history, 'tasks' => $tasks]);
     }
 
     private function findVisibleDeal(int $id): Deal

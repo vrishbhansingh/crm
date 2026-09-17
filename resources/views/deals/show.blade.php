@@ -270,6 +270,13 @@
                             </div>
                         </div>
 
+                        <div class="card-box">
+                            <h5><i class="fa fa-tasks"></i> Activities</h5>
+                            <div id="dealActivityList">
+                                <p class="text-muted">Loading…</p>
+                            </div>
+                        </div>
+
                     </div>
 
                     <!-- SIDEBAR -->
@@ -304,6 +311,16 @@
                             <h5><i class="fa fa-trophy"></i> Order</h5>
                             <div id="orderCardBody"></div>
                         </div>
+
+                        @can('quotations.view')
+                        <div class="card-box">
+                            <h5><i class="fa fa-file-text-o"></i> Quotations</h5>
+                            <div id="dealQuotationsList" class="mb-2"><p class="text-muted" style="font-size:12.5px;">Loading…</p></div>
+                            @can('quotations.create')
+                            <a class="btn btn-primary btn-sm btn-block" href="{{ url('/quotations/create') }}?deal_id={{ $dealId }}"><i class="fa fa-plus"></i> New Quotation</a>
+                            @endcan
+                        </div>
+                        @endcan
 
                         <div class="card-box">
                             <h5><i class="fa fa-sticky-note"></i> Notes</h5>
@@ -458,6 +475,17 @@
             });
         }
 
+        function loadQuotationsPanel() {
+            $.get(`{{ url('/quotations/data') }}?deal_id=${dealId}`, response => {
+                if (!response.data.length) { $('#dealQuotationsList').html('<p class="text-muted" style="font-size:12.5px;">No quotations yet.</p>'); return; }
+                $('#dealQuotationsList').html(response.data.map(q => `
+                    <a href="{{ url('/quotations') }}/${q.id}" class="d-flex justify-content-between align-items-center mb-2" style="font-size:13px;">
+                        <span>${esc(q.quotation_number)} <span class="text-muted">v${q.version}</span></span>
+                        <span class="badge badge-light">${esc(q.status)}</span>
+                    </a>`).join(''));
+            });
+        }
+
         function loadMoveStageOptions(d) {
             if (!d.pipeline || !d.pipeline.stages) return;
 
@@ -556,6 +584,10 @@
             return `${from} → ${to}`;
         }
 
+        function activityIcon(type) {
+            return type === 'call' ? 'fa-phone' : (type === 'meeting' ? 'fa-users' : 'fa-check-square-o');
+        }
+
         function loadTimeline() {
             $.get("{{ url('deals') }}/" + dealId + "/timeline", function(response) {
                 $('#metricStageChanges').text(response.data.length);
@@ -571,6 +603,19 @@
                         </div>`;
                 });
                 $('#timelineList').html(html || '<p class="text-muted">No stage changes yet.</p>');
+
+                let activityHtml = '';
+                (response.tasks || []).forEach(task => {
+                    activityHtml += `
+                        <div class="timeline-item">
+                            <div class="timeline-icon"><i class="fa ${activityIcon(task.activity_type)}"></i></div>
+                            <div>
+                                <div class="timeline-desc">${esc(task.title)}${task.status === 'completed' ? ' <span class="text-success">(done)</span>' : ''}</div>
+                                <div class="timeline-meta">${esc(task.assignee_name)} · ${esc(task.touched_at || '')}</div>
+                            </div>
+                        </div>`;
+                });
+                $('#dealActivityList').html(activityHtml || '<p class="text-muted">No tasks, calls or meetings linked yet.</p>');
             });
         }
 
@@ -641,6 +686,7 @@
         $(document).ready(function() {
             loadDetail();
             loadTimeline();
+            loadQuotationsPanel();
         });
     </script>
 

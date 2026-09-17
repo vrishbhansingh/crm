@@ -11,6 +11,7 @@ use App\Models\LeadAttachment;
 use App\Models\Leadfollowup;
 use App\Models\Pipeline;
 use App\Models\Tag;
+use App\Models\Task;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -76,7 +77,21 @@ class LeadDetailController extends Controller
                 'attachment_id' => $f->id,
             ]);
 
-        $timeline = $activities->concat($followUps)->concat($attachments)
+        $tasks = Task::with('assignee:id,name')
+            ->where('related_type', 'lead')->where('related_id', $id)
+            ->get()
+            ->map(fn (Task $task) => [
+                'kind' => $task->activity_type,
+                'type' => $task->activity_type,
+                'description' => $this->taskTimelineDescription($task),
+                'user_name' => $task->assignee->name ?? 'Unassigned',
+                // Last-touch time: when it actually happened/completed if
+                // known, otherwise when it's due — not when the row was
+                // created, which could be well before either.
+                'created_at' => $task->completed_at ?? $task->due_at ?? $task->created_at,
+            ]);
+
+        $timeline = $activities->concat($followUps)->concat($attachments)->concat($tasks)
             ->sortByDesc('created_at')
             ->values();
 
@@ -380,6 +395,17 @@ class LeadDetailController extends Controller
             ->get(['id', 'name', 'phone', 'email', 'company_name', 'lead_status']);
 
         return response()->json(['status' => true, 'data' => $matches]);
+    }
+
+    private function taskTimelineDescription(Task $task): string
+    {
+        $details = $task->activity_details ?? [];
+
+        return match ($task->activity_type) {
+            'call' => trim($task->title.($details['disposition'] ?? null ? ' — '.ucfirst(str_replace('_', ' ', $details['disposition'])) : '')),
+            'meeting' => trim($task->title.($details['outcome'] ?? null ? ' — '.$details['outcome'] : '')),
+            default => $task->title,
+        };
     }
 
     private function findVisibleLead(int $id): Lead

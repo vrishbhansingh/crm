@@ -197,40 +197,74 @@
                     </div>
                 </div>
 
-                <div class="row">
-                    <div class="col-md-3 mb-3">
-                        <div class="type-list" id="typeList">
-                            <!-- AJAX: master types -->
+                <ul class="nav nav-tabs mb-3" id="masterDataTabs">
+                    <li class="nav-item"><a class="nav-link active" data-tab="dropdowns" href="#">Dropdown Values</a></li>
+                    <li class="nav-item"><a class="nav-link" data-tab="taxRates" href="#">Tax Rates</a></li>
+                </ul>
+
+                <div class="tab-pane" id="dropdownsTab">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <div class="type-list" id="typeList">
+                                <!-- AJAX: master types -->
+                            </div>
+                        </div>
+
+                        <div class="col-md-9">
+                            <div class="values-panel">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h5 class="mb-0" id="activeTypeName">Select a type</h5>
+                                    <button class="btn btn-primary btn-sm" id="addValueBtn" style="display:none;" data-toggle="modal" data-target="#valueModal">
+                                        <i class="fa fa-plus"></i> Add Value
+                                    </button>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table" id="valuesTable">
+                                        <thead>
+                                            <tr>
+                                                <th>#</th>
+                                                <th>Code</th>
+                                                <th>Label</th>
+                                                <th>Status</th>
+                                                <th>Scope</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td colspan="6" class="text-center text-muted">Select a master type on the left to see its values.</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
                     </div>
+                </div>
 
-                    <div class="col-md-9">
-                        <div class="values-panel">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h5 class="mb-0" id="activeTypeName">Select a type</h5>
-                                <button class="btn btn-primary btn-sm" id="addValueBtn" style="display:none;" data-toggle="modal" data-target="#valueModal">
-                                    <i class="fa fa-plus"></i> Add Value
-                                </button>
-                            </div>
-                            <div class="table-responsive">
-                                <table class="table" id="valuesTable">
-                                    <thead>
-                                        <tr>
-                                            <th>#</th>
-                                            <th>Code</th>
-                                            <th>Label</th>
-                                            <th>Status</th>
-                                            <th>Scope</th>
-                                            <th>Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td colspan="6" class="text-center text-muted">Select a master type on the left to see its values.</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
+                <div class="tab-pane" id="taxRatesTab" style="display:none;">
+                    <div class="values-panel">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="mb-0">Tax Rates</h5>
+                            <button class="btn btn-primary btn-sm" id="addTaxRateBtn" data-toggle="modal" data-target="#taxRateModal">
+                                <i class="fa fa-plus"></i> Add Tax Rate
+                            </button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table" id="taxRatesTable">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Name</th>
+                                        <th>Rate</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td colspan="5" class="text-center text-muted">Loading…</td></tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -268,6 +302,35 @@
                         <div class="form-group">
                             <label>Sort Order</label>
                             <input type="number" id="value_sort_order" class="form-control" value="0">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Tax Rate Modal -->
+    <div class="modal fade" id="taxRateModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="taxRateModalTitle">Add Tax Rate</h5>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <form id="taxRateForm">
+                    <div class="modal-body">
+                        <input type="hidden" id="tax_rate_id">
+                        <div class="form-group">
+                            <label>Name</label>
+                            <input type="text" id="tax_rate_name" class="form-control" placeholder="e.g. GST 18%">
+                        </div>
+                        <div class="form-group">
+                            <label>Rate (%)</label>
+                            <input type="number" step="0.01" min="0" max="100" id="tax_rate_percent" class="form-control" placeholder="18">
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -471,6 +534,114 @@
         });
         $(document).on('click', '.row-actions-menu', function(e) { e.stopPropagation(); });
         $(document).on('click', function() { $('.row-actions-menu').removeClass('is-open'); });
+
+        // Tax rates tab
+        function loadTaxRates() {
+            $.get("{{ route('master_data.tax_rates.data') }}", function(response) {
+                let rows = '';
+                response.data.forEach((r, i) => {
+                    const statusClass = r.is_active ? 'active' : 'inactive';
+                    const statusLabel = r.is_active ? 'Active' : 'Inactive';
+                    rows += `
+                        <tr>
+                            <td>${i + 1}</td>
+                            <td>${esc(r.name)}</td>
+                            <td>${esc(r.rate_percent)}%</td>
+                            <td><span class="status-pill ${statusClass}">${statusLabel}</span></td>
+                            <td>
+                                <div class="row-actions">
+                                    <button type="button" class="row-actions-btn" aria-label="Actions"><i class="fa fa-ellipsis-v"></i></button>
+                                    <div class="row-actions-menu">
+                                        <button class="editTaxRateBtn" data-id="${r.id}" data-name="${esc(r.name)}" data-rate="${r.rate_percent}">
+                                            <i class="fa fa-pencil"></i> Edit
+                                        </button>
+                                        <button class="toggleTaxRateBtn" data-id="${r.id}" data-active="${r.is_active ? '1' : '0'}">
+                                            <i class="fa fa-power-off"></i> ${r.is_active ? 'Deactivate' : 'Activate'}
+                                        </button>
+                                        <button class="deleteTaxRateBtn text-danger" data-id="${r.id}">
+                                            <i class="fa fa-trash"></i> Delete
+                                        </button>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>`;
+                });
+                $('#taxRatesTable tbody').html(rows || '<tr><td colspan="5" class="text-center text-muted">No tax rates yet — add the first one.</td></tr>');
+            });
+        }
+
+        $('#masterDataTabs a').on('click', function(e) {
+            e.preventDefault();
+            $('#masterDataTabs a').removeClass('active');
+            $(this).addClass('active');
+            const tab = $(this).data('tab');
+            $('#dropdownsTab').toggle(tab === 'dropdowns');
+            $('#taxRatesTab').toggle(tab === 'taxRates');
+            if (tab === 'taxRates') loadTaxRates();
+        });
+
+        $(document).on('click', '#addTaxRateBtn', function() {
+            $('#taxRateModalTitle').text('Add Tax Rate');
+            $('#taxRateForm')[0].reset();
+            $('#tax_rate_id').val('');
+        });
+
+        $(document).on('click', '.editTaxRateBtn', function() {
+            $('#taxRateModalTitle').text('Edit Tax Rate');
+            $('#tax_rate_id').val($(this).data('id'));
+            $('#tax_rate_name').val($(this).data('name'));
+            $('#tax_rate_percent').val($(this).data('rate'));
+            $('#taxRateModal').modal('show');
+        });
+
+        $(document).on('submit', '#taxRateForm', function(e) {
+            e.preventDefault();
+            const id = $('#tax_rate_id').val();
+            const payload = { name: $('#tax_rate_name').val(), rate_percent: $('#tax_rate_percent').val() };
+            const url = id ? "{{ url('master-data/tax-rates') }}/" + id : "{{ route('master_data.tax_rates.store') }}";
+
+            $.ajax({
+                url: url,
+                type: 'POST',
+                data: id ? Object.assign(payload, { _method: 'PUT' }) : payload,
+                success: function(response) {
+                    if (response.status) {
+                        toastr.success(response.message);
+                        $('#taxRateModal').modal('hide');
+                        loadTaxRates();
+                    } else {
+                        toastr.error(response.message);
+                    }
+                },
+                error: function(xhr) {
+                    toastr.error(xhr.responseJSON?.message || 'Something went wrong');
+                }
+            });
+        });
+
+        $(document).on('click', '.toggleTaxRateBtn', function() {
+            const id = $(this).data('id');
+            if ($(this).data('active') == '1' && !confirm('Deactivate this tax rate? It will stop appearing in product/quotation pickers.')) {
+                return;
+            }
+            $.post("{{ url('master-data/tax-rates') }}/" + id + "/toggle-status", {}, function(response) {
+                if (response.status) { toastr.success('Status updated'); loadTaxRates(); }
+            }).fail(xhr => toastr.error(xhr.responseJSON?.message || 'Something went wrong'));
+        });
+
+        $(document).on('click', '.deleteTaxRateBtn', function() {
+            if (!confirm('Delete this tax rate?')) return;
+            const id = $(this).data('id');
+            $.ajax({
+                url: "{{ url('master-data/tax-rates') }}/" + id,
+                type: 'POST',
+                data: { _method: 'DELETE' },
+                success: function(response) {
+                    if (response.status) { toastr.success(response.message); loadTaxRates(); }
+                },
+                error: xhr => toastr.error(xhr.responseJSON?.message || 'Something went wrong')
+            });
+        });
 
         $(document).ready(function() {
             loadTypes();

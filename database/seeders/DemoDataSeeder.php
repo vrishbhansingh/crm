@@ -130,7 +130,7 @@ class DemoDataSeeder extends Seeder
         foreach ($leads as $i => $row) {
             $createdAt = Carbon::now()->subDays($row['days_ago'])->setTime(10, 30);
 
-            Lead::create([
+            $lead = Lead::create([
                 'tenant_id' => self::TENANT_ID,
                 'contact_id' => $contactIds[$i % count($contactIds)] ?? null,
                 'lead_type' => 'new',
@@ -146,9 +146,13 @@ class DemoDataSeeder extends Seeder
                 'assigned_by' => self::USER_ID,
                 'assigned_at' => $createdAt,
                 'status' => 'Active',
-                'created_at' => $createdAt,
-                'updated_at' => $createdAt,
             ]);
+
+            // created_at/updated_at aren't in Lead's $fillable, so create()
+            // silently drops them and Eloquent's auto-timestamping stamps
+            // "now" instead — forceFill bypasses mass-assignment protection
+            // to actually backdate these.
+            $lead->forceFill(['created_at' => $createdAt, 'updated_at' => $createdAt])->save();
         }
     }
 
@@ -171,7 +175,7 @@ class DemoDataSeeder extends Seeder
             $createdAt = Carbon::now()->subDays(20 - $i * 2);
             $closedAt = $row['status'] !== 'open' ? $createdAt->copy()->addDays(5) : null;
 
-            $dealIds[] = Deal::create([
+            $deal = Deal::create([
                 'tenant_id' => self::TENANT_ID,
                 'pipeline_id' => 1,
                 'stage_id' => $stageIds[$row['stage']],
@@ -185,9 +189,13 @@ class DemoDataSeeder extends Seeder
                 'expected_close_date' => Carbon::now()->addDays(7 + $i * 3)->toDateString(),
                 'closed_at' => $closedAt,
                 'status' => $row['status'],
-                'created_at' => $createdAt,
-                'updated_at' => $closedAt ?? $createdAt,
-            ])->id;
+            ]);
+
+            // created_at/updated_at aren't in Deal's $fillable — see the
+            // same forceFill note in seedLeads().
+            $deal->forceFill(['created_at' => $createdAt, 'updated_at' => $closedAt ?? $createdAt])->save();
+
+            $dealIds[] = $deal->id;
         }
 
         return $dealIds;
@@ -220,20 +228,24 @@ class DemoDataSeeder extends Seeder
                 'order_status' => 'in_progress',
                 'currency' => 'INR',
                 'status' => 'Active',
-                'created_at' => $invoiceDate,
-                'updated_at' => $invoiceDate,
             ]);
 
-            PaymentDetails::create([
+            // created_at/updated_at aren't in Order's/PaymentDetails'
+            // $fillable — see the same forceFill note in seedLeads().
+            $order->forceFill(['created_at' => $invoiceDate, 'updated_at' => $invoiceDate])->save();
+
+            $paymentDate = $invoiceDate->copy()->addDays(3);
+
+            $payment = PaymentDetails::create([
                 'tenant_id' => self::TENANT_ID,
                 'order_id' => $order->id,
                 'payment_mode' => 'bank_transfer',
-                'payment_date' => $invoiceDate->copy()->addDays(3),
+                'payment_date' => $paymentDate,
                 'paid_amount' => $paid,
                 'status' => 'Active',
-                'created_at' => $invoiceDate->copy()->addDays(3),
-                'updated_at' => $invoiceDate->copy()->addDays(3),
             ]);
+
+            $payment->forceFill(['created_at' => $paymentDate, 'updated_at' => $paymentDate])->save();
         }
     }
 
