@@ -65,6 +65,31 @@ class QuotationManagementTest extends TestCase
         $this->assertStringStartsWith('QT-'.now()->format('Y').'-', $quotation->quotation_number);
     }
 
+    public function test_user_can_create_a_quotation_with_line_items_in_one_request(): void
+    {
+        $lead = Lead::create(['tenant_id' => $this->tenant->id, 'name' => 'One-Shot Lead', 'status' => 'Active', 'is_converted' => 'No']);
+        $product = Product::create(['tenant_id' => $this->tenant->id, 'name' => 'Widget', 'unit_price' => 200, 'status' => 'Active']);
+        $taxRate = TaxRate::create(['tenant_id' => $this->tenant->id, 'name' => 'GST 18%', 'rate_percent' => 18]);
+
+        $response = $this->postJson('/quotations', [
+            'lead_id' => $lead->id,
+            'terms_conditions' => 'Net 30',
+            'items' => [
+                ['product_id' => $product->id, 'description' => 'Widget', 'quantity' => 2, 'unit_price' => 200, 'discount_percent' => 10, 'tax_rate_id' => $taxRate->id],
+                ['description' => 'Custom setup fee', 'quantity' => 1, 'unit_price' => 500],
+            ],
+        ])->assertOk();
+
+        $quotation = Quotation::findOrFail($response->json('id'));
+        $this->assertSame('Net 30', $quotation->terms_conditions);
+        $this->assertSame(2, $quotation->items()->count());
+        // widget: 400 gross, -10% = 360, +18% tax = 424.80; setup fee: 500 flat → subtotal 900
+        $this->assertSame('900.00', (string) $quotation->sub_total);
+        $this->assertSame('40.00', (string) $quotation->discount_amount);
+        $this->assertSame('64.80', (string) $quotation->tax_amount);
+        $this->assertSame('924.80', (string) $quotation->total_amount);
+    }
+
     public function test_user_can_create_a_quotation_from_a_deal(): void
     {
         [$pipeline, $stage] = $this->pipeline();
