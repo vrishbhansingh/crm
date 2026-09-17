@@ -45,7 +45,8 @@
     .auth-shell {
       min-height: 100vh;
       display: grid;
-      grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+      /* ~66/34 split, matching the reference layout's proportions. */
+      grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
     }
 
     /* ===== LEFT: brand / visual panel — photo slideshow =====
@@ -56,21 +57,35 @@
     .auth-visual {
       position: relative;
       overflow: hidden;
+      /* Sampled from the image's own sky tone, so if the viewport's aspect
+         ratio doesn't match the image's and it can't fill edge-to-edge,
+         the leftover strip blends in instead of showing a hard color band. */
+      background: #dbedfc;
     }
 
     .auth-slide {
       position: absolute;
       inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       opacity: 0;
       visibility: hidden;
       transition: opacity 0.9s ease;
     }
     .auth-slide.is-active { opacity: 1; visibility: visible; }
 
+    /* object-fit:contain, not cover — this image is a fixed composition
+       with headline/cards/quote text right up to every edge, so cropping
+       it to fill the panel (cover) cuts words off on tall/narrow screens.
+       Contain guarantees the whole picture, and all its text, stays visible. */
     .auth-slide img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
+      max-width: 100%;
+      max-height: 100%;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+      display: block;
     }
 
     /* ===== RIGHT: form panel ===== */
@@ -114,10 +129,10 @@
     .auth-subtitle {
       font-size: 14px;
       color: var(--muted);
-      margin-bottom: 28px;
+      margin-bottom: 22px;
     }
 
-    .form-group { margin-bottom: 18px; }
+    .form-group { margin-bottom: 16px; }
 
     .form-label {
       display: block;
@@ -150,21 +165,24 @@
       width: 100%;
       height: 48px;
       border-radius: 10px;
-      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      background: var(--primary);
       border: none;
       color: #fff;
       font-size: 15px;
       font-weight: 600;
       cursor: pointer;
-      margin-top: 6px;
+      margin-top: 2px;
       transition: 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
     }
 
     .login-btn:hover {
       transform: translateY(-1px);
       box-shadow: 0 10px 22px rgba(99, 102, 241, 0.3);
     }
-    .login-btn i { margin-right: 6px; }
 
     .auth-signup-line {
       text-align: center;
@@ -210,8 +228,62 @@
     .eye-btn:hover { color: var(--text); }
     .eye-btn:focus { outline: none; }
 
-    .forgot-link { text-align: right; margin-top: 8px; }
+    .form-options {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 10px;
+      margin-bottom: 4px;
+    }
+    .remember-check {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12.5px;
+      color: var(--text);
+      cursor: pointer;
+      user-select: none;
+    }
+    .remember-check input { width: 14px; height: 14px; accent-color: var(--primary); cursor: pointer; }
+
+    .forgot-link { margin: 0; }
     .forgot-link a { font-size: 12.5px; color: var(--primary); text-decoration: none; }
+
+    /* Visual only — no OAuth is wired up behind these yet (see chat). */
+    .auth-divider {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 20px 0;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .auth-divider::before, .auth-divider::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+    .social-row { display: flex; gap: 12px; }
+    .social-btn {
+      flex: 1;
+      height: 44px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--text);
+      font-size: 13.5px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .social-btn:hover { background: rgba(37, 99, 235, 0.06); }
+    .social-btn.google i { color: #ea4335; }
+    .social-btn.microsoft i { color: #5e5e5e; }
 
     @media (max-width: 900px) {
       .auth-shell { grid-template-columns: 1fr; }
@@ -265,6 +337,13 @@
                 <i class="fa fa-eye"></i>
               </button>
             </div>
+          </div>
+
+          <div class="form-options">
+            <label class="remember-check">
+              <input type="checkbox">
+              Remember me
+            </label>
             <div class="forgot-link">
               <a href="{{ route('password.request') }}">Forgot password?</a>
             </div>
@@ -276,6 +355,12 @@
             <i class="fa fa-arrow-right"></i>
           </button>
         </form>
+
+        <div class="auth-divider">or continue with</div>
+        <div class="social-row">
+          <button type="button" class="social-btn google" id="googleLoginBtn"><i class="fa-brands fa-google"></i> Google</button>
+          <button type="button" class="social-btn microsoft" id="microsoftLoginBtn"><i class="fa-brands fa-microsoft"></i> Microsoft</button>
+        </div>
 
         <p class="auth-signup-line">New company? <a href="{{ route('register') }}">Create a workspace</a></p>
 
@@ -346,6 +431,14 @@
           const message = xhr.responseJSON?.message || 'Something went wrong!';
           toastr.error(message);
         }
+      });
+    });
+
+    ['googleLoginBtn', 'microsoftLoginBtn'].forEach(function(id) {
+      const btn = document.getElementById(id);
+      const provider = id === 'googleLoginBtn' ? 'Google' : 'Microsoft';
+      btn.addEventListener('click', function() {
+        toastr.info(provider + ' sign-in isn\'t set up yet — please sign in with your email and password.');
       });
     });
 
