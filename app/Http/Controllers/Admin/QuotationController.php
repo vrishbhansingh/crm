@@ -223,12 +223,15 @@ class QuotationController extends Controller
     private function validatedQuotationData(Request $request, ?int $tenantId, ?Quotation $existing = null): array
     {
         $data = $request->validate([
-            'lead_id' => ['nullable', 'integer', Rule::exists('leads', 'id')->where('tenant_id', $tenantId)],
-            'deal_id' => ['nullable', 'integer', Rule::exists('deals', 'id')->where('tenant_id', $tenantId)],
+            'lead_id' => ['nullable', 'integer', Rule::exists($this->tenantTable('leads'), 'id')->where('tenant_id', $tenantId)],
+            'deal_id' => ['nullable', 'integer', Rule::exists($this->tenantTable('deals'), 'id')->where('tenant_id', $tenantId)],
             'valid_until' => ['nullable', 'date'],
             'currency' => ['nullable', 'string', 'max:10'],
             'terms_conditions' => ['nullable', 'string', 'max:10000'],
             'notes' => ['nullable', 'string', 'max:5000'],
+            // users lives on the master connection even in database-per-tenant
+            // mode (see User::getConnectionName()), so this one is never
+            // prefixed — unlike leads/deals/products/tax_rates above/below.
             'owner_id' => ['nullable', Rule::exists('users', 'id')->where('tenant_id', $tenantId)],
         ]);
 
@@ -242,13 +245,13 @@ class QuotationController extends Controller
     private function validatedItemData(Request $request, Quotation $quotation): array
     {
         $data = $request->validate([
-            'product_id' => ['nullable', Rule::exists('products', 'id')->where('tenant_id', $quotation->tenant_id)],
+            'product_id' => ['nullable', Rule::exists($this->tenantTable('products'), 'id')->where('tenant_id', $quotation->tenant_id)],
             'description' => ['required', 'string', 'max:255'],
             'uom' => ['nullable', 'string', 'max:100'],
             'quantity' => ['required', 'numeric', 'min:0.01'],
             'unit_price' => ['required', 'numeric', 'min:0'],
             'discount_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
-            'tax_rate_id' => ['nullable', Rule::exists('tax_rates', 'id')->where('tenant_id', $quotation->tenant_id)],
+            'tax_rate_id' => ['nullable', Rule::exists($this->tenantTable('tax_rates'), 'id')->where('tenant_id', $quotation->tenant_id)],
         ]);
 
         $data['tax_percent'] = isset($data['tax_rate_id'])
@@ -256,6 +259,17 @@ class QuotationController extends Controller
             : 0;
 
         return $data;
+    }
+
+    /**
+     * Tenant-scoped tables (leads, deals, products, tax_rates, quotations,
+     * tasks, …) live on the separate 'tenant' connection in database-mode
+     * tenancy, not the default one Rule::exists() checks by default — same
+     * fix already established in DealController/MasterDataController.
+     */
+    private function tenantTable(string $table): string
+    {
+        return (config('tenancy.mode') === 'database' ? 'tenant.' : '').$table;
     }
 
     private function visibleQuery()
