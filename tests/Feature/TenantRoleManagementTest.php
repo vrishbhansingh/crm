@@ -168,6 +168,79 @@ class TenantRoleManagementTest extends TestCase
         $this->assertSame('Admin', $adminRole->fresh()->name);
     }
 
+    public function test_products_and_quotations_modules_appear_in_the_permission_catalog(): void
+    {
+        [$tenant, $admin] = $this->tenantAdmin('eight');
+        $this->actingAs($admin)->withSession(['session_token' => $admin->session_token]);
+
+        $response = $this->getJson('/roles/permissions')->assertOk()->json();
+        $modules = collect($response['groups'])->pluck('module');
+        $this->assertTrue($modules->contains('products'), 'Products module missing from the permission catalog');
+        $this->assertTrue($modules->contains('quotations'), 'Quotations module missing from the permission catalog');
+
+        $allNames = collect($response['groups'])->flatMap(fn ($g) => collect($g['permissions'])->pluck('name'));
+        foreach (['products.view', 'products.create', 'products.edit', 'products.delete'] as $name) {
+            $this->assertTrue($allNames->contains($name), "Missing {$name} in the picker");
+        }
+        foreach (['quotations.view', 'quotations.create', 'quotations.edit', 'quotations.delete'] as $name) {
+            $this->assertTrue($allNames->contains($name), "Missing {$name} in the picker");
+        }
+    }
+
+    /**
+     * The real end-to-end check the "allow/disallow" toggle needs: a role
+     * with the permission unchecked genuinely can't reach the page or its
+     * write endpoints (not just hidden from the sidebar), and flipping it
+     * on/off through the actual Manage Permissions endpoint — the same
+     * code path the checkbox UI calls — takes effect immediately for a
+     * user already logged in, with no re-login required.
+     */
+    public function test_toggling_products_and_quotations_permissions_actually_allows_and_blocks_access(): void
+    {
+        [$tenant, $admin] = $this->tenantAdmin('ten');
+        PermissionTeam::set($tenant->id);
+
+        $role = Role::create(['tenant_id' => $tenant->id, 'name' => 'Catalog Role', 'guard_name' => 'web']);
+        $role->syncPermissions(Permission::whereIn('name', ['leads.view'])->get());
+        $user = User::create(['tenant_id' => $tenant->id, 'name' => 'Catalog User', 'email' => Str::random(10).'@example.test', 'password' => Hash::make('password'), 'status' => 'Active', 'session_token' => Str::random(60)]);
+        $user->assignRole($role);
+
+        // Disallowed: no products/quotations permission granted yet.
+        $this->actingAs($user)->withSession(['session_token' => $user->session_token]);
+        $this->get('/products')->assertForbidden();
+        $this->getJson('/products/data')->assertForbidden();
+        $this->postJson('/products', ['name' => 'Blocked', 'unit_price' => 10, 'status' => 'Active'])->assertForbidden();
+        $this->get('/quotations')->assertForbidden();
+        $this->getJson('/quotations/data')->assertForbidden();
+
+        // Allow: an admin grants the permissions via the real Manage
+        // Permissions endpoint (PUT /roles/{id}/permissions), exactly what
+        // the checkbox UI submits.
+        $this->actingAs($admin)->withSession(['session_token' => $admin->session_token])
+            ->putJson("/roles/{$role->id}/permissions", [
+                'permissions' => ['leads.view', 'products.view', 'products.create', 'quotations.view', 'quotations.create'],
+            ])->assertOk();
+
+        // Same user, same session, no re-login — access should now work.
+        $this->actingAs($user)->withSession(['session_token' => $user->session_token]);
+        $this->get('/products')->assertOk();
+        $this->getJson('/products/data')->assertOk();
+        $this->postJson('/products', ['name' => 'Allowed Product', 'unit_price' => 10, 'status' => 'Active'])->assertOk();
+        $this->get('/quotations')->assertOk();
+        $this->getJson('/quotations/data')->assertOk();
+
+        // Disallow again: revoking through the same endpoint blocks it
+        // straight back — proves this isn't a one-way/cached grant.
+        $this->actingAs($admin)->withSession(['session_token' => $admin->session_token])
+            ->putJson("/roles/{$role->id}/permissions", ['permissions' => ['leads.view']])
+            ->assertOk();
+
+        $this->actingAs($user)->withSession(['session_token' => $user->session_token]);
+        $this->get('/products')->assertForbidden();
+        $this->get('/quotations')->assertForbidden();
+        $this->postJson('/products', ['name' => 'Blocked Again', 'unit_price' => 10, 'status' => 'Active'])->assertForbidden();
+    }
+
     private function tenantAdmin(string $label): array
     {
         $tenant = Tenant::create(['name' => "Tenant {$label}", 'slug' => $label.'-'.Str::random(8), 'status' => 'Active']);
