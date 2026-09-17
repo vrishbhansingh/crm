@@ -284,7 +284,7 @@
 
     <div class="auth-visual">
       <div class="auth-slide is-active">
-        <img src="{{ asset('images/login_bg_1.png') }}" alt="">
+        <img src="{{ asset('images/login_bg_1.jpg') }}" alt="">
       </div>
     </div>
 
