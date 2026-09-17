@@ -57,40 +57,35 @@
     .auth-visual {
       position: relative;
       overflow: hidden;
-      /* Sampled from the image's own sky tone, so if the viewport's aspect
-         ratio doesn't match the image's and it can't fill edge-to-edge,
-         the leftover strip blends in instead of showing a hard color band. */
-      background: #dbedfc;
     }
 
     .auth-slide {
       position: absolute;
       inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
       opacity: 0;
       visibility: hidden;
       transition: opacity 0.9s ease;
     }
     .auth-slide.is-active { opacity: 1; visibility: visible; }
 
-    /* object-fit:contain, not cover — this image is a fixed composition
-       with headline/cards/quote text right up to every edge, so cropping
-       it to fill the panel (cover) cuts words off on tall/narrow screens.
-       Contain guarantees the whole picture, and all its text, stays visible. */
+    /* This image (1536x1024, 1.5:1) is a fixed composition with text near
+       every edge. The panel is relatively taller than that (~1.27:1 on a
+       typical desktop window at the new wider 2fr:1fr split), so cover
+       trims a modest, even sliver off the left/right edges — a few pixels
+       into the outermost letters/punctuation, not whole words — instead of
+       contain's visible top/bottom letterbox gap when aspect ratios don't
+       match. */
     .auth-slide img {
-      max-width: 100%;
-      max-height: 100%;
-      width: auto;
-      height: auto;
-      object-fit: contain;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
       display: block;
     }
 
     /* ===== RIGHT: form panel ===== */
     .auth-form-panel {
       position: relative;
+      overflow: hidden;
       background: var(--panel);
       display: flex;
       flex-direction: column;
@@ -98,8 +93,35 @@
       justify-content: center;
       padding: 40px 28px;
     }
+    /* Soft brand-colored glows top-right and bottom-left so the panel
+       reads as designed rather than a flat white rectangle. */
+    .auth-form-panel::before,
+    .auth-form-panel::after {
+      content: "";
+      position: absolute;
+      z-index: 0;
+      border-radius: 50%;
+      pointer-events: none;
+      filter: blur(60px);
+    }
+    .auth-form-panel::before {
+      width: 280px;
+      height: 280px;
+      top: -90px;
+      right: -70px;
+      background: radial-gradient(circle, rgba(37, 99, 235, 0.16), transparent 70%);
+    }
+    .auth-form-panel::after {
+      width: 320px;
+      height: 320px;
+      bottom: -110px;
+      left: -90px;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.12), transparent 70%);
+    }
 
     .auth-form-wrap {
+      position: relative;
+      z-index: 1;
       width: 100%;
       max-width: 380px;
       animation: slideUp 0.5s ease;
@@ -249,42 +271,6 @@
     .forgot-link { margin: 0; }
     .forgot-link a { font-size: 12.5px; color: var(--primary); text-decoration: none; }
 
-    /* Visual only — no OAuth is wired up behind these yet (see chat). */
-    .auth-divider {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin: 20px 0;
-      font-size: 12px;
-      color: var(--muted);
-    }
-    .auth-divider::before, .auth-divider::after {
-      content: "";
-      flex: 1;
-      height: 1px;
-      background: var(--border);
-    }
-    .social-row { display: flex; gap: 12px; }
-    .social-btn {
-      flex: 1;
-      height: 44px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      background: var(--panel);
-      color: var(--text);
-      font-size: 13.5px;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      cursor: pointer;
-      transition: background 0.15s ease;
-    }
-    .social-btn:hover { background: rgba(37, 99, 235, 0.06); }
-    .social-btn.google i { color: #ea4335; }
-    .social-btn.microsoft i { color: #5e5e5e; }
-
     @media (max-width: 900px) {
       .auth-shell { grid-template-columns: 1fr; }
       .auth-visual { display: none; }
@@ -356,12 +342,6 @@
           </button>
         </form>
 
-        <div class="auth-divider">or continue with</div>
-        <div class="social-row">
-          <button type="button" class="social-btn google" id="googleLoginBtn"><i class="fa-brands fa-google"></i> Google</button>
-          <button type="button" class="social-btn microsoft" id="microsoftLoginBtn"><i class="fa-brands fa-microsoft"></i> Microsoft</button>
-        </div>
-
         <p class="auth-signup-line">New company? <a href="{{ route('register') }}">Create a workspace</a></p>
 
         <div class="footer-text">
@@ -431,14 +411,6 @@
           const message = xhr.responseJSON?.message || 'Something went wrong!';
           toastr.error(message);
         }
-      });
-    });
-
-    ['googleLoginBtn', 'microsoftLoginBtn'].forEach(function(id) {
-      const btn = document.getElementById(id);
-      const provider = id === 'googleLoginBtn' ? 'Google' : 'Microsoft';
-      btn.addEventListener('click', function() {
-        toastr.info(provider + ' sign-in isn\'t set up yet — please sign in with your email and password.');
       });
     });
 
