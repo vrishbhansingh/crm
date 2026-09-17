@@ -13,6 +13,7 @@ use App\Services\QuotationNumberService;
 use App\Support\TenantContext;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 /**
@@ -66,6 +67,7 @@ class QuotationController extends Controller
         return view('quotations.create', [
             'leadId' => $request->integer('lead_id') ?: null,
             'dealId' => $request->integer('deal_id') ?: null,
+            'defaultTerms' => CompanyDetails::first()?->default_quotation_terms,
         ]);
     }
 
@@ -96,12 +98,22 @@ class QuotationController extends Controller
         return response()->json(['data' => $records->map(fn ($r) => ['id' => $r->id, 'label' => $r->name])]);
     }
 
+    /**
+     * Creates the quotation and, when the caller supplies them, its line
+     * items in one request — the "single page" flow (pick lead/deal, add
+     * products, set terms, generate) posts everything here at once rather
+     * than creating a bare draft and requiring a second page/round-trip
+     * per line item. `items` is optional so the old create-then-edit path
+     * (POST with just lead_id/deal_id) still works unchanged.
+     */
     public function store(Request $request)
     {
         $tenantId = TenantContext::id();
         abort_if($tenantId === null, 422, 'Select a tenant before creating a quotation.');
 
         $data = $this->validatedQuotationData($request, $tenantId);
+        $items = $this->validatedItemsArray($request, $tenantId);
+
         $data['tenant_id'] = $tenantId;
         $data['status'] = 'draft';
         $data['version'] = 1;
@@ -109,10 +121,54 @@ class QuotationController extends Controller
         $data['created_by'] = Auth::guard('web')->id();
         $data['terms_conditions'] = $data['terms_conditions'] ?? CompanyDetails::first()?->default_quotation_terms;
 
-        $quotation = Quotation::create($data);
-        QuotationNumberService::saveNew($quotation);
+        $quotation = DB::connection($this->tenantConnection())->transaction(function () use ($data, $items, $tenantId) {
+            $quotation = Quotation::create($data);
+            QuotationNumberService::saveNew($quotation);
+
+            foreach ($items as $sort => $item) {
+                $item['tenant_id'] = $tenantId;
+                $item['quotation_id'] = $quotation->id;
+                $item['sort_order'] = $sort + 1;
+                $item['tax_percent'] = isset($item['tax_rate_id'])
+                    ? (float) (TaxRate::find($item['tax_rate_id'])?->rate_percent ?? 0)
+                    : 0;
+                QuotationItem::create($item);
+            }
+
+            if ($items) {
+                $quotation->recalculateTotals();
+            }
+
+            return $quotation;
+        });
 
         return response()->json(['status' => true, 'message' => 'Quotation created successfully', 'id' => $quotation->id]);
+    }
+
+    /**
+     * items.* validation shares the same per-field rules as
+     * validatedItemData() but is array-shaped since it arrives nested
+     * inside the quotation-creation request rather than one item at a time.
+     */
+    private function validatedItemsArray(Request $request, int $tenantId): array
+    {
+        $validated = $request->validate([
+            'items' => ['nullable', 'array'],
+            'items.*.product_id' => ['nullable', Rule::exists($this->tenantTable('products'), 'id')->where('tenant_id', $tenantId)],
+            'items.*.description' => ['required_with:items', 'string', 'max:255'],
+            'items.*.uom' => ['nullable', 'string', 'max:100'],
+            'items.*.quantity' => ['required_with:items', 'numeric', 'min:0.01'],
+            'items.*.unit_price' => ['required_with:items', 'numeric', 'min:0'],
+            'items.*.discount_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'items.*.tax_rate_id' => ['nullable', Rule::exists($this->tenantTable('tax_rates'), 'id')->where('tenant_id', $tenantId)],
+        ]);
+
+        return $validated['items'] ?? [];
+    }
+
+    private function tenantConnection(): string
+    {
+        return config('tenancy.mode') === 'database' ? 'tenant' : config('tenancy.master_connection', 'mysql');
     }
 
     public function show(int $id)
