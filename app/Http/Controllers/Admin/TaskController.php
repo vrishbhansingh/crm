@@ -330,12 +330,22 @@ class TaskController extends Controller
             'recurrence_rule' => ['nullable', Rule::in(['daily', 'weekly', 'monthly'])],
             'recurrence_interval' => ['nullable', 'integer', 'min:1', 'max:365'],
             'recurrence_end_date' => ['nullable', 'date'],
-            'depends_on_task_id' => ['nullable', Rule::exists('tasks', 'id')->where('tenant_id', $tenantId)],
+            'depends_on_task_id' => ['nullable', Rule::exists($this->tenantTable('tasks'), 'id')->where('tenant_id', $tenantId)],
         ]);
 
         $data['activity_type'] = $data['activity_type'] ?? 'task';
 
         return $data;
+    }
+
+    /**
+     * tasks lives on the separate 'tenant' connection in database-mode
+     * tenancy, not the default one Rule::exists() checks by default — same
+     * fix already established in DealController/MasterDataController.
+     */
+    private function tenantTable(string $table): string
+    {
+        return (config('tenancy.mode') === 'database' ? 'tenant.' : '').$table;
     }
 
     private function visibleQuery()

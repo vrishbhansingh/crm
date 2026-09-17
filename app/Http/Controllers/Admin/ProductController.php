@@ -88,10 +88,20 @@ class ProductController extends Controller
             'uom' => 'nullable|string|max:100',
             'hsn_sac' => 'nullable|string|max:50',
             'unit_price' => 'required|numeric|min:0',
-            'tax_rate_id' => ['nullable', Rule::exists('tax_rates', 'id')->where('tenant_id', $tenantId)],
+            'tax_rate_id' => ['nullable', Rule::exists($this->tenantTable('tax_rates'), 'id')->where('tenant_id', $tenantId)],
             'description' => 'nullable|string|max:5000',
             'status' => ['required', Rule::in(['Active', 'Inactive'])],
         ]);
+    }
+
+    /**
+     * tax_rates lives on the separate 'tenant' connection in database-mode
+     * tenancy, not the default one Rule::exists() checks by default — same
+     * fix already established in DealController/MasterDataController.
+     */
+    private function tenantTable(string $table): string
+    {
+        return (config('tenancy.mode') === 'database' ? 'tenant.' : '').$table;
     }
 
     private function findEditable(int $id): Product
