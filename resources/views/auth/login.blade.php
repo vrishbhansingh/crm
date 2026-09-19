@@ -46,7 +46,7 @@
       min-height: 100vh;
       display: grid;
       /* ~66/34 split, matching the reference layout's proportions. */
-      grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+      grid-template-columns: minmax(0, 2fr) minmax(360px, 1fr);
     }
 
     /* ===== LEFT: brand / visual panel — photo slideshow =====
@@ -57,29 +57,45 @@
     .auth-visual {
       position: relative;
       overflow: hidden;
+      background: #cfe2f3;
     }
 
     .auth-slide {
       position: absolute;
       inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       opacity: 0;
       visibility: hidden;
       transition: opacity 0.9s ease;
     }
     .auth-slide.is-active { opacity: 1; visibility: visible; }
 
-    /* This image (1536x1024, 1.5:1) is a fixed composition with text near
-       every edge. The panel is relatively taller than that (~1.27:1 on a
-       typical desktop window at the new wider 2fr:1fr split), so cover
-       trims a modest, even sliver off the left/right edges — a few pixels
-       into the outermost letters/punctuation, not whole words — instead of
-       contain's visible top/bottom letterbox gap when aspect ratios don't
-       match. */
+    /* Responsive strategy for an image with text baked in: the picture is
+       always shown WHOLE (never cropped, so no screen size cuts words off),
+       scaled to fit whichever dimension is tighter. Whatever space is left
+       over — which varies with every window shape — is filled by a blurred,
+       enlarged copy of the same photo, so it reads as the scene continuing
+       rather than empty bars. The sharp image's edges are feathered into it. */
+    .auth-slide-backdrop {
+      position: absolute;
+      inset: -60px;
+      background-size: cover;
+      background-position: center;
+      filter: blur(32px) saturate(1.05);
+    }
     .auth-slide img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
+      position: relative;
       display: block;
+      width: min(100%, 150vh);
+      height: auto;
+      -webkit-mask-image: linear-gradient(to bottom, transparent, #000 5%, #000 95%, transparent),
+                          linear-gradient(to right, transparent, #000 4%, #000 96%, transparent);
+      -webkit-mask-composite: source-in;
+      mask-image: linear-gradient(to bottom, transparent, #000 5%, #000 95%, transparent),
+                  linear-gradient(to right, transparent, #000 4%, #000 96%, transparent);
+      mask-composite: intersect;
     }
 
     /* ===== RIGHT: form panel ===== */
@@ -271,8 +287,15 @@
     .forgot-link { margin: 0; }
     .forgot-link a { font-size: 12.5px; color: var(--primary); text-decoration: none; }
 
+    /* Tablet: stack, image becomes a banner above the form (its baked-in
+       text is still legible at this width). */
     @media (max-width: 900px) {
       .auth-shell { grid-template-columns: 1fr; }
+      .auth-visual { aspect-ratio: 3 / 2; max-height: 60vh; }
+      .auth-slide img { width: min(100%, 90vh); }
+    }
+    /* Phone: the picture's text would shrink to unreadable, so show just the form. */
+    @media (max-width: 599px) {
       .auth-visual { display: none; }
     }
   </style>
@@ -284,7 +307,8 @@
 
     <div class="auth-visual">
       <div class="auth-slide is-active">
-        <img src="{{ asset('images/login_bg_1.jpg') }}" alt="">
+        <div class="auth-slide-backdrop" style="background-image: url('{{ asset('images/login_bg_1.jpg') }}');"></div>
+        <img src="{{ asset('images/login_bg_1.jpg') }}" alt="" fetchpriority="high">
       </div>
     </div>
 
