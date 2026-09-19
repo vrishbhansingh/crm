@@ -49,53 +49,191 @@
       grid-template-columns: minmax(0, 2fr) minmax(360px, 1fr);
     }
 
-    /* ===== LEFT: brand / visual panel — photo slideshow =====
-       Each slide is a single pre-composed image (headline, KPI cards, all
-       baked into the picture) — the panel just crossfades between them.
-       Only one image exists today; add more <div class="auth-slide"> blocks
-       with their own <img> to extend the rotation later. */
+    /* ===== LEFT: brand / visual panel =====
+       Real, live page content (text + cards) over a plain photo, so it
+       reflows and rescales with the window instead of being a flat picture.
+       Sizes are driven by the panel's own width (cqw) with clamps. */
     .auth-visual {
       position: relative;
       overflow: hidden;
       background: #cfe2f3;
+      container-type: inline-size;
+      container-name: hero;
     }
-
-    .auth-slide {
+    .auth-photo {
       position: absolute;
       inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      opacity: 0;
-      visibility: hidden;
-      transition: opacity 0.9s ease;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: 50% 55%;
     }
-    .auth-slide.is-active { opacity: 1; visibility: visible; }
-
-    /* Responsive strategy for an image with text baked in: the picture is
-       always shown WHOLE (never cropped, so no screen size cuts words off),
-       scaled to fit whichever dimension is tighter. Whatever space is left
-       over — which varies with every window shape — is filled by a blurred,
-       enlarged copy of the same photo, so it reads as the scene continuing
-       rather than empty bars. The sharp image's edges are feathered into it. */
-    .auth-slide-backdrop {
+    /* Keeps the bottom tagline/quote legible over the darker grass. */
+    .auth-visual::after {
+      content: "";
       position: absolute;
-      inset: -60px;
-      background-size: cover;
-      background-position: center;
-      filter: blur(32px) saturate(1.05);
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(to top, rgba(8, 40, 22, 0.42), rgba(8, 40, 22, 0) 30%);
     }
-    .auth-slide img {
+
+    .auth-hero {
       position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      padding: clamp(22px, 4.2cqw, 64px);
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+      grid-template-rows: 1fr auto;
+      column-gap: clamp(16px, 2.4cqw, 40px);
+      align-items: center;
+    }
+
+    .hero-copy { grid-column: 1; grid-row: 1; align-self: start; padding-top: clamp(8px, 7vh, 90px); }
+    .hero-eyebrow {
+      font-size: clamp(9.5px, 0.85cqw, 13px);
+      font-weight: 500;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      line-height: 1.7;
+      color: #5b6b82;
+      margin-bottom: clamp(12px, 2.2cqw, 34px);
+    }
+    .hero-title {
+      font-size: clamp(24px, 3.75cqw, 58px);
+      font-weight: 800;
+      line-height: 1.16;
+      letter-spacing: -0.01em;
+      color: #0f1f3a;
+    }
+    .hero-rule {
       display: block;
-      width: min(100%, 150vh);
-      height: auto;
-      -webkit-mask-image: linear-gradient(to bottom, transparent, #000 5%, #000 95%, transparent),
-                          linear-gradient(to right, transparent, #000 4%, #000 96%, transparent);
-      -webkit-mask-composite: source-in;
-      mask-image: linear-gradient(to bottom, transparent, #000 5%, #000 95%, transparent),
-                  linear-gradient(to right, transparent, #000 4%, #000 96%, transparent);
-      mask-composite: intersect;
+      width: clamp(28px, 3.1cqw, 46px);
+      height: 2px;
+      margin: clamp(12px, 1.9cqw, 28px) 0;
+      background: #2dd4bf;
+    }
+    .hero-sub {
+      max-width: 30em;
+      font-size: clamp(12.5px, 1.32cqw, 20px);
+      line-height: 1.6;
+      color: #5b6b82;
+    }
+
+    .hero-cards {
+      grid-column: 2;
+      grid-row: 1;
+      display: grid;
+      grid-template-columns: 1.55fr 1fr;
+      gap: clamp(8px, 1.1cqw, 16px);
+    }
+    .glass {
+      background: rgba(255, 255, 255, 0.74);
+      -webkit-backdrop-filter: blur(14px) saturate(1.2);
+      backdrop-filter: blur(14px) saturate(1.2);
+      border: 1px solid rgba(255, 255, 255, 0.75);
+      border-radius: clamp(12px, 1.3cqw, 20px);
+      box-shadow: 0 18px 40px rgba(30, 58, 100, 0.14);
+      padding: clamp(10px, 1.45cqw, 22px);
+      color: #0f1f3a;
+      min-width: 0;
+    }
+    .glass h3 { font-size: clamp(12.5px, 1.3cqw, 20px); font-weight: 700; line-height: 1.2; }
+    .glass small, .glass .muted { font-size: clamp(9px, 0.82cqw, 12.5px); color: #7b8aa0; font-weight: 400; }
+    .glass .up { color: #10b981; font-weight: 600; font-size: clamp(9.5px, 0.9cqw, 13.5px); }
+
+    .sales-card { grid-column: 1 / -1; }
+    .sc-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+    .sc-head small { display: block; margin-top: 3px; }
+    .pill {
+      background: #dcfce7; color: #10b981; font-weight: 700;
+      font-size: clamp(11px, 1.15cqw, 17px);
+      padding: 0.28em 0.8em; border-radius: 8px; white-space: nowrap;
+    }
+    .sc-body { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: clamp(10px, 2cqw, 30px); align-items: end; margin-top: clamp(6px, 1cqw, 16px); }
+    .sc-kpi strong { display: block; font-size: clamp(18px, 2.05cqw, 32px); font-weight: 800; line-height: 1.1; }
+    .sc-kpi .up { display: block; margin-top: 4px; }
+    .sc-kpi .muted { display: block; margin-top: 2px; }
+    .sc-chart svg { display: block; width: 100%; height: clamp(34px, 4.6cqw, 70px); }
+    .sc-days { display: flex; justify-content: space-between; margin-top: 3px; }
+    .sc-days span { font-size: clamp(7px, 0.62cqw, 10px); color: #a3afc0; }
+
+    .stat-card { grid-column: 1; }
+    .st-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; flex-wrap: wrap; }
+    .st-head small { display: block; margin-top: 3px; }
+    .st-legend { display: flex; gap: 10px; align-items: center; font-size: clamp(8.5px, 0.78cqw, 12px); color: #475569; }
+    .st-legend i { display: inline-block; width: 0.8em; height: 0.8em; border-radius: 50%; margin-right: 4px; vertical-align: -0.05em; }
+    .dot-rev { background: #14d3a5; }
+    .dot-sal { background: #3b82f6; }
+    .st-chart { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px; margin-top: clamp(8px, 1.2cqw, 18px); }
+    .st-y { display: flex; flex-direction: column; justify-content: space-between; align-items: flex-end; height: clamp(90px, 12.5cqw, 190px); }
+    .st-y span { font-size: clamp(7px, 0.62cqw, 10px); color: #7b8aa0; line-height: 1; }
+    .st-plot {
+      position: relative; display: flex; justify-content: space-around; align-items: flex-end;
+      height: clamp(90px, 12.5cqw, 190px);
+      background-image: repeating-linear-gradient(to bottom, transparent 0, transparent calc(16.66% - 1px), rgba(148,163,184,.35) calc(16.66% - 1px), rgba(148,163,184,.35) 16.66%);
+      background-size: 100% 100%;
+    }
+    .st-group { display: flex; align-items: flex-end; gap: 2px; height: 100%; }
+    .st-group b { display: block; width: clamp(5px, 0.62cqw, 10px); border-radius: 2px 2px 0 0; }
+    .st-group b:first-child { background: linear-gradient(to bottom, #14d3a5, #38bdf8); }
+    .st-group b:last-child { background: linear-gradient(to bottom, #3b9cf6, #3b5bf0); }
+    .st-x { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px; margin-top: 4px; }
+    .st-x div { display: flex; justify-content: space-around; }
+    .st-x span { font-size: clamp(7.5px, 0.7cqw, 11px); color: #7b8aa0; }
+    .st-x .st-spacer { visibility: hidden; font-size: clamp(7px, 0.62cqw, 10px); }
+
+    .hero-mini { grid-column: 2; display: grid; grid-template-rows: 1fr 1fr; gap: clamp(8px, 1.1cqw, 16px); }
+    .mini-card { display: flex; align-items: center; gap: clamp(8px, 1.1cqw, 16px); }
+    .mini-ic {
+      flex: none; display: grid; place-items: center;
+      width: clamp(28px, 3.5cqw, 54px); height: clamp(28px, 3.5cqw, 54px);
+      border-radius: clamp(8px, 0.95cqw, 14px); font-size: clamp(13px, 1.6cqw, 24px);
+    }
+    .mini-ic.blue { background: linear-gradient(135deg, #93c5fd, #60a5fa); color: #1d4ed8; }
+    .mini-ic.teal { background: linear-gradient(135deg, #6ee7b7, #2dd4bf); color: #0f766e; }
+    .mini-card small { display: block; }
+    .mini-card strong { display: block; font-size: clamp(15px, 1.8cqw, 28px); font-weight: 800; line-height: 1.15; margin: 2px 0; }
+
+    .hero-foot {
+      grid-column: 1 / -1; grid-row: 2;
+      display: flex; justify-content: space-between; align-items: flex-end; gap: 16px;
+      color: rgba(255, 255, 255, 0.92);
+      padding-top: clamp(14px, 3vh, 40px);
+    }
+    .hero-tagline {
+      font-size: clamp(9px, 0.82cqw, 13px); letter-spacing: 0.3em; text-transform: uppercase; font-weight: 500;
+    }
+    .hero-tagline::after, .hero-quote::after {
+      content: ""; display: block; width: 26px; height: 1px; margin-top: 10px; background: rgba(255,255,255,.7);
+    }
+    .hero-quote { font-size: clamp(9.5px, 0.92cqw, 14px); line-height: 1.55; max-width: 24em; }
+
+    /* Narrower panel: drop the busiest card and stack the rest under the copy. */
+    @container hero (max-width: 860px) {
+      .auth-hero { grid-template-columns: 1fr; grid-template-rows: auto auto auto; row-gap: clamp(16px, 3cqw, 28px); align-items: start; }
+      .hero-copy, .hero-cards { grid-column: 1; }
+      .hero-copy { grid-row: 1; padding-top: 0; }
+      .hero-cards { grid-row: 2; grid-template-columns: 1fr 1fr; }
+      .stat-card { display: none; }
+      .hero-mini { grid-column: 1 / -1; grid-template-rows: none; grid-template-columns: 1fr 1fr; }
+      .hero-foot { grid-row: 3; align-self: end; }
+      .hero-title { font-size: clamp(24px, 5.6cqw, 40px); }
+      .hero-sub { font-size: clamp(12.5px, 2.1cqw, 16px); }
+      .hero-eyebrow { font-size: clamp(9.5px, 1.3cqw, 12px); }
+      .glass h3 { font-size: clamp(13px, 2.1cqw, 17px); }
+      .glass small { font-size: clamp(9.5px, 1.4cqw, 12px); }
+      .sc-kpi strong { font-size: clamp(19px, 3.2cqw, 28px); }
+      .mini-card strong { font-size: clamp(16px, 2.6cqw, 22px); }
+      .mini-ic { width: clamp(30px, 5cqw, 42px); height: clamp(30px, 5cqw, 42px); font-size: clamp(14px, 2.2cqw, 19px); }
+      .hero-tagline, .hero-quote { font-size: clamp(9.5px, 1.4cqw, 12px); }
+      .sc-days span { font-size: clamp(8px, 1.1cqw, 10px); }
+      .sc-chart svg { height: clamp(36px, 6cqw, 56px); }
+    }
+    /* Short windows: keep everything on screen by dropping the tallest card. */
+    @media (max-height: 640px) and (min-width: 901px) {
+      .stat-card { display: none; }
+      .hero-mini { grid-template-rows: none; grid-template-columns: 1fr 1fr; grid-column: 1 / -1; }
     }
 
     /* ===== RIGHT: form panel ===== */
@@ -287,16 +425,23 @@
     .forgot-link { margin: 0; }
     .forgot-link a { font-size: 12.5px; color: var(--primary); text-decoration: none; }
 
-    /* Tablet: stack, image becomes a banner above the form (its baked-in
-       text is still legible at this width). */
+    /* Tablet / phone: stack. The visual becomes a compact banner above the
+       form with just the headline copy (cards + footer text are too busy
+       for this width). */
     @media (max-width: 900px) {
       .auth-shell { grid-template-columns: 1fr; }
-      .auth-visual { aspect-ratio: 3 / 2; max-height: 60vh; }
-      .auth-slide img { width: min(100%, 90vh); }
+      .auth-hero { min-height: 0; padding: clamp(22px, 5vw, 44px) clamp(20px, 5vw, 44px) clamp(26px, 6vw, 48px); }
+      .hero-cards, .hero-foot { display: none; }
+      .hero-title { font-size: clamp(24px, 6.4vw, 40px); }
+      .hero-sub { font-size: clamp(13px, 2.4vw, 16px); }
+      .hero-eyebrow { font-size: clamp(9.5px, 1.6vw, 12px); margin-bottom: 12px; }
+      .auth-photo { object-position: 50% 30%; }
+      .auth-visual::after { display: none; }
+      .auth-form-panel { padding: 32px 22px 40px; }
     }
-    /* Phone: the picture's text would shrink to unreadable, so show just the form. */
-    @media (max-width: 599px) {
-      .auth-visual { display: none; }
+    @media (max-width: 480px) {
+      .hero-sub { display: none; }
+      .hero-rule { margin-bottom: 0; }
     }
   </style>
 </head>
@@ -306,9 +451,82 @@
   <div class="auth-shell">
 
     <div class="auth-visual">
-      <div class="auth-slide is-active">
-        <div class="auth-slide-backdrop" style="background-image: url('{{ asset('images/login_bg_1.jpg') }}');"></div>
-        <img src="{{ asset('images/login_bg_1.jpg') }}" alt="" fetchpriority="high">
+      <img class="auth-photo" src="{{ asset('images/login_photo.jpg') }}" alt="" fetchpriority="high">
+
+      <div class="auth-hero">
+        <div class="hero-copy">
+          <p class="hero-eyebrow">Customer relationships<br>for a brighter tomorrow</p>
+          <h2 class="hero-title">Your CRM,<br>Smarter and Simpler</h2>
+          <span class="hero-rule"></span>
+          <p class="hero-sub">Manage leads, track performance, and grow your business — all in one powerful yet intuitive platform.</p>
+        </div>
+
+        <div class="hero-cards">
+          <div class="glass sales-card">
+            <div class="sc-head">
+              <div><h3>Sales</h3><small>This Month</small></div>
+              <span class="pill">+12%</span>
+            </div>
+            <div class="sc-body">
+              <div class="sc-kpi">
+                <strong>$6,324</strong>
+                <span class="up">&uarr; 12%</span>
+                <span class="muted">vs last month</span>
+              </div>
+              <div class="sc-chart">
+                <svg viewBox="0 0 300 80" preserveAspectRatio="none" aria-hidden="true">
+                  <defs>
+                    <linearGradient id="scFill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0" stop-color="#2dd4bf" stop-opacity=".35"/>
+                      <stop offset="1" stop-color="#2dd4bf" stop-opacity="0"/>
+                    </linearGradient>
+                  </defs>
+                  <path d="M0,72 C20,68 28,44 55,40 C80,37 92,56 118,52 C146,48 158,32 185,34 C212,36 222,18 250,12 C270,8 285,18 300,16 L300,80 L0,80 Z" fill="url(#scFill)"/>
+                  <path d="M0,72 C20,68 28,44 55,40 C80,37 92,56 118,52 C146,48 158,32 185,34 C212,36 222,18 250,12 C270,8 285,18 300,16" fill="none" stroke="#14d3a5" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linecap="round"/>
+                </svg>
+                <div class="sc-days"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="glass stat-card">
+            <div class="st-head">
+              <div><h3>Statistic</h3><small>Income and Expenses</small></div>
+              <div class="st-legend"><span><i class="dot-rev"></i>Revenue</span><span><i class="dot-sal"></i>Sales</span></div>
+            </div>
+            <div class="st-chart">
+              <div class="st-y"><span>$14k</span><span>$12k</span><span>$10k</span><span>$8k</span><span>$4k</span><span>$2k</span><span>0</span></div>
+              <div class="st-plot">
+                <div class="st-group"><b style="height:55%"></b><b style="height:42%"></b></div>
+                <div class="st-group"><b style="height:42%"></b><b style="height:45%"></b></div>
+                <div class="st-group"><b style="height:32%"></b><b style="height:51%"></b></div>
+                <div class="st-group"><b style="height:67%"></b><b style="height:51%"></b></div>
+                <div class="st-group"><b style="height:99%"></b><b style="height:76%"></b></div>
+                <div class="st-group"><b style="height:45%"></b><b style="height:56%"></b></div>
+              </div>
+            </div>
+            <div class="st-x">
+              <span class="st-spacer">$14k</span>
+              <div><span>Jan</span><span>Feb</span><span>Mar</span><span>Apr</span><span>May</span><span>Jun</span></div>
+            </div>
+          </div>
+
+          <div class="hero-mini">
+            <div class="glass mini-card">
+              <span class="mini-ic blue"><i class="fa fa-user-group"></i></span>
+              <div><small>Active Leads</small><strong>1,428</strong><span class="up">&uarr; 8%</span></div>
+            </div>
+            <div class="glass mini-card">
+              <span class="mini-ic teal"><i class="fa fa-bullseye"></i></span>
+              <div><small>Conversion Rate</small><strong>24.5%</strong><span class="up">&uarr; 3%</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero-foot">
+          <span class="hero-tagline">People &middot; Process &middot; Growth</span>
+          <p class="hero-quote">&ldquo;Stronger Customer Relationships<br>Build Brighter Tomorrows.&rdquo;</p>
+        </div>
       </div>
     </div>
 
@@ -450,20 +668,6 @@
         icon.classList.replace('fa-eye-slash', 'fa-eye');
       }
     });
-
-    (function() {
-      const slides = document.querySelectorAll('.auth-slide');
-      if (!slides.length) return;
-
-      let index = 0;
-
-      function show(i) {
-        index = (i + slides.length) % slides.length;
-        slides.forEach((s, n) => s.classList.toggle('is-active', n === index));
-      }
-
-      setInterval(() => show(index + 1), 5000);
-    })();
 
   </script>
 
