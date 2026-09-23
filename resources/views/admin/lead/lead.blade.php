@@ -309,23 +309,19 @@
             user-select: none;
         }
 
-        /* Assigned-to cell: plain text + a neutral icon, not a colored
-           badge — a two-letter initials circle ("VS" for Vrishbhan Singh,
-           say) reads as "versus" out of context, and a blue pill made it
-           look like a button rather than a label. */
+        /* Assigned-to cell: the name itself reads as a link (blue, underline
+           on hover) rather than a plain label with an icon next to it — an
+           icon didn't clearly signal "clickable", and this way it doesn't
+           need one to. */
         .assign-user {
             padding: 4px 6px;
             border-radius: 6px;
         }
         .assign-user:hover { background: #f3f4f6; }
+        .assign-user:hover .assignee-name { text-decoration: underline; }
 
-        .assign-active .assignee-name { color: #1f2937; font-weight: 600; }
-        .assign-active .assignee-avatar-icon { background: #eef2f7; color: #64748b; }
-
+        .assign-active .assignee-name { color: #2563eb; font-weight: 600; }
         .assign-unassigned .assignee-name { color: #9ca3af; font-style: italic; font-weight: 500; }
-        .assign-unassigned .assignee-avatar-icon {
-            background: #f9fafb; color: #cbd5e1; border: 1px dashed #d1d5db;
-        }
 
         .form-checkbox {
             width: 21px;
@@ -438,13 +434,8 @@
             display: flex; align-items: center; justify-content: center; font-size: 17px;
         }
 
-        /* ===== Assigned-to avatar ===== */
-        .assignee-cell { display: inline-flex; align-items: center; gap: 8px; }
-        .assignee-avatar-icon {
-            width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
-            display: inline-flex; align-items: center; justify-content: center;
-            font-size: 12px;
-        }
+        /* ===== Assigned-to cell ===== */
+        .assignee-cell { display: inline-flex; align-items: center; }
 
         /* ===== Row actions (3-dot menu) — shared pattern, reused across
            every list page being migrated off inline button pairs. ===== */
@@ -472,6 +463,9 @@
         .row-actions-menu .text-danger i { color: #dc2626; }
         .row-actions-menu .text-danger:hover { background: #fef2f2; }
 
+        [data-theme="dark"] .assign-user:hover { background: #232637; }
+        [data-theme="dark"] .assign-active .assignee-name { color: #93a4fd; }
+        [data-theme="dark"] .assign-unassigned .assignee-name { color: #6b7280; }
         [data-theme="dark"] .row-actions-btn { color: #9aa1b5; }
         [data-theme="dark"] .row-actions-btn:hover { background: #232637; color: #eef0f6; }
         [data-theme="dark"] .row-actions-menu { background: #1e2233; box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4); }
@@ -1112,7 +1106,6 @@
                                         data-assigned-id="${item.assigned_to_id ?? ''}"
                                         style="cursor:pointer;"
                                     >
-                                        <span class="assignee-avatar-icon"><i class="fa ${item.assigned_to ? 'fa-user' : 'fa-user-plus'}"></i></span>
                                         <span class="assignee-name">${esc(item.assigned_to ?? 'Unassigned')}</span>
                                     </span>
                                 </td>

@@ -104,12 +104,16 @@
             display: flex; align-items: center; justify-content: center; font-size: 17px;
         }
 
-        .owner-cell { display: inline-flex; align-items: center; gap: 8px; }
+        .owner-cell { display: inline-flex; align-items: center; gap: 8px; padding: 4px 6px; border-radius: 6px; }
+        .owner-cell.assign-deal:hover { background: #f3f4f6; }
+        .owner-cell.assign-deal:hover .owner-name { text-decoration: underline; }
         .owner-avatar {
             width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
             display: inline-flex; align-items: center; justify-content: center;
             color: #fff; font-weight: 700; font-size: 10.5px;
         }
+        .owner-name { color: #2563eb; font-weight: 600; }
+        .owner-cell.is-unassigned .owner-name { color: #9ca3af; font-style: italic; font-weight: 500; }
 
         .stage-pill { display: inline-block; padding: 4px 11px; border-radius: 999px; font-size: 12px; font-weight: 700; }
 
@@ -121,6 +125,9 @@
             background: #1a1d2b;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
         }
+        [data-theme="dark"] .owner-cell.assign-deal:hover { background: #232637; }
+        [data-theme="dark"] .owner-name { color: #93a4fd; }
+        [data-theme="dark"] .owner-cell.is-unassigned .owner-name { color: #6b7280; }
         [data-theme="dark"] .page-header h4,
         [data-theme="dark"] .deal-stat-card .deal-stat-value,
         [data-theme="dark"] .order-table tbody td a {
@@ -248,6 +255,35 @@
         </div>
     </div>
 
+    <div class="modal fade" id="assignDealModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Assign Deal</h5>
+                    <button class="close" data-dismiss="modal">&times;</button>
+                </div>
+
+                <div class="modal-body">
+                    <input type="hidden" id="assignDealId">
+
+                    <div class="form-group">
+                        <label>Assign To</label>
+                        <select id="assignedDealUser" class="form-control">
+                            <option value="">Loading...</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-light" data-dismiss="modal">Cancel</button>
+                    <button class="btn btn-primary" id="saveAssignedDealUser">Save</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="{{ asset('vendors/js/vendor.bundle.base.js') }}"></script>
     <script src="{{ asset('vendors/datatables.net/jquery.dataTables.js') }}"></script>
@@ -336,8 +372,8 @@
 
                             const stageColor = stagePillColor(item.stage_name, item.stage_color);
                             const ownerCell = item.owner_name
-                                ? `<span class="owner-cell"><span class="owner-avatar" style="background:${dealPaletteColor(item.owner_name)}">${dealInitials(item.owner_name)}</span>${esc(item.owner_name)}</span>`
-                                : '-';
+                                ? `<span class="owner-cell assign-deal" data-deal_id="${item.id}" style="cursor:pointer;"><span class="owner-avatar" style="background:${dealPaletteColor(item.owner_name)}">${dealInitials(item.owner_name)}</span><span class="owner-name">${esc(item.owner_name)}</span></span>`
+                                : `<span class="owner-cell assign-deal is-unassigned" data-deal_id="${item.id}" style="cursor:pointer;"><span class="owner-name">Unassigned</span></span>`;
 
                             tbody += `
                     <tr>
@@ -382,6 +418,62 @@
         $(document).on('change', '#dealFilterStatus', function() {
             dealCurrentPage = 1;
             loadDealList();
+        });
+
+        $(document).on('click', '.assign-deal', function() {
+            const dealId = $(this).data('deal_id');
+            $('#assignDealId').val(dealId);
+
+            $('#assignedDealUser').html('<option value="">Loading...</option>');
+            $.ajax({
+                url: "{{ route('leads.assignable_users') }}",
+                type: "GET",
+                success: function(res) {
+                    let options = '<option value="">-- Select User --</option>';
+                    res.users.forEach(function(user) {
+                        options += `<option value="${user.id}">${esc(user.name)}</option>`;
+                    });
+                    $('#assignedDealUser').html(options);
+                    $('#assignDealModal').modal('show');
+                }
+            });
+        });
+
+        $(document).on('click', '#saveAssignedDealUser', function() {
+            const dealId = $('#assignDealId').val();
+            const ownerId = $('#assignedDealUser').val();
+
+            if (!ownerId) {
+                toastr.error('Please select a user');
+                return;
+            }
+
+            const $btn = $(this).prop('disabled', true).text('Saving...');
+
+            $.ajax({
+                url: "{{ route('deals.assign') }}",
+                type: "POST",
+                data: {
+                    _token: "{{ csrf_token() }}",
+                    deal_id: dealId,
+                    owner_id: ownerId
+                },
+                success: function(res) {
+                    if (res.status) {
+                        toastr.success(res.message);
+                        $('#assignDealModal').modal('hide');
+                        loadDealList();
+                    } else {
+                        toastr.error(res.message || 'Something went wrong');
+                    }
+                },
+                error: function(xhr) {
+                    toastr.error(xhr.responseJSON?.message || 'Something went wrong');
+                },
+                complete: function() {
+                    $btn.prop('disabled', false).text('Save');
+                }
+            });
         });
 
         $(document).ready(function() {
