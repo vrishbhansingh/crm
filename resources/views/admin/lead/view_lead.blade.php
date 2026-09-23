@@ -191,11 +191,17 @@
         .lead-metric-tile .metric-value { font-size: 24px; font-weight: 700; color: var(--text-dark); }
         .lead-metric-tile .metric-label { font-size: 12px; color: var(--text-muted); margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: .02em; }
 
+        /* "Assigned To" — a neutral icon, not colored initials (which can
+           misread as an unrelated abbreviation, e.g. "VS" for "versus"). */
         .assignee-inline { display: inline-flex; align-items: center; gap: 6px; }
         .assignee-inline .assignee-avatar {
             width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0;
             display: inline-flex; align-items: center; justify-content: center;
-            color: #fff; font-weight: 700; font-size: 9px;
+            background: #eef2f7; color: #64748b; font-size: 9.5px;
+        }
+        .assignee-inline.assignee-unassigned { color: #9ca3af; font-style: italic; }
+        .assignee-inline.assignee-unassigned .assignee-avatar {
+            background: #f9fafb; color: #cbd5e1; border: 1px dashed #d1d5db;
         }
 
         [data-theme="dark"] {
@@ -543,8 +549,8 @@
                 `);
 
                 const assignedHtml = d.assigned_user
-                    ? `<span class="assignee-inline"><span class="assignee-avatar" style="background:${leadPaletteColor(d.assigned_user.name)}">${leadInitials(d.assigned_user.name)}</span>${esc(d.assigned_user.name)}</span>`
-                    : 'Unassigned';
+                    ? `<span class="assignee-inline"><span class="assignee-avatar"><i class="fa fa-user"></i></span>${esc(d.assigned_user.name)}</span>`
+                    : `<span class="assignee-inline assignee-unassigned"><span class="assignee-avatar"><i class="fa fa-user-plus"></i></span>Unassigned</span>`;
 
                 $('#leadInfoCard').html(`
                     <div class="field-row"><span class="label">Phone</span><span class="value">${esc(d.phone ?? '-')}</span></div>

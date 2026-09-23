@@ -309,49 +309,22 @@
             user-select: none;
         }
 
-        /* Assigned */
-        .assign-active {
-            background: #e8f2ff;
-            color: #0d6efd;
-            border: 1px solid #cfe2ff;
-        }
-
-        .assign-active:hover {
-            background: #dbeafe;
-        }
-
-        /* Unassigned */
-        .assign-unassigned {
-            background: #f1f3f5;
-            color: #6c757d;
-            border: 1px dashed #ced4da;
-        }
-
-        .assign-unassigned:hover {
-            background: #e9ecef;
-        }
-
-        /* Icon dot */
-        .assign-dot {
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 10px;
-            background: rgba(0, 0, 0, 0.05);
-        }
-
+        /* Assigned-to cell: plain text + a neutral icon, not a colored
+           badge — a two-letter initials circle ("VS" for Vrishbhan Singh,
+           say) reads as "versus" out of context, and a blue pill made it
+           look like a button rather than a label. */
         .assign-user {
-            padding: 5px;
-            border-radius: 5px;
-
+            padding: 4px 6px;
+            border-radius: 6px;
         }
+        .assign-user:hover { background: #f3f4f6; }
 
-        /* Hover effect */
-        .assign-user:hover {
-            transform: translateY(-1px);
+        .assign-active .assignee-name { color: #1f2937; font-weight: 600; }
+        .assign-active .assignee-avatar-icon { background: #eef2f7; color: #64748b; }
+
+        .assign-unassigned .assignee-name { color: #9ca3af; font-style: italic; font-weight: 500; }
+        .assign-unassigned .assignee-avatar-icon {
+            background: #f9fafb; color: #cbd5e1; border: 1px dashed #d1d5db;
         }
 
         .form-checkbox {
@@ -467,10 +440,10 @@
 
         /* ===== Assigned-to avatar ===== */
         .assignee-cell { display: inline-flex; align-items: center; gap: 8px; }
-        .assignee-avatar {
+        .assignee-avatar-icon {
             width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
             display: inline-flex; align-items: center; justify-content: center;
-            color: #fff; font-weight: 700; font-size: 10.5px;
+            font-size: 12px;
         }
 
         /* ===== Row actions (3-dot menu) — shared pattern, reused across
@@ -992,11 +965,6 @@
             String(seed || '').split('').forEach(ch => { hash = (hash * 31 + ch.charCodeAt(0)) >>> 0; });
             return LEAD_PALETTE[hash % LEAD_PALETTE.length];
         }
-        function leadInitials(name) {
-            const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
-            if (!parts.length) return '?';
-            return (parts[0][0] + (parts[1] ? parts[1][0] : '')).toUpperCase();
-        }
 
         const LEAD_STATUS_COLORS = {
             'new': '#2563eb', 'hot': '#dc2626', 'warm': '#ea580c', 'cold': '#0891b2',
@@ -1144,8 +1112,8 @@
                                         data-assigned-id="${item.assigned_to_id ?? ''}"
                                         style="cursor:pointer;"
                                     >
-                                        ${item.assigned_to ? `<span class="assignee-avatar" style="background:${leadPaletteColor(item.assigned_to)}">${leadInitials(item.assigned_to)}</span>` : ''}
-                                        ${esc(item.assigned_to ?? 'Unassigned')}
+                                        <span class="assignee-avatar-icon"><i class="fa ${item.assigned_to ? 'fa-user' : 'fa-user-plus'}"></i></span>
+                                        <span class="assignee-name">${esc(item.assigned_to ?? 'Unassigned')}</span>
                                     </span>
                                 </td>
 

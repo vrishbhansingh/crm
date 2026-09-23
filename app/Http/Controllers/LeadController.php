@@ -84,6 +84,7 @@ class LeadController extends Controller
         $paginator = $query->with('deal:id,lead_id,name')->orderByDesc('id')->paginate($perPage);
 
         $data = [];
+        $sl_no = ($paginator->currentPage() - 1) * $paginator->perPage() + 1;
         foreach ($paginator->items() as $lead) {
             $editUrl = route('leads.edit', $lead->id);
             $dealUrl = $lead->deal ? route('deals.show', $lead->deal->id) : null;
@@ -120,7 +121,7 @@ class LeadController extends Controller
             $data[] = [
 
                 /* ================= BASIC ================= */
-                'sl_no' => $lead->lead_number,
+                'sl_no' => $sl_no++,
                 'id' => $lead->id,
 
                 /* ================= LEAD INFO ================= */
