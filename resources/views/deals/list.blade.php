@@ -11,6 +11,8 @@
     <link rel="stylesheet" href="{{ asset('css/vertical-layout-light/style.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" href="{{ asset('vendors/datatables.net-bs4/dataTables.bootstrap4.css') }}">
+    <link rel="stylesheet" href="{{asset('vendors/select2/select2.min.css')}}">
+    <link rel="stylesheet" href="{{asset('vendors/select2-bootstrap-theme/select2-bootstrap.min.css')}}">
 
     <style>
         /* Same modernization pattern as Roles & Permissions / Dashboard /
@@ -255,21 +257,25 @@
         </div>
     </div>
 
-    <div class="modal fade" id="assignDealModal" tabindex="-1">
+    <div class="modal fade assign-modal" id="assignDealModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
 
                 <div class="modal-header">
-                    <h5 class="modal-title">Assign Deal</h5>
+                    <div class="assign-modal-icon"><i class="fa fa-user-plus"></i></div>
+                    <div class="assign-modal-heading">
+                        <h5 class="modal-title">Assign Deal</h5>
+                        <p class="assign-modal-subtitle">Choose a team member to take ownership of this deal.</p>
+                    </div>
                     <button class="close" data-dismiss="modal">&times;</button>
                 </div>
 
                 <div class="modal-body">
                     <input type="hidden" id="assignDealId">
 
-                    <div class="form-group">
-                        <label>Assign To</label>
-                        <select id="assignedDealUser" class="form-control">
+                    <div class="form-group mb-0">
+                        <label class="assign-modal-label">Assign To</label>
+                        <select id="assignedDealUser" class="form-control assign-modal-select">
                             <option value="">Loading...</option>
                         </select>
                     </div>
@@ -277,7 +283,7 @@
 
                 <div class="modal-footer">
                     <button class="btn btn-light" data-dismiss="modal">Cancel</button>
-                    <button class="btn btn-primary" id="saveAssignedDealUser">Save</button>
+                    <button class="btn btn-primary" id="saveAssignedDealUser"><i class="fa fa-check"></i> Save</button>
                 </div>
 
             </div>
@@ -288,6 +294,7 @@
     <script src="{{ asset('vendors/js/vendor.bundle.base.js') }}"></script>
     <script src="{{ asset('vendors/datatables.net/jquery.dataTables.js') }}"></script>
     <script src="{{ asset('vendors/datatables.net-bs4/dataTables.bootstrap4.js') }}"></script>
+    <script src="{{asset('vendors/select2/select2.min.js')}}"></script>
 
     <script>
         function pretty(s) {
@@ -434,6 +441,16 @@
                         options += `<option value="${user.id}">${esc(user.name)}</option>`;
                     });
                     $('#assignedDealUser').html(options);
+
+                    if ($('#assignedDealUser').data('select2')) {
+                        $('#assignedDealUser').select2('destroy');
+                    }
+                    $('#assignedDealUser').select2({
+                        dropdownParent: $('#assignDealModal'),
+                        width: '100%',
+                        placeholder: '-- Select User --',
+                    });
+
                     $('#assignDealModal').modal('show');
                 }
             });

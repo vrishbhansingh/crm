@@ -434,6 +434,55 @@
             display: flex; align-items: center; justify-content: center; font-size: 17px;
         }
 
+        /* ===== Active / Converted tab toggle — a rounded pill switch
+           instead of Bootstrap's default boxy underline tabs. ===== */
+        #leadTabs {
+            display: flex;
+            gap: 4px;
+            background: #f1f5f9;
+            border-radius: 10px;
+            padding: 4px;
+            border: none;
+            list-style: none;
+            width: fit-content;
+        }
+        #leadTabs .nav-item { margin: 0; }
+        #leadTabs .nav-link {
+            border: none;
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #64748b;
+            background: transparent;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            white-space: nowrap;
+        }
+        #leadTabs .nav-link:hover { color: #1e293b; }
+        #leadTabs .nav-link.active {
+            background: #fff;
+            color: #2563eb;
+            box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+        }
+        #leadTabs .badge {
+            background: #e2e8f0;
+            color: #64748b;
+            font-weight: 700;
+            border-radius: 999px;
+            padding: 2px 8px;
+            font-size: 11px;
+        }
+        #leadTabs .nav-link.active .badge { background: #eff6ff; color: #2563eb; }
+
+        [data-theme="dark"] #leadTabs { background: #232637; }
+        [data-theme="dark"] #leadTabs .nav-link { color: #9aa1b5; }
+        [data-theme="dark"] #leadTabs .nav-link:hover { color: #eef0f6; }
+        [data-theme="dark"] #leadTabs .nav-link.active { background: #1a1d2b; color: #93a4fd; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3); }
+        [data-theme="dark"] #leadTabs .badge { background: #2a2e40; color: #9aa1b5; }
+        [data-theme="dark"] #leadTabs .nav-link.active .badge { background: rgba(147, 164, 253, 0.16); color: #93a4fd; }
+
         /* ===== Assigned-to cell ===== */
         .assignee-cell { display: inline-flex; align-items: center; }
 
@@ -876,21 +925,25 @@
         </div>
     </div>
 
-    <div class="modal fade" id="assignUserModal" tabindex="-1">
+    <div class="modal fade assign-modal" id="assignUserModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
 
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title">Assign Lead</h5>
-                    <button class="close text-white" data-dismiss="modal">&times;</button>
+                <div class="modal-header">
+                    <div class="assign-modal-icon"><i class="fa fa-user-plus"></i></div>
+                    <div class="assign-modal-heading">
+                        <h5 class="modal-title">Assign Lead</h5>
+                        <p class="assign-modal-subtitle">Choose a team member to take ownership of this lead.</p>
+                    </div>
+                    <button class="close" data-dismiss="modal">&times;</button>
                 </div>
 
                 <div class="modal-body">
                     <input type="hidden" id="leadId">
 
-                    <div class="form-group">
-                        <label>Assign To</label>
-                        <select id="assignedUser" class="form-control">
+                    <div class="form-group mb-0">
+                        <label class="assign-modal-label">Assign To</label>
+                        <select id="assignedUser" class="form-control assign-modal-select">
                             <option value="">Loading...</option>
                         </select>
                     </div>
@@ -898,7 +951,7 @@
 
                 <div class="modal-footer">
                     <button class="btn btn-light" data-dismiss="modal">Cancel</button>
-                    <button class="btn btn-primary" id="saveAssignedUser">Save</button>
+                    <button class="btn btn-primary" id="saveAssignedUser"><i class="fa fa-check"></i> Save</button>
                 </div>
 
             </div>
@@ -912,8 +965,6 @@
     <script src="{{asset('vendors/datatables.net/jquery.dataTables.js')}}"></script>
     <script src="{{asset('vendors/datatables.net-bs4/dataTables.bootstrap4.js')}}"></script>
     <script src="{{asset('js/dataTables.select.min.js')}}"></script>
-    <script src="{{asset('vendors/select2/select2.min.js')}}"></script>
-    <script src="{{asset('js/select2.js')}}"></script>
     <script src="{{asset('js/off-canvas.js')}}"></script>
     <script src="{{asset('js/hoverable-collapse.js')}}"></script>
     <script src="{{asset('js/template.js')}}"></script>
@@ -926,6 +977,13 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.26.25/sweetalert2.min.js"></script>
     <script src="{{ asset('js/toast-shim.js') }}?v={{ filemtime(public_path('js/toast-shim.js')) }}"></script>
     <script src="{{ asset('vendors/js/vendor.bundle.base.js') }}"></script>
+    <!-- Select2 must load after vendor.bundle.base.js: that bundle ships
+         its own jQuery and replaces window.jQuery with it, discarding any
+         plugin (like Select2) that registered itself on jQuery loaded
+         earlier in the page — same root cause documented in
+         roles/index.blade.php's own script-order comment. -->
+    <script src="{{asset('vendors/select2/select2.min.js')}}"></script>
+    <script src="{{asset('js/select2.js')}}"></script>
     <script>
         function showToast(message, type = 'success') {
             toastr.options = {
@@ -1567,6 +1625,21 @@
 
                     // Inject options into select
                     $('#assignedUser').html(options);
+
+                    // Select2 needs re-initializing after the options are
+                    // swapped out from under it — destroy any instance from
+                    // a previous open before building a fresh one, and
+                    // anchor its dropdown to the modal itself (dropdownParent)
+                    // so it isn't clipped/mispositioned by the modal's own
+                    // stacking context.
+                    if ($('#assignedUser').data('select2')) {
+                        $('#assignedUser').select2('destroy');
+                    }
+                    $('#assignedUser').select2({
+                        dropdownParent: $('#assignUserModal'),
+                        width: '100%',
+                        placeholder: '-- Select User --',
+                    });
 
                     $('#assignUserModal').modal('show');
                 }
