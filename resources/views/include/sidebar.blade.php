@@ -165,7 +165,17 @@
            carry its own background again since it no longer shows through
            from the rail underneath it. */
         .sidebar-rail { display: contents; }
-        .sidebar {
+
+        /* #sidebar.sidebar (not plain .sidebar) to match — not just tie —
+           the always-on `#sidebar.sidebar { left:0; top:80px; ... }` rule
+           above, which has no media query of its own and so applies here
+           too. At matching specificity the later rule in source order wins,
+           which is this one; at the previous mismatched specificity the
+           always-on rule silently won regardless of the .show class,
+           forcing the drawer permanently open on every mobile screen —
+           same root cause already called out in the comment above that
+           rule for the vendor theme's width collision. */
+        #sidebar.sidebar {
             position: fixed;
             top: 64px;
             left: -200px;
@@ -176,14 +186,14 @@
             transition: left 0.3s ease;
             z-index: 1000;
         }
-        .sidebar.show { left: 0; }
+        #sidebar.sidebar.show { left: 0; }
         .sidebar.collapsed .nav-section-label,
         .sidebar.collapsed .nav-sidebar-menu .nav-link span,
         .sidebar.collapsed .sidebar-search { display: block; }
     }
 
     @media (max-width: 768px) {
-        .sidebar { top: 56px; height: calc(100vh - 56px); }
+        #sidebar.sidebar { top: 56px; height: calc(100vh - 56px); }
     }
 
     /* Dark mode: the sidebar keeps its own colorful identity (a deep
@@ -203,8 +213,23 @@
     [data-theme="dark"] .sidebar-search input:focus {
         background: rgba(255, 255, 255, 0.14);
     }
+
+    /* Mobile-drawer backdrop: dims the page and gives a tap target to
+       close the drawer, since it's a fixed overlay covering the content
+       underneath — without this there was no way to dismiss it besides
+       hitting the hamburger again. Desktop never shows this (no .show
+       toggle happens above 991px), so no width gate needed here. */
+    .sidebar-backdrop {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(16, 24, 40, 0.45);
+        z-index: 999;
+    }
+    .sidebar-backdrop.show { display: block; }
 </style>
 
+<div class="sidebar-backdrop" id="sidebarBackdrop"></div>
 <div class="sidebar-rail">
 <nav class="sidebar" id="sidebar">
 
@@ -512,12 +537,31 @@
             var toggleBtn = document.querySelector(".crm-toggle");
             var collapseBtn = document.getElementById("sidebarCollapseBtn");
 
+            var backdrop = document.getElementById("sidebarBackdrop");
+
+            function closeMobileDrawer() {
+                sidebar.classList.remove("show");
+                if (backdrop) backdrop.classList.remove("show");
+            }
+
             if (toggleBtn) {
                 toggleBtn.addEventListener("click", function (e) {
                     e.preventDefault();
-                    sidebar.classList.toggle("show");
+                    var opening = sidebar.classList.toggle("show");
+                    if (backdrop) backdrop.classList.toggle("show", opening);
                 });
             }
+            if (backdrop) {
+                backdrop.addEventListener("click", closeMobileDrawer);
+            }
+            // Also close after following a link, so navigating on mobile
+            // doesn't leave the drawer (and its now-stale backdrop) open
+            // behind the newly loaded page.
+            sidebar.addEventListener("click", function (e) {
+                if (e.target.closest("a.nav-link") && window.innerWidth <= 991) {
+                    closeMobileDrawer();
+                }
+            });
 
             if (collapseBtn) {
                 collapseBtn.addEventListener("click", function () {
