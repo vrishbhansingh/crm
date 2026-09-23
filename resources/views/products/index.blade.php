@@ -84,6 +84,18 @@
         #productModal .section-divider{border-top:1px solid var(--line); margin:6px 0 16px; grid-column:1/-1;}
         [data-theme="dark"] #productModal .modal-content{background:var(--card);}
 
+        .select-with-add{display:flex; gap:6px; align-items:center;}
+        .select-with-add select{flex:1;}
+        .btn-quick-add{
+            width:34px; height:34px; flex:none; border-radius:9px; border:1px dashed var(--border);
+            background:var(--accent-soft); color:var(--accent); display:inline-flex; align-items:center;
+            justify-content:center; cursor:pointer; font-size:13px;
+        }
+        .btn-quick-add:hover{background:var(--accent); color:#fff; border-style:solid;}
+        .quick-add-row{display:flex; gap:6px; align-items:center; margin-top:8px;}
+        .quick-add-row input{flex:2;}
+        .quick-add-row .btn{border-radius:7px; white-space:nowrap;}
+
         @media(max-width:900px){
             .product-row{grid-template-columns:1fr; gap:4px;}
             .product-row > div::before{content:attr(data-label); display:block; font-size:10px; text-transform:uppercase; color:var(--faint); letter-spacing:.03em;}
@@ -120,11 +132,23 @@
         <div class="form-row">
             <div class="form-group col-md-8"><label>Name</label><input class="form-control" name="name" id="productName" maxlength="255" required placeholder="e.g. Enterprise License"></div>
             <div class="form-group col-md-4"><label>SKU</label><input class="form-control" name="sku" id="productSku" maxlength="100" placeholder="Optional"></div>
-            <div class="form-group col-md-4"><label>Category</label><select class="form-control" name="category" id="productCategory"><option value="">None</option></select></div>
-            <div class="form-group col-md-4"><label>Unit of Measure</label><select class="form-control" name="uom" id="productUom"><option value="">None</option></select></div>
+            <div class="form-group col-md-4">
+                <label>Category</label>
+                <div class="select-with-add"><select class="form-control" name="category" id="productCategory"><option value="">None</option></select><button type="button" class="btn-quick-add" data-toggle-quick="category" title="Add new category"><i class="fa fa-plus"></i></button></div>
+                <div class="quick-add-row d-none" id="quickAddCategory"><input type="text" class="form-control form-control-sm" id="quickAddCategoryInput" placeholder="New category name" maxlength="150"><button type="button" class="btn btn-sm btn-primary quick-add-save" data-quick="category">Add</button><button type="button" class="btn btn-sm btn-light quick-add-cancel" data-quick="category">✕</button></div>
+            </div>
+            <div class="form-group col-md-4">
+                <label>Unit of Measure</label>
+                <div class="select-with-add"><select class="form-control" name="uom" id="productUom"><option value="">None</option></select><button type="button" class="btn-quick-add" data-toggle-quick="uom" title="Add new unit"><i class="fa fa-plus"></i></button></div>
+                <div class="quick-add-row d-none" id="quickAddUom"><input type="text" class="form-control form-control-sm" id="quickAddUomInput" placeholder="e.g. Roll, Bundle" maxlength="150"><button type="button" class="btn btn-sm btn-primary quick-add-save" data-quick="uom">Add</button><button type="button" class="btn btn-sm btn-light quick-add-cancel" data-quick="uom">✕</button></div>
+            </div>
             <div class="form-group col-md-4"><label>HSN / SAC</label><input class="form-control" name="hsn_sac" id="productHsnSac" maxlength="50" placeholder="Optional"></div>
             <div class="form-group col-md-4"><label>Unit Price</label><input type="number" step="0.01" min="0" class="form-control" name="unit_price" id="productUnitPrice" required placeholder="0.00"></div>
-            <div class="form-group col-md-4"><label>Tax Rate</label><select class="form-control" name="tax_rate_id" id="productTaxRate"><option value="">No tax</option></select></div>
+            <div class="form-group col-md-4">
+                <label>Tax Rate</label>
+                <div class="select-with-add"><select class="form-control" name="tax_rate_id" id="productTaxRate"><option value="">No tax</option></select><button type="button" class="btn-quick-add" data-toggle-quick="taxrate" title="Add new tax rate"><i class="fa fa-plus"></i></button></div>
+                <div class="quick-add-row d-none" id="quickAddTaxrate"><input type="text" class="form-control form-control-sm" id="quickAddTaxrateName" placeholder="e.g. GST 12%" maxlength="100" style="flex:1.4;"><input type="number" step="0.01" min="0" max="100" class="form-control form-control-sm" id="quickAddTaxrateRate" placeholder="%" style="flex:.6;"><button type="button" class="btn btn-sm btn-primary quick-add-save" data-quick="taxrate">Add</button><button type="button" class="btn btn-sm btn-light quick-add-cancel" data-quick="taxrate">✕</button></div>
+            </div>
             <div class="form-group col-md-4"><label>Status</label><select class="form-control" name="status" id="productStatus"><option value="Active">Active</option><option value="Inactive">Inactive</option></select></div>
             <div class="form-group col-md-12"><label>Description</label><textarea class="form-control" name="description" id="productDescription" rows="3" placeholder="Shown on quotations when relevant"></textarea></div>
         </div>
@@ -178,6 +202,63 @@
         $('#productUom').html('<option value="">None</option>' + uoms.data.map(u => `<option value="${esc(u.code)}">${esc(u.label)}</option>`).join(''));
         $('#productTaxRate').html('<option value="">No tax</option>' + taxRates.data.filter(t => t.is_active).map(t => `<option value="${t.id}">${esc(t.name)} (${t.rate_percent}%)</option>`).join(''));
     }
+
+    // Quick-add: "+" next to Category/UOM/Tax Rate lets an admin create a
+    // new value without leaving the product form — reuses the same
+    // Master Data / Tax Rate tables, so anything added here also shows up
+    // on the Master Data settings page.
+    $(document).on('click', '[data-toggle-quick]', function(){
+        const key = $(this).data('toggle-quick');
+        $(`#quickAdd${key.charAt(0).toUpperCase()}${key.slice(1)}`).removeClass('d-none').find('input').first().focus();
+    });
+    $(document).on('click', '.quick-add-cancel', function(){
+        const key = $(this).data('quick');
+        $(`#quickAdd${key.charAt(0).toUpperCase()}${key.slice(1)}`).addClass('d-none');
+    });
+    $(document).on('click', '.quick-add-save', function(){
+        const key = $(this).data('quick');
+        const btn = $(this);
+
+        if (key === 'taxrate') {
+            const name = $('#quickAddTaxrateName').val().trim();
+            const rate = $('#quickAddTaxrateRate').val();
+            if (!name || rate === '') { alert('Enter a name and a rate.'); return; }
+            btn.prop('disabled', true);
+            $.ajax({url: `{{ route('products.tax_rates.store') }}`, method: 'POST', headers: {'X-CSRF-TOKEN': csrf}, data: {name, rate_percent: rate}})
+                .done(response => {
+                    const t = response.data;
+                    $('#productTaxRate').append(`<option value="${t.id}">${esc(t.name)} (${t.rate_percent}%)</option>`).val(t.id);
+                    $('#quickAddTaxrate').addClass('d-none');
+                    $('#quickAddTaxrateName').val(''); $('#quickAddTaxrateRate').val('');
+                })
+                .fail(xhr => alert(xhr.responseJSON?.message || 'Unable to add tax rate.'))
+                .always(() => btn.prop('disabled', false));
+            return;
+        }
+
+        const inputId = key === 'category' ? '#quickAddCategoryInput' : '#quickAddUomInput';
+        const label = $(inputId).val().trim();
+        if (!label) { alert('Enter a name.'); return; }
+        const endpoint = key === 'category' ? `{{ route('products.categories.store') }}` : `{{ route('products.uoms.store') }}`;
+        const selectId = key === 'category' ? '#productCategory' : '#productUom';
+
+        btn.prop('disabled', true);
+        $.ajax({url: endpoint, method: 'POST', headers: {'X-CSRF-TOKEN': csrf}, data: {label}})
+            .done(response => {
+                const v = response.data;
+                if (!$(`${selectId} option[value="${v.code}"]`).length) {
+                    $(selectId).append(`<option value="${esc(v.code)}">${esc(v.label)}</option>`);
+                }
+                $(selectId).val(v.code);
+                $(`#quickAdd${key.charAt(0).toUpperCase()}${key.slice(1)}`).addClass('d-none');
+                $(inputId).val('');
+            })
+            .fail(xhr => alert(xhr.responseJSON?.message || 'Unable to add value.'))
+            .always(() => btn.prop('disabled', false));
+    });
+    $(document).on('keydown', '.quick-add-row input', function(e){
+        if (e.key === 'Enter') { e.preventDefault(); $(this).closest('.quick-add-row').find('.quick-add-save').click(); }
+    });
 
     function openProduct(product = null) {
         $('#productForm')[0].reset(); $('#productError').addClass('d-none'); $('#productId').val(product?.id || ''); $('#productModalTitle').text(product ? 'Edit Product' : 'New Product');

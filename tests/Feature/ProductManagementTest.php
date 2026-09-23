@@ -69,6 +69,28 @@ class ProductManagementTest extends TestCase
         $this->assertDatabaseMissing('products', ['name' => 'Bad Product']);
     }
 
+    public function test_quick_add_creates_a_tenant_scoped_category_and_reuses_it_on_a_repeat_label(): void
+    {
+        $response = $this->postJson('/products/categories', ['label' => 'Spare Parts'])->assertOk();
+        $code = $response->json('data.code');
+        $this->assertSame('Spare Parts', $response->json('data.label'));
+        $this->assertDatabaseHas('master_values', ['code' => $code, 'label' => 'Spare Parts', 'tenant_id' => $this->tenant->id]);
+
+        // Same label again → reuses the existing value instead of a near-duplicate row.
+        $again = $this->postJson('/products/categories', ['label' => 'Spare Parts'])->assertOk();
+        $this->assertSame($code, $again->json('data.code'));
+        $this->assertSame(1, \App\Models\MasterValue::where('code', $code)->where('tenant_id', $this->tenant->id)->count());
+    }
+
+    public function test_quick_add_creates_a_uom_and_a_tax_rate(): void
+    {
+        $uom = $this->postJson('/products/uoms', ['label' => 'Roll'])->assertOk();
+        $this->assertDatabaseHas('master_values', ['code' => $uom->json('data.code'), 'label' => 'Roll', 'tenant_id' => $this->tenant->id]);
+
+        $rate = $this->postJson('/products/tax-rates', ['name' => 'GST 12%', 'rate_percent' => 12])->assertOk();
+        $this->assertDatabaseHas('tax_rates', ['id' => $rate->json('data.id'), 'name' => 'GST 12%', 'tenant_id' => $this->tenant->id]);
+    }
+
     public function test_options_endpoint_only_lists_active_products_for_the_current_tenant(): void
     {
         Product::create(['tenant_id' => $this->tenant->id, 'name' => 'Active One', 'unit_price' => 10, 'status' => 'Active']);
