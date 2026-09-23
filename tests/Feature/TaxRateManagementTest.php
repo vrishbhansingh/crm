@@ -37,6 +37,11 @@ class TaxRateManagementTest extends TestCase
         $this->actingAs($this->user, 'web')->withSession(['session_token' => $this->user->session_token]);
     }
 
+    public function test_master_data_page_renders(): void
+    {
+        $this->get('/master-data')->assertOk();
+    }
+
     public function test_user_can_create_update_and_toggle_a_tax_rate(): void
     {
         $response = $this->postJson('/master-data/tax-rates', ['name' => 'GST 18%', 'rate_percent' => 18])->assertOk();
