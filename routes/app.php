@@ -451,6 +451,9 @@ Route::middleware(['admin_middle', 'permission:products.view'])->group(function 
 
 Route::middleware(['admin_middle', 'permission:products.create'])->group(function () {
     Route::post('/products', [ProductController::class, 'store'])->name('products.store');
+    Route::post('/products/categories', [ProductController::class, 'storeCategory'])->name('products.categories.store');
+    Route::post('/products/uoms', [ProductController::class, 'storeUom'])->name('products.uoms.store');
+    Route::post('/products/tax-rates', [ProductController::class, 'storeTaxRate'])->name('products.tax_rates.store');
 });
 
 Route::middleware(['admin_middle', 'permission:products.edit'])->group(function () {

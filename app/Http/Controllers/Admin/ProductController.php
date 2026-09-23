@@ -3,9 +3,13 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\MasterType;
+use App\Models\MasterValue;
 use App\Models\Product;
+use App\Models\TaxRate;
 use App\Support\TenantContext;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class ProductController extends Controller
@@ -77,6 +81,71 @@ class ProductController extends Controller
         $this->findEditable($id)->delete();
 
         return response()->json(['status' => true, 'message' => 'Product deleted successfully']);
+    }
+
+    /**
+     * Quick-add for the "+" next to Category/UOM on the product form —
+     * gated by products.create (not masters.create), since adding a
+     * category while creating a product is part of that workflow, not a
+     * separate settings task. Reuses the same MasterType/MasterValue
+     * tables the Master Data admin screen manages, so anything added here
+     * also shows up there.
+     */
+    public function storeCategory(Request $request)
+    {
+        return response()->json(['status' => true, 'data' => $this->quickAddMasterValue($request, 'product_category')]);
+    }
+
+    public function storeUom(Request $request)
+    {
+        return response()->json(['status' => true, 'data' => $this->quickAddMasterValue($request, 'uom')]);
+    }
+
+    public function storeTaxRate(Request $request)
+    {
+        $tenantId = TenantContext::id();
+        abort_if($tenantId === null, 422, 'Select a tenant first.');
+
+        $data = $request->validate([
+            'name' => 'required|string|max:100',
+            'rate_percent' => 'required|numeric|min:0|max:100',
+        ]);
+        $data['tenant_id'] = $tenantId;
+
+        $taxRate = TaxRate::create($data);
+
+        return response()->json(['status' => true, 'data' => ['id' => $taxRate->id, 'name' => $taxRate->name, 'rate_percent' => $taxRate->rate_percent]]);
+    }
+
+    private function quickAddMasterValue(Request $request, string $typeCode): array
+    {
+        $tenantId = TenantContext::id();
+        abort_if($tenantId === null, 422, 'Select a tenant first.');
+
+        $data = $request->validate(['label' => 'required|string|max:150']);
+        $code = Str::slug($data['label'], '_') ?: Str::random(8);
+
+        $type = MasterType::where('code', $typeCode)->first();
+        abort_if(! $type, 500, "Master type '{$typeCode}' is not configured.");
+
+        // Reuse an existing value with the same code (global default or
+        // this tenant's own) instead of creating a near-duplicate.
+        $existing = MasterValue::where('master_type_id', $type->id)->where('code', $code)
+            ->where(fn ($q) => $q->whereNull('tenant_id')->orWhere('tenant_id', $tenantId))
+            ->first();
+        if ($existing) {
+            return ['code' => $existing->code, 'label' => $existing->label];
+        }
+
+        $value = MasterValue::create([
+            'master_type_id' => $type->id,
+            'tenant_id' => $tenantId,
+            'code' => $code,
+            'label' => $data['label'],
+            'sort_order' => 0,
+        ]);
+
+        return ['code' => $value->code, 'label' => $value->label];
     }
 
     private function validatedData(Request $request, ?int $tenantId): array
