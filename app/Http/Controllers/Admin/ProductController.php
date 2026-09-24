@@ -101,16 +101,27 @@ class ProductController extends Controller
         return response()->json(['status' => true, 'data' => $this->quickAddMasterValue($request, 'uom')]);
     }
 
+    /**
+     * Quick-add only asks for the rate — a separate "name" field next to a
+     * single-purpose % input was one more thing to fill in for no real
+     * benefit, so the name is auto-derived ("GST 12%") the same way the
+     * full Tax Rates screen already labels India GST slabs by convention.
+     * That screen still lets it be renamed afterward for anything
+     * non-GST (a name field there stays meaningful — "Exempt", "Zero-rated",
+     * a customer-specific scheme, etc.), so nothing is lost by not asking
+     * for it here.
+     */
     public function storeTaxRate(Request $request)
     {
         $tenantId = TenantContext::id();
         abort_if($tenantId === null, 422, 'Select a tenant first.');
 
         $data = $request->validate([
-            'name' => 'required|string|max:100',
+            'name' => 'nullable|string|max:100',
             'rate_percent' => 'required|numeric|min:0|max:100',
         ]);
         $data['tenant_id'] = $tenantId;
+        $data['name'] = $data['name'] ?: 'GST '.rtrim(rtrim(number_format((float) $data['rate_percent'], 2), '0'), '.').'%';
 
         $taxRate = TaxRate::create($data);
 

@@ -147,7 +147,7 @@
             <div class="form-group col-md-4">
                 <label>Tax Rate</label>
                 <div class="select-with-add"><select class="form-control" name="tax_rate_id" id="productTaxRate"><option value="">No tax</option></select><button type="button" class="btn-quick-add" data-toggle-quick="taxrate" title="Add new tax rate"><i class="fa fa-plus"></i></button></div>
-                <div class="quick-add-row d-none" id="quickAddTaxrate"><input type="text" class="form-control form-control-sm" id="quickAddTaxrateName" placeholder="e.g. GST 12%" maxlength="100" style="flex:1.4;"><input type="number" step="0.01" min="0" max="100" class="form-control form-control-sm" id="quickAddTaxrateRate" placeholder="%" style="flex:.6;"><button type="button" class="btn btn-sm btn-primary quick-add-save" data-quick="taxrate">Add</button><button type="button" class="btn btn-sm btn-light quick-add-cancel" data-quick="taxrate">✕</button></div>
+                <div class="quick-add-row d-none" id="quickAddTaxrate"><input type="number" step="0.01" min="0" max="100" class="form-control form-control-sm" id="quickAddTaxrateRate" placeholder="Rate %" style="flex:1;"><button type="button" class="btn btn-sm btn-primary quick-add-save" data-quick="taxrate">Add</button><button type="button" class="btn btn-sm btn-light quick-add-cancel" data-quick="taxrate">✕</button></div>
             </div>
             <div class="form-group col-md-4"><label>Status</label><select class="form-control" name="status" id="productStatus"><option value="Active">Active</option><option value="Inactive">Inactive</option></select></div>
             <div class="form-group col-md-12"><label>Description</label><textarea class="form-control" name="description" id="productDescription" rows="3" placeholder="Shown on quotations when relevant"></textarea></div>
@@ -220,16 +220,15 @@
         const btn = $(this);
 
         if (key === 'taxrate') {
-            const name = $('#quickAddTaxrateName').val().trim();
             const rate = $('#quickAddTaxrateRate').val();
-            if (!name || rate === '') { alert('Enter a name and a rate.'); return; }
+            if (rate === '') { alert('Enter a rate.'); return; }
             btn.prop('disabled', true);
-            $.ajax({url: `{{ route('products.tax_rates.store') }}`, method: 'POST', headers: {'X-CSRF-TOKEN': csrf}, data: {name, rate_percent: rate}})
+            $.ajax({url: `{{ route('products.tax_rates.store') }}`, method: 'POST', headers: {'X-CSRF-TOKEN': csrf}, data: {rate_percent: rate}})
                 .done(response => {
                     const t = response.data;
                     $('#productTaxRate').append(`<option value="${t.id}">${esc(t.name)} (${t.rate_percent}%)</option>`).val(t.id);
                     $('#quickAddTaxrate').addClass('d-none');
-                    $('#quickAddTaxrateName').val(''); $('#quickAddTaxrateRate').val('');
+                    $('#quickAddTaxrateRate').val('');
                 })
                 .fail(xhr => alert(xhr.responseJSON?.message || 'Unable to add tax rate.'))
                 .always(() => btn.prop('disabled', false));
