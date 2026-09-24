@@ -10,50 +10,94 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" href="{{ asset('vendors/css/vendor.bundle.base.css') }}">
     <link rel="stylesheet" href="{{ asset('css/vertical-layout-light/style.css') }}">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.26.25/sweetalert2.min.css">
 
     <style>
-        :root { --bg: #f5f7fb; --card: #ffffff; --border: #e6e9f0; --text: #1f2937; --muted: #6b7280; --primary: #2563eb; }
-        body { background: var(--bg); font-family: "Inter", system-ui, sans-serif; }
+        :root { --primary: #4338ca; --primary-dark: #312e81; --border: #e5e7eb; --text-dark: #111827; --text-muted: #6b7280; }
+        body { font-family: "Inter", system-ui, sans-serif; }
 
-        .crm-page-header{background:#fff;padding:20px 22px;border-radius:13px;box-shadow:0 8px 24px rgba(15,23,42,.06);margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
-        .crm-page-header h3{margin:0 0 6px;font-weight:700;font-size:18px;color:#111827}.crm-page-header p{margin:0;color:#6b7280;font-size:14px;max-width:640px}
+        .crm-page-header {
+            background: #fff; padding: 20px 22px; border-radius: 14px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06); border-left: 4px solid var(--primary);
+            display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; flex-wrap: wrap;
+        }
+        .crm-header-left { display: flex; align-items: center; gap: 14px; }
+        .crm-header-icon {
+            width: 44px; height: 44px; border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary)); color: #fff;
+            display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0;
+        }
+        .crm-page-header h4 { font-weight: 800; font-size: 18px; color: var(--text-dark); margin: 0; }
+        .crm-subtitle { color: var(--text-muted); font-size: 13px; max-width: 620px; display: block; margin-top: 2px; }
 
-        .panel { background: var(--card); border-radius: 13px; border: none; box-shadow: 0 8px 24px rgba(15,23,42,.06); padding: 24px; max-width: 900px; }
-        .section-title { font-size: 15.5px; font-weight: 700; margin-bottom: 18px; }
-        label { font-size: 12.5px; font-weight: 600; color: var(--muted); }
-        .hint { font-size: 12.5px; color: var(--muted); margin-top: -8px; margin-bottom: 16px; }
+        .settings-card {
+            background: #fff; border-radius: 14px; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
+            padding: 20px 22px; margin-bottom: 18px;
+        }
+        .settings-card-title { font-size: 14.5px; font-weight: 700; color: var(--text-dark); margin-bottom: 2px; }
+        .settings-card-sub { font-size: 12.5px; color: var(--text-muted); margin-bottom: 18px; }
 
-        .smtp-empty { text-align: center; padding: 30px 20px; color: var(--muted); }
-        .smtp-empty i { font-size: 28px; color: #cbd5e1; margin-bottom: 10px; display: block; }
+        .smtp-row {
+            display: flex; align-items: center; justify-content: space-between; gap: 16px;
+            padding: 14px 16px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 10px; flex-wrap: wrap;
+        }
+        .smtp-row:last-child { margin-bottom: 0; }
+        .smtp-row-left { display: flex; align-items: center; gap: 14px; min-width: 0; }
+        .smtp-icon {
+            width: 38px; height: 38px; border-radius: 10px; flex-shrink: 0;
+            background: #eef2ff; color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 15px;
+        }
+        .smtp-name { font-weight: 700; font-size: 13.5px; color: var(--text-dark); display: flex; align-items: center; gap: 8px; }
+        .smtp-detail { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+        .smtp-actions { display: flex; gap: 6px; flex-wrap: wrap; flex-shrink: 0; }
+        .smtp-actions .btn { border-radius: 8px; font-size: 12px; padding: 6px 11px; font-weight: 600; }
 
-        .smtp-row { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 16px 4px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
-        .smtp-row:last-child { border-bottom: none; }
-        .smtp-name { font-weight: 700; font-size: 14px; color: var(--text); display: flex; align-items: center; gap: 8px; }
-        .smtp-detail { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
-        .smtp-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+        .badge-active-smtp {
+            background: #dcfce7; color: #166534; font-size: 10px; font-weight: 800;
+            text-transform: uppercase; letter-spacing: .03em; padding: 3px 8px; border-radius: 999px;
+            display: inline-flex; align-items: center; gap: 4px;
+        }
+        .badge-active-smtp .status-dot { width: 6px; height: 6px; border-radius: 50%; background: #22c55e; }
 
-        .badge-active-smtp { background: #dcfce7; color: #166534; font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .03em; padding: 3px 9px; border-radius: 999px; }
+        .empty-state { text-align: center; padding: 36px 20px; color: var(--text-muted); }
+        .empty-state .empty-icon { font-size: 30px; color: #cbd5e1; margin-bottom: 12px; display: block; }
+        .empty-state p { max-width: 420px; margin: 0 auto 16px; font-size: 13px; }
+
+        .test-email-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+        .test-email-row .test-icon {
+            width: 38px; height: 38px; border-radius: 10px; flex-shrink: 0;
+            background: #fff7ed; color: #c2410c; display: flex; align-items: center; justify-content: center; font-size: 15px;
+        }
+        .test-email-row form { display: flex; gap: 8px; flex: 1; min-width: 260px; flex-wrap: wrap; }
+        .test-email-row input { flex: 1; min-width: 220px; height: 40px; border-radius: 9px; border: 1px solid var(--border); padding: 0 13px; font-size: 13px; }
+        .test-email-row .btn { border-radius: 9px; font-weight: 600; font-size: 13px; padding: 0 18px; height: 40px; white-space: nowrap; }
+
+        .btn-primary-brand { background: var(--primary); border-color: var(--primary); color: #fff; }
+        .btn-primary-brand:hover { background: var(--primary-dark); border-color: var(--primary-dark); color: #fff; }
 
         #smtpModal .modal-dialog { max-width: 640px; }
+        #smtpModal .modal-content { border-radius: 14px; border: none; }
+        #smtpModal label { font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: .02em; }
+        .hint { font-size: 12px; color: var(--text-muted); margin-top: -8px; margin-bottom: 16px; }
 
         [data-theme="dark"] {
-            --bg: #0f1117;
-            --card: #1a1d2b;
             --border: #2a2e40;
-            --text: #eef0f6;
-            --muted: #9aa1b5;
+            --text-dark: #eef0f6;
+            --text-muted: #9aa1b5;
         }
         [data-theme="dark"] .crm-page-header,
-        [data-theme="dark"] .panel {
+        [data-theme="dark"] .settings-card {
             background: #1a1d2b;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
         }
-        [data-theme="dark"] .crm-page-header h3 { color: #eef0f6; }
-        [data-theme="dark"] .crm-page-header p { color: #9aa1b5; }
-        [data-theme="dark"] .smtp-empty i { color: #343850; }
+        [data-theme="dark"] .smtp-row { background: #16192a; }
+        [data-theme="dark"] .smtp-icon { background: rgba(99, 102, 241, 0.16); color: #a5b4fc; }
+        [data-theme="dark"] .test-email-row .test-icon { background: rgba(251, 146, 60, 0.14); color: #fb923c; }
         [data-theme="dark"] .badge-active-smtp { background: rgba(74, 222, 128, 0.16); color: #4ade80; }
+        [data-theme="dark"] .empty-state .empty-icon { color: #343850; }
+        [data-theme="dark"] #smtpModal .modal-content { background: #1a1d2b; color: #eef0f6; }
+        [data-theme="dark"] .test-email-row input { background: #16192a; color: #eef0f6; }
     </style>
 </head>
 
@@ -68,36 +112,44 @@
             <div class="content-wrapper">
 
                 <div class="crm-page-header">
-                    <div>
-                        <h3>Mail Settings</h3>
-                        <p>Save one or more SMTP configurations for this company's outgoing emails (invoices, password resets, campaigns). Whichever one is marked Active is used; if none is, the platform's default mail server sends on your behalf instead.</p>
+                    <div class="crm-header-left">
+                        <div class="crm-header-icon"><i class="fa fa-envelope"></i></div>
+                        <div>
+                            <h4>Mail Settings</h4>
+                            <small class="crm-subtitle">One or more SMTP configs for this company's outgoing email. Whichever's marked Active is used — if none is, the platform's default mail server sends on your behalf.</small>
+                        </div>
                     </div>
-                    <button class="btn btn-primary" id="addSmtpBtn" data-toggle="modal" data-target="#smtpModal"><i class="fa fa-plus"></i> Add SMTP</button>
+                    <button class="btn btn-primary-brand" id="addSmtpBtn" data-toggle="modal" data-target="#smtpModal"><i class="fa fa-plus"></i> Add SMTP</button>
                 </div>
 
-                <div class="panel section mb-4">
-                    <div class="section-title">Saved SMTP configurations</div>
+                <div class="settings-card">
+                    <div class="settings-card-title">Saved SMTP configurations</div>
+                    <div class="settings-card-sub">{{ $mailSettings->count() }} configured</div>
 
                     @if($mailSettings->isEmpty())
-                        <div class="smtp-empty">
-                            <i class="fa fa-envelope-o"></i>
-                            No SMTP configured yet — emails from this company currently send through the platform's default mail server.
+                        <div class="empty-state">
+                            <i class="fa fa-envelope-o empty-icon"></i>
+                            <p>No SMTP configured yet — emails from this company currently send through the platform's default mail server.</p>
+                            <button class="btn btn-primary-brand" data-toggle="modal" data-target="#smtpModal"><i class="fa fa-plus"></i> Add your first SMTP</button>
                         </div>
                     @else
                         @foreach($mailSettings as $setting)
                             <div class="smtp-row">
-                                <div>
-                                    <div class="smtp-name">
-                                        {{ $setting->name }}
-                                        @if($setting->is_active)<span class="badge-active-smtp">Active</span>@endif
+                                <div class="smtp-row-left">
+                                    <div class="smtp-icon"><i class="fa fa-server"></i></div>
+                                    <div style="min-width:0;">
+                                        <div class="smtp-name">
+                                            {{ $setting->name }}
+                                            @if($setting->is_active)<span class="badge-active-smtp"><span class="status-dot"></span> Active</span>@endif
+                                        </div>
+                                        <div class="smtp-detail">{{ $setting->smtp_host }}:{{ $setting->smtp_port }} @if($setting->smtp_encryption) · {{ strtoupper($setting->smtp_encryption) }} @endif @if($setting->smtp_from_address) · from {{ $setting->smtp_from_address }} @endif</div>
                                     </div>
-                                    <div class="smtp-detail">{{ $setting->smtp_host }}:{{ $setting->smtp_port }} @if($setting->smtp_encryption) · {{ strtoupper($setting->smtp_encryption) }} @endif @if($setting->smtp_from_address) · from {{ $setting->smtp_from_address }} @endif</div>
                                 </div>
                                 <div class="smtp-actions">
                                     @unless($setting->is_active)
-                                        <form method="post" action="{{ route('settings.mail.activate', $setting) }}">@csrf<button class="btn btn-sm btn-outline-success">Set active</button></form>
+                                        <form method="post" action="{{ route('settings.mail.activate', $setting) }}">@csrf<button class="btn btn-outline-success">Set active</button></form>
                                     @endunless
-                                    <button type="button" class="btn btn-sm btn-outline-secondary editSmtpBtn"
+                                    <button type="button" class="btn btn-outline-secondary editSmtpBtn"
                                         data-id="{{ $setting->id }}"
                                         data-name="{{ $setting->name }}"
                                         data-host="{{ $setting->smtp_host }}"
@@ -108,21 +160,24 @@
                                         data-from-name="{{ $setting->smtp_from_name }}">
                                         <i class="fa fa-pencil"></i> Edit
                                     </button>
-                                    <form method="post" action="{{ route('settings.mail.destroy', $setting) }}" onsubmit="return confirm('Delete &quot;{{ $setting->name }}&quot;?');">@csrf @method('DELETE')<button class="btn btn-sm btn-outline-danger"><i class="fa fa-trash"></i></button></form>
+                                    <form method="post" action="{{ route('settings.mail.destroy', $setting) }}" onsubmit="return confirm('Delete &quot;{{ $setting->name }}&quot;?');">@csrf @method('DELETE')<button class="btn btn-outline-danger"><i class="fa fa-trash"></i></button></form>
                                 </div>
                             </div>
                         @endforeach
                     @endif
                 </div>
 
-                <div class="panel section">
-                    <div class="section-title">Send a test email</div>
-                    <p class="hint">Sends using whichever config is Active above (or the platform default if none is).</p>
-                    <form id="testEmailForm" method="POST" action="{{ route('settings.mail.test') }}" class="form-inline">
-                        @csrf
-                        <input type="email" name="test_email" class="form-control mr-2" placeholder="you@example.com" required style="min-width:280px">
-                        <button type="submit" class="btn btn-outline-primary">Send test email</button>
-                    </form>
+                <div class="settings-card">
+                    <div class="settings-card-title">Send a test email</div>
+                    <div class="settings-card-sub">Sends using whichever config is Active above (or the platform default if none is).</div>
+                    <div class="test-email-row">
+                        <div class="test-icon"><i class="fa fa-paper-plane"></i></div>
+                        <form id="testEmailForm" method="POST" action="{{ route('settings.mail.test') }}">
+                            @csrf
+                            <input type="email" name="test_email" placeholder="you@example.com" required>
+                            <button type="submit" class="btn btn-outline-primary">Send test email</button>
+                        </form>
+                    </div>
                 </div>
 
                 @include('include.footer')
@@ -184,7 +239,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Save configuration</button>
+                        <button type="submit" class="btn btn-primary-brand">Save configuration</button>
                     </div>
                 </form>
             </div>
