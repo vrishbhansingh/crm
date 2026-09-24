@@ -198,8 +198,16 @@ class PlatformQueryRunnerController extends Controller
             }
         }
 
+        // Columns are the union across every row, not just the first — a
+        // tenant that fails (unprovisioned database, missing table, a
+        // syntax error only that tenant's schema triggers, …) produces a
+        // differently-shaped row than a successful one, and deriving
+        // columns from row 0 alone would silently drop that tenant's
+        // `error` value off the results table instead of surfacing it.
+        $columns = $rows ? array_values(array_unique(array_merge(...array_map('array_keys', $rows)))) : ['tenant_id', 'tenant_name'];
+
         return [
-            'columns' => $rows ? array_keys($rows[0]) : ['tenant_id', 'tenant_name'],
+            'columns' => $columns,
             'rows' => $rows,
             'row_count' => count($rows),
             'truncated' => $kind === 'read' && count($rows) >= $rowLimit,

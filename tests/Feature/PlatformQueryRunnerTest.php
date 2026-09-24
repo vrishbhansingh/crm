@@ -133,6 +133,30 @@ class PlatformQueryRunnerTest extends TestCase
         $this->assertArrayNotHasKey('error', $rowForA);
     }
 
+    public function test_all_tenants_mode_surfaces_a_per_tenant_error_alongside_successful_rows(): void
+    {
+        // Reproduces a bug found via manual verification: an unprovisioned
+        // tenant mixed in among healthy ones produced a row shaped
+        // {tenant_id, tenant_name, error} instead of {..., one}. Deriving
+        // the response's `columns` from row 0 alone silently dropped the
+        // `error` value off the table for every row after a successful one.
+        config(['tenancy.mode' => 'database']);
+        $healthy = Tenant::create(['name' => 'QR Healthy Co', 'slug' => 'qr-healthy-'.Str::lower(Str::random(8)), 'status' => 'Active', 'provision_status' => 'ready', 'database_name' => config('database.connections.mysql.database')]);
+        $broken = Tenant::create(['name' => 'QR Unprovisioned Co', 'slug' => 'qr-broken-'.Str::lower(Str::random(8)), 'status' => 'Active', 'provision_status' => 'ready']);
+
+        $response = $this->postJson('/superadmin/query-runner/run', [
+            'sql' => 'SELECT 1 AS one;',
+            'mode' => 'all',
+        ])->assertOk();
+
+        $this->assertContains('error', $response->json('columns'));
+        $rows = collect($response->json('rows'));
+        $brokenRow = $rows->firstWhere('tenant_name', $broken->name);
+        $this->assertNotNull($brokenRow);
+        $this->assertArrayHasKey('error', $brokenRow);
+        $this->assertStringContainsString('no provisioned database', $brokenRow['error']);
+    }
+
     public function test_in_real_database_tenancy_mode_an_unprovisioned_tenant_fails_cleanly(): void
     {
         // Outside "shared" mode, a company needs a real provisioned
