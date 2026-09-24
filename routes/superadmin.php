@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\PlatformAuditLogController;
 use App\Http\Controllers\Admin\PlatformDashboardController;
 use App\Http\Controllers\Admin\PlatformMailSettingsController;
+use App\Http\Controllers\Admin\PlatformQueryRunnerController;
 use App\Http\Controllers\Admin\PlatformUserController;
 use App\Http\Controllers\Admin\TenantBackupController;
 use App\Http\Controllers\Admin\TenantController;
@@ -23,6 +24,8 @@ Route::middleware('throttle:5,1')->group(function () {
 Route::middleware(['admin_middle', 'role:Super Admin'])->group(function () {
     Route::get('/', [PlatformDashboardController::class, 'index'])->name('dashboard');
     Route::get('/audit-log', [PlatformAuditLogController::class, 'index'])->name('audit.index');
+    Route::get('/query-runner', [PlatformQueryRunnerController::class, 'index'])->name('query_runner.index');
+    Route::post('/query-runner/run', [PlatformQueryRunnerController::class, 'run'])->name('query_runner.run');
     Route::get('/settings/mail', [PlatformMailSettingsController::class, 'index'])->name('settings.mail.edit');
     Route::get('/settings/mail/form', [PlatformMailSettingsController::class, 'form'])->name('settings.mail.form');
     Route::put('/settings/mail', [PlatformMailSettingsController::class, 'update'])->name('settings.mail.update');
