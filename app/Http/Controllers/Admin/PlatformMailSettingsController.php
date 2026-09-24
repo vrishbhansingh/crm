@@ -80,13 +80,17 @@ class PlatformMailSettingsController extends Controller
     }
 
     /**
-     * One-click test — sends to the Super Admin's own account email rather
-     * than asking for an address, since this is now a plain row action
-     * (Test/Edit/Delete) instead of its own little form.
+     * Sends to whatever address is typed in the Test field, defaulting to
+     * the Super Admin's own email so the field arrives pre-filled and a
+     * plain click still works like before.
      */
-    public function test(MailConfigurator $mailer)
+    public function test(Request $request, MailConfigurator $mailer)
     {
-        $to = Auth::guard('web')->user()->email;
+        $data = $request->validate([
+            'test_email' => ['nullable', 'email', 'max:255'],
+        ]);
+
+        $to = ($data['test_email'] ?? null) ?: Auth::guard('web')->user()->email;
         $mailer->configureFor(null);
 
         try {

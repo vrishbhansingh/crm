@@ -18,6 +18,11 @@
     .smtp-detail { font-size: 12.5px; color: #64748b; margin-top: 2px; }
     .badge-configured { background: #dcfce7; color: #166534; font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .03em; padding: 3px 9px; border-radius: 999px; }
     .smtp-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .smtp-test-form { display: flex; align-items: center; gap: 6px; }
+    .smtp-test-form input {
+        height: 31px; border: 1px solid var(--border); border-radius: 6px;
+        padding: 0 10px; font-size: 12.5px; width: 190px;
+    }
 
     .empty-state { text-align: center; padding: 34px 20px; color: #64748b; }
     .empty-state i { font-size: 30px; color: #cbd5e1; margin-bottom: 12px; display: block; }
@@ -74,8 +79,9 @@
             </div>
         </div>
         <div class="smtp-actions">
-            <form method="post" action="{{ route('superadmin.settings.mail.test') }}">
+            <form method="post" action="{{ route('superadmin.settings.mail.test') }}" class="smtp-test-form">
                 @csrf
+                <input type="email" name="test_email" value="{{ old('test_email', Auth::guard('web')->user()->email) }}" placeholder="you@example.com" required>
                 <button class="btn btn-sm btn-outline-success"><i class="fa fa-paper-plane"></i> Test</button>
             </form>
             <a href="{{ route('superadmin.settings.mail.form') }}" class="btn btn-sm btn-outline-secondary"><i class="fa fa-pencil"></i> Edit</a>
@@ -113,8 +119,8 @@
             <p>Username is usually your full email address. From address/name is what every recipient sees as the sender — use a real, working address on the same domain if your provider requires it (some reject a "From" address that doesn't match the account you're sending as).</p>
         </li>
         <li>
-            <h6>Click Test on the row above — and actually check your inbox</h6>
-            <p>It sends to your own Super Admin email. A message at the top of the page tells you immediately if it failed, with the real reason. If it says sent, check your inbox <strong>and your spam/junk folder</strong> — a first email from a new sender sometimes lands there.</p>
+            <h6>Enter an email next to Test, click it — and actually check that inbox</h6>
+            <p>The field is pre-filled with your own Super Admin email, but you can send the test to any address instead. A message at the top of the page tells you immediately if it failed, with the real reason. If it says sent, check the inbox you sent it to <strong>and its spam/junk folder</strong> — a first email from a new sender sometimes lands there.</p>
             <div class="guide-troubleshoot">
                 If the test email fails, the error shown is usually one of these:
                 <ul>
