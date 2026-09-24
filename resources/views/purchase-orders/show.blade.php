@@ -57,6 +57,14 @@
         .grn-history .g-row{padding:10px 0; border-bottom:1px solid var(--line); font-size:13px; color:var(--muted);}
         .grn-history .g-row strong{color:var(--ink);}
         .empty-state{padding:30px 20px; text-align:center; color:var(--muted); font-size:13.5px;}
+
+        .items-table input.cell-edit, .items-table select.cell-edit{border-radius:7px; border:1px solid var(--border); font-size:13px; padding:6px 8px; background:var(--card); color:var(--ink); width:100%;}
+        .icon-btn{width:28px; height:28px; border-radius:7px; border:none; background:transparent; color:var(--faint); cursor:pointer;}
+        .icon-btn:hover{background:var(--line); color:var(--ink);}
+        .icon-btn.danger:hover{background:#fef1f1; color:#b42318;}
+        .add-item-grid{display:grid; grid-template-columns:1.6fr 1fr .8fr .6fr .8fr 1fr auto; gap:10px; align-items:center;}
+        @media(max-width:1100px){.add-item-grid{grid-template-columns:repeat(2,1fr);}}
+        .add-item-grid .form-control{border-radius:8px; border:1px solid var(--border); font-size:13.5px; padding:8px 10px; background:var(--card); color:var(--ink); height:auto;}
     </style>
 </head>
 <body><div class="container-scroller">@include('include.header')<div class="container-fluid page-body-wrapper">@include('include.sidebar')<div class="main-panel"><div class="content-wrapper">
@@ -80,10 +88,22 @@
             <div class="m"><div class="l">Expected Delivery</div><div class="v" id="metaDelivery">—</div></div>
         </div>
         <table class="items-table">
-            <thead><tr><th>Item</th><th>HSN/SAC</th><th>UOM</th><th class="num">Qty</th><th class="num">Received</th><th class="num">Unit Price</th><th class="num">Tax</th><th class="num">Line Total</th></tr></thead>
+            <thead><tr><th>Item</th><th>HSN/SAC</th><th>UOM</th><th class="num">Qty</th><th class="num">Received</th><th class="num">Unit Price</th><th class="num">Tax</th><th class="num">Line Total</th><th></th></tr></thead>
             <tbody id="itemsBody"></tbody>
         </table>
         <div class="totals-wrap"><div class="totals-box" id="totalsBox"></div></div>
+        <div class="add-item-row d-none" id="addItemRow">
+            <div class="section-title" style="margin:18px 0 10px;"><i class="fa fa-plus"></i> Add Item</div>
+            <div class="add-item-grid">
+                <input class="form-control" id="newItemDescription" placeholder="Description">
+                <input class="form-control" id="newItemHsn" placeholder="HSN/SAC">
+                <input class="form-control" id="newItemUom" placeholder="UOM">
+                <input type="number" step="0.01" class="form-control" id="newItemQty" placeholder="Qty" value="1">
+                <input type="number" step="0.01" class="form-control" id="newItemPrice" placeholder="Unit Price">
+                <select class="form-control" id="newItemTax"><option value="">No tax</option></select>
+                <button type="button" class="btn-accent" id="addItemBtn">Add</button>
+            </div>
+        </div>
     </div>
 
     <div class="paper d-none" id="grnCard">
@@ -109,9 +129,39 @@
     const statusLabel = s => s.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase());
     const canEdit = @json(auth()->user()->can('purchase_orders.edit'));
     let po = null;
+    let taxRates = [];
+    let editingItemId = null;
 
     function load() {
         $.get(`{{ url('/purchase-orders') }}/${poId}/detail`, response => { po = response.data; render(); });
+    }
+    function loadTaxRates() {
+        $.get(`{{ route('master_data.tax_rates.data') }}`, response => {
+            taxRates = response.data.filter(t => t.is_active);
+            $('#newItemTax').html('<option value="">No tax</option>' + taxRates.map(t => `<option value="${t.id}">${esc(t.name)} (${t.rate_percent}%)</option>`).join(''));
+        });
+    }
+
+    function itemRow(item, editable) {
+        if (editable && item.id === editingItemId) {
+            const taxOptions = ['<option value="">No tax</option>'].concat(taxRates.map(t => `<option value="${t.id}" ${String(t.id) === String(item.tax_rate_id) ? 'selected' : ''}>${esc(t.name)} (${t.rate_percent}%)</option>`));
+            return `<tr data-item-id="${item.id}">
+                <td>${esc(item.description)}</td><td>${esc(item.hsn_sac || '—')}</td><td>${esc(item.uom || '—')}</td>
+                <td class="num">${item.quantity}</td><td class="num">${item.received_qty}</td>
+                <td class="num"><input type="number" step="0.01" class="cell-edit editUnitPrice" value="${item.unit_price}"></td>
+                <td class="num"><select class="cell-edit editTaxRate">${taxOptions.join('')}</select></td>
+                <td class="num">—</td>
+                <td><button type="button" class="icon-btn saveItemBtn" title="Save"><i class="fa fa-check"></i></button><button type="button" class="icon-btn cancelItemBtn" title="Cancel"><i class="fa fa-times"></i></button></td>
+            </tr>`;
+        }
+
+        return `<tr data-item-id="${item.id}">
+            <td>${esc(item.description)}</td><td>${esc(item.hsn_sac || '—')}</td><td>${esc(item.uom || '—')}</td>
+            <td class="num">${item.quantity}</td><td class="num">${item.received_qty}</td>
+            <td class="num">${money(item.unit_price)}</td><td class="num">${item.tax_percent > 0 ? item.tax_percent + '%' : '—'}</td>
+            <td class="num">${money(item.line_total)}</td>
+            <td>${editable ? `<button type="button" class="icon-btn editItemBtn" title="Edit"><i class="fa fa-pencil"></i></button><button type="button" class="icon-btn danger removeItemBtn" title="Remove"><i class="fa fa-trash-o"></i></button>` : ''}</td>
+        </tr>`;
     }
 
     function render() {
@@ -119,12 +169,9 @@
         $('#metaVendor').text(po.vendor?.name || '—');
         $('#metaDelivery').text(po.expected_delivery_date || '—');
 
-        $('#itemsBody').html((po.items || []).map(item => `<tr>
-            <td>${esc(item.description)}</td><td>${esc(item.hsn_sac || '—')}</td><td>${esc(item.uom || '—')}</td>
-            <td class="num">${item.quantity}</td><td class="num">${item.received_qty}</td>
-            <td class="num">${money(item.unit_price)}</td><td class="num">${item.tax_percent > 0 ? item.tax_percent + '%' : '—'}</td>
-            <td class="num">${money(item.line_total)}</td>
-        </tr>`).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px;">No items on this order.</td></tr>');
+        const editable = canEdit && po.is_editable;
+        $('#itemsBody').html((po.items || []).map(item => itemRow(item, editable)).join('') || `<tr><td colspan="${editable ? 9 : 8}" style="text-align:center;color:var(--muted);padding:24px;">No items on this order.</td></tr>`);
+        $('#addItemRow').toggleClass('d-none', !editable);
 
         $('#totalsBox').html(`
             <div class="t-line"><span>Subtotal</span><span>${money(po.sub_total)}</span></div>
@@ -149,6 +196,43 @@
         $('#grnHistory').html(receipts.length ? receipts.map(g => `<div class="g-row"><strong>${esc(g.grn_number || 'GRN')}</strong> — ${g.received_date} — ${(g.items || []).length} line(s) received</div>`).join('') : '<div class="empty-state">No receipts recorded yet.</div>');
     }
 
+    $(document).on('click', '.editItemBtn', function(){ editingItemId = $(this).closest('tr').data('item-id'); render(); });
+    $(document).on('click', '.cancelItemBtn', function(){ editingItemId = null; render(); });
+    $(document).on('click', '.saveItemBtn', function(){
+        const row = $(this).closest('tr');
+        const itemId = row.data('item-id');
+        const item = po.items.find(i => i.id === itemId);
+        const taxRateId = row.find('.editTaxRate').val() || null;
+        const taxRate = taxRates.find(t => String(t.id) === String(taxRateId));
+
+        $.ajax({
+            url: `{{ url('/purchase-orders') }}/${poId}/items/${itemId}`, method: 'PUT', headers: {'X-CSRF-TOKEN': csrf},
+            data: {
+                description: item.description, uom: item.uom, hsn_sac: item.hsn_sac, quantity: item.quantity,
+                unit_price: row.find('.editUnitPrice').val(), tax_rate_id: taxRateId, product_id: item.product_id,
+            },
+        }).done(() => { editingItemId = null; load(); }).fail(xhr => alert(xhr.responseJSON?.message || 'Unable to update item.'));
+    });
+    $(document).on('click', '.removeItemBtn', function(){
+        if (!confirm('Remove this item?')) return;
+        const itemId = $(this).closest('tr').data('item-id');
+        $.ajax({url: `{{ url('/purchase-orders') }}/${poId}/items/${itemId}`, method: 'DELETE', headers: {'X-CSRF-TOKEN': csrf}}).done(load).fail(xhr => alert(xhr.responseJSON?.message || 'Unable to remove item.'));
+    });
+    $('#addItemBtn').on('click', function(){
+        const description = $('#newItemDescription').val();
+        if (!description) { $('#newItemDescription').focus(); return; }
+        $.ajax({
+            url: `{{ url('/purchase-orders') }}/${poId}/items`, method: 'POST', headers: {'X-CSRF-TOKEN': csrf},
+            data: {
+                description, uom: $('#newItemUom').val() || null, hsn_sac: $('#newItemHsn').val() || null,
+                quantity: $('#newItemQty').val() || 1, unit_price: $('#newItemPrice').val() || 0, tax_rate_id: $('#newItemTax').val() || null,
+            },
+        }).done(() => {
+            $('#newItemDescription,#newItemHsn,#newItemUom,#newItemPrice').val(''); $('#newItemQty').val(1); $('#newItemTax').val('');
+            load();
+        }).fail(xhr => alert(xhr.responseJSON?.message || 'Unable to add item.'));
+    });
+
     $('#sendBtn').on('click', function(){
         $.ajax({url:`{{ url('/purchase-orders') }}/${poId}/send`, method:'POST', headers:{'X-CSRF-TOKEN':csrf}}).done(load).fail(xhr=>alert(xhr.responseJSON?.message||'Unable to send.'));
     });
@@ -170,5 +254,6 @@
     });
 
     load();
+    loadTaxRates();
 })();
 </script></body></html>
