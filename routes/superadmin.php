@@ -3,9 +3,9 @@
 use App\Http\Controllers\Admin\PlatformAuditLogController;
 use App\Http\Controllers\Admin\PlatformDashboardController;
 use App\Http\Controllers\Admin\PlatformEmailLogController;
-use App\Http\Controllers\Admin\PlatformQueryRunnerController;
 use App\Http\Controllers\Admin\PlatformMailSettingsController;
 use App\Http\Controllers\Admin\PlatformProfileController;
+use App\Http\Controllers\Admin\PlatformQueryRunnerController;
 use App\Http\Controllers\Admin\PlatformUserController;
 use App\Http\Controllers\Admin\TenantBackupController;
 use App\Http\Controllers\Admin\TenantController;
