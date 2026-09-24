@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\TaxRate;
 use App\Models\Tenant;
 use App\Tenancy\TenantConnectionManager;
 use Illuminate\Console\Command;
@@ -18,13 +19,15 @@ use Throwable;
  * were) therefore does nothing for tenants that already existed before
  * the seeder ran — this command closes that gap by copying any global
  * type/value that's missing from each tenant's own copy, the same way a
- * fresh provision would have.
+ * fresh provision would have. It also backfills the default GST tax-rate
+ * slabs (0/5/12/18/28%) for tenants provisioned before those defaults
+ * existed, the same way TenantDatabaseProvisioner seeds them for new ones.
  */
 class SyncMasterDataToTenants extends Command
 {
     protected $signature = 'crm:sync-master-data {--tenant= : Sync only one tenant ID}';
 
-    protected $description = 'Seed the master database with MasterDataSeeder, then copy any missing global master types/values into every already-provisioned tenant';
+    protected $description = 'Seed the master database with MasterDataSeeder, then copy any missing global master types/values and default tax rates into every already-provisioned tenant';
 
     public function handle(TenantConnectionManager $connections): int
     {
@@ -50,7 +53,8 @@ class SyncMasterDataToTenants extends Command
             try {
                 $connections->activate($tenant);
                 [$types, $values] = $this->syncTenant($tenant->database_name, $masterDatabase, $master);
-                $this->info("Tenant {$tenant->id} ({$tenant->name}): +{$types} type(s), +{$values} value(s)");
+                $rates = $this->syncDefaultTaxRates($tenant->id);
+                $this->info("Tenant {$tenant->id} ({$tenant->name}): +{$types} type(s), +{$values} value(s), +{$rates} tax rate(s)");
             } catch (Throwable $exception) {
                 $failed[] = $tenant->id;
                 $this->error("Tenant {$tenant->id} failed: {$exception->getMessage()}");
@@ -117,5 +121,42 @@ class SyncMasterDataToTenants extends Command
         }
 
         return [$typesCopied, $valuesCopied];
+    }
+
+    /**
+     * Backfills the standard GST slabs for a tenant that has none of them
+     * yet — additive only, so a tenant's own custom/renamed rates are never
+     * touched, and running this command twice never creates duplicates.
+     */
+    private function syncDefaultTaxRates(int $tenantId): int
+    {
+        $existing = DB::connection('tenant')->table('tax_rates')
+            ->where('tenant_id', $tenantId)
+            ->pluck('rate_percent')
+            ->map(fn ($rate) => (float) $rate)
+            ->all();
+
+        $now = now();
+        $rows = [];
+        foreach (TaxRate::defaultRatePercents() as $rate) {
+            if (in_array((float) $rate, $existing, true)) {
+                continue;
+            }
+
+            $rows[] = [
+                'tenant_id' => $tenantId,
+                'name' => TaxRate::labelFor((float) $rate),
+                'rate_percent' => $rate,
+                'is_active' => 1,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+        }
+
+        if ($rows !== []) {
+            DB::connection('tenant')->table('tax_rates')->insert($rows);
+        }
+
+        return count($rows);
     }
 }

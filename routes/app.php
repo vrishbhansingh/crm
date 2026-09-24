@@ -16,7 +16,11 @@ use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\OrderDetailController;
 use App\Http\Controllers\Admin\PipelineController;
 use App\Http\Controllers\Admin\PipelineStageController;
+use App\Http\Controllers\Admin\GoodsReceiptController;
 use App\Http\Controllers\Admin\ProductController;
+use App\Http\Controllers\Admin\PurchaseOrderController;
+use App\Http\Controllers\Admin\RfqController;
+use App\Http\Controllers\Admin\VendorController;
 use App\Http\Controllers\Admin\ProjectDetailsController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\RoleController;
@@ -545,6 +549,76 @@ Route::middleware(['admin_middle', 'permission:quotations.edit'])->group(functio
 
 Route::middleware(['admin_middle', 'permission:quotations.delete'])->group(function () {
     Route::delete('/quotations/{id}', [QuotationRecordController::class, 'destroy'])->name('quotations.destroy')->whereNumber('id');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Vendors — simple tenant-scoped master for the purchase-order module.
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['admin_middle', 'permission:vendors.view'])->group(function () {
+    Route::get('/vendors', [VendorController::class, 'index'])->name('vendors.index');
+    Route::get('/vendors/data', [VendorController::class, 'data'])->name('vendors.data');
+    Route::get('/vendors/options', [VendorController::class, 'options'])->name('vendors.options');
+});
+
+Route::middleware(['admin_middle', 'permission:vendors.create'])->group(function () {
+    Route::post('/vendors', [VendorController::class, 'store'])->name('vendors.store');
+});
+
+Route::middleware(['admin_middle', 'permission:vendors.edit'])->group(function () {
+    Route::put('/vendors/{id}', [VendorController::class, 'update'])->name('vendors.update')->whereNumber('id');
+});
+
+Route::middleware(['admin_middle', 'permission:vendors.delete'])->group(function () {
+    Route::delete('/vendors/{id}', [VendorController::class, 'destroy'])->name('vendors.destroy')->whereNumber('id');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Purchase Orders, RFQs and Goods Receipts — all share the purchase_orders.*
+| permission module (RFQ/GRN are sub-workflows of procurement, not
+| independent modules, to avoid permission sprawl).
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['admin_middle', 'permission:purchase_orders.view'])->group(function () {
+    Route::get('/purchase-orders', [PurchaseOrderController::class, 'index'])->name('purchase_orders.index');
+    Route::get('/purchase-orders/data', [PurchaseOrderController::class, 'data'])->name('purchase_orders.data');
+    Route::get('/purchase-orders/create', [PurchaseOrderController::class, 'create'])->name('purchase_orders.create_form');
+    Route::get('/purchase-orders/{id}/detail', [PurchaseOrderController::class, 'detail'])->name('purchase_orders.detail')->whereNumber('id');
+    Route::get('/purchase-orders/{id}/pdf', [PurchaseOrderController::class, 'pdf'])->name('purchase_orders.pdf')->whereNumber('id');
+    Route::get('/purchase-orders/{id}', [PurchaseOrderController::class, 'show'])->name('purchase_orders.show')->whereNumber('id');
+
+    Route::get('/rfqs', [RfqController::class, 'index'])->name('rfqs.index');
+    Route::get('/rfqs/data', [RfqController::class, 'data'])->name('rfqs.data');
+    Route::get('/rfqs/create', [RfqController::class, 'create'])->name('rfqs.create_form');
+    Route::get('/rfqs/{id}/detail', [RfqController::class, 'detail'])->name('rfqs.detail')->whereNumber('id');
+    Route::get('/rfqs/{id}', [RfqController::class, 'show'])->name('rfqs.show')->whereNumber('id');
+});
+
+Route::middleware(['admin_middle', 'permission:purchase_orders.create'])->group(function () {
+    Route::post('/purchase-orders', [PurchaseOrderController::class, 'store'])->name('purchase_orders.store');
+    Route::post('/rfqs', [RfqController::class, 'store'])->name('rfqs.store');
+});
+
+Route::middleware(['admin_middle', 'permission:purchase_orders.edit'])->group(function () {
+    Route::put('/purchase-orders/{id}', [PurchaseOrderController::class, 'update'])->name('purchase_orders.update')->whereNumber('id');
+    Route::post('/purchase-orders/{id}/items', [PurchaseOrderController::class, 'addItem'])->name('purchase_orders.items.store')->whereNumber('id');
+    Route::put('/purchase-orders/{id}/items/{itemId}', [PurchaseOrderController::class, 'updateItem'])->name('purchase_orders.items.update')->whereNumber('id')->whereNumber('itemId');
+    Route::delete('/purchase-orders/{id}/items/{itemId}', [PurchaseOrderController::class, 'removeItem'])->name('purchase_orders.items.destroy')->whereNumber('id')->whereNumber('itemId');
+    Route::post('/purchase-orders/{id}/send', [PurchaseOrderController::class, 'send'])->name('purchase_orders.send')->whereNumber('id');
+    Route::post('/purchase-orders/{id}/cancel', [PurchaseOrderController::class, 'cancel'])->name('purchase_orders.cancel')->whereNumber('id');
+    Route::post('/purchase-orders/{id}/goods-receipts', [GoodsReceiptController::class, 'store'])->name('purchase_orders.goods_receipts.store')->whereNumber('id');
+
+    Route::post('/rfqs/{id}/vendors/{vendorRowId}/quote', [RfqController::class, 'recordQuote'])->name('rfqs.vendors.quote')->whereNumber('id')->whereNumber('vendorRowId');
+    Route::post('/rfqs/{id}/convert-to-po', [RfqController::class, 'convertToPo'])->name('rfqs.convert_to_po')->whereNumber('id');
+});
+
+Route::middleware(['admin_middle', 'permission:purchase_orders.delete'])->group(function () {
+    Route::delete('/purchase-orders/{id}', [PurchaseOrderController::class, 'destroy'])->name('purchase_orders.destroy')->whereNumber('id');
+    Route::delete('/rfqs/{id}', [RfqController::class, 'destroy'])->name('rfqs.destroy')->whereNumber('id');
 });
 
 Route::middleware(['admin_middle', 'permission:orders.edit'])->group(function () {
