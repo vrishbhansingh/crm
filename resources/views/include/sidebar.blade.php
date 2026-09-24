@@ -385,6 +385,28 @@
         </div>
         @endcanany
 
+        @canany(['vendors.view', 'purchase_orders.view'])
+        <div class="nav-section {{ request()->routeIs(['vendors.*','purchase_orders.*','rfqs.*']) ? 'has-active' : '' }}">
+            <div class="nav-section-label">Procurement &amp; Finance</div>
+            <ul class="nav nav-sidebar-menu">
+                @can('purchase_orders.view')
+                <li class="mb-1" data-nav-label="Purchase Orders">
+                    <a class="nav-link {{ request()->routeIs(['purchase_orders.*','rfqs.*']) ? 'active' : '' }}" href="{{ route('purchase_orders.index') }}" title="Purchase Orders">
+                        <i class="fa fa-truck"></i><span>Purchase Orders</span>
+                    </a>
+                </li>
+                @endcan
+                @can('vendors.view')
+                <li class="mb-1" data-nav-label="Vendors">
+                    <a class="nav-link {{ request()->routeIs('vendors.*') ? 'active' : '' }}" href="{{ route('vendors.index') }}" title="Vendors">
+                        <i class="fa fa-building-o"></i><span>Vendors</span>
+                    </a>
+                </li>
+                @endcan
+            </ul>
+        </div>
+        @endcanany
+
         @canany(['tasks.view', 'calendar.view'])
         <div class="nav-section {{ request()->routeIs(['tasks.*','calendar.*']) ? 'has-active' : '' }}">
             <div class="nav-section-label">Activity</div>

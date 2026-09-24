@@ -121,7 +121,7 @@ class ProductController extends Controller
             'rate_percent' => 'required|numeric|min:0|max:100',
         ]);
         $data['tenant_id'] = $tenantId;
-        $data['name'] = $data['name'] ?: 'GST '.rtrim(rtrim(number_format((float) $data['rate_percent'], 2), '0'), '.').'%';
+        $data['name'] = $data['name'] ?: TaxRate::labelFor((float) $data['rate_percent']);
 
         $taxRate = TaxRate::create($data);
 

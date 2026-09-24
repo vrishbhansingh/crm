@@ -3,6 +3,7 @@
 namespace App\Tenancy;
 
 use App\Models\Pipeline;
+use App\Models\TaxRate;
 use App\Models\Tenant;
 use App\Support\TenantContext;
 use Illuminate\Support\Facades\DB;
@@ -19,6 +20,8 @@ class TenantDatabaseProvisioner
         'lead_follow_up', 'lead_activities', 'lead_attachments', 'tags', 'pipelines',
         'pipeline_stages', 'deals', 'project_info', 'orders', 'payment_details',
         'tasks', 'user_attendance', 'audit_logs', 'tax_rates', 'products',
+        'vendors', 'request_for_quotations', 'rfq_items', 'rfq_vendors',
+        'purchase_orders', 'purchase_order_items', 'goods_receipts', 'goods_receipt_items',
     ];
 
     public function __construct(private readonly TenantConnectionManager $connections) {}
@@ -168,6 +171,10 @@ class TenantDatabaseProvisioner
             );
         }
 
+        if (DB::connection('tenant')->table('tax_rates')->count() === 0) {
+            DB::connection('tenant')->table('tax_rates')->insert($this->defaultTaxRateRows($tenant->id));
+        }
+
         if (DB::connection('tenant')->table('company_details')->count() === 0) {
             DB::connection('tenant')->table('company_details')->insert([
                 'tenant_id' => $tenant->id,
@@ -206,6 +213,10 @@ class TenantDatabaseProvisioner
             );
         }
 
+        if (DB::connection('tenant')->table('tax_rates')->count() === 0) {
+            DB::connection('tenant')->table('tax_rates')->insert($this->defaultTaxRateRows($tenant->id));
+        }
+
         if (DB::connection('tenant')->table('deal_stage_history')->count() === 0) {
             DB::connection($master)->insert(
                 'INSERT INTO '.$this->qualified($databaseName, 'deal_stage_history').' SELECT h.* FROM '.$this->qualified($masterDatabase, 'deal_stage_history').' h INNER JOIN '.$this->qualified($masterDatabase, 'deals').' d ON d.id = h.deal_id WHERE d.tenant_id = ?',
@@ -219,6 +230,20 @@ class TenantDatabaseProvisioner
                 [$tenant->id]
             );
         }
+    }
+
+    private function defaultTaxRateRows(int $tenantId): array
+    {
+        $now = now();
+
+        return array_map(fn ($rate) => [
+            'tenant_id' => $tenantId,
+            'name' => TaxRate::labelFor((float) $rate),
+            'rate_percent' => $rate,
+            'is_active' => 1,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ], TaxRate::defaultRatePercents());
     }
 
     private function databaseName(Tenant $tenant): string

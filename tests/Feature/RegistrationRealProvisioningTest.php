@@ -74,6 +74,13 @@ class RegistrationRealProvisioningTest extends TestCase
         $schemaExists = DB::select('SELECT SCHEMA_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = ?', [$this->tenant->database_name]);
         $this->assertNotEmpty($schemaExists, 'A real per-tenant database should exist.');
 
+        // Default GST slabs should be seeded into the fresh tenant database
+        // so its tax-rate dropdown isn't empty out of the box.
+        $rates = DB::connection('mysql')->table($this->tenant->database_name.'.tax_rates')
+            ->where('tenant_id', $this->tenant->id)->pluck('rate_percent')
+            ->map(fn ($rate) => (float) $rate)->sort()->values()->all();
+        $this->assertSame([0.0, 5.0, 12.0, 18.0, 28.0], $rates);
+
         $admin = User::where('email', $email)->firstOrFail();
         $this->assertSame('Active', $admin->status);
 
