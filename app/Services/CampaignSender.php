@@ -2,14 +2,14 @@
 
 namespace App\Services;
 
-use App\Mail\CampaignMail;
+use App\Jobs\SendCampaignEmailJob;
 use App\Models\Company;
 use App\Models\Contact;
 use App\Models\EmailCampaign;
 use App\Models\EmailCampaignRecipient;
 use App\Models\Lead;
-use Illuminate\Support\Facades\Mail;
-use Throwable;
+use App\Tenancy\TenantConnectionManager;
+use Illuminate\Support\Facades\Bus;
 
 /**
  * Everything involved in actually running a campaign: turning its audience
@@ -26,7 +26,11 @@ class CampaignSender
         'companies' => ['status', 'industry', 'city'],
     ];
 
-    public function __construct(private readonly TemplateVariableResolver $variables) {}
+    public function __construct(
+        private readonly TemplateVariableResolver $variables,
+        private readonly EmailLogger $emailLogger,
+        private readonly TenantConnectionManager $connections,
+    ) {}
 
     /**
      * Resolve the campaign's audience_filters into a concrete list of
@@ -72,55 +76,89 @@ class CampaignSender
         return $this->audienceQuery($campaign)->count();
     }
 
+    /**
+     * Builds one queued job per recipient (variables already resolved, so
+     * the job itself doesn't need the lead/contact/company record at all)
+     * and dispatches them as a batch — the campaign's own status only
+     * flips to its final sent/failed once every job in the batch has run,
+     * via the batch's finally() callback below. Actual delivery happens
+     * whenever the scheduled queue worker next runs (see Kernel::schedule),
+     * not within this request.
+     */
     public function send(EmailCampaign $campaign): void
     {
         $campaign->forceFill(['status' => 'sending'])->save();
 
-        app(MailConfigurator::class)->configureFor($campaign->tenant);
-
         $subject = $campaign->subject ?: $campaign->template->subject;
         $body = $campaign->template->body;
+        $tenantId = $campaign->tenant_id;
+        $tenant = $campaign->tenant;
+
+        $jobs = [];
 
         $campaign->recipients()->where('status', 'pending')->orderBy('id')
-            ->chunkById(50, function ($recipients) use ($subject, $body, $campaign) {
+            ->chunkById(50, function ($recipients) use (&$jobs, $subject, $body, $campaign, $tenantId, $tenant) {
                 foreach ($recipients as $recipientRow) {
-                    $this->sendOne($recipientRow, $subject, $body, $campaign);
+                    $record = $recipientRow->recipient();
+
+                    if (! $record) {
+                        $recipientRow->forceFill(['status' => 'failed', 'error' => 'Record no longer exists'])->save();
+                        $campaign->increment('failed_count');
+
+                        continue;
+                    }
+
+                    $context = $this->variables->contextFor($record, $tenant);
+                    $resolvedSubject = $this->variables->resolve($subject, $context);
+                    $resolvedBody = $this->variables->resolve($body, $context);
+
+                    $log = $this->emailLogger->queued('campaign', $tenantId, $recipientRow->email, $resolvedSubject, [
+                        'campaign_id' => $campaign->id,
+                        'recipient_id' => $recipientRow->id,
+                        'body' => $resolvedBody,
+                    ]);
+
+                    $jobs[] = new SendCampaignEmailJob(
+                        $tenantId, $campaign->id, $recipientRow->id, $recipientRow->email,
+                        $resolvedSubject, $resolvedBody, $log->id,
+                    );
                 }
             });
 
-        $campaign->refresh();
-        $campaign->forceFill([
-            'status' => $campaign->failed_count > 0 && $campaign->sent_count === 0 ? 'failed' : 'sent',
-            'sent_at' => now(),
-        ])->save();
-    }
-
-    private function sendOne(EmailCampaignRecipient $recipientRow, string $subject, string $body, EmailCampaign $campaign): void
-    {
-        $record = $recipientRow->recipient();
-
-        if (! $record) {
-            $recipientRow->forceFill(['status' => 'failed', 'error' => 'Record no longer exists'])->save();
-            $campaign->increment('failed_count');
+        if ($jobs === []) {
+            $campaign->refresh();
+            $campaign->forceFill([
+                'status' => $campaign->failed_count > 0 && $campaign->sent_count === 0 ? 'failed' : 'sent',
+                'sent_at' => now(),
+            ])->save();
 
             return;
         }
 
-        $context = $this->variables->contextFor($record, $campaign->tenant);
+        Bus::batch($jobs)
+            ->name('campaign-'.$campaign->id)
+            ->finally(function () use ($campaign, $tenantId) {
+                // This callback can itself run later, outside the request
+                // that dispatched it — no tenant connection is guaranteed to
+                // be active, so (re)activate it before touching the campaign.
+                // "shared" tenancy mode has no per-tenant database at all.
+                $needsTenantSwitch = $tenantId && config('tenancy.mode') !== 'shared';
 
-        try {
-            Mail::to($recipientRow->email)->send(new CampaignMail(
-                $this->variables->resolve($subject, $context),
-                $this->variables->resolve($body, $context),
-            ));
+                if ($needsTenantSwitch) {
+                    $this->connections->activate($tenantId);
+                }
 
-            $recipientRow->forceFill(['status' => 'sent', 'sent_at' => now(), 'error' => null])->save();
-            $campaign->increment('sent_count');
-        } catch (Throwable $exception) {
-            report($exception);
-            $recipientRow->forceFill(['status' => 'failed', 'error' => $exception->getMessage()])->save();
-            $campaign->increment('failed_count');
-        }
+                $campaign->refresh();
+                $campaign->forceFill([
+                    'status' => $campaign->failed_count > 0 && $campaign->sent_count === 0 ? 'failed' : 'sent',
+                    'sent_at' => now(),
+                ])->save();
+
+                if ($needsTenantSwitch) {
+                    $this->connections->deactivate();
+                }
+            })
+            ->dispatch();
     }
 
     private function audienceQuery(EmailCampaign $campaign)

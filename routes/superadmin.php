@@ -2,7 +2,10 @@
 
 use App\Http\Controllers\Admin\PlatformAuditLogController;
 use App\Http\Controllers\Admin\PlatformDashboardController;
+use App\Http\Controllers\Admin\PlatformEmailLogController;
+use App\Http\Controllers\Admin\PlatformQueryRunnerController;
 use App\Http\Controllers\Admin\PlatformMailSettingsController;
+use App\Http\Controllers\Admin\PlatformProfileController;
 use App\Http\Controllers\Admin\PlatformUserController;
 use App\Http\Controllers\Admin\TenantBackupController;
 use App\Http\Controllers\Admin\TenantController;
@@ -22,7 +25,15 @@ Route::middleware('throttle:5,1')->group(function () {
 
 Route::middleware(['admin_middle', 'role:Super Admin'])->group(function () {
     Route::get('/', [PlatformDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/profile', [PlatformProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('/profile', [PlatformProfileController::class, 'update'])->name('profile.update');
+    Route::put('/profile/password', [PlatformProfileController::class, 'updatePassword'])->name('profile.password');
     Route::get('/audit-log', [PlatformAuditLogController::class, 'index'])->name('audit.index');
+    Route::get('/email-log', [PlatformEmailLogController::class, 'index'])->name('email_log.index');
+    Route::post('/email-log/{log}/retry', [PlatformEmailLogController::class, 'retry'])->name('email_log.retry')->whereNumber('log');
+    Route::get('/query-runner', [PlatformQueryRunnerController::class, 'index'])->name('query_runner.index');
+    Route::post('/query-runner/run', [PlatformQueryRunnerController::class, 'run'])->name('query_runner.run');
+    Route::get('/query-runner/tables', [PlatformQueryRunnerController::class, 'tables'])->name('query_runner.tables');
     Route::get('/settings/mail', [PlatformMailSettingsController::class, 'index'])->name('settings.mail.edit');
     Route::get('/settings/mail/form', [PlatformMailSettingsController::class, 'form'])->name('settings.mail.form');
     Route::put('/settings/mail', [PlatformMailSettingsController::class, 'update'])->name('settings.mail.update');

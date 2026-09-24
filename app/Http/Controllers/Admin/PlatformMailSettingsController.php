@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\PlatformMailSetting;
+use App\Services\EmailLogger;
 use App\Services\MailConfigurator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -84,18 +85,21 @@ class PlatformMailSettingsController extends Controller
      * the Super Admin's own email so the field arrives pre-filled and a
      * plain click still works like before.
      */
-    public function test(Request $request, MailConfigurator $mailer)
+    public function test(Request $request, MailConfigurator $mailer, EmailLogger $emailLogger)
     {
         $data = $request->validate([
             'test_email' => ['nullable', 'email', 'max:255'],
         ]);
 
         $to = ($data['test_email'] ?? null) ?: Auth::guard('web')->user()->email;
+        $subject = 'CRM platform: SMTP test email';
         $mailer->configureFor(null);
 
         try {
-            Mail::raw('This is a test email from the CRM platform default mail settings. If you received this, SMTP is working correctly.', function ($message) use ($to) {
-                $message->to($to)->subject('CRM platform: SMTP test email');
+            $emailLogger->sync('smtp_test', null, $to, $subject, function () use ($to, $subject) {
+                Mail::raw('This is a test email from the CRM platform default mail settings. If you received this, SMTP is working correctly.', function ($message) use ($to, $subject) {
+                    $message->to($to)->subject($subject);
+                });
             });
         } catch (\Throwable $exception) {
             return back()->withErrors(['test' => 'Could not send test email: '.$exception->getMessage()]);

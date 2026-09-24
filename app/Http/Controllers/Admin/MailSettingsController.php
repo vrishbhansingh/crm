@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\TenantMailSetting;
+use App\Services\EmailLogger;
 use App\Services\MailConfigurator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -76,16 +77,19 @@ class MailSettingsController extends Controller
         return back()->with('success', "\"{$name}\" deleted.");
     }
 
-    public function test(Request $request, MailConfigurator $mailer)
+    public function test(Request $request, MailConfigurator $mailer, EmailLogger $emailLogger)
     {
         $tenant = Auth::user()->tenant;
         $data = Validator::make($request->all(), ['test_email' => ['required', 'email']])->validate();
+        $subject = ($tenant->name ?: 'CRM').': SMTP test email';
 
         $mailer->configureFor($tenant);
 
         try {
-            Mail::raw('This is a test email from your CRM mail settings. If you received this, SMTP is working correctly.', function ($message) use ($data, $tenant) {
-                $message->to($data['test_email'])->subject(($tenant->name ?: 'CRM').': SMTP test email');
+            $emailLogger->sync('smtp_test', $tenant->id, $data['test_email'], $subject, function () use ($data, $subject) {
+                Mail::raw('This is a test email from your CRM mail settings. If you received this, SMTP is working correctly.', function ($message) use ($data, $subject) {
+                    $message->to($data['test_email'])->subject($subject);
+                });
             });
         } catch (\Throwable $exception) {
             return back()->withErrors(['test_email' => 'Could not send test email: '.$exception->getMessage()]);

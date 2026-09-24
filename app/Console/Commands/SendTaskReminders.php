@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\Task;
 use App\Models\Tenant;
 use App\Notifications\TaskDueReminder;
+use App\Services\EmailLogger;
 use App\Services\MailConfigurator;
 use App\Support\TenantContext;
 use App\Tenancy\TenantConnectionManager;
@@ -70,7 +71,12 @@ class SendTaskReminders extends Command
                     // outer tenant loop, since "shared" tenancy mode has no
                     // such loop and calls this without one.
                     app(MailConfigurator::class)->configureFor($task->assignee->tenant);
-                    $task->assignee->notify(new TaskDueReminder($task));
+                    app(EmailLogger::class)->sync(
+                        'task_reminder', $task->assignee->tenant_id, $task->assignee->email,
+                        'Task reminder: '.$task->title,
+                        fn () => $task->assignee->notify(new TaskDueReminder($task)),
+                        ['task_id' => $task->id],
+                    );
                     $task->forceFill(['notification_sent_at' => now()])->save();
                     $sent++;
                 }

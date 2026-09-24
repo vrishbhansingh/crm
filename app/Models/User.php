@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\EmailLogger;
 use App\Services\MailConfigurator;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -70,6 +71,9 @@ class User extends Authenticatable
     public function sendPasswordResetNotification($token): void
     {
         app(MailConfigurator::class)->configureFor($this->tenant);
-        $this->notify(new ResetPassword($token));
+
+        app(EmailLogger::class)->sync('password_reset', $this->tenant_id, $this->email, 'Reset your password', function () use ($token) {
+            $this->notify(new ResetPassword($token));
+        });
     }
 }
