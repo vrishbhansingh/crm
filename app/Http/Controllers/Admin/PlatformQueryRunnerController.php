@@ -5,22 +5,23 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Tenant;
 use App\Services\PlatformAuditLogger;
-use Illuminate\Database\Connection;
+use App\Tenancy\TenantConnectionManager;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Throwable;
 
 /**
- * The only raw-SQL execution surface in the platform — every safety
- * decision here treats the Allow-write/Allow-DDL checkboxes as real
- * server-side gates, not UI decoration, since a super admin's browser
- * click is the only thing standing between this and every tenant's data.
+ * A phpMyAdmin replacement for the Super Admin: run SQL against the master
+ * database, one tenant's database, or every ready tenant's database at
+ * once, without leaving the app. Every attempt — successful or not — is
+ * written to the platform audit log. The Allow-write/Allow-DDL checkboxes
+ * are enforced server-side by classifying the statement's leading
+ * keyword, not just trusted from the client.
  */
 class PlatformQueryRunnerController extends Controller
 {
-    private const CONNECTION = 'query_runner';
-
     private const READ_KEYWORDS = ['SELECT', 'SHOW', 'DESCRIBE', 'DESC', 'EXPLAIN', 'WITH'];
 
     private const WRITE_KEYWORDS = ['INSERT', 'UPDATE', 'DELETE', 'REPLACE'];
@@ -37,12 +38,38 @@ class PlatformQueryRunnerController extends Controller
         ]);
     }
 
-    public function run(Request $request, PlatformAuditLogger $audit)
+    public function tables(Request $request, TenantConnectionManager $connections)
+    {
+        $data = $request->validate(['connection' => ['required', 'string']]);
+        $isMaster = $data['connection'] === 'master';
+        $needsTenantSwitch = ! $isMaster && config('tenancy.mode') !== 'shared';
+        $connectionName = $needsTenantSwitch ? config('tenancy.tenant_connection', 'tenant') : config('tenancy.master_connection', 'mysql');
+
+        try {
+            if ($needsTenantSwitch) {
+                $connections->activate((int) $data['connection']);
+            }
+
+            $rows = DB::connection($connectionName)->select('SHOW TABLES');
+            $tables = array_map(fn ($row) => array_values((array) $row)[0], $rows);
+            sort($tables);
+
+            return response()->json(['status' => true, 'tables' => $tables]);
+        } catch (Throwable $exception) {
+            return response()->json(['status' => false, 'message' => $exception->getMessage()], 422);
+        } finally {
+            if ($needsTenantSwitch) {
+                $connections->deactivate();
+            }
+        }
+    }
+
+    public function run(Request $request, TenantConnectionManager $connections, PlatformAuditLogger $audit)
     {
         $data = $request->validate([
             'sql' => ['required', 'string', 'max:20000'],
             'mode' => ['required', Rule::in(['single', 'all'])],
-            'tenant_id' => ['nullable', 'integer', Rule::exists('tenants', 'id')],
+            'tenant_id' => ['nullable', 'integer'],
             'allow_write' => ['nullable', 'boolean'],
             'allow_ddl' => ['nullable', 'boolean'],
             'row_limit' => ['nullable', 'integer', 'min:1', 'max:10000'],
@@ -65,29 +92,28 @@ class PlatformQueryRunnerController extends Controller
         }
 
         $tenant = $data['mode'] === 'single' && ! empty($data['tenant_id']) ? Tenant::find($data['tenant_id']) : null;
-        $targetLabel = $data['mode'] === 'all' ? 'ALL_TENANTS' : ($tenant->database_name ?? 'master');
+        $targetLabel = $data['mode'] === 'all' ? 'ALL_TENANTS' : ($tenant->name ?? 'master');
         $started = microtime(true);
 
         try {
             $result = $data['mode'] === 'all'
-                ? $this->runAgainstAllTenants($statement, $kind, $rowLimit)
-                : $this->runSingle($tenant?->database_name ?? config('database.connections.'.config('tenancy.master_connection', 'mysql').'.database'), $statement, $kind, $rowLimit);
+                ? $this->runAgainstAllTenants($connections, $statement, $kind, $rowLimit)
+                : $this->runSingle($connections, $tenant, $statement, $kind, $rowLimit);
         } catch (Throwable $exception) {
-            $audit->record('query_runner.execute', $tenant, null, [
-                'sql' => $statement, 'mode' => $data['mode'], 'target_database' => $targetLabel,
-                'allow_write' => $allowWrite, 'allow_ddl' => $allowDdl, 'error' => $exception->getMessage(),
+            $audit->record('query_runner.executed', $tenant, null, [
+                'sql' => Str::limit($statement, 2000), 'mode' => $data['mode'], 'target' => $targetLabel,
+                'allow_write' => $allowWrite, 'allow_ddl' => $allowDdl, 'success' => false, 'error' => $exception->getMessage(),
             ]);
 
             return response()->json(['status' => false, 'message' => $exception->getMessage()], 422);
-        } finally {
-            DB::purge(self::CONNECTION);
         }
 
         $durationMs = (int) round((microtime(true) - $started) * 1000);
 
-        $audit->record('query_runner.execute', $tenant, null, [
-            'sql' => $statement, 'mode' => $data['mode'], 'target_database' => $targetLabel,
-            'allow_write' => $allowWrite, 'allow_ddl' => $allowDdl, 'row_count' => $result['row_count'], 'duration_ms' => $durationMs,
+        $audit->record('query_runner.executed', $tenant, null, [
+            'sql' => Str::limit($statement, 2000), 'mode' => $data['mode'], 'target' => $targetLabel,
+            'allow_write' => $allowWrite, 'allow_ddl' => $allowDdl, 'success' => true,
+            'row_count' => $result['row_count'], 'duration_ms' => $durationMs,
         ]);
 
         return response()->json(array_merge(['status' => true, 'duration_ms' => $durationMs], $result));
@@ -114,57 +140,40 @@ class PlatformQueryRunnerController extends Controller
         };
     }
 
-    private function connectTo(string $databaseName): Connection
+    /**
+     * Resolves the connection to run against exactly like every other
+     * tenant-switching code path in this app: activate() the shared
+     * `tenant` connection for a real per-tenant database, or fall straight
+     * through to the master connection for "master" / the shared-tenancy
+     * test mode (where every tenant already lives in the one database).
+     */
+    private function connectionFor(TenantConnectionManager $connections, ?Tenant $tenant): string
     {
-        $base = config('database.connections.'.config('tenancy.master_connection', 'mysql'));
-        config(['database.connections.'.self::CONNECTION => array_merge($base, ['database' => $databaseName])]);
-        DB::purge(self::CONNECTION);
+        if (! $tenant || config('tenancy.mode') === 'shared') {
+            return config('tenancy.master_connection', 'mysql');
+        }
 
-        $connection = DB::connection(self::CONNECTION);
+        $connections->activate($tenant);
+
+        return config('tenancy.tenant_connection', 'tenant');
+    }
+
+    private function runSingle(TenantConnectionManager $connections, ?Tenant $tenant, string $statement, string $kind, int $rowLimit): array
+    {
+        $needsDeactivate = $tenant && config('tenancy.mode') !== 'shared';
 
         try {
-            $connection->statement('SET SESSION MAX_EXECUTION_TIME = 10000');
-        } catch (Throwable) {
-            // Best-effort — older MySQL/MariaDB builds don't support this
-            // session variable; a runaway query is still bounded by the
-            // row limit and the request's own PHP execution timeout.
-        }
+            $connectionName = $this->connectionFor($connections, $tenant);
 
-        return $connection;
+            return $this->execute(DB::connection($connectionName), $statement, $kind, $rowLimit);
+        } finally {
+            if ($needsDeactivate) {
+                $connections->deactivate();
+            }
+        }
     }
 
-    private function runSingle(string $databaseName, string $statement, string $kind, int $rowLimit): array
-    {
-        $connection = $this->connectTo($databaseName);
-
-        if ($kind === 'read') {
-            return $this->runRead($connection, $statement, $rowLimit);
-        }
-
-        if ($kind === 'write') {
-            $affected = $connection->affectingStatement($statement);
-
-            return ['columns' => ['affected_rows'], 'rows' => [['affected_rows' => $affected]], 'row_count' => $affected, 'truncated' => false];
-        }
-
-        $connection->statement($statement);
-
-        return ['columns' => ['result'], 'rows' => [['result' => 'Statement executed successfully.']], 'row_count' => 0, 'truncated' => false];
-    }
-
-    private function runRead(Connection $connection, string $statement, int $rowLimit): array
-    {
-        $rows = collect($connection->select($this->withLimit($statement, $rowLimit)))->map(fn ($row) => (array) $row);
-
-        return [
-            'columns' => $rows->isNotEmpty() ? array_keys($rows->first()) : [],
-            'rows' => $rows->values()->all(),
-            'row_count' => $rows->count(),
-            'truncated' => $rows->count() >= $rowLimit,
-        ];
-    }
-
-    private function runAgainstAllTenants(string $statement, string $kind, int $rowLimit): array
+    private function runAgainstAllTenants(TenantConnectionManager $connections, string $statement, string $kind, int $rowLimit): array
     {
         $tenants = Tenant::where('provision_status', 'ready')->orderBy('name')->get(['id', 'name', 'database_name']);
         $rows = [];
@@ -174,31 +183,60 @@ class PlatformQueryRunnerController extends Controller
                 break;
             }
 
-            try {
-                $connection = $this->connectTo($tenant->database_name);
+            $needsDeactivate = config('tenancy.mode') !== 'shared';
 
-                if ($kind === 'read') {
-                    foreach ($connection->select($this->withLimit($statement, $rowLimit - count($rows))) as $row) {
-                        $rows[] = array_merge(['tenant_id' => $tenant->id, 'tenant_name' => $tenant->name], (array) $row);
-                    }
-                } elseif ($kind === 'write') {
-                    $affected = $connection->affectingStatement($statement);
-                    $rows[] = ['tenant_id' => $tenant->id, 'tenant_name' => $tenant->name, 'affected_rows' => $affected];
-                } else {
-                    $connection->statement($statement);
-                    $rows[] = ['tenant_id' => $tenant->id, 'tenant_name' => $tenant->name, 'result' => 'Statement executed successfully.'];
-                }
+            try {
+                $connectionName = $this->connectionFor($connections, $tenant);
+                $tagged = $this->execute(DB::connection($connectionName), $statement, $kind, $rowLimit - count($rows), ['tenant_id' => $tenant->id, 'tenant_name' => $tenant->name]);
+                $rows = array_merge($rows, $tagged['rows']);
             } catch (Throwable $exception) {
                 $rows[] = ['tenant_id' => $tenant->id, 'tenant_name' => $tenant->name, 'error' => $exception->getMessage()];
+            } finally {
+                if ($needsDeactivate) {
+                    $connections->deactivate();
+                }
             }
         }
 
+        // Columns are the union across every row, not just the first — a
+        // tenant that fails (unprovisioned database, missing table, a
+        // syntax error only that tenant's schema triggers, …) produces a
+        // differently-shaped row than a successful one, and deriving
+        // columns from row 0 alone would silently drop that tenant's
+        // `error` value off the results table instead of surfacing it.
+        $columns = $rows ? array_values(array_unique(array_merge(...array_map('array_keys', $rows)))) : ['tenant_id', 'tenant_name'];
+
         return [
-            'columns' => $rows ? array_keys($rows[0]) : ['tenant_id', 'tenant_name'],
+            'columns' => $columns,
             'rows' => $rows,
             'row_count' => count($rows),
             'truncated' => $kind === 'read' && count($rows) >= $rowLimit,
         ];
+    }
+
+    private function execute($connection, string $statement, string $kind, int $rowLimit, array $prefixColumns = []): array
+    {
+        if ($kind === 'read') {
+            $rows = collect($connection->select($this->withLimit($statement, $rowLimit)))
+                ->map(fn ($row) => array_merge($prefixColumns, (array) $row));
+
+            return [
+                'columns' => $rows->isNotEmpty() ? array_keys($rows->first()) : array_keys($prefixColumns),
+                'rows' => $rows->values()->all(),
+                'row_count' => $rows->count(),
+                'truncated' => $rows->count() >= $rowLimit,
+            ];
+        }
+
+        if ($kind === 'write') {
+            $affected = $connection->affectingStatement($statement);
+
+            return ['columns' => array_keys(array_merge($prefixColumns, ['affected_rows' => null])), 'rows' => [array_merge($prefixColumns, ['affected_rows' => $affected])], 'row_count' => $affected, 'truncated' => false];
+        }
+
+        $connection->statement($statement);
+
+        return ['columns' => array_keys(array_merge($prefixColumns, ['result' => null])), 'rows' => [array_merge($prefixColumns, ['result' => 'Statement executed successfully.'])], 'row_count' => 0, 'truncated' => false];
     }
 
     private function withLimit(string $sql, int $rowLimit): string

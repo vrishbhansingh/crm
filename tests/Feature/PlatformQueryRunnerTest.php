@@ -60,14 +60,12 @@ class PlatformQueryRunnerTest extends TestCase
 
     public function test_a_write_statement_succeeds_with_allow_write_and_is_audited(): void
     {
-        // Deliberately targets a row that cannot exist: the query runner's
-        // connection is a genuinely separate PDO connection (by design —
-        // it must not join the current request's own transaction), so a
-        // row this same test just inserted via Eloquent is invisible to it
-        // until commit, and MySQL lock-waits on the update instead of
-        // simply finding 0 matches. Zero affected rows is still a fully
-        // valid proof that the write path is allowed through, executes
-        // without error, and gets audited.
+        // Deliberately targets a row that cannot exist: TenantConnectionManager
+        // (via the shared `tenant`/`mysql` connection) still participates in
+        // this test's own DatabaseTransactions wrapper for the master
+        // connection, but exercising that isn't the point here — zero
+        // affected rows is still full proof the write path is allowed
+        // through, executes without error, and gets audited.
         $response = $this->postJson('/superadmin/query-runner/run', [
             'sql' => 'UPDATE tenants SET name = name WHERE id = 999999999;',
             'mode' => 'single',
@@ -76,9 +74,10 @@ class PlatformQueryRunnerTest extends TestCase
 
         $this->assertSame(0, $response->json('row_count'));
 
-        $log = PlatformAuditLog::where('event', 'query_runner.execute')->latest('id')->first();
+        $log = PlatformAuditLog::where('event', 'query_runner.executed')->latest('id')->first();
         $this->assertNotNull($log);
         $this->assertTrue($log->metadata['allow_write']);
+        $this->assertTrue($log->metadata['success']);
     }
 
     public function test_a_multi_statement_query_is_rejected(): void
@@ -98,19 +97,27 @@ class PlatformQueryRunnerTest extends TestCase
         ])->assertUnprocessable();
     }
 
+    public function test_a_bad_query_returns_the_database_error_and_is_still_audited(): void
+    {
+        $this->postJson('/superadmin/query-runner/run', [
+            'sql' => 'SELECT * FROM this_table_does_not_exist;',
+            'mode' => 'single',
+        ])->assertUnprocessable();
+
+        $log = PlatformAuditLog::where('event', 'query_runner.executed')->latest('id')->first();
+        $this->assertNotNull($log);
+        $this->assertFalse($log->metadata['success']);
+    }
+
     public function test_all_tenants_mode_returns_rows_tagged_with_tenant_name(): void
     {
         // Under the test suite's shared tenancy mode, TenantDatabaseProvisioner
-        // never sets database_name — point both test tenants at real,
-        // always-present databases (database_name has a unique constraint,
-        // so they can't share one) so connectTo() succeeds for both and this
-        // proves the per-tenant loop actually executes the query, not just
-        // that it tolerates a connection failure (the controller's
-        // catch-and-continue path would otherwise mask a broken query
-        // behind a superficially-passing assertion).
-        $testDatabase = config('database.connections.'.config('tenancy.master_connection', 'mysql').'.database');
-        $tenantA = Tenant::create(['name' => 'QR Tenant A', 'slug' => 'qr-a-'.Str::lower(Str::random(8)), 'status' => 'Active', 'provision_status' => 'ready', 'database_name' => $testDatabase]);
-        $tenantB = Tenant::create(['name' => 'QR Tenant B', 'slug' => 'qr-b-'.Str::lower(Str::random(8)), 'status' => 'Active', 'provision_status' => 'ready', 'database_name' => 'information_schema']);
+        // never sets database_name and connectionFor() falls through to the
+        // master connection for every tenant — point both test tenants at
+        // real rows so the per-tenant loop provably executes the query
+        // rather than just tolerating a connection failure per iteration.
+        $tenantA = Tenant::create(['name' => 'QR Tenant A', 'slug' => 'qr-a-'.Str::lower(Str::random(8)), 'status' => 'Active', 'provision_status' => 'ready']);
+        $tenantB = Tenant::create(['name' => 'QR Tenant B', 'slug' => 'qr-b-'.Str::lower(Str::random(8)), 'status' => 'Active', 'provision_status' => 'ready']);
 
         $response = $this->postJson('/superadmin/query-runner/run', [
             'sql' => 'SELECT 1 AS one;',
@@ -124,6 +131,54 @@ class PlatformQueryRunnerTest extends TestCase
         $this->assertNotNull($rowForB);
         $this->assertSame(1, $rowForA['one']);
         $this->assertArrayNotHasKey('error', $rowForA);
+    }
+
+    public function test_all_tenants_mode_surfaces_a_per_tenant_error_alongside_successful_rows(): void
+    {
+        // Reproduces a bug found via manual verification: an unprovisioned
+        // tenant mixed in among healthy ones produced a row shaped
+        // {tenant_id, tenant_name, error} instead of {..., one}. Deriving
+        // the response's `columns` from row 0 alone silently dropped the
+        // `error` value off the table for every row after a successful one.
+        config(['tenancy.mode' => 'database']);
+        $healthy = Tenant::create(['name' => 'QR Healthy Co', 'slug' => 'qr-healthy-'.Str::lower(Str::random(8)), 'status' => 'Active', 'provision_status' => 'ready', 'database_name' => config('database.connections.mysql.database')]);
+        $broken = Tenant::create(['name' => 'QR Unprovisioned Co', 'slug' => 'qr-broken-'.Str::lower(Str::random(8)), 'status' => 'Active', 'provision_status' => 'ready']);
+
+        $response = $this->postJson('/superadmin/query-runner/run', [
+            'sql' => 'SELECT 1 AS one;',
+            'mode' => 'all',
+        ])->assertOk();
+
+        $this->assertContains('error', $response->json('columns'));
+        $rows = collect($response->json('rows'));
+        $brokenRow = $rows->firstWhere('tenant_name', $broken->name);
+        $this->assertNotNull($brokenRow);
+        $this->assertArrayHasKey('error', $brokenRow);
+        $this->assertStringContainsString('no provisioned database', $brokenRow['error']);
+    }
+
+    public function test_in_real_database_tenancy_mode_an_unprovisioned_tenant_fails_cleanly(): void
+    {
+        // Outside "shared" mode, a company needs a real provisioned
+        // database to query — confirms connectionFor() actually calls
+        // TenantConnectionManager::activate() for that mode, not just the
+        // shared-mode shortcut exercised by the tests above.
+        config(['tenancy.mode' => 'database']);
+        $tenant = Tenant::create(['name' => 'Unprovisioned Co', 'slug' => 'unprov-'.Str::lower(Str::random(8)), 'status' => 'Active']);
+
+        $this->postJson('/superadmin/query-runner/run', [
+            'sql' => 'SELECT 1;',
+            'mode' => 'single',
+            'tenant_id' => $tenant->id,
+        ])->assertUnprocessable();
+    }
+
+    public function test_listing_tables_against_master_returns_known_tables(): void
+    {
+        $response = $this->getJson('/superadmin/query-runner/tables?connection=master')->assertOk();
+
+        $this->assertTrue($response->json('status'));
+        $this->assertContains('tenants', $response->json('tables'));
     }
 
     public function test_a_tenant_user_cannot_reach_the_query_runner(): void
