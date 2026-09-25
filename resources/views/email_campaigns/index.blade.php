@@ -186,8 +186,10 @@
         </div>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <script src="{{ asset('vendors/js/vendor.bundle.base.js') }}"></script>
+    {{-- jQuery + Bootstrap already load once via include.footer below (in
+    the body) — loading them again here registered a second copy of
+    Bootstrap's modal plugin, which double-fired on "New Campaign" and left
+    an orphaned .modal-backdrop behind after the dialog closed. --}}
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.26.25/sweetalert2.min.js"></script>
     <script src="{{ asset('js/toast-shim.js') }}?v={{ filemtime(public_path('js/toast-shim.js')) }}"></script>
 
