@@ -32,6 +32,9 @@ class SendCampaignEmailJob implements ShouldQueue
 
     public int $tries = 1;
 
+    /**
+     * @param  array<int, array{path: string, name: string, mime: ?string}>  $attachments
+     */
     public function __construct(
         private readonly ?int $tenantId,
         private readonly int $campaignId,
@@ -40,6 +43,7 @@ class SendCampaignEmailJob implements ShouldQueue
         private readonly string $subject,
         private readonly string $body,
         private readonly int $emailLogId,
+        private readonly array $attachments = [],
     ) {}
 
     public function handle(TenantConnectionManager $connections, MailConfigurator $mailer): void
@@ -69,7 +73,7 @@ class SendCampaignEmailJob implements ShouldQueue
             $mailer->configureFor($campaign?->tenant);
             $log?->update(['status' => 'sending']);
 
-            Mail::to($this->toEmail)->send(new CampaignMail($this->subject, $this->body));
+            Mail::to($this->toEmail)->send(new CampaignMail($this->subject, $this->body, $this->attachments));
 
             $recipientRow?->forceFill(['status' => 'sent', 'sent_at' => now(), 'error' => null])->save();
             $campaign?->increment('sent_count');

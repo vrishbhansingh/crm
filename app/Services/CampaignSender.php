@@ -10,6 +10,7 @@ use App\Models\EmailCampaignRecipient;
 use App\Models\Lead;
 use App\Tenancy\TenantConnectionManager;
 use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * Everything involved in actually running a campaign: turning its audience
@@ -94,10 +95,21 @@ class CampaignSender
         $tenantId = $campaign->tenant_id;
         $tenant = $campaign->tenant;
 
+        // Resolved once, up front, while the right tenant connection is
+        // still guaranteed active — turns each EmailTemplateAttachment row
+        // into a plain, queue-serializable array (absolute disk path, not
+        // the model), so the job never needs its own DB/tenant lookup just
+        // to find the files.
+        $attachments = $campaign->template->attachments->map(fn ($attachment) => [
+            'path' => Storage::disk('local')->path($attachment->stored_path),
+            'name' => $attachment->original_name,
+            'mime' => $attachment->mime_type,
+        ])->all();
+
         $jobs = [];
 
         $campaign->recipients()->where('status', 'pending')->orderBy('id')
-            ->chunkById(50, function ($recipients) use (&$jobs, $subject, $body, $campaign, $tenantId, $tenant) {
+            ->chunkById(50, function ($recipients) use (&$jobs, $subject, $body, $campaign, $tenantId, $tenant, $attachments) {
                 foreach ($recipients as $recipientRow) {
                     $record = $recipientRow->recipient();
 
@@ -120,7 +132,7 @@ class CampaignSender
 
                     $jobs[] = new SendCampaignEmailJob(
                         $tenantId, $campaign->id, $recipientRow->id, $recipientRow->email,
-                        $resolvedSubject, $resolvedBody, $log->id,
+                        $resolvedSubject, $resolvedBody, $log->id, $attachments,
                     );
                 }
             });

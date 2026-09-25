@@ -6,10 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Models\Company;
 use App\Models\Contact;
 use App\Models\EmailTemplate;
+use App\Models\EmailTemplateAttachment;
 use App\Models\Lead;
 use App\Services\TemplateVariableResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class EmailTemplateController extends Controller
 {
@@ -27,7 +30,7 @@ class EmailTemplateController extends Controller
     {
         // Plain $id + a manual lookup, not route-model-binding — see the
         // note on update() below for why.
-        $template = EmailTemplate::findOrFail($id);
+        $template = EmailTemplate::with('attachments')->findOrFail($id);
 
         return view('email_templates.form', ['template' => $template]);
     }
@@ -99,6 +102,84 @@ class EmailTemplateController extends Controller
         ]);
     }
 
+    /**
+     * TinyMCE's images_upload_handler target — inserting an image into the
+     * editor uploads it here and gets back a plain URL, rather than the
+     * user having to already have the image hosted somewhere else. Stored
+     * on the public disk (not the private 'local' disk used for
+     * attachments below): recipients' mail clients fetch this image over
+     * plain HTTP when they open the email, so it has to be a real public
+     * URL, not something only this app's own server can read.
+     */
+    public function uploadImage(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|image|mimes:jpg,jpeg,png,gif,webp|max:5120',
+        ]);
+
+        $file = $request->file('file');
+        $fileName = Str::random(20).'.'.$file->getClientOriginalExtension();
+        $directory = public_path('uploads/email-templates/images');
+
+        if (! is_dir($directory)) {
+            mkdir($directory, 0755, true);
+        }
+
+        $file->move($directory, $fileName);
+
+        return response()->json([
+            'status' => true,
+            'url' => asset('uploads/email-templates/images/'.$fileName),
+        ]);
+    }
+
+    /**
+     * Adds one file (a PDF brochure, a quotation doc, ...) that gets sent
+     * as a real email attachment with every send of this template — see
+     * CampaignSender::send(), which reads these rows and attaches them to
+     * each CampaignMail. Requires the template to already exist (needs its
+     * id as the foreign key), so this route only appears on the edit page.
+     */
+    public function uploadAttachment(Request $request, $id)
+    {
+        $template = EmailTemplate::findOrFail($id);
+
+        $request->validate([
+            'file' => 'required|file|max:10240|mimes:pdf,jpg,jpeg,png,webp,doc,docx,xls,xlsx,csv,txt',
+        ]);
+
+        $file = $request->file('file');
+        $storedPath = $file->store('email-template-attachments/'.$template->tenant_id.'/'.$template->id, 'local');
+
+        $attachment = EmailTemplateAttachment::create([
+            'tenant_id' => $template->tenant_id,
+            'email_template_id' => $template->id,
+            'original_name' => $file->getClientOriginalName(),
+            'stored_path' => $storedPath,
+            'size' => $file->getSize(),
+            'mime_type' => $file->getMimeType(),
+        ]);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Attachment added',
+            'data' => [
+                'id' => $attachment->id,
+                'original_name' => $attachment->original_name,
+                'size' => $attachment->size,
+            ],
+        ]);
+    }
+
+    public function destroyAttachment($attachmentId)
+    {
+        $attachment = EmailTemplateAttachment::findOrFail($attachmentId);
+        Storage::disk('local')->delete($attachment->stored_path);
+        $attachment->delete();
+
+        return response()->json(['status' => true, 'message' => 'Attachment removed']);
+    }
+
     public function store(Request $request)
     {
         $data = $request->validate([
@@ -139,6 +220,10 @@ class EmailTemplateController extends Controller
                 'status' => false,
                 'message' => 'This template is used by one or more campaigns and cannot be deleted.',
             ], 422);
+        }
+
+        foreach ($emailTemplate->attachments as $attachment) {
+            Storage::disk('local')->delete($attachment->stored_path);
         }
 
         $emailTemplate->delete();

@@ -350,6 +350,7 @@ Route::middleware(['admin_middle', 'permission:templates.view'])->group(function
     Route::get('/email-templates/data', [EmailTemplateController::class, 'data'])->name('templates.data');
     Route::get('/email-templates/variables', [EmailTemplateController::class, 'variables'])->name('templates.variables');
     Route::post('/email-templates/preview', [EmailTemplateController::class, 'preview'])->name('templates.preview');
+    Route::post('/email-templates/upload-image', [EmailTemplateController::class, 'uploadImage'])->name('templates.upload_image');
 });
 
 Route::middleware(['admin_middle', 'permission:templates.create'])->group(function () {
@@ -360,6 +361,8 @@ Route::middleware(['admin_middle', 'permission:templates.create'])->group(functi
 Route::middleware(['admin_middle', 'permission:templates.edit'])->group(function () {
     Route::get('/email-templates/{id}/edit', [EmailTemplateController::class, 'edit'])->name('templates.edit')->whereNumber('id');
     Route::put('/email-templates/{emailTemplate}', [EmailTemplateController::class, 'update'])->name('templates.update');
+    Route::post('/email-templates/{id}/attachments', [EmailTemplateController::class, 'uploadAttachment'])->name('templates.attachments.store')->whereNumber('id');
+    Route::delete('/email-templates/attachments/{attachmentId}', [EmailTemplateController::class, 'destroyAttachment'])->name('templates.attachments.destroy')->whereNumber('attachmentId');
 });
 
 Route::middleware(['admin_middle', 'permission:templates.delete'])->group(function () {

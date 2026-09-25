@@ -22,4 +22,9 @@ class EmailTemplate extends Model
     {
         return $this->hasMany(EmailCampaign::class);
     }
+
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(EmailTemplateAttachment::class);
+    }
 }

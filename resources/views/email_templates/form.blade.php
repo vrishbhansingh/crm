@@ -119,7 +119,15 @@
                             </div>
                         </div>
 
-                        <label class="field-label">Template Content</label>
+                        <div class="d-flex align-items-center justify-content-between flex-wrap" style="gap:10px;">
+                            <label class="field-label mb-0">Template Content</label>
+                            <div>
+                                <label class="btn btn-outline-secondary btn-sm mb-0" for="htmlUploadInput" style="cursor:pointer;">
+                                    <i class="fa fa-upload"></i> Upload HTML file
+                                </label>
+                                <input type="file" id="htmlUploadInput" accept=".html,.htm" style="display:none">
+                            </div>
+                        </div>
                         <div class="var-hint-bar">
                             <span class="var-hint-text"><i class="fa fa-info-circle"></i> Pick a variable, then <strong>Insert</strong> to drop it into the subject or content as a tag.</span>
                             <select id="previewAudienceType" class="form-control">
@@ -134,6 +142,7 @@
                         </div>
 
                         <textarea id="templateBody" class="form-control"></textarea>
+                        <p class="text-muted mt-1" style="font-size:12px;">Uploading a file replaces the content above. Use the image icon in the toolbar to insert an image — you can either upload a file or paste an external image URL; both work.</p>
 
                         <div class="form-row-tight mt-3">
                             <button type="button" class="btn btn-outline-secondary btn-sm" id="previewTemplateBtn">
@@ -146,6 +155,32 @@
                             <div class="preview-pane mb-2" id="previewSubject"></div>
                             <div class="variable-group-label">Body</div>
                             <div class="preview-pane" id="previewBody"></div>
+                        </div>
+
+                        <div class="form-row-tight mt-4">
+                            <label class="field-label">File attachments <span class="text-muted" style="text-transform:none;font-weight:400;">— sent with every email that uses this template (e.g. a PDF brochure or price list)</span></label>
+
+                            @if($template)
+                                <div id="attachmentsList">
+                                    @foreach($template->attachments as $attachment)
+                                        <div class="attachment-row" data-id="{{ $attachment->id }}" style="display:flex;align-items:center;gap:10px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;font-size:13px;">
+                                            <i class="fa fa-paperclip text-muted"></i>
+                                            <span style="flex:1;">{{ $attachment->original_name }}</span>
+                                            <span class="text-muted">{{ number_format($attachment->size / 1024, 1) }} KB</span>
+                                            <button type="button" class="btn btn-sm btn-outline-danger removeAttachmentBtn" data-id="{{ $attachment->id }}"><i class="fa fa-trash"></i></button>
+                                        </div>
+                                    @endforeach
+                                </div>
+                                <label class="btn btn-outline-primary btn-sm mt-2 mb-0" for="attachmentUploadInput" style="cursor:pointer;">
+                                    <i class="fa fa-plus"></i> Add attachment
+                                </label>
+                                <input type="file" id="attachmentUploadInput" style="display:none">
+                                <span class="text-muted" style="font-size:12px;margin-left:8px;">PDF, Word, Excel, CSV, or image — up to 10 MB.</span>
+                            @else
+                                <div class="text-muted" style="font-size:12.5px;">
+                                    <i class="fa fa-info-circle"></i> Save this template first, then come back here to add attachments.
+                                </div>
+                            @endif
                         </div>
 
                         <div class="form-actions">
@@ -253,11 +288,166 @@
             setup: function(editor) {
                 editor.on('focus', function() { lastFocusedField = 'body'; });
             },
+            // Adds an "Upload" tab to the stock Insert Image dialog
+            // alongside its existing "Source" (external URL) field — a
+            // dropped-in/uploaded image is stored on this server and
+            // inserted as a normal <img src="..."> pointing at it.
+            automatic_uploads: true,
+            images_upload_handler: function (blobInfo) {
+                return new Promise(function (resolve, reject) {
+                    const formData = new FormData();
+                    formData.append('file', blobInfo.blob(), blobInfo.filename());
+                    $.ajax({
+                        url: "{{ route('templates.upload_image') }}",
+                        type: 'POST',
+                        data: formData,
+                        contentType: false,
+                        processData: false,
+                    }).done(function (response) {
+                        if (response.status) {
+                            resolve(response.url);
+                        } else {
+                            reject(response.message || 'Image upload failed.');
+                        }
+                    }).fail(function (xhr) {
+                        reject(xhr.responseJSON?.message || 'Image upload failed.');
+                    });
+                });
+            },
         }).then(function() {
             bodyEditor().setContent(initialBody || '');
         });
 
         loadVariablePicker();
+
+        // Uploaded files are often full HTML documents with a <style> block
+        // in <head>. The editor only keeps body markup, and email clients
+        // routinely strip <style> tags on send anyway — so before handing
+        // the content to TinyMCE, bake every matching CSS rule into each
+        // element's own inline style attribute. That survives both.
+        function inlineCssFromUploadedHtml(rawHtml) {
+            return new Promise(function (resolve) {
+                const parsed = new DOMParser().parseFromString(rawHtml, 'text/html');
+                const cssText = Array.from(parsed.querySelectorAll('style')).map(function (s) { return s.textContent; }).join('\n');
+                const bodyHtml = parsed.body ? parsed.body.innerHTML : rawHtml;
+
+                if (!cssText.trim()) {
+                    resolve(bodyHtml);
+                    return;
+                }
+
+                const iframe = document.createElement('iframe');
+                iframe.style.cssText = 'position:absolute;width:0;height:0;border:0;visibility:hidden;';
+                document.body.appendChild(iframe);
+
+                const idoc = iframe.contentDocument;
+                idoc.open();
+                idoc.write('<!doctype html><html><head><style>' + cssText + '</style></head><body></body></html>');
+                idoc.close();
+                idoc.body.innerHTML = bodyHtml;
+
+                const sheet = idoc.styleSheets[0];
+                const rules = sheet ? Array.from(sheet.cssRules) : [];
+
+                rules.forEach(function (rule) {
+                    // rule.type === 1 is CSSRule.STYLE_RULE — checked by value
+                    // (not instanceof CSSStyleRule) since these rules belong
+                    // to the iframe's own realm, not this document's classes.
+                    if (rule.type !== 1) return; // skip @media/@font-face/etc.
+                    let matched;
+                    try { matched = idoc.body.querySelectorAll(rule.selectorText); } catch (e) { return; }
+                    matched.forEach(function (el) {
+                        for (let i = 0; i < rule.style.length; i++) {
+                            const prop = rule.style[i];
+                            // An element's own inline style always wins in the
+                            // real cascade too, so never clobber it here.
+                            if (!el.style.getPropertyValue(prop)) {
+                                el.style.setProperty(prop, rule.style.getPropertyValue(prop), rule.style.getPropertyPriority(prop));
+                            }
+                        }
+                    });
+                });
+
+                const finalHtml = idoc.body.innerHTML;
+                document.body.removeChild(iframe);
+                resolve(finalHtml);
+            });
+        }
+
+        // Upload HTML file — read it client-side, inline any stylesheet CSS,
+        // and drop the result straight into the editor as its new content.
+        $(document).on('change', '#htmlUploadInput', function() {
+            const file = this.files[0];
+            this.value = '';
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                inlineCssFromUploadedHtml(e.target.result).then(function (html) {
+                    if (bodyEditor()) {
+                        bodyEditor().setContent(html);
+                        toastr.success('Loaded "' + file.name + '" into the editor with its CSS applied inline.');
+                    }
+                });
+            };
+            reader.onerror = function() { toastr.error('Could not read that file.'); };
+            reader.readAsText(file);
+        });
+
+        // Attachments — only present once the template has an id (see the
+        // template-exists guard in the markup above), so this input only
+        // ever exists on the edit page.
+        $(document).on('change', '#attachmentUploadInput', function() {
+            const file = this.files[0];
+            this.value = '';
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+            const templateId = $('#template_id').val();
+
+            $.ajax({
+                url: "{{ url('email-templates') }}/" + templateId + "/attachments",
+                type: 'POST',
+                data: formData,
+                contentType: false,
+                processData: false,
+            }).done(function(response) {
+                if (!response.status) { toastr.error(response.message); return; }
+                toastr.success(response.message);
+                const row = $(
+                    '<div class="attachment-row" data-id="' + response.data.id + '" style="display:flex;align-items:center;gap:10px;padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:6px;font-size:13px;">' +
+                        '<i class="fa fa-paperclip text-muted"></i>' +
+                        '<span style="flex:1;">' + esc(response.data.original_name) + '</span>' +
+                        '<span class="text-muted">' + (response.data.size / 1024).toFixed(1) + ' KB</span>' +
+                        '<button type="button" class="btn btn-sm btn-outline-danger removeAttachmentBtn" data-id="' + response.data.id + '"><i class="fa fa-trash"></i></button>' +
+                    '</div>'
+                );
+                $('#attachmentsList').append(row);
+            }).fail(function(xhr) {
+                toastr.error(xhr.responseJSON?.message || 'Attachment upload failed.');
+            });
+        });
+
+        $(document).on('click', '.removeAttachmentBtn', function() {
+            const btn = $(this);
+            const id = btn.data('id');
+
+            $.ajax({
+                url: "{{ url('email-templates/attachments') }}/" + id,
+                type: 'POST',
+                data: { _method: 'DELETE' },
+            }).done(function(response) {
+                if (response.status) {
+                    btn.closest('.attachment-row').remove();
+                    toastr.success(response.message);
+                } else {
+                    toastr.error(response.message);
+                }
+            }).fail(function(xhr) {
+                toastr.error(xhr.responseJSON?.message || 'Could not remove that attachment.');
+            });
+        });
 
         $(document).on('click', '#previewTemplateBtn', function() {
             $.post("{{ route('templates.preview') }}", {
