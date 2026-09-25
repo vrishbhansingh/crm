@@ -149,6 +149,15 @@ class CampaignSender
 
         Bus::batch($jobs)
             ->name('campaign-'.$campaign->id)
+            // Without this, Laravel cancels the entire batch the moment a
+            // single job fails (its default) — every recipient queued
+            // after a bad address would then skip itself via the
+            // `$this->batch()?->cancelled()` guard at the top of
+            // SendCampaignEmailJob::handle() and never send, contradicting
+            // that job's own stated behavior: "a failed send here is a
+            // normal, expected outcome... it's recorded and the batch
+            // moves on."
+            ->allowFailures()
             ->finally(function () use ($campaign, $tenantId) {
                 // This callback can itself run later, outside the request
                 // that dispatched it — no tenant connection is guaranteed to

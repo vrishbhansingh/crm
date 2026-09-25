@@ -65,16 +65,21 @@ class PlatformEmailLogController extends Controller
     }
 
     /**
-     * Re-queues a failed campaign email as a brand new attempt — only
-     * meaningful for campaign rows, which carry enough context
-     * (campaign_id + recipient_id) to rebuild the job; anything else
-     * (a password reset, an SMTP test) was a one-off, point-in-time send
-     * with nothing left to retry.
+     * Re-queues a failed — or stuck — campaign email as a brand new
+     * attempt — only meaningful for campaign rows, which carry enough
+     * context (campaign_id + recipient_id) to rebuild the job; anything
+     * else (a password reset, an SMTP test) was a one-off, point-in-time
+     * send with nothing left to retry. Dispatched as a standalone job, not
+     * back into the original Bus::batch() — that batch may itself be
+     * cancelled or long gone, and this new attempt shouldn't inherit
+     * whatever state it's in.
      */
     public function retry(EmailLog $log)
     {
-        if ($log->type !== 'campaign' || $log->status !== 'failed') {
-            return back()->withErrors(['retry' => 'Only failed campaign emails can be retried.']);
+        $retryable = $log->status === 'failed' || $log->isStuck();
+
+        if ($log->type !== 'campaign' || ! $retryable) {
+            return back()->withErrors(['retry' => 'Only a failed or stuck campaign email can be retried.']);
         }
 
         $campaignId = $log->context['campaign_id'] ?? null;
@@ -83,6 +88,14 @@ class PlatformEmailLogController extends Controller
 
         if (! $campaignId || ! $recipientId || $body === null) {
             return back()->withErrors(['retry' => 'Missing context for this email — it cannot be retried.']);
+        }
+
+        // A stuck row was never actually failed, so its own status has to
+        // be closed out explicitly — otherwise it just keeps sitting there
+        // "stuck" forever alongside the fresh retry, double-counted in the
+        // in-flight stat.
+        if ($log->isStuck()) {
+            $log->update(['status' => 'failed', 'error' => 'Timed out waiting for a queue worker — retried manually.']);
         }
 
         $newLog = EmailLog::create([

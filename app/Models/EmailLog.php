@@ -53,4 +53,16 @@ class EmailLog extends Model
         return $query->whereIn('status', ['queued', 'sending'])
             ->where('queued_at', '<', now()->subMinutes(self::STUCK_AFTER_MINUTES));
     }
+
+    /**
+     * Same test as scopeStuck(), for a single already-loaded row — the
+     * controller/view need to ask this about one row at a time (e.g. to
+     * decide whether to show a Retry button), not run a fresh query.
+     */
+    public function isStuck(): bool
+    {
+        return in_array($this->status, ['queued', 'sending'], true)
+            && $this->queued_at
+            && $this->queued_at->lt(now()->subMinutes(self::STUCK_AFTER_MINUTES));
+    }
 }

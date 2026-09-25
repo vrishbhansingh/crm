@@ -106,4 +106,37 @@ class PlatformEmailLogPageTest extends TestCase
         $sentLog = EmailLog::where('to_email', 'sent@example.test')->first();
         $this->post(route('superadmin.email_log.retry', $sentLog))->assertSessionHasErrors('retry');
     }
+
+    public function test_retrying_a_stuck_campaign_email_requeues_it_and_closes_out_the_original(): void
+    {
+        Mail::fake();
+
+        $stuck = EmailLog::create([
+            'tenant_id' => $this->tenant->id, 'type' => 'campaign', 'to_email' => 'reallystuck@example.test',
+            'status' => 'queued', 'queued_at' => now()->subMinutes(30),
+            'context' => ['campaign_id' => 1, 'recipient_id' => 1, 'body' => 'Hello'],
+        ]);
+
+        $this->post(route('superadmin.email_log.retry', $stuck))
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        // The stuck row is closed out (not left stuck forever alongside
+        // the retry) and a fresh attempt exists.
+        $stuck->refresh();
+        $this->assertSame('failed', $stuck->status);
+        $this->assertDatabaseHas('email_logs', ['to_email' => 'reallystuck@example.test', 'status' => 'sent']);
+        $this->assertSame(2, EmailLog::where('to_email', 'reallystuck@example.test')->count());
+    }
+
+    public function test_a_stuck_row_missing_retry_context_is_refused(): void
+    {
+        $stuck = EmailLog::create([
+            'tenant_id' => $this->tenant->id, 'type' => 'campaign', 'to_email' => 'nocontext@example.test',
+            'status' => 'queued', 'queued_at' => now()->subMinutes(30),
+        ]);
+
+        $this->post(route('superadmin.email_log.retry', $stuck))->assertSessionHasErrors('retry');
+        $this->assertSame('queued', $stuck->fresh()->status);
+    }
 }
