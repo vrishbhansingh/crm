@@ -40,9 +40,31 @@
         #calendar { max-width: 100%; }
         .fc { font-family: inherit; }
         .fc .fc-toolbar-title { font-size: 18px; font-weight: 700; color: var(--text-dark); }
-        .fc .fc-button-primary { background: var(--primary); border-color: var(--primary); }
-        .fc .fc-button-primary:hover { background: #1d4ed8; border-color: #1d4ed8; }
-        .fc .fc-button-primary:not(:disabled).fc-button-active { background: #1d4ed8; border-color: #1d4ed8; }
+
+        /* FullCalendar injects its own theme CSS at render time (after this
+           <style> block), so a plain, non-!important override loses the
+           cascade — its default non-active button state is white-on-white
+           (verified live: background and text both rgb(255,255,255)),
+           which made prev/next/week/list unreadable while today/month
+           happened to pick up enough of our color to stay legible.
+           !important forces our colors to win regardless of injection
+           order, for every state including disabled (today, when already
+           on the current month). */
+        .fc .fc-button-primary,
+        .fc .fc-button-primary:disabled {
+            background-color: var(--primary) !important;
+            border-color: var(--primary) !important;
+            color: #fff !important;
+            opacity: 1 !important;
+        }
+        .fc .fc-button-primary:hover,
+        .fc .fc-button-primary:not(:disabled).fc-button-active {
+            background-color: #1d4ed8 !important;
+            border-color: #1d4ed8 !important;
+            color: #fff !important;
+        }
+        .fc .fc-icon { color: #fff !important; }
+
         .fc-event { cursor: pointer; border: none; font-size: 12px; padding: 1px 4px; }
         .fc-daygrid-event-dot { display: none; }
 
@@ -52,6 +74,18 @@
            an explicit override back to a normal readable color. */
         .fc-list-event-title a, .fc-list-event-time { color: var(--text-dark) !important; }
         .fc-list-day-cushion { background: #f8fafc !important; }
+
+        /* Same white-link bleed hits day-grid "dot" style events (a plain
+           <a> tag with no background) whenever a busy week forces
+           FullCalendar to switch from solid color blocks to the compact
+           dot+text layout — invisible white-on-white, worst (but not only)
+           on the pale-yellow "today" cell. eventDisplay:'block' below keeps
+           every event a solid pill so this mode is rarely hit at all; this
+           is the belt-and-suspenders fallback for whenever it still is. */
+        .fc-daygrid-dot-event .fc-event-title,
+        .fc-daygrid-dot-event .fc-event-time {
+            color: var(--text-dark) !important;
+        }
 
         [data-theme="dark"] {
             --text-dark: #eef0f6;
@@ -134,6 +168,12 @@
                     right: 'dayGridMonth,timeGridWeek,listMonth',
                 },
                 height: 'auto',
+                // Always render events as solid color pills, never the
+                // compact dot+plain-text style FullCalendar falls back to
+                // on busy weeks — that style is a bare <a> tag with no
+                // background, which this app's own global link-color CSS
+                // turns invisible (see the .fc-daygrid-dot-event rule above).
+                eventDisplay: 'block',
                 events: function(info, successCallback, failureCallback) {
                     $.get("{{ route('calendar.events') }}", {
                         start: info.startStr,
