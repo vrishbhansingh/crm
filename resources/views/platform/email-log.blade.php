@@ -115,8 +115,8 @@
                         <td>{{ $log->queued_at?->format('d M, H:i') ?? '—' }}</td>
                         <td>{{ $log->sent_at?->format('d M, H:i') ?? '—' }}</td>
                         <td>
-                            @if($log->type === 'campaign' && $log->status === 'failed')
-                                <form method="post" action="{{ route('superadmin.email_log.retry', $log) }}">
+                            @if($log->type === 'campaign' && ($log->status === 'failed' || $isStuck))
+                                <form method="post" action="{{ route('superadmin.email_log.retry', $log) }}" onsubmit="return confirm('Re-queue this email as a fresh attempt?');">
                                     @csrf
                                     <button class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-rotate-right"></i> Retry</button>
                                 </form>
