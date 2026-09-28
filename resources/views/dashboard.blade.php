@@ -282,9 +282,9 @@
         .funnel-list { display: flex; flex-direction: column; gap: 10px; }
         .funnel-stage { display: flex; flex-direction: column; gap: 4px; align-items: center; }
         .funnel-bar {
-            min-width: 34%; max-width: 100%; height: 42px; border-radius: 9px;
+            min-width: 34%; max-width: 100%; height: 38px; border-radius: 8px;
             display: flex; align-items: center; justify-content: center; gap: 8px;
-            color: #fff; font-weight: 700; font-size: 13px; white-space: nowrap;
+            font-weight: 700; font-size: 13px; white-space: nowrap;
             padding: 0 16px; transition: width .3s ease;
         }
         .funnel-bar .funnel-count { opacity: .85; font-weight: 600; }
@@ -334,11 +334,13 @@
         .lead-row-actions a:hover { background: #eff6ff; color: var(--primary); }
 
         /* Lead sources chips */
-        .source-chip-list { display: flex; flex-direction: column; gap: 10px; }
-        .source-chip-row { display: flex; align-items: center; gap: 10px; }
-        .source-chip-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-        .source-chip-label { font-size: 13px; color: var(--text-dark); font-weight: 600; flex: 1; }
-        .source-chip-total { font-size: 13px; font-weight: 700; color: var(--text-dark); }
+        /* Lead Sources reuses the .geo-row proportional-bar pattern below
+           (magnitude + identity in one glance beats a bare list of dots and
+           numbers) — these two rules only widen its name/count columns to
+           fit source labels and a percentage, which run longer than state
+           names and a bare count. */
+        #sourceChipList .geo-name { flex-basis: 128px; }
+        #sourceChipList .geo-count { width: 74px; }
 
         /* Closing-soon cards */
         .closing-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
@@ -443,7 +445,7 @@
                     <div class="col-lg-4">
                         <div class="dash-card">
                             <h5><i class="fa fa-share-alt"></i> Lead Sources</h5>
-                            <div class="source-chip-list" id="sourceChipList"></div>
+                            <div id="sourceChipList"></div>
                         </div>
                     </div>
                 </div>
@@ -516,12 +518,24 @@
             badge.style.background = bg;
         })();
 
-        const PALETTE = ['#2563eb', '#7c3aed', '#0d9488', '#ea580c', '#db2777', '#16a34a', '#4338ca', '#0891b2'];
+        // Colorblind-safe, fixed-order categorical set (validated with this
+        // app's own dataviz tooling: 8 hues clear both the CVD-separation
+        // and normal-vision-floor checks in light AND dark mode — the
+        // previous ad-hoc set put blue and violet next to each other with a
+        // CVD delta of 0.4, meaning they were nearly indistinguishable
+        // under deuteranopia/protanopia).
+        const PALETTE_LIGHT = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300', '#4a3aa7', '#e34948'];
+        const PALETTE_DARK = ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181', '#008300', '#9085e9', '#e66767'];
+
+        function isDarkTheme() {
+            return document.documentElement.getAttribute('data-theme') === 'dark';
+        }
 
         function paletteColor(seed) {
+            const palette = isDarkTheme() ? PALETTE_DARK : PALETTE_LIGHT;
             let hash = 0;
             String(seed || '').split('').forEach(ch => { hash = (hash * 31 + ch.charCodeAt(0)) >>> 0; });
-            return PALETTE[hash % PALETTE.length];
+            return palette[hash % palette.length];
         }
 
         function initials(name) {
@@ -530,12 +544,40 @@
             return (parts[0][0] + (parts[1] ? parts[1][0] : '')).toUpperCase();
         }
 
-        function stageColor(stage) {
-            if (stage.color && /^#[0-9a-f]{3,8}$/i.test(stage.color)) return stage.color;
-            const name = (stage.name || '').toLowerCase();
-            if (name.includes('won')) return '#16a34a';
-            if (name.includes('lost')) return '#dc2626';
-            return paletteColor(stage.name);
+        // Funnel-stage color: stages are *ordinal* (their order carries
+        // meaning — swapping "Proposal" and "Won" changes what the chart
+        // says), so per this app's dataviz standard they get a one-hue
+        // ramp stepping light→dark by position, not arbitrary per-stage
+        // hues. Both ramps are validated with --ordinal: monotone
+        // lightness, >=0.06 step gaps, light end still >=2:1 on its surface.
+        const FUNNEL_RAMP_LIGHT = ['#60a5fa', '#3b82f6', '#2563eb', '#172554'];
+        const FUNNEL_RAMP_DARK = ['#bfdbfe', '#93c5fd', '#60a5fa', '#2563eb'];
+
+        function hexToRgb(hex) {
+            const v = hex.replace('#', '');
+            return { r: parseInt(v.slice(0, 2), 16), g: parseInt(v.slice(2, 4), 16), b: parseInt(v.slice(4, 6), 16) };
+        }
+        function rgbToHex(r, g, b) {
+            return '#' + [r, g, b].map(x => Math.round(x).toString(16).padStart(2, '0')).join('');
+        }
+        function lerpHex(a, b, t) {
+            const pa = hexToRgb(a), pb = hexToRgb(b);
+            return rgbToHex(pa.r + (pb.r - pa.r) * t, pa.g + (pb.g - pa.g) * t, pa.b + (pb.b - pa.b) * t);
+        }
+        function funnelColor(index, total) {
+            const ramp = isDarkTheme() ? FUNNEL_RAMP_DARK : FUNNEL_RAMP_LIGHT;
+            if (total <= 1) return ramp[0];
+            const scaled = (index / (total - 1)) * (ramp.length - 1);
+            const lo = Math.floor(scaled), hi = Math.ceil(scaled);
+            return lo === hi ? ramp[lo] : lerpHex(ramp[lo], ramp[hi], scaled - lo);
+        }
+        // A label set inside a colored fill needs its text color picked by
+        // the fill's own luminance, not a fixed white — the lightest funnel
+        // step is too pale for white text to clear contrast on.
+        function idealTextColor(hex) {
+            const { r, g, b } = hexToRgb(hex);
+            const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+            return luminance > 0.6 ? '#0f172a' : '#ffffff';
         }
 
         const STATUS_COLORS = {
@@ -585,8 +627,11 @@
         function applyChartTheme() {
             const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
             Chart.defaults.global.defaultFontColor = isDark ? '#9aa1b5' : '#6b7280';
-            Chart.defaults.scale.gridLines.color = isDark ? '#2a2e40' : 'rgba(0,0,0,.1)';
-            Chart.defaults.scale.gridLines.zeroLineColor = isDark ? '#2a2e40' : 'rgba(0,0,0,.25)';
+            // Gridlines one step off the surface, hairline and recessive —
+            // the data should be the only loud thing on the chart.
+            Chart.defaults.scale.gridLines.color = isDark ? '#2c2c2a' : '#e1e0d9';
+            Chart.defaults.scale.gridLines.zeroLineColor = isDark ? '#383835' : '#c3c2b7';
+            Chart.defaults.scale.gridLines.lineWidth = 1;
         }
         applyChartTheme();
         document.addEventListener('crm-theme-changed', function() {
@@ -601,15 +646,16 @@
             }
             const maxValue = Math.max(...stages.map(s => Number(s.value) || 0), 1);
             let html = '';
-            stages.forEach(stage => {
-                const color = stageColor(stage);
+            stages.forEach((stage, i) => {
+                const color = funnelColor(i, stages.length);
+                const textColor = idealTextColor(color);
                 // A bar scaled below ~34% reads as a sliver and clips its own
                 // label, so the widest stage is pinned to 100% and everything
                 // else is floored — still tapers, just never unreadable.
                 const widthPct = Math.max(34, Math.round((Number(stage.value) || 0) / maxValue * 100));
                 html += `
                     <div class="funnel-stage">
-                        <div class="funnel-bar" style="width:${widthPct}%; background:${color};">
+                        <div class="funnel-bar" style="width:${widthPct}%; background:${color}; color:${textColor};">
                             <span>${esc(stage.name)}</span>
                             <span class="funnel-count">&middot; ${stage.count}</span>
                         </div>
@@ -695,19 +741,26 @@
             $('#revenueChartBox').show();
             $('#revenueEmpty').hide();
 
+            // Chart.js 2.x has no real bar-radius option (the old
+            // `borderRadius: 6` here was a silent no-op) — barPercentage/
+            // categoryPercentage/maxBarThickness are the actual supported
+            // levers for the "thin bars, real breathing room" spec.
             draw('revenueChart', {
                 type: 'bar',
                 data: {
                     labels: revenue.labels,
                     datasets: [
-                        { label: 'Booked revenue', data: revenue.revenue, backgroundColor: '#2563eb', borderRadius: 6 },
-                        { label: 'Cash collected', data: revenue.cash, backgroundColor: '#16a34a', borderRadius: 6 },
+                        { label: 'Booked revenue', data: revenue.revenue, backgroundColor: '#2563eb', maxBarThickness: 22, barPercentage: 0.7, categoryPercentage: 0.6 },
+                        { label: 'Cash collected', data: revenue.cash, backgroundColor: '#16a34a', maxBarThickness: 22, barPercentage: 0.7, categoryPercentage: 0.6 },
                     ]
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } } },
-                    scales: { y: { beginAtZero: true } }
+                    legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } },
+                    tooltips: { mode: 'index', intersect: false },
+                    scales: {
+                        yAxes: [{ ticks: { beginAtZero: true, callback: v => '₹' + v.toLocaleString('en-IN') } }],
+                    }
                 }
             });
         }
@@ -717,13 +770,18 @@
                 $('#sourceChipList').html('<div class="pipeline-empty">No leads yet.</div>');
                 return;
             }
+            const total = sources.reduce((sum, s) => sum + (Number(s.total) || 0), 0) || 1;
+            const maxTotal = Math.max(...sources.map(s => Number(s.total) || 0), 1);
             let html = '';
             sources.forEach(s => {
+                const color = paletteColor(s.label);
+                const pct = Math.round((Number(s.total) || 0) / total * 100);
+                const widthPct = Math.max(6, Math.round((Number(s.total) || 0) / maxTotal * 100));
                 html += `
-                    <div class="source-chip-row">
-                        <span class="source-chip-dot" style="background:${paletteColor(s.label)}"></span>
-                        <span class="source-chip-label">${esc(s.label)}</span>
-                        <span class="source-chip-total">${s.total}</span>
+                    <div class="geo-row">
+                        <div class="geo-name">${esc(s.label)}</div>
+                        <div class="geo-bar-wrap"><span class="geo-bar" style="width:${widthPct}%;background:${color};"></span></div>
+                        <div class="geo-count">${s.total} <span style="font-weight:600;opacity:.65;">&middot;${pct}%</span></div>
                     </div>`;
             });
             $('#sourceChipList').html(html);
