@@ -178,7 +178,7 @@
         .followup-pill.today { background: #fef3c7; color: #92400e; }
         .followup-pill.is-done { background: #dcfce7; color: #15803d; display: inline-flex; align-items: center; gap: 5px; }
         .followup-done-btn {
-            flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%;
+            flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%;
             border: 1px solid var(--border); background: #fff; color: var(--text-muted);
             display: flex; align-items: center; justify-content: center; font-size: 11px; cursor: pointer;
             transition: background .12s ease, color .12s ease, border-color .12s ease;
@@ -208,7 +208,7 @@
             margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;
         }
         .mini-cal-header .mini-cal-nav {
-            border: none; background: var(--surface); color: var(--text-muted); width: 26px; height: 26px;
+            border: none; background: var(--surface); color: var(--text-muted); width: 30px; height: 30px;
             border-radius: 50%; cursor: pointer; font-size: 11px;
         }
         .mini-cal-header .mini-cal-nav:hover { background: #eff6ff; color: var(--primary); }
@@ -303,7 +303,7 @@
         .performer-deals { font-size: 11.5px; color: var(--text-muted); }
         .performer-actions { display: flex; gap: 4px; flex-shrink: 0; }
         .performer-actions a {
-            width: 28px; height: 28px; border-radius: 8px; background: var(--surface);
+            width: 32px; height: 32px; border-radius: 8px; background: var(--surface);
             display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 12px;
         }
         .performer-actions a:hover { background: #eff6ff; color: var(--primary); }
@@ -319,7 +319,7 @@
         .status-pill { display: inline-block; padding: 4px 11px; border-radius: 999px; font-size: 11.5px; font-weight: 700; white-space: nowrap; }
         .lead-row-actions { display: flex; gap: 6px; }
         .lead-row-actions a {
-            width: 30px; height: 30px; border-radius: 8px; background: var(--surface);
+            width: 32px; height: 32px; border-radius: 8px; background: var(--surface);
             display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 12.5px;
         }
         .lead-row-actions a:hover { background: #eff6ff; color: var(--primary); }
@@ -379,7 +379,7 @@
 
                 <div class="dash-header">
                     <div>
-                        <h1 class="dash-greeting"><span class="emoji" id="greetingEmoji">👋</span><span id="greetingText">Welcome back</span>, {{ Auth::guard('web')->user()->name }}</h1>
+                        <h1 class="dash-greeting"><i class="fa fa-hand-paper-o emoji" id="greetingEmoji" aria-hidden="true"></i><span id="greetingText">Welcome back</span>, {{ Auth::guard('web')->user()->name }}</h1>
                         <p class="dash-subtitle">{{ Auth::guard('web')->user()->getRoleNames()->first() }} &middot; Here's your overview</p>
                     </div>
                     <div class="dash-header-actions">
@@ -498,11 +498,11 @@
 
         (function greetByTime() {
             const hour = new Date().getHours();
-            let text = 'Good evening', emoji = '🌙';
-            if (hour < 12) { text = 'Good morning'; emoji = '☀️'; }
-            else if (hour < 17) { text = 'Good afternoon'; emoji = '🌤️'; }
+            let text = 'Good evening', icon = 'fa-moon-o';
+            if (hour < 12) { text = 'Good morning'; icon = 'fa-sun-o'; }
+            else if (hour < 17) { text = 'Good afternoon'; icon = 'fa-sun-o'; }
             document.getElementById('greetingText').textContent = text;
-            document.getElementById('greetingEmoji').textContent = emoji;
+            document.getElementById('greetingEmoji').className = 'fa ' + icon + ' emoji';
         })();
 
         const PALETTE = ['#2563eb', '#7c3aed', '#0d9488', '#ea580c', '#db2777', '#16a34a', '#4338ca', '#0891b2'];
@@ -626,7 +626,7 @@
                             <div class="performer-deals">${p.won} won &middot; ${p.deals} deals</div>
                         </div>
                         <div class="performer-actions">
-                            ${p.phone ? `<a href="tel:${esc(p.phone)}" title="Call"><i class="fa fa-phone"></i></a>` : ''}
+                            ${p.phone ? `<a href="tel:${esc(p.phone)}" title="Call" aria-label="Call ${esc(p.name)}"><i class="fa fa-phone"></i></a>` : ''}
                         </div>
                     </div>`;
             });
@@ -658,8 +658,8 @@
                         <td>${esc(lead.created_at)}</td>
                         <td class="text-right">
                             <div class="lead-row-actions justify-content-end">
-                                ${lead.phone ? `<a href="tel:${esc(lead.phone)}" title="Call"><i class="fa fa-phone"></i></a>` : ''}
-                                <a href="${lead.url}" title="View"><i class="fa fa-eye"></i></a>
+                                ${lead.phone ? `<a href="tel:${esc(lead.phone)}" title="Call" aria-label="Call ${esc(lead.name)}"><i class="fa fa-phone"></i></a>` : ''}
+                                <a href="${lead.url}" title="View" aria-label="View ${esc(lead.name)}"><i class="fa fa-eye"></i></a>
                             </div>
                         </td>
                     </tr>`;
@@ -801,7 +801,7 @@
                     </a>
                     <div class="followup-item-actions">
                         <div class="followup-pill ${pillCls}">${formatRelative(parsed, item.overdue)}</div>
-                        <button type="button" class="followup-done-btn" title="Mark done"
+                        <button type="button" class="followup-done-btn" title="Mark done" aria-label="Mark ${esc(item.title)} as done"
                             data-source="${item.source}" data-id="${item.id}" data-task-id="${item.task_id ?? ''}">
                             <i class="fa fa-check"></i>
                         </button>
@@ -924,9 +924,9 @@
             });
 
             let html = `<div class="mini-cal-header">
-                <button type="button" class="mini-cal-nav" data-dir="-1"><i class="fa fa-chevron-left"></i></button>
+                <button type="button" class="mini-cal-nav" data-dir="-1" aria-label="Previous month"><i class="fa fa-chevron-left"></i></button>
                 <span>${shown.toLocaleDateString([], { month: 'long', year: 'numeric' })}</span>
-                <button type="button" class="mini-cal-nav" data-dir="1"><i class="fa fa-chevron-right"></i></button>
+                <button type="button" class="mini-cal-nav" data-dir="1" aria-label="Next month"><i class="fa fa-chevron-right"></i></button>
             </div><div class="mini-cal-grid">`;
             ['S', 'M', 'T', 'W', 'T', 'F', 'S'].forEach(w => html += `<div class="mini-cal-weekday">${w}</div>`);
             for (let i = 0; i < startWeekday; i++) html += `<div class="mini-cal-cell"></div>`;
