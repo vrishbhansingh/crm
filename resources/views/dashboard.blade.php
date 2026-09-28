@@ -36,8 +36,12 @@
             flex-wrap: wrap;
         }
 
-        .dash-greeting { font-size: 24px; font-weight: 700; color: var(--text-dark); margin: 0 0 6px; }
-        .dash-greeting .emoji { margin-right: 6px; }
+        .dash-greeting { font-size: 24px; font-weight: 700; color: var(--text-dark); margin: 0 0 6px; display: flex; align-items: center; gap: 10px; }
+        .dash-greeting .greet-badge {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 36px; height: 36px; border-radius: 50%; font-size: 18px;
+            flex-shrink: 0; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+        }
         .dash-subtitle { color: var(--text-muted); font-size: 14.5px; margin: 0; }
 
         .dash-header-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
@@ -272,15 +276,19 @@
         [data-theme="dark"] .geo-bar-wrap { background: #232637; }
         [data-theme="dark"] .geo-empty { color: #9aa1b5; }
 
-        /* Sales Pipeline */
-        .pipeline-list { display: flex; flex-direction: column; gap: 12px; }
-        .pipeline-row {
-            display: flex; align-items: center; justify-content: space-between;
-            gap: 14px; border-radius: 12px; padding: 13px 16px;
+        /* Sales Pipeline — a horizontal funnel: one bar per stage, in
+           pipeline order, width scaled against the largest stage's value so
+           the shape actually tapers instead of just being a plain list. */
+        .funnel-list { display: flex; flex-direction: column; gap: 10px; }
+        .funnel-stage { display: flex; flex-direction: column; gap: 4px; align-items: center; }
+        .funnel-bar {
+            min-width: 34%; max-width: 100%; height: 42px; border-radius: 9px;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            color: #fff; font-weight: 700; font-size: 13px; white-space: nowrap;
+            padding: 0 16px; transition: width .3s ease;
         }
-        .pipeline-row .pipeline-name { font-weight: 700; font-size: 13.5px; }
-        .pipeline-row .pipeline-count { opacity: .75; font-weight: 600; font-size: 12.5px; margin-left: 6px; }
-        .pipeline-row .pipeline-value { font-weight: 700; font-size: 13.5px; }
+        .funnel-bar .funnel-count { opacity: .85; font-weight: 600; }
+        .funnel-value { font-size: 12px; font-weight: 700; color: var(--text-muted); }
         .pipeline-empty, .performer-empty, .leads-empty { text-align: center; color: var(--text-muted); padding: 30px 0; font-size: 13.5px; }
 
         /* Top Performers */
@@ -309,7 +317,8 @@
         .performer-actions a:hover { background: #eff6ff; color: var(--primary); }
 
         /* Recent Leads */
-        .lead-cell { display: flex; align-items: center; gap: 10px; }
+        .lead-cell { display: flex; align-items: center; gap: 10px; color: inherit; text-decoration: none; }
+        a.lead-cell:hover .lead-name { color: var(--primary); text-decoration: underline; }
         .lead-avatar {
             width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
             display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 12px;
@@ -379,7 +388,7 @@
 
                 <div class="dash-header">
                     <div>
-                        <h1 class="dash-greeting"><i class="fa fa-hand-paper-o emoji" id="greetingEmoji" aria-hidden="true"></i><span id="greetingText">Welcome back</span>, {{ Auth::guard('web')->user()->name }}</h1>
+                        <h1 class="dash-greeting"><span class="greet-badge" id="greetingBadge" aria-hidden="true">👋</span><span><span id="greetingText">Welcome back</span>, {{ Auth::guard('web')->user()->name }}</span></h1>
                         <p class="dash-subtitle">{{ Auth::guard('web')->user()->getRoleNames()->first() }} &middot; Here's your overview</p>
                     </div>
                     <div class="dash-header-actions">
@@ -396,7 +405,7 @@
                     <div class="col-lg-7" id="pipelineCol">
                         <div class="dash-card">
                             <h5><i class="fa fa-filter"></i> Sales Pipeline</h5>
-                            <div class="pipeline-list" id="pipelineList"></div>
+                            <div class="funnel-list" id="pipelineList"></div>
                         </div>
                     </div>
                     <div class="col-lg-5" id="performerCol" style="display:none">
@@ -498,11 +507,13 @@
 
         (function greetByTime() {
             const hour = new Date().getHours();
-            let text = 'Good evening', icon = 'fa-moon-o';
-            if (hour < 12) { text = 'Good morning'; icon = 'fa-sun-o'; }
-            else if (hour < 17) { text = 'Good afternoon'; icon = 'fa-sun-o'; }
+            let text = 'Good evening', emoji = '🌙', bg = 'linear-gradient(135deg, #4338ca, #7c3aed)';
+            if (hour < 12) { text = 'Good morning'; emoji = '☀️'; bg = 'linear-gradient(135deg, #f59e0b, #fb923c)'; }
+            else if (hour < 17) { text = 'Good afternoon'; emoji = '🌤️'; bg = 'linear-gradient(135deg, #0ea5e9, #38bdf8)'; }
             document.getElementById('greetingText').textContent = text;
-            document.getElementById('greetingEmoji').className = 'fa ' + icon + ' emoji';
+            const badge = document.getElementById('greetingBadge');
+            badge.textContent = emoji;
+            badge.style.background = bg;
         })();
 
         const PALETTE = ['#2563eb', '#7c3aed', '#0d9488', '#ea580c', '#db2777', '#16a34a', '#4338ca', '#0891b2'];
@@ -588,16 +599,21 @@
                 $('#pipelineList').html('<div class="pipeline-empty">No open deals in the pipeline yet.</div>');
                 return;
             }
+            const maxValue = Math.max(...stages.map(s => Number(s.value) || 0), 1);
             let html = '';
             stages.forEach(stage => {
                 const color = stageColor(stage);
+                // A bar scaled below ~34% reads as a sliver and clips its own
+                // label, so the widest stage is pinned to 100% and everything
+                // else is floored — still tapers, just never unreadable.
+                const widthPct = Math.max(34, Math.round((Number(stage.value) || 0) / maxValue * 100));
                 html += `
-                    <div class="pipeline-row" style="background:${color}1a;">
-                        <div>
-                            <span class="pipeline-name" style="color:${color}">${esc(stage.name)}</span>
-                            <span class="pipeline-count" style="color:${color}">${stage.count}</span>
+                    <div class="funnel-stage">
+                        <div class="funnel-bar" style="width:${widthPct}%; background:${color};">
+                            <span>${esc(stage.name)}</span>
+                            <span class="funnel-count">&middot; ${stage.count}</span>
                         </div>
-                        <div class="pipeline-value" style="color:${color}">${fmt(stage.value, true)}</div>
+                        <div class="funnel-value">${fmt(stage.value, true)}</div>
                     </div>`;
             });
             $('#pipelineList').html(html);
@@ -645,20 +661,20 @@
                 html += `
                     <tr>
                         <td>
-                            <div class="lead-cell">
+                            <a href="${lead.url}" class="lead-cell">
                                 <div class="lead-avatar" style="background:${color}">${initials(lead.name)}</div>
                                 <div>
                                     <div class="lead-name">${esc(lead.name)}</div>
                                     <div class="lead-email">${esc(lead.email || lead.phone || '')}</div>
                                 </div>
-                            </div>
+                            </a>
                         </td>
                         <td>${esc(lead.source)}</td>
                         <td><span class="status-pill" style="background:${sc}1a;color:${sc}">${esc(lead.status)}</span></td>
                         <td>${esc(lead.created_at)}</td>
                         <td class="text-right">
                             <div class="lead-row-actions justify-content-end">
-                                ${lead.phone ? `<a href="tel:${esc(lead.phone)}" title="Call" aria-label="Call ${esc(lead.name)}"><i class="fa fa-phone"></i></a>` : ''}
+                                ${lead.email ? `<a href="mailto:${esc(lead.email)}" title="Email" aria-label="Email ${esc(lead.name)}"><i class="fa fa-envelope-o"></i></a>` : ''}
                                 <a href="${lead.url}" title="View" aria-label="View ${esc(lead.name)}"><i class="fa fa-eye"></i></a>
                             </div>
                         </td>
