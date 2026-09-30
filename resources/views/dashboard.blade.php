@@ -189,10 +189,14 @@
         }
         .followup-done-btn:hover { background: #16a34a; border-color: #16a34a; color: #fff; }
         .followup-done-btn:disabled { opacity: .5; cursor: default; }
-        .followup-empty { text-align: center; color: var(--text-muted); padding: 28px 0; font-size: 13.5px; }
-        .followup-empty i { font-size: 24px; opacity: .5; display: block; margin-bottom: 8px; }
+        .followup-empty { text-align: center; color: var(--text-muted); padding: 34px 0; font-size: 13.5px; }
+        .followup-empty i {
+            display: flex; align-items: center; justify-content: center; margin: 0 auto 12px;
+            width: 50px; height: 50px; border-radius: 50%; background: var(--surface); font-size: 19px;
+        }
 
-        /* Current / Upcoming / Past tabs */
+        /* Current / Upcoming / Past tabs — each carries a live count badge
+           so urgency/volume reads at a glance without opening the tab. */
         .followup-tabs { display: flex; gap: 4px; background: var(--surface); border-radius: 10px; padding: 4px; margin: -6px 0 14px; }
         .followup-tab-btn {
             flex: 1; border: none; background: transparent; padding: 7px 10px; border-radius: 8px;
@@ -200,19 +204,24 @@
         }
         .followup-tab-btn:hover { color: var(--text-dark); }
         .followup-tab-btn.active { background: #fff; color: var(--primary); box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08); }
+        .followup-tab-count {
+            display: inline-block; margin-left: 5px; padding: 1px 7px; border-radius: 999px;
+            font-size: 10.5px; font-weight: 700; background: rgba(15, 23, 42, 0.08); color: inherit;
+        }
+        .followup-tab-btn.active .followup-tab-count { background: rgba(37, 99, 235, 0.12); color: var(--primary); }
 
-        /* Proper calendar on the left, tabs + list on the right — this
-           card is full-width now, so the calendar gets real room instead
-           of being squeezed into a sidebar-sized sliver. */
-        .followup-layout { display: flex; gap: 28px; align-items: flex-start; }
-        .followup-cal-col { flex: 0 0 300px; }
+        /* The calendar sits in its own tinted panel rather than floating
+           bare on the card's white background — reads as one contained
+           widget instead of loose controls next to the list. */
+        .followup-layout { display: flex; gap: 24px; align-items: flex-start; }
+        .followup-cal-col { flex: 0 0 300px; background: var(--surface); border-radius: 14px; padding: 18px 16px; }
         .followup-list-col { flex: 1; min-width: 0; }
         .mini-cal-header {
             font-size: 14px; font-weight: 700; color: var(--text-dark); text-align: center;
             margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;
         }
         .mini-cal-header .mini-cal-nav {
-            border: none; background: var(--surface); color: var(--text-muted); width: 30px; height: 30px;
+            border: none; background: #fff; color: var(--text-muted); width: 30px; height: 30px;
             border-radius: 50%; cursor: pointer; font-size: 11px;
         }
         .mini-cal-header .mini-cal-nav:hover { background: #eff6ff; color: var(--primary); }
@@ -227,14 +236,21 @@
             font-size: 12.5px; color: var(--text-dark); border-radius: 50%; cursor: default;
         }
         .mini-cal-cell.is-day { cursor: pointer; transition: background .12s ease; }
-        .mini-cal-cell.is-day:hover { background: var(--surface); }
+        .mini-cal-cell.is-day:hover { background: #fff; }
         .mini-cal-cell.is-today { background: var(--primary); color: #fff; font-weight: 700; }
         .mini-cal-cell.is-selected { box-shadow: inset 0 0 0 2px var(--primary); font-weight: 700; }
-        .mini-cal-cell.has-due::after {
+        /* Due-date dots carry the same urgency color as the list groups
+           below (red = overdue, amber = upcoming) instead of one flat dot
+           for every kind of due date. */
+        .mini-cal-cell.has-due-overdue::after,
+        .mini-cal-cell.has-due-due::after {
             content: ''; position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%);
-            width: 5px; height: 5px; border-radius: 50%; background: #f59e0b;
+            width: 5px; height: 5px; border-radius: 50%;
         }
-        .mini-cal-cell.is-today.has-due::after { background: #fff; }
+        .mini-cal-cell.has-due-overdue::after { background: #dc2626; }
+        .mini-cal-cell.has-due-due::after { background: #f59e0b; }
+        .mini-cal-cell.is-today.has-due-overdue::after,
+        .mini-cal-cell.is-today.has-due-due::after { background: #fff; }
         @media (max-width: 700px) {
             .followup-layout { flex-direction: column; }
             .followup-cal-col { flex: 0 0 auto; width: 100%; max-width: 320px; margin: 0 auto; }
@@ -262,12 +278,15 @@
         [data-theme="dark"] .followup-tab-btn { color: #9aa1b5; }
         [data-theme="dark"] .followup-tab-btn:hover { color: #eef0f6; }
         [data-theme="dark"] .followup-tab-btn.active { background: #1a1d2b; color: #93a4fd; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3); }
+        [data-theme="dark"] .followup-tab-count { background: rgba(255, 255, 255, 0.08); }
+        [data-theme="dark"] .followup-tab-btn.active .followup-tab-count { background: rgba(147, 164, 253, 0.18); color: #93a4fd; }
+        [data-theme="dark"] .followup-empty i { background: #232637; }
         [data-theme="dark"] .mini-cal-header { color: #eef0f6; }
-        [data-theme="dark"] .mini-cal-header .mini-cal-nav { background: #232637; color: #9aa1b5; }
+        [data-theme="dark"] .mini-cal-header .mini-cal-nav { background: #1a1d2b; color: #9aa1b5; }
         [data-theme="dark"] .mini-cal-header .mini-cal-nav:hover { background: #2a2e40; color: #93a4fd; }
         [data-theme="dark"] .mini-cal-weekday { color: #9aa1b5; }
         [data-theme="dark"] .mini-cal-cell { color: #d7dbe4; }
-        [data-theme="dark"] .mini-cal-cell.is-day:hover { background: #232637; }
+        [data-theme="dark"] .mini-cal-cell.is-day:hover { background: #1a1d2b; }
         [data-theme="dark"] .mini-cal-cell.is-today { background: #93a4fd; color: #0f1117; }
         [data-theme="dark"] .mini-cal-cell.is-selected { box-shadow: inset 0 0 0 2px #93a4fd; }
         [data-theme="dark"] .mini-cal-clear { color: #93a4fd; }
@@ -340,7 +359,13 @@
            fit source labels and a percentage, which run longer than state
            names and a bare count. */
         #sourceChipList .geo-name { flex-basis: 128px; }
-        #sourceChipList .geo-count { width: 74px; }
+        #sourceChipList .geo-count {
+            width: auto; display: flex; align-items: baseline; gap: 7px;
+        }
+        #sourceChipList .geo-count .geo-count-pct {
+            font-size: 11px; font-weight: 700; color: var(--text-muted);
+            background: var(--surface); padding: 2px 7px; border-radius: 999px;
+        }
 
         /* Closing-soon cards */
         .closing-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
@@ -781,7 +806,7 @@
                     <div class="geo-row">
                         <div class="geo-name">${esc(s.label)}</div>
                         <div class="geo-bar-wrap"><span class="geo-bar" style="width:${widthPct}%;background:${color};"></span></div>
-                        <div class="geo-count">${s.total} <span style="font-weight:600;opacity:.65;">&middot;${pct}%</span></div>
+                        <div class="geo-count">${s.total}<span class="geo-count-pct">${pct}%</span></div>
                     </div>`;
             });
             $('#sourceChipList').html(html);
