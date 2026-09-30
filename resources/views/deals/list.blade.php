@@ -9,77 +9,17 @@
 
     <link rel="stylesheet" href="{{ asset('vendors/css/vendor.bundle.base.css') }}">
     <link rel="stylesheet" href="{{ asset('css/vertical-layout-light/style.css') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="{{ asset('vendors/datatables.net-bs4/dataTables.bootstrap4.css') }}">
     <link rel="stylesheet" href="{{asset('vendors/select2/select2.min.css')}}">
     <link rel="stylesheet" href="{{asset('vendors/select2-bootstrap-theme/select2-bootstrap.min.css')}}">
 
     <style>
-        /* Same modernization pattern as Roles & Permissions / Dashboard /
-           Leads: bigger type, roomier cards. Pure visual pass — IDs and
-           structure this page's JS depends on are untouched. */
-        .order-table-wrapper {
-            background: #fff;
-            border-radius: 14px;
-            padding: 18px;
-            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
-        }
-
-        .order-table { font-size: 14.5px; }
-
-        .order-table thead th {
-            background: #f8fafc;
-            color: #475569;
-            font-size: 12.5px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.03em;
-            text-align: center;
-            padding: 14px 12px;
-        }
-
-        .order-table tbody td {
-            font-size: 14px;
-            text-align: center;
-            vertical-align: middle;
-            padding: 14px 12px;
-        }
-
-        .status-badge {
-            padding: 6px 14px;
-            font-size: 12px;
-            font-weight: 600;
-            border-radius: 999px;
-            display: inline-block;
-        }
-
-        .status-open { background: #eef2ff; color: #4338ca; }
-        .status-won { background: #dcfce7; color: #15803d; }
-        .status-lost { background: #fee2e2; color: #b91c1c; }
-
-        .page-header {
-            background: #ffffff;
-            padding: 20px 22px;
-            border-radius: 13px;
-            margin-bottom: 18px;
-            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 16px;
-        }
-
-        .page-header h4 {
-            font-weight: 700;
-            font-size: 18px;
-            margin: 0 0 6px;
-            color: #111827;
-        }
-
-        .page-header .text-muted { font-size: 14px !important; }
-
-        .page-header .btn { border-radius: 10px; padding: 10px 18px; font-weight: 600; }
+        /* .order-table-wrapper/.order-table/.status-badge/.status-open/
+           .status-won/.status-lost/.page-header removed in V2 — this list
+           now uses the shared .crm-table-wrap/.crm-table/.crm-badge/
+           .crm-header components from crm-components.css (loaded globally
+           via include/header.blade.php) instead. */
 
         .deal-stat-grid {
             display: grid;
@@ -88,10 +28,10 @@
             margin-bottom: 20px;
         }
 
+        /* Background/border/radius/shadow now come from the shared
+           .crm-card class (added alongside .deal-stat-card in the markup)
+           — this rule only supplies the tile's own flex layout. */
         .deal-stat-card {
-            background: #fff;
-            border-radius: 13px;
-            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
             padding: 20px 22px;
             display: flex;
             align-items: center;
@@ -119,25 +59,13 @@
 
         .stage-pill { display: inline-block; padding: 4px 11px; border-radius: 999px; font-size: 12px; font-weight: 700; }
 
-        /* Dark mode overrides — see admin/lead/lead.blade.php for why this
-           page needs explicit per-selector rules rather than variables. */
-        [data-theme="dark"] .page-header,
-        [data-theme="dark"] .deal-stat-card,
-        [data-theme="dark"] .order-table-wrapper {
-            background: #1a1d2b;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-        }
+        /* .deal-stat-card's background/shadow now come from .crm-card,
+           which already has its own [data-theme="dark"] handling. */
         [data-theme="dark"] .owner-cell.assign-deal:hover { background: #232637; }
         [data-theme="dark"] .owner-name { color: #93a4fd; }
         [data-theme="dark"] .owner-cell.is-unassigned .owner-name { color: #6b7280; }
-        [data-theme="dark"] .page-header h4,
-        [data-theme="dark"] .deal-stat-card .deal-stat-value,
-        [data-theme="dark"] .order-table tbody td a {
-            color: #eef0f6;
-        }
+        [data-theme="dark"] .deal-stat-card .deal-stat-value { color: #eef0f6; }
         [data-theme="dark"] .deal-stat-card .deal-stat-label { color: #9aa1b5; }
-        [data-theme="dark"] .order-table thead th { background: #232637; color: #9aa1b5; }
-        [data-theme="dark"] .order-table tbody td { color: #d7dbe4; border-color: #2a2e40; }
     </style>
 </head>
 
@@ -153,46 +81,46 @@
 
             <div class="content-wrapper">
 
-                <div class="page-header">
-                    <div>
-                        <h4>Deals</h4>
-                        <p class="text-muted mb-0" style="font-size:12px;">{{ Auth::guard('web')->user()->hasElevatedAccess() ? 'Every deal in the pipeline' : 'Your deals' }}</p>
-                    </div>
-                    <div class="d-flex" style="gap:8px;">
-                        <a href="{{ route('deals.index') }}" class="btn btn-outline-primary btn-sm">
+                @component('include.page-header', [
+                    'icon' => 'fa fa-handshake-o',
+                    'title' => 'Deals',
+                    'subtitle' => Auth::guard('web')->user()->hasElevatedAccess() ? 'Every deal in the pipeline' : 'Your deals',
+                ])
+                    @slot('actions')
+                        <a href="{{ route('deals.index') }}" class="crm-btn crm-btn--secondary">
                             <i class="fa fa-columns"></i> Kanban View
                         </a>
                         @can('deals.create')
-                        <a href="{{ route('deals.create') }}" class="btn btn-primary btn-sm">
+                        <a href="{{ route('deals.create') }}" class="crm-btn crm-btn--primary">
                             <i class="fa fa-plus"></i> New Deal
                         </a>
                         @endcan
-                    </div>
-                </div>
+                    @endslot
+                @endcomponent
 
                 <div class="deal-stat-grid" id="dealStatGrid">
-                    <div class="deal-stat-card">
+                    <div class="deal-stat-card crm-card">
                         <div>
                             <div class="deal-stat-value" id="statTotalDeals">0</div>
                             <div class="deal-stat-label">Total Deals</div>
                         </div>
                         <div class="deal-stat-icon" style="background:#eff6ff;color:#2563eb;"><i class="fa fa-handshake-o"></i></div>
                     </div>
-                    <div class="deal-stat-card">
+                    <div class="deal-stat-card crm-card">
                         <div>
                             <div class="deal-stat-value" id="statOpenDeals">0</div>
                             <div class="deal-stat-label">Open Deals</div>
                         </div>
                         <div class="deal-stat-icon" style="background:#eef2ff;color:#4338ca;"><i class="fa fa-folder-open-o"></i></div>
                     </div>
-                    <div class="deal-stat-card">
+                    <div class="deal-stat-card crm-card">
                         <div>
                             <div class="deal-stat-value" id="statPipelineValue">₹0</div>
                             <div class="deal-stat-label">Pipeline Value</div>
                         </div>
                         <div class="deal-stat-icon" style="background:#ecfdf5;color:#16a34a;"><i class="fa fa-inr"></i></div>
                     </div>
-                    <div class="deal-stat-card">
+                    <div class="deal-stat-card crm-card">
                         <div>
                             <div class="deal-stat-value" id="statWonDeals">0</div>
                             <div class="deal-stat-label">Won Deals</div>
@@ -208,25 +136,21 @@
                     </a>
                 </div>
 
-                <div class="row mb-3">
-                    <div class="col-md-5 mb-2">
-                        <input type="text" id="dealSearchInput" class="form-control form-control-sm" placeholder="Search deal name…">
-                    </div>
-                    <div class="col-md-3 mb-2">
-                        <select id="dealFilterStatus" class="form-control form-control-sm">
-                            <option value="">All statuses</option>
-                            <option value="open">Open</option>
-                            <option value="won">Won</option>
-                            <option value="lost">Lost</option>
-                        </select>
-                    </div>
+                <div class="crm-filters">
+                    <input type="text" id="dealSearchInput" class="crm-input" style="flex:2 1 260px;" placeholder="Search deal name…">
+                    <select id="dealFilterStatus" class="crm-select">
+                        <option value="">All statuses</option>
+                        <option value="open">Open</option>
+                        <option value="won">Won</option>
+                        <option value="lost">Lost</option>
+                    </select>
                 </div>
 
                 <div class="row">
                     <div class="col-12">
-                        <div class="order-table-wrapper">
+                        <div class="crm-table-wrap">
                             <div class="table-responsive">
-                                <table class="table order-table" id="dealTable">
+                                <table class="table crm-table" id="dealTable">
                                     <thead>
                                         <tr>
                                             <th>#</th>
@@ -257,15 +181,15 @@
         </div>
     </div>
 
-    <div class="modal fade assign-modal" id="assignDealModal" tabindex="-1">
+    <div class="modal fade crm-modal" id="assignDealModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
 
                 <div class="modal-header">
-                    <div class="assign-modal-icon"><i class="fa fa-user-plus"></i></div>
-                    <div class="assign-modal-heading">
+                    <div class="crm-modal__icon"><i class="fa fa-user-plus"></i></div>
+                    <div class="crm-modal__heading">
                         <h5 class="modal-title">Assign Deal</h5>
-                        <p class="assign-modal-subtitle">Choose a team member to take ownership of this deal.</p>
+                        <p class="crm-modal__subtitle">Choose a team member to take ownership of this deal.</p>
                     </div>
                     <button class="close" data-dismiss="modal">&times;</button>
                 </div>
@@ -274,16 +198,16 @@
                     <input type="hidden" id="assignDealId">
 
                     <div class="form-group mb-0">
-                        <label class="assign-modal-label">Assign To</label>
-                        <select id="assignedDealUser" class="form-control assign-modal-select">
+                        <label class="crm-label">Assign To</label>
+                        <select id="assignedDealUser" class="form-control">
                             <option value="">Loading...</option>
                         </select>
                     </div>
                 </div>
 
                 <div class="modal-footer">
-                    <button class="btn btn-light" data-dismiss="modal">Cancel</button>
-                    <button class="btn btn-primary" id="saveAssignedDealUser"><i class="fa fa-check"></i> Save</button>
+                    <button class="crm-btn crm-btn--secondary crm-btn--sm" data-dismiss="modal">Cancel</button>
+                    <button class="crm-btn crm-btn--primary crm-btn--sm" id="saveAssignedDealUser"><i class="fa fa-check"></i> Save</button>
                 </div>
 
             </div>
@@ -312,7 +236,9 @@
         }
 
         const esc = value => $('<div>').text(value ?? '').html();
-        const safeToken = value => /^[a-z0-9_-]+$/i.test(value || '') ? value : 'unknown';
+        // Deal status pill now comes from the shared renderStatusBadge()
+        // (public/js/crm-status.js) — safeToken() was only needed to build
+        // the old per-status "status-open/status-won/status-lost" class name.
 
         const DEAL_PALETTE = ['#2563eb', '#7c3aed', '#0d9488', '#ea580c', '#db2777', '#16a34a', '#4338ca', '#0891b2'];
         function dealPaletteColor(seed) {
@@ -392,7 +318,7 @@
                         <td>${ownerCell}</td>
                         <td>${leadCell}</td>
                         <td>${esc(dash(item.expected_close_date))}</td>
-                        <td><span class="status-badge status-${safeToken(item.status)}">${esc(pretty(item.status))}</span></td>
+                        <td>${renderStatusBadge('deal', item.status)}</td>
                         <td>${item.action}</td>
                     </tr>`;
                         });
@@ -401,7 +327,13 @@
                             $('#pipelineFilterBanner').removeClass('d-none').addClass('d-flex');
                             $('#pipelineFilterName').text('this pipeline');
                         }
-                        tbody = `<tr><td colspan="10">No deals found</td></tr>`;
+                        tbody = `<tr><td colspan="10">
+                            <div class="crm-empty">
+                                <div class="crm-empty__icon"><i class="fa fa-handshake-o"></i></div>
+                                <p class="crm-empty__title">No deals found</p>
+                                <p class="crm-empty__desc">Deals you create, or leads that convert, will show up here.</p>
+                            </div>
+                        </td></tr>`;
                     }
 
                     $('#dealTable tbody').html(tbody);

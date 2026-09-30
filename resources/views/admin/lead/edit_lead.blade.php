@@ -8,9 +8,9 @@
     <title>CRM Admin Panel</title>
 
     <!-- plugins:css -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-    <link rel="stylesheet" href="{{asset('vendors/feather/feather.css')}}">
-    <link rel="stylesheet" href="{{asset('vendors/ti-icons/css/themify-icons.css')}}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    
+    
     <link rel="stylesheet" href="{{asset('vendors/css/vendor.bundle.base.css')}}">
 
     <!-- Plugin css -->
@@ -26,49 +26,18 @@
     <link rel="stylesheet" href="{{asset('vendors/select2-bootstrap-theme/select2-bootstrap.min.css')}}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.26.25/sweetalert2.min.css">
     <style>
-        /* ===== PAGE HEADER ===== */
-        /* Same modernization pattern as the rest of this pass. */
-        .page-header {
-            background: #ffffff;
-            padding: 20px 22px;
-            border-radius: 13px;
-            margin-bottom: 18px;
-            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 16px;
-        }
-
-        .page-header h2 {
-            font-size: 18px;
-            font-weight: 700;
-            color: #111827;
-            margin: 0;
-        }
-
-        .page-header .breadcrumb {
-            font-size: 14px;
-            color: #6b7280;
-        }
-
-        /* ===== FORM CARD ===== */
-        .lead-card {
-            background: #ffffff;
-            border-radius: 12px;
-            padding: 24px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
-        }
+        /* Detail/edit forms respect the shared 960px reading-width cap
+           rather than stretching edge-to-edge on a wide monitor. */
+        .lead-form-wrap { max-width: 960px; margin: 0 auto; }
 
         /* ===== SECTION TITLE ===== */
         .section-title {
             font-size: 13px;
             font-weight: 600;
-            color: #2563eb;
+            color: var(--crm-accent, #2563eb);
             text-transform: uppercase;
             margin-bottom: 12px;
-            border-left: 4px solid #2563eb;
+            border-left: 4px solid var(--crm-accent, #2563eb);
             padding-left: 8px;
         }
 
@@ -97,46 +66,9 @@
             margin: 24px 0;
         }
 
-        /* ===== FOOTER BUTTONS ===== */
-        .form-footer {
-            position: sticky;
-            bottom: 0;
-            background: #ffffff;
-            padding: 15px 24px;
-            margin-top: 20px;
-            border-top: 1px solid #e5e7eb;
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-        }
-
-        .btn-back {
-            background: #f3f4f6;
-            color: #374151;
-        }
-
-        .btn-save-solid {
-            background: #2563eb;
-            border: none;
-        }
-
-        .btn-save-solid:hover {
-            background: #1e40af;
-        }
-
-        [data-theme="dark"] .page-header,
-        [data-theme="dark"] .lead-card,
-        [data-theme="dark"] .form-footer {
-            background: #1a1d2b;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-        }
-        [data-theme="dark"] .page-header h2 { color: #eef0f6; }
-        [data-theme="dark"] .page-header .breadcrumb { color: #9aa1b5; }
-        [data-theme="dark"] .section-title { color: #93a4fd; border-left-color: #93a4fd; }
+        [data-theme="dark"] .section-title { color: var(--crm-accent, #93a4fd); border-left-color: var(--crm-accent, #93a4fd); }
         [data-theme="dark"] .form-group label { color: #d7dbe4; }
         [data-theme="dark"] .form-divider { background: #2a2e40; }
-        [data-theme="dark"] .form-footer { border-top-color: #2a2e40; }
-        [data-theme="dark"] .btn-back { background: #232637; color: #d7dbe4; }
     </style>
 </head>
 
@@ -148,18 +80,23 @@
             @include('include.sidebar')
 
             <div class="content-wrapper">
-                <form id="editUserForm" method="post">
+
+                @component('include.page-header', [
+                    'icon' => 'fa fa-pencil',
+                    'title' => 'Edit Lead',
+                ])
+                    @slot('actions')
+                        <button type="button" class="crm-btn crm-btn--secondary" onclick="backButton()">
+                            <i class="fa fa-arrow-left"></i> Back
+                        </button>
+                    @endslot
+                @endcomponent
+
+                <div class="lead-form-wrap">
+                <form id="editUserForm" method="post" class="crm-card">
                     @csrf
 
-                    <div class="modal-body lead-form" style="font-size:12.5px;">
-                        <div class="page-header">
-                            <div>
-                                <h2>Edit New Lead</h2>
-                            </div>
-                            <button type="button" class="btn btn-danger" onclick="backButton()">
-                                <i class="fa fa-arrow-left"></i> Back
-                            </button>
-                        </div>
+                    <div class="lead-form" style="font-size:12.5px;">
 
                         <!-- ================= BASIC INFO ================= -->
                         <div class="form-row">
@@ -387,12 +324,13 @@
 
                     <!-- FOOTER -->
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-light px-4" data-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary btn-save-solid">
+                        <button type="button" class="crm-btn crm-btn--secondary" onclick="backButton()">Cancel</button>
+                        <button type="submit" class="crm-btn crm-btn--primary">
                             <i class="fa fa-save"></i> Update Lead
                         </button>
                     </div>
                 </form>
+                </div>
 
             </div>
         </div>

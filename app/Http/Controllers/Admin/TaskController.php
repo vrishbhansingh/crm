@@ -11,11 +11,15 @@ use App\Models\Order;
 use App\Models\Task;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Notifications\TaskAssigned;
+use App\Services\EmailLogger;
+use App\Services\MailConfigurator;
 use App\Support\TenantContext;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use Throwable;
 
 class TaskController extends Controller
 {
@@ -116,6 +120,7 @@ class TaskController extends Controller
         $this->assertRelatedRecord($data, $tenantId);
 
         $task = Task::create($data);
+        $this->notifyAssignment($task);
 
         return response()->json(['status' => true, 'message' => 'Task created successfully', 'id' => $task->id]);
     }
@@ -123,6 +128,7 @@ class TaskController extends Controller
     public function update(Request $request, int $id)
     {
         $task = $this->findEditable($id);
+        $previousAssignee = $task->assigned_to;
         $data = $this->validatedData($request, $task->tenant_id);
         abort_if(($data['depends_on_task_id'] ?? null) === $task->id, 422, 'A task cannot depend on itself.');
         $data['due_at'] = $this->toUtc($data['due_at'] ?? null, $task->tenant_id);
@@ -136,12 +142,50 @@ class TaskController extends Controller
 
         $data['completed_at'] = $data['status'] === 'completed' ? ($task->completed_at ?? now()) : null;
         $task->update($data);
+        $this->notifyAssignment($task, $previousAssignee);
 
         if ($completingNow) {
             $this->spawnNextOccurrence($task);
         }
 
         return response()->json(['status' => true, 'message' => 'Task updated successfully']);
+    }
+
+    /**
+     * Notify the assignee the moment a task lands on their plate — nothing
+     * did this before (create/update/bulk-create all silently set
+     * assigned_to with zero signal to the person it named). Fires only on
+     * an actual change, never when the assignee just re-saves their own
+     * task, and a failed send (e.g. tenant SMTP misconfigured) never blocks
+     * the task create/update response itself.
+     */
+    private function notifyAssignment(Task $task, ?int $previousAssignee = null, int $extraCount = 0): void
+    {
+        if (! $task->assigned_to || $task->assigned_to === $previousAssignee) {
+            return;
+        }
+
+        $assignedBy = Auth::guard('web')->user();
+        if ($assignedBy && (int) $assignedBy->id === (int) $task->assigned_to) {
+            return;
+        }
+
+        $assignee = $task->assignee ?: User::find($task->assigned_to);
+        if (! $assignee || $assignee->status !== 'Active') {
+            return;
+        }
+
+        try {
+            app(MailConfigurator::class)->configureFor($assignee->tenant);
+            app(EmailLogger::class)->sync(
+                'task_assigned', $task->tenant_id, $assignee->email,
+                'New task assigned: '.$task->title,
+                fn () => $assignee->notify(new TaskAssigned($task, $assignedBy, $extraCount)),
+                ['task_id' => $task->id],
+            );
+        } catch (Throwable $exception) {
+            report($exception);
+        }
     }
 
     public function complete(int $id)
@@ -199,10 +243,10 @@ class TaskController extends Controller
 
         $dueAt = $this->toUtc($validated['due_at'] ?? null, $tenantId);
         $createdBy = Auth::guard('web')->id();
-        $created = 0;
+        $created = [];
 
         foreach ($relatedIds as $relatedId) {
-            Task::create([
+            $created[] = Task::create([
                 'tenant_id' => $tenantId,
                 'assigned_to' => $validated['assigned_to'] ?? null,
                 'created_by' => $createdBy,
@@ -215,10 +259,16 @@ class TaskController extends Controller
                 'due_at' => $dueAt,
                 'activity_type' => $validated['activity_type'] ?? 'task',
             ]);
-            $created++;
         }
 
-        return response()->json(['status' => true, 'message' => "{$created} task(s) created."]);
+        // One notification for the whole batch, not one per record — the
+        // assignee doesn't need 50 separate emails for a bulk-create that
+        // targeted 50 leads with the same task.
+        if ($created !== []) {
+            $this->notifyAssignment($created[0], null, count($created) - 1);
+        }
+
+        return response()->json(['status' => true, 'message' => count($created).' task(s) created.']);
     }
 
     public function workload()

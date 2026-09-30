@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}"><title>Purchase Orders</title>
-    <link rel="stylesheet" href="{{ asset('vendors/feather/feather.css') }}"><link rel="stylesheet" href="{{ asset('vendors/css/vendor.bundle.base.css') }}"><link rel="stylesheet" href="{{ asset('css/vertical-layout-light/style.css') }}"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="{{ asset('vendors/css/vendor.bundle.base.css') }}"><link rel="stylesheet" href="{{ asset('css/vertical-layout-light/style.css') }}"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root{
             --ink:#101828; --muted:#667085; --faint:#98a2b3; --border:#e4e7ec; --line:#eef1f5;
-            --bg:#f5f6fa; --card:#fff; --accent:#4f46e5; --accent-soft:#eef2ff; --accent-dark:#4338ca;
+            --bg:#f5f6fa; --card:#fff; --accent:var(--crm-accent,#1f6f63); --accent-soft:var(--crm-accent-tint,#e4efec); --accent-dark:var(--crm-accent-dark,#154f46);
         }
         [data-theme="dark"]{
             --ink:#eef0f6; --muted:#9aa1b5; --faint:#71798f; --border:#2a2e40; --line:#252838;
-            --bg:#11131c; --card:#181b28; --accent:#818cf8; --accent-soft:#252a4a; --accent-dark:#a5b0ff;
+            --bg:#11131c; --card:#181b28; --accent:var(--crm-accent,#5aab9d); --accent-soft:var(--crm-accent-tint,#1c2b28); --accent-dark:var(--crm-accent-dark,#7fc3b6);
         }
         body{font-family:"Inter",ui-sans-serif,system-ui,sans-serif;}
         .content-wrapper{background:var(--bg);}
@@ -134,8 +134,8 @@
     let searchTimer;
     $('#filterSearch').on('input', () => { clearTimeout(searchTimer); searchTimer = setTimeout(loadOrders, 300); });
     $(document).on('click', '.sendPo', function(){ const id=$(this).closest('.po-row').data('id'); $.ajax({url:`{{ url('/purchase-orders') }}/${id}/send`,method:'POST',headers:{'X-CSRF-TOKEN':csrf}}).done(loadOrders).fail(xhr=>alert(xhr.responseJSON?.message||'Unable to send.')); });
-    $(document).on('click', '.cancelPo', function(){ if(!confirm('Cancel this purchase order?')) return; const id=$(this).closest('.po-row').data('id'); $.ajax({url:`{{ url('/purchase-orders') }}/${id}/cancel`,method:'POST',headers:{'X-CSRF-TOKEN':csrf}}).done(loadOrders).fail(xhr=>alert(xhr.responseJSON?.message||'Unable to cancel.')); });
-    $(document).on('click', '.deletePo', function(){ if(!confirm('Delete this purchase order?')) return; const id=$(this).closest('.po-row').data('id'); $.ajax({url:`{{ url('/purchase-orders') }}/${id}`,method:'DELETE',headers:{'X-CSRF-TOKEN':csrf}}).done(loadOrders).fail(xhr=>alert(xhr.responseJSON?.message||'Unable to delete.')); });
+    $(document).on('click', '.cancelPo', function(){ const id=$(this).closest('.po-row').data('id'); openConfirmModal({title:'Cancel this purchase order?',variant:'warning',confirmText:'Cancel order',onConfirm:function(done){ $.ajax({url:`{{ url('/purchase-orders') }}/${id}/cancel`,method:'POST',headers:{'X-CSRF-TOKEN':csrf}}).done(() => { loadOrders(); done(); }).fail(xhr=>{alert(xhr.responseJSON?.message||'Unable to cancel.');done();}); }}); });
+    $(document).on('click', '.deletePo', function(){ const id=$(this).closest('.po-row').data('id'); openConfirmModal({title:'Delete this purchase order?',message:'This can\'t be undone.',confirmText:'Delete',onConfirm:function(done){ $.ajax({url:`{{ url('/purchase-orders') }}/${id}`,method:'DELETE',headers:{'X-CSRF-TOKEN':csrf}}).done(() => { loadOrders(); done(); }).fail(xhr=>{alert(xhr.responseJSON?.message||'Unable to delete.');done();}); }}); });
     $(document).on('click', '.row-actions-btn', function(e){ e.stopPropagation(); const menu=$(this).siblings('.row-actions-menu'); const opening=!menu.hasClass('is-open'); $('.row-actions-menu').removeClass('is-open'); if(opening){ const rect=this.getBoundingClientRect(); menu.css({position:'fixed',top:rect.bottom+4,left:'auto',right:window.innerWidth-rect.right}).addClass('is-open'); } });
     $(document).on('click', '.row-actions-menu', function(e){ e.stopPropagation(); });
     $(document).on('click', function(){ $('.row-actions-menu').removeClass('is-open'); });

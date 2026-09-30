@@ -9,7 +9,7 @@
 
     <link rel="stylesheet" href="{{ asset('vendors/css/vendor.bundle.base.css') }}">
     <link rel="stylesheet" href="{{ asset('css/vertical-layout-light/style.css') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.26.25/sweetalert2.min.css">
 
     <style>
@@ -20,13 +20,13 @@
             --text-muted: #6b7280;
         }
 
-        /* Same modernization pattern as Roles & Permissions / Dashboard /
-           Leads / Deals: bigger, roomier white header card. */
+        /* V2: background/border/radius/shadow now come from the shared
+           .crm-card class (added alongside in the markup below) — this
+           local rule only supplies this hero's own padding/margin, since
+           its layout (avatar + budget + actions) is bespoke to this page
+           rather than the generic page-header partial. */
         .crm-page-header {
-            background: #fff;
             padding: 24px 28px;
-            border-radius: 13px;
-            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
             margin-bottom: 18px;
         }
 
@@ -57,21 +57,42 @@
         .badge-score-warm { background: #fef3c7; color: #92400e; }
         .badge-score-cold { background: #e0f2fe; color: #075985; }
 
+        /* Background/border/radius/shadow now come from the shared
+           .crm-card class (added alongside .card-box in the markup) —
+           this rule only supplies spacing between sections. */
         .card-box {
-            background: #fff;
-            border-radius: 14px;
-            box-shadow: 0 8px 22px rgba(0, 0, 0, 0.05);
-            border: 1px solid var(--border);
             padding: 20px;
             margin-bottom: 20px;
         }
 
+        /* Section headers: a small tinted icon badge + title, matching the
+           page-level header's visual language, instead of a bare icon
+           glyph sitting flush against the text. One CSS rule covers every
+           section on this page since they all share this exact markup
+           shape (<h5><i>...</i> Title</h5>) — no per-section edits needed. */
         .card-box h5 {
             font-weight: 700;
-            font-size: 15px;
+            font-size: 14.5px;
             color: var(--text-dark);
-            margin-bottom: 14px;
+            margin: 0 0 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
+        .card-box h5 i {
+            width: 30px;
+            height: 30px;
+            border-radius: 9px;
+            flex-shrink: 0;
+            background: var(--crm-accent-tint, #e4efec);
+            color: var(--crm-accent, #1f6f63);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+        }
+        .card-box > p.text-muted { line-height: 1.5; margin: 0 0 14px; }
+        [data-theme="dark"] .card-box h5 i { background: rgba(90, 171, 157, 0.16); }
 
         .field-row {
             display: flex;
@@ -184,10 +205,7 @@
             display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
             gap: 16px; margin: 18px 0 22px;
         }
-        .lead-metric-tile {
-            background: #fff; border-radius: 14px; box-shadow: 0 8px 22px rgba(0,0,0,.05);
-            border: 1px solid var(--border); padding: 16px 18px; text-align: center;
-        }
+        .lead-metric-tile { padding: 16px 18px; text-align: center; }
         .lead-metric-tile .metric-value { font-size: 24px; font-weight: 700; color: var(--text-dark); }
         .lead-metric-tile .metric-label { font-size: 12px; color: var(--text-muted); margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: .02em; }
 
@@ -209,12 +227,9 @@
             --text-dark: #eef0f6;
             --text-muted: #9aa1b5;
         }
-        [data-theme="dark"] .crm-page-header,
-        [data-theme="dark"] .card-box,
-        [data-theme="dark"] .lead-metric-tile {
-            background: #1a1d2b;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-        }
+        /* .crm-page-header/.card-box/.lead-metric-tile's background/shadow
+           now come from .crm-card, which already has its own
+           [data-theme="dark"] handling in crm-components.css. */
         [data-theme="dark"] .tag-chip { background: #232637; color: #d7dbe4; }
         [data-theme="dark"] .tag-chip button { color: #9aa1b5; }
         [data-theme="dark"] .timeline-icon { background: #232637; }
@@ -239,7 +254,7 @@
 
             <div class="content-wrapper">
 
-                <div class="crm-page-header d-flex justify-content-between align-items-start flex-wrap" style="gap:16px;">
+                <div class="crm-page-header crm-card d-flex justify-content-between align-items-start flex-wrap" style="gap:16px;">
                     <div class="lead-hero-top">
                         <div class="lead-detail-avatar" id="leadAvatar">?</div>
                         <div>
@@ -251,9 +266,9 @@
                             <div class="lead-company" id="leadCompany"></div>
                             <div id="leadBadges" class="mt-2"></div>
                             <div class="lead-hero-actions">
-                                <a href="#" id="leadCallBtn" class="btn btn-success btn-sm" style="display:none;"><i class="fa fa-phone"></i> Call</a>
-                                <a href="#" id="leadEmailBtn" class="btn btn-outline-secondary btn-sm" style="display:none;"><i class="fa fa-envelope"></i> Email</a>
-                                @can('leads.edit')<a href="{{ route('leads.edit', $leadId) }}" class="btn btn-outline-secondary btn-sm"><i class="fa fa-pencil"></i> Edit</a>@endcan
+                                <a href="#" id="leadCallBtn" class="crm-btn crm-btn--primary crm-btn--sm" style="display:none;"><i class="fa fa-phone"></i> Call</a>
+                                <a href="#" id="leadEmailBtn" class="crm-btn crm-btn--secondary crm-btn--sm" style="display:none;"><i class="fa fa-envelope"></i> Email</a>
+                                @can('leads.edit')<a href="{{ route('leads.edit', $leadId) }}" class="crm-btn crm-btn--secondary crm-btn--sm"><i class="fa fa-pencil"></i> Edit</a>@endcan
                             </div>
                         </div>
                     </div>
@@ -264,15 +279,15 @@
                 </div>
 
                 <div class="lead-metric-grid">
-                    <div class="lead-metric-tile">
+                    <div class="lead-metric-tile crm-card">
                         <div class="metric-value" id="metricDaysOpen">—</div>
                         <div class="metric-label">Days Open</div>
                     </div>
-                    <div class="lead-metric-tile">
+                    <div class="lead-metric-tile crm-card">
                         <div class="metric-value" id="metricActivities">—</div>
                         <div class="metric-label">Activities Logged</div>
                     </div>
-                    <div class="lead-metric-tile">
+                    <div class="lead-metric-tile crm-card">
                         <div class="metric-value" id="metricTags">—</div>
                         <div class="metric-label">Tags</div>
                     </div>
@@ -282,29 +297,29 @@
                     <!-- MAIN COLUMN -->
                     <div class="col-md-8">
 
-                        <div class="card-box">
+                        <div class="card-box crm-card">
                             <h5><i class="fa fa-address-book"></i> Customer Contact</h5>
                             <div id="contactCard">
                                 <p class="text-muted">Loading…</p>
                             </div>
                         </div>
 
-                        <div class="card-box">
+                        <div class="card-box crm-card">
                             <h5><i class="fa fa-tags"></i> Tags</h5>
                             <div id="tagList"></div>
                             <div class="tag-input-row">
-                                <input type="text" id="newTagInput" class="form-control form-control-sm" placeholder="Add a tag and press Enter">
+                                <input type="text" id="newTagInput" class="crm-input" placeholder="Add a tag and press Enter">
                             </div>
                         </div>
 
                         @can('leads.edit')
-                        <div class="card-box">
+                        <div class="card-box crm-card">
                             <h5><i class="fa fa-phone"></i> Log a Follow-up Call</h5>
                             <form id="followUpForm">
                                 <div class="form-row">
                                     <div class="form-group col-md-6">
-                                        <label>Call Status</label>
-                                        <select name="call_status" id="call_status" class="form-control form-control-sm">
+                                        <label class="crm-label">Call Status</label>
+                                        <select name="call_status" id="call_status" class="crm-select">
                                             <option value="call_connected">Call Connected</option>
                                             <option value="not_reachable">Not Reachable</option>
                                             <option value="switched_off">Switched Off</option>
@@ -313,8 +328,8 @@
                                         </select>
                                     </div>
                                     <div class="form-group col-md-6">
-                                        <label>Lead Response</label>
-                                        <select name="lead_response" id="lead_response" class="form-control form-control-sm">
+                                        <label class="crm-label">Lead Response</label>
+                                        <select name="lead_response" id="lead_response" class="crm-select">
                                             <option value="">-- Optional --</option>
                                             <option value="interested">Interested</option>
                                             <option value="callback">Callback</option>
@@ -323,31 +338,31 @@
                                         </select>
                                     </div>
                                     <div class="form-group col-md-6">
-                                        <label>Next Follow-up Date</label>
-                                        <input type="date" name="followup_date" id="followup_date" class="form-control form-control-sm">
+                                        <label class="crm-label">Next Follow-up Date</label>
+                                        <input type="date" name="followup_date" id="followup_date" class="crm-input">
                                     </div>
                                     <div class="form-group col-md-6">
-                                        <label>Time</label>
-                                        <input type="time" name="followup_time" id="followup_time" class="form-control form-control-sm">
+                                        <label class="crm-label">Time</label>
+                                        <input type="time" name="followup_time" id="followup_time" class="crm-input">
                                     </div>
                                     <div class="form-group col-md-12">
-                                        <label>Notes</label>
-                                        <textarea name="call_notes" id="call_notes" class="form-control form-control-sm" rows="2"></textarea>
+                                        <label class="crm-label">Notes</label>
+                                        <textarea name="call_notes" id="call_notes" class="crm-input" style="height:auto;padding:10px 12px;" rows="2"></textarea>
                                     </div>
                                 </div>
-                                <button type="submit" class="btn btn-primary btn-sm">
+                                <button type="submit" class="crm-btn crm-btn--primary crm-btn--sm">
                                     <i class="fa fa-save"></i> Save Follow-up
                                 </button>
                             </form>
                         </div>
                         @endcan
 
-                        <div class="card-box">
+                        <div class="card-box crm-card">
                             <h5><i class="fa fa-clock-o"></i> Timeline</h5>
 
                             <div class="mb-3">
-                                <textarea id="newNoteBody" class="form-control" rows="2" placeholder="Add a note…"></textarea>
-                                <button class="btn btn-primary btn-sm mt-2" id="addNoteBtn">
+                                <textarea id="newNoteBody" class="crm-input" style="height:auto;padding:10px 12px;" rows="2" placeholder="Add a note…"></textarea>
+                                <button class="crm-btn crm-btn--primary crm-btn--sm mt-2" id="addNoteBtn">
                                     <i class="fa fa-plus"></i> Add Note
                                 </button>
                             </div>
@@ -357,11 +372,11 @@
                             </div>
                         </div>
 
-                        <div class="card-box">
+                        <div class="card-box crm-card">
                             <h5><i class="fa fa-paperclip"></i> Attachments</h5>
                             <form id="attachmentForm">
-                                <input type="file" id="attachmentFile" class="form-control form-control-sm mb-2">
-                                <button type="submit" class="btn btn-outline-primary btn-sm">
+                                <input type="file" id="attachmentFile" class="crm-input mb-2">
+                                <button type="submit" class="crm-btn crm-btn--secondary crm-btn--sm">
                                     <i class="fa fa-upload"></i> Upload
                                 </button>
                             </form>
@@ -372,34 +387,34 @@
 
                     <!-- SIDEBAR -->
                     <div class="col-md-4">
-                        <div class="card-box">
+                        <div class="card-box crm-card">
                             <h5><i class="fa fa-info-circle"></i> Lead Info</h5>
                             <div id="leadInfoCard">
                                 <p class="text-muted">Loading…</p>
                             </div>
                         </div>
 
-                        <div class="card-box" id="conversionCard" style="display:none;">
+                        <div class="card-box crm-card" id="conversionCard" style="display:none;">
                             <h5><i class="fa fa-trophy"></i> Conversion</h5>
                             <div id="conversionBody"></div>
                         </div>
 
                         @can('deals.create')
-                        <div class="card-box" id="convertCard">
+                        <div class="card-box crm-card" id="convertCard">
                             <h5><i class="fa fa-briefcase"></i> Convert to Deal</h5>
                             <p class="text-muted" style="font-size:12.5px;">Create a deal for this lead and start tracking it through the pipeline.</p>
-                            <button class="btn btn-success btn-sm btn-block" data-toggle="modal" data-target="#convertModal">
+                            <button class="crm-btn crm-btn--primary crm-btn--sm btn-block" data-toggle="modal" data-target="#convertModal">
                                 <i class="fa fa-check"></i> Convert to Deal
                             </button>
                         </div>
                         @endcan
 
                         @can('quotations.view')
-                        <div class="card-box">
+                        <div class="card-box crm-card">
                             <h5><i class="fa fa-file-text-o"></i> Quotations</h5>
                             <div id="leadQuotationsList" class="mb-2"><p class="text-muted" style="font-size:12.5px;">Loading…</p></div>
                             @can('quotations.create')
-                            <a class="btn btn-primary btn-sm btn-block" href="{{ url('/quotations/create') }}?lead_id={{ $leadId }}"><i class="fa fa-plus"></i> New Quotation</a>
+                            <a class="crm-btn crm-btn--primary crm-btn--sm btn-block" href="{{ url('/quotations/create') }}?lead_id={{ $leadId }}"><i class="fa fa-plus"></i> New Quotation</a>
                             @endcan
                         </div>
                         <script>
@@ -418,10 +433,10 @@
                         @endcan
 
                         @can('tasks.create')
-                        <div class="card-box">
+                        <div class="card-box crm-card">
                             <h5><i class="fa fa-check-square-o"></i> Follow-up</h5>
                             <p class="text-muted" style="font-size:12.5px;">Add a task or reminder linked to this lead.</p>
-                            <button type="button" class="btn btn-primary btn-sm btn-block" onclick="var t=document.querySelector('.lead-title'); openQuickTask('lead', {{ (int) $leadId }}, t ? t.textContent : null)">
+                            <button type="button" class="crm-btn crm-btn--primary crm-btn--sm btn-block" onclick="var t=document.querySelector('.lead-title'); openQuickTask('lead', {{ (int) $leadId }}, t ? t.textContent : null)">
                                 <i class="fa fa-plus"></i> Add Task
                             </button>
                         </div>
@@ -436,37 +451,38 @@
     </div>
 
     @can('deals.create')
-    <div class="modal fade" id="convertModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal fade crm-modal" id="convertModal" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Convert Lead to Deal</h5>
+                    <div class="crm-modal__icon"><i class="fa fa-briefcase"></i></div>
+                    <div class="crm-modal__heading">
+                        <h5 class="modal-title">Convert Lead to Deal</h5>
+                        <p class="crm-modal__subtitle">Creates a deal in the chosen pipeline's first open stage.</p>
+                    </div>
                     <button type="button" class="close" data-dismiss="modal">&times;</button>
                 </div>
                 <form id="convertForm">
                     <div class="modal-body">
-                        <p class="text-muted" style="font-size:12.5px;">
-                            This creates a deal in the chosen pipeline's first open stage.
-                            An order is only created once the deal reaches a Won stage.
-                        </p>
+                        <p class="text-muted" style="font-size:12.5px;">An order is only created once the deal reaches a Won stage.</p>
                         <div class="form-group">
-                            <label>Pipeline</label>
-                            <select name="pipeline_id" id="convertPipelineSelect" class="form-control form-control-sm"></select>
+                            <label class="crm-label">Pipeline</label>
+                            <select name="pipeline_id" id="convertPipelineSelect" class="crm-select"></select>
                         </div>
                         <div class="form-row">
                             <div class="form-group col-md-6">
-                                <label>Amount</label>
-                                <input type="number" step="0.01" name="amount" class="form-control form-control-sm">
+                                <label class="crm-label">Amount</label>
+                                <input type="number" step="0.01" name="amount" class="crm-input">
                             </div>
                             <div class="form-group col-md-6">
-                                <label>Currency</label>
-                                <select name="currency" class="form-control form-control-sm" data-master-type="currency"></select>
+                                <label class="crm-label">Currency</label>
+                                <select name="currency" class="crm-select" data-master-type="currency"></select>
                             </div>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-light" data-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-success">
+                        <button type="button" class="crm-btn crm-btn--secondary crm-btn--sm" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="crm-btn crm-btn--primary crm-btn--sm">
                             <i class="fa fa-check"></i> Convert to Deal
                         </button>
                     </div>
@@ -504,14 +520,11 @@
             if (!parts.length) return '?';
             return (parts[0][0] + (parts[1] ? parts[1][0] : '')).toUpperCase();
         }
-        const LEAD_STATUS_COLORS = {
-            'new': '#2563eb', 'hot': '#dc2626', 'warm': '#ea580c', 'cold': '#0891b2',
-            'contacted': '#7c3aed', 'interested': '#7c3aed', 'follow_up': '#ea580c',
-            'converted': '#16a34a', 'not_interested': '#6b7280', 'closed': '#6b7280',
-        };
-        function leadStatusColor(status) {
-            return LEAD_STATUS_COLORS[String(status || '').toLowerCase()] || leadPaletteColor(status);
-        }
+        // Lead status / priority pills now come from the shared
+        // renderStatusBadge() (public/js/crm-status.js); leadStatusColor()
+        // is gone. leadPaletteColor() stays — it's also this page's avatar
+        // color and the lead-score pill below, neither of which is a
+        // status field.
         function pillHtml(text, color) {
             return `<span class="badge-pill" style="background:${color}1a;color:${color};">${esc(text)}</span>`;
         }
@@ -543,8 +556,8 @@
 
                 const band = scoreBand(d.score);
                 $('#leadBadges').html(`
-                    ${pillHtml(d.lead_status ?? '-', leadStatusColor(d.lead_status))}
-                    ${pillHtml(d.priority ?? '-', leadPaletteColor(d.priority))}
+                    ${d.lead_status ? renderStatusBadge('lead', d.lead_status) : ''}
+                    ${d.priority ? renderStatusBadge('priority', d.priority) : ''}
                     ${band.label ? pillHtml(band.label, band.cls === 'badge-score-hot' ? '#dc2626' : band.cls === 'badge-score-warm' ? '#ea580c' : '#0891b2') : ''}
                 `);
 
@@ -698,7 +711,7 @@
                     html += `
                         <div class="attachment-item">
                             <span><i class="fa fa-file-o"></i> ${esc(a.description)}</span>
-                            <a href="{{ url('attachments') }}/${a.attachment_id}/download" class="btn btn-sm btn-outline-secondary">
+                            <a href="{{ url('attachments') }}/${a.attachment_id}/download" class="crm-btn crm-btn--secondary crm-btn--sm">
                                 <i class="fa fa-download"></i>
                             </a>
                         </div>`;

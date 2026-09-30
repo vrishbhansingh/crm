@@ -9,7 +9,7 @@
 
     <link rel="stylesheet" href="{{ asset('vendors/css/vendor.bundle.base.css') }}">
     <link rel="stylesheet" href="{{ asset('css/vertical-layout-light/style.css') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.26.25/sweetalert2.min.css">
 
     <style>
@@ -271,20 +271,35 @@
         });
 
         $('.btn-regen-account').on('click', function () {
-            if (!confirm('Generate a new webhook URL? The old one will stop working — update it on the provider side too.')) return;
             var id = $(this).data('id');
-            $.post('/whatsapp/settings/' + id + '/regenerate', function (res) {
-                toastr.success(res.message);
-                setTimeout(function () { window.location.reload(); }, 900);
+            openConfirmModal({
+                title: 'Generate a new webhook URL?',
+                message: 'The old one will stop working — update it on the provider side too.',
+                variant: 'warning',
+                confirmText: 'Regenerate',
+                onConfirm: function (done) {
+                    $.post('/whatsapp/settings/' + id + '/regenerate', function (res) {
+                        toastr.success(res.message);
+                        setTimeout(function () { window.location.reload(); }, 900);
+                        done();
+                    }).fail(function () { done(); });
+                }
             });
         });
 
         $('.btn-delete-account').on('click', function () {
-            if (!confirm('Remove this WhatsApp account? Its webhook URL will stop working.')) return;
             var id = $(this).data('id');
-            $.ajax({
-                url: '/whatsapp/settings/' + id, method: 'DELETE',
-                success: function (res) { toastr.success(res.message); setTimeout(function () { window.location.reload(); }, 700); }
+            openConfirmModal({
+                title: 'Remove this WhatsApp account?',
+                message: 'Its webhook URL will stop working.',
+                confirmText: 'Remove',
+                onConfirm: function (done) {
+                    $.ajax({
+                        url: '/whatsapp/settings/' + id, method: 'DELETE',
+                        success: function (res) { toastr.success(res.message); setTimeout(function () { window.location.reload(); }, 700); done(); },
+                        error: function () { done(); }
+                    });
+                }
             });
         });
     </script>

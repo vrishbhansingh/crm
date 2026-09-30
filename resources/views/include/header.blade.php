@@ -1,5 +1,33 @@
 <link rel="icon" type="image/svg+xml" href="{{ asset('images/favicon.svg') }}">
 
+{{--
+  CRM design-system foundation (V1) — loaded once here since this app
+  has no shared <head> across its 63 views; header.blade.php is the
+  one include nearly every tenant page already pulls in near the top
+  of <body>, so this is the single place that reaches all of them
+  without editing each page individually. crm-tokens.css/
+  crm-components.css use only new, namespaced --crm-*/.crm-* names —
+  see those files' own comments for why loading them here is safe and
+  changes nothing on a page that hasn't adopted a .crm-* class yet.
+--}}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="{{ asset('css/crm-tokens.css') }}">
+<link rel="stylesheet" href="{{ asset('css/crm-components.css') }}">
+
+{{--
+  V2 icon consolidation: every page's own <head> now loads Font Awesome
+  6.5's all.min.css (swapped in-place from the old 4.7.0 CDN link, no
+  markup changes needed) instead of the previous mix of FA 4.7 (on ~52
+  pages) + FA 6.5 (auth/platform only) + Feather + Themify. v4-shims.css
+  is FA6's own official compatibility layer — it makes every existing
+  `class="fa fa-icon-name"` in this app's Blade files keep resolving to
+  the correct (now sharper, FA6-drawn) glyph with zero per-usage changes.
+  Loaded once here rather than duplicated into all 62 files.
+--}}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/v4-shims.min.css">
+
 <style>
   .crm-navbar-wrap {
     position: fixed;
@@ -15,60 +43,44 @@
   @media (max-width: 991px) { .page-body-wrapper { padding-top: 52px !important; } }
   @media (max-width: 768px) { .page-body-wrapper { padding-top: 46px !important; } }
 
+  /* V2: was a light blue-tinted gradient; now a flat neutral surface,
+     consistent with the sidebar/card treatment below (var(--crm-*)
+     already flips correctly for dark mode, no separate override needed
+     for this rule). */
   .crm-navbar {
     height: 52px;
-    background: linear-gradient(90deg, #f9fafb 0%, #eef2ff 50%, #f0f9ff 100%);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    background: var(--crm-surface, #fff);
+    border-bottom: 1px solid var(--crm-border, #e5e7eb);
     display: flex;
     align-items: center;
   }
 
-  /* The breadcrumb bar's left edge stays the sidebar's own blue so the
-     brand column and sidebar read as one continuous panel from the top of
-     the page down, instead of a white header sitting disconnected above a
-     blue sidebar. Breadcrumb content is pushed clear of that blue strip. */
+  /* V2: the sidebar is no longer a colored panel, so the breadcrumb bar
+     no longer needs the color-matching gradient split that used to make
+     it read as a continuation of the sidebar — a flat surface with a
+     border-top reads as one continuous panel with the navbar above it
+     instead. */
   .crm-breadcrumb {
     height: 28px;
     display: flex;
     align-items: center;
     gap: 6px;
     padding: 0 24px 0 calc(var(--sidebar-w, 200px) + 24px);
-    background: linear-gradient(to right, #0c7bfe 0, #0c7bfe var(--sidebar-w, 200px), #ffffff var(--sidebar-w, 200px), #ffffff 100%);
-    border-top: 1px solid #edf0f5;
+    background: var(--crm-surface, #fff);
+    border-top: 1px solid var(--crm-border, #edf0f5);
     font-size: 12.5px;
-    color: #6b7280;
+    color: var(--crm-ink-muted, #6b7280);
     overflow-x: auto;
     white-space: nowrap;
-    transition: padding-left 0.2s ease, background 0.2s ease;
+    transition: padding-left 0.2s ease;
   }
-  .crm-breadcrumb a { color: #6b7280; text-decoration: none; }
-  .crm-breadcrumb a:hover { color: #4b49ac; text-decoration: underline; }
-  .crm-breadcrumb .sep { color: #cbd1db; font-size: 11px; }
-  .crm-breadcrumb .current { color: #1f2937; font-weight: 600; }
-  .crm-breadcrumb i.fa-home { color: #9ca3af; font-size: 12px; }
+  .crm-breadcrumb a { color: var(--crm-ink-muted, #6b7280); text-decoration: none; }
+  .crm-breadcrumb a:hover { color: var(--crm-accent, #1f6f63); text-decoration: underline; }
+  .crm-breadcrumb .sep { color: var(--crm-border-strong, #cbd1db); font-size: 11px; }
+  .crm-breadcrumb .current { color: var(--crm-ink, #1f2937); font-weight: 600; }
+  .crm-breadcrumb i.fa-home { color: var(--crm-ink-faint, #9ca3af); font-size: 12px; }
   @media (max-width: 991px) { .crm-breadcrumb { display: none; } }
 
-  [data-theme="dark"] .crm-navbar {
-    background: linear-gradient(90deg, #12141d 0%, #161a2c 50%, #12141d 100%);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
-  }
-  [data-theme="dark"] .crm-breadcrumb {
-    background: linear-gradient(to right, #14172e 0, #14172e var(--sidebar-w, 200px), #12141d var(--sidebar-w, 200px), #12141d 100%);
-    border-top-color: #232637;
-    color: #9aa1b5;
-  }
-  [data-theme="dark"] .crm-brand-wrapper {
-    background: linear-gradient(180deg, #14172e, #1a1e3d);
-  }
-  [data-theme="dark"] .sidebar-collapse-btn {
-    background: #232637;
-    color: #93a4fd;
-    border-color: #2a2e40;
-  }
-  [data-theme="dark"] .sidebar-collapse-btn:hover { background: #2a2e40; }
-  [data-theme="dark"] .crm-breadcrumb a { color: #9aa1b5; }
-  [data-theme="dark"] .crm-breadcrumb .current { color: #eef0f6; }
-  [data-theme="dark"] .crm-toggle { color: #93a4fd; }
   [data-theme="dark"] .icon-btn { background: #232637; color: #b8bed2; }
   [data-theme="dark"] .icon-btn:hover { background: #2c3049; color: #ffffff; }
   [data-theme="dark"] .crm-profile:hover { background: rgba(255, 255, 255, 0.06); }
@@ -77,19 +89,23 @@
   [data-theme="dark"] .crm-profile-avatar { border-color: #343850; }
 
   .crm-brand-wrapper {
-    /* Tracks the sidebar's own width exactly, so the blue brand column and
-       the icon rail beneath it shrink together instead of the column
-       staying wide while the rail below it goes narrow. The full wordmark
-       doesn't fit in the collapsed 72px, so .crm-brand-chip crops down to
-       just the logo's icon mark instead (see below) rather than either
-       overflowing or squishing the whole lockup illegibly. */
+    /* Tracks the sidebar's own width exactly, so the brand column and the
+       icon rail beneath it shrink together instead of the column staying
+       wide while the rail below it goes narrow. The full wordmark doesn't
+       fit in the collapsed 72px, so .crm-brand-chip crops down to just
+       the logo's icon mark instead (see below) rather than either
+       overflowing or squishing the whole lockup illegibly.
+       V2: flat surface (matching the navbar/sidebar below it) instead of
+       a blue gradient, with a right border continuing the sidebar's own
+       edge up through the header row. */
     width: var(--sidebar-w, 200px);
     height: 52px;
     position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(180deg, #0c7bfe, #01bdff);
+    background: var(--crm-surface, #fff);
+    border-right: 1px solid var(--crm-border, #e5e7eb);
     transition: width 0.2s ease;
   }
 
@@ -101,9 +117,9 @@
     width: 22px;
     height: 22px;
     border-radius: 50%;
-    background: #fff;
-    color: #0a6cff;
-    border: 1px solid #dde9ff;
+    background: var(--crm-surface, #fff);
+    color: var(--crm-ink-muted, #585f57);
+    border: 1px solid var(--crm-border-strong, #d1d5db);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -111,13 +127,18 @@
     font-size: 10px;
     box-shadow: 0 1px 4px rgba(15, 23, 42, 0.18);
     z-index: 5;
-    transition: background 0.15s ease;
+    transition: background 0.15s ease, color 0.15s ease;
   }
-  .sidebar-collapse-btn:hover { background: #eef6ff; }
+  .sidebar-collapse-btn:hover { background: var(--crm-accent-tint, #eef6ff); color: var(--crm-accent, #1f6f63); }
   .sidebar-collapse-btn.is-collapsed i { transform: rotate(180deg); }
 
+  /* Always a light chip regardless of theme — the logo wordmark itself
+     is a fixed dark color (near-black), so it needs a light backdrop to
+     stay legible even in dark mode, same reasoning as before this pass;
+     only the surrounding wrapper's color changed. */
   .crm-brand-chip {
     background: #ffffff;
+    border: 1px solid var(--crm-border, #e5e7eb);
     border-radius: 8px;
     padding: 5px 12px;
     display: inline-flex;
@@ -193,7 +214,7 @@
   .crm-toggle {
     display: none;
     font-size: 18px;
-    color: #4b49ac;
+    color: var(--crm-ink-muted, #585f57);
     cursor: pointer;
     flex-shrink: 0;
   }
@@ -221,8 +242,8 @@
   }
   .crm-search-wrapper:focus-within {
     width: 340px;
-    border-color: #4b49ac;
-    box-shadow: 0 0 0 3px rgba(75, 73, 172, 0.12);
+    border-color: var(--crm-accent, #1f6f63);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--crm-accent, #1f6f63) 15%, transparent);
   }
   .crm-search-icon { color: #9ca3af; font-size: 13px; flex-shrink: 0; }
   .crm-search-input {
@@ -283,7 +304,7 @@
   .crm-search-item:hover { background: #f5f6fb; }
   .crm-search-item-icon {
     width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0;
-    background: #eef0fb; color: #4b49ac;
+    background: var(--crm-accent-tint, #eef0fb); color: var(--crm-accent, #1f6f63);
     display: flex; align-items: center; justify-content: center; font-size: 13px;
   }
   .crm-search-item-title { font-size: 13px; font-weight: 600; color: #1f2937; line-height: 1.3; }
@@ -359,13 +380,18 @@
     color: #6b7280;
   }
 
+  /* V2 fix: this menu was hardcoded to the dark palette unconditionally
+     (no light-mode style existed at all), so it stayed dark even with
+     the app in light mode — now reads the shared tokens like every
+     other surface, so it actually follows the toggle. */
   .crm-dropdown {
     position: absolute;
     top: 88px; /* below navbar (52px) + breadcrumb (28px), plus a small gap */
     right: 20px;
-    background: #1e2233;
+    background: var(--crm-surface, #fff);
+    border: 1px solid var(--crm-border, #e5e7eb);
     border-radius: 14px;
-    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.28);
+    box-shadow: var(--crm-shadow-lg, 0 16px 36px rgba(0, 0, 0, 0.16));
     width: 200px;
     padding: 8px;
     display: none;
@@ -380,17 +406,17 @@
     margin: 2px 0;
     border-radius: 10px;
     font-size: 13.5px;
-    color: #e2e8f5;
+    color: var(--crm-ink, #1f2937);
     text-decoration: none;
   }
 
   .crm-dropdown a:hover {
-    background: rgba(255, 255, 255, 0.08);
-    color: #ffffff;
+    background: var(--crm-surface-2, #f3f4f6);
+    color: var(--crm-ink, #1f2937);
   }
 
   .crm-dropdown i {
-    color: #93a4fd;
+    color: var(--crm-accent, #1f6f63);
     width: 16px;
     text-align: center;
   }
@@ -398,7 +424,7 @@
   .crm-dropdown form {
     margin: 6px 0 0;
     padding-top: 6px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid var(--crm-border, #e5e7eb);
   }
 
   .crm-dropdown .logout-btn {
@@ -409,7 +435,7 @@
     margin: 2px 0;
     border-radius: 10px;
     font-size: 13.5px;
-    color: #e2e8f5;
+    color: var(--crm-ink, #1f2937);
     display: flex;
     align-items: center;
     gap: 12px;
@@ -417,15 +443,15 @@
     text-align: left;
   }
 
-  .crm-dropdown .logout-btn i { color: #93a4fd; width: 16px; text-align: center; }
+  .crm-dropdown .logout-btn i { color: var(--crm-accent, #1f6f63); width: 16px; text-align: center; }
 
   .crm-dropdown .logout-btn:hover {
-    background: rgba(239, 68, 68, 0.15);
-    color: #fca5a5;
+    background: var(--crm-danger-tint, rgba(239, 68, 68, 0.12));
+    color: var(--crm-danger, #b3261e);
   }
 
   .crm-dropdown .logout-btn:hover i {
-    color: #fca5a5;
+    color: var(--crm-danger, #b3261e);
   }
 
   /* Notification bell dropdown — a light content-dense panel (unlike the

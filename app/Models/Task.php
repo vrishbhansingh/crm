@@ -14,7 +14,7 @@ class Task extends Model
 
     protected $fillable = [
         'tenant_id', 'assigned_to', 'created_by', 'related_type', 'related_id',
-        'title', 'description', 'priority', 'status', 'due_at', 'remind_at', 'notification_sent_at', 'completed_at',
+        'title', 'description', 'priority', 'status', 'due_at', 'remind_at', 'notification_sent_at', 'due_reminder_sent_at', 'completed_at',
         'activity_type', 'activity_details', 'checklist',
         'recurrence_rule', 'recurrence_interval', 'recurrence_end_date', 'recurrence_parent_id',
         'depends_on_task_id',
@@ -24,6 +24,7 @@ class Task extends Model
         'due_at' => 'datetime',
         'remind_at' => 'datetime',
         'notification_sent_at' => 'datetime',
+        'due_reminder_sent_at' => 'datetime',
         'completed_at' => 'datetime',
         'recurrence_end_date' => 'date',
         'activity_details' => 'array',

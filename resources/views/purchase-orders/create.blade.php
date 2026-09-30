@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}"><title>New Purchase Order</title>
-    <link rel="stylesheet" href="{{ asset('vendors/feather/feather.css') }}"><link rel="stylesheet" href="{{ asset('vendors/css/vendor.bundle.base.css') }}"><link rel="stylesheet" href="{{ asset('css/vertical-layout-light/style.css') }}"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="{{ asset('vendors/css/vendor.bundle.base.css') }}"><link rel="stylesheet" href="{{ asset('css/vertical-layout-light/style.css') }}"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root{
             --ink:#101828; --muted:#667085; --faint:#98a2b3; --border:#e4e7ec; --line:#eef1f5;
-            --bg:#f5f6fa; --card:#fff; --accent:#4f46e5; --accent-soft:#eef2ff; --accent-dark:#4338ca;
+            --bg:#f5f6fa; --card:#fff; --accent:var(--crm-accent,#1f6f63); --accent-soft:var(--crm-accent-tint,#e4efec); --accent-dark:var(--crm-accent-dark,#154f46);
         }
         [data-theme="dark"]{
             --ink:#eef0f6; --muted:#9aa1b5; --faint:#71798f; --border:#2a2e40; --line:#252838;
-            --bg:#11131c; --card:#181b28; --accent:#818cf8; --accent-soft:#252a4a; --accent-dark:#a5b0ff;
+            --bg:#11131c; --card:#181b28; --accent:var(--crm-accent,#5aab9d); --accent-soft:var(--crm-accent-tint,#1c2b28); --accent-dark:var(--crm-accent-dark,#7fc3b6);
         }
         body{font-family:"Inter",ui-sans-serif,system-ui,sans-serif;}
         .content-wrapper{background:var(--bg);}

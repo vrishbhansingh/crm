@@ -1,0 +1,389 @@
+/*
+ * CRM Shared Components — V1 foundation
+ * ------------------------------------------------------------------
+ * The reusable visual building blocks later phases will migrate
+ * pages onto. Every class name here is NEW (verified against the
+ * audit: none of these collide with an existing class already in use
+ * — .crm-page-header/.crm-card/.crm-table were deliberately NOT
+ * reused since those names are already load-bearing on ~20 legacy
+ * pages with drifting values; picking new names here means loading
+ * this file is purely additive and changes nothing on any page that
+ * hasn't adopted a .crm-* class below).
+ *
+ * Depends on public/css/crm-tokens.css (loaded first). Consumes
+ * var(--crm-*) only — no hardcoded colors.
+ */
+
+/* =====================================================================
+   Buttons — exactly three types, two sizes. No page should invent a
+   fourth button color; destructive styling belongs on the confirm
+   step (.crm-confirm-modal), not the trigger button.
+   ===================================================================== */
+.crm-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--crm-space-2);
+  font-family: var(--crm-font-sans);
+  font-weight: 600;
+  font-size: 13.5px;
+  line-height: 1.2;
+  border-radius: var(--crm-radius-md);
+  border: 1px solid transparent;
+  padding: 9px 16px;
+  cursor: pointer;
+  transition: background-color .15s ease, border-color .15s ease, color .15s ease;
+  text-decoration: none;
+}
+.crm-btn:focus-visible { outline: 2px solid var(--crm-accent); outline-offset: 2px; }
+.crm-btn[disabled], .crm-btn.is-disabled { opacity: .45; cursor: not-allowed; pointer-events: none; }
+
+.crm-btn--sm { padding: 6px 12px; font-size: 12.5px; border-radius: var(--crm-radius-sm); }
+/* Kept the Bootstrap "btn-block" class name as the full-width hook (many
+   detail-page sidebar buttons already carry it) — .crm-btn's own
+   display:inline-flex + Bootstrap's width:100% from that class combine
+   correctly on width, but need centering added explicitly since
+   .crm-btn doesn't inherit Bootstrap's .btn text-align:center. */
+.crm-btn.btn-block { width: 100%; justify-content: center; }
+
+.crm-btn--primary { background: var(--crm-accent); border-color: var(--crm-accent); color: #fff; }
+.crm-btn--primary:hover { background: var(--crm-accent-dark); border-color: var(--crm-accent-dark); }
+
+.crm-btn--secondary { background: transparent; border-color: var(--crm-border-strong); color: var(--crm-ink); }
+.crm-btn--secondary:hover { background: var(--crm-surface-2); border-color: var(--crm-ink-faint); }
+
+.crm-btn--ghost { background: transparent; border-color: transparent; color: var(--crm-ink-muted); }
+.crm-btn--ghost:hover { background: var(--crm-surface-2); color: var(--crm-ink); }
+
+/* Destructive intent — reserved for the confirm step of a confirm
+   modal's footer, not for the button that opens it. */
+.crm-btn--danger { background: var(--crm-danger); border-color: var(--crm-danger); color: #fff; }
+.crm-btn--danger:hover { background: #93201a; border-color: #93201a; }
+
+/* =====================================================================
+   Inputs & selects
+   ===================================================================== */
+.crm-input, .crm-select {
+  display: block;
+  width: 100%;
+  height: 40px;
+  padding: 0 var(--crm-space-3);
+  font-family: var(--crm-font-sans);
+  font-size: 13.5px;
+  color: var(--crm-ink);
+  background: var(--crm-surface);
+  border: 1px solid var(--crm-border-strong);
+  border-radius: var(--crm-radius-sm);
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.crm-input:focus, .crm-select:focus {
+  outline: none;
+  border-color: var(--crm-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--crm-accent) 22%, transparent);
+}
+.crm-input::placeholder { color: var(--crm-ink-faint); }
+.crm-input[disabled], .crm-select[disabled] { background: var(--crm-surface-2); color: var(--crm-ink-faint); cursor: not-allowed; }
+.crm-input.is-invalid, .crm-select.is-invalid { border-color: var(--crm-danger); }
+
+/* Required-field convention — one asterisk style app-wide. */
+.crm-label { display: block; font-size: 12.5px; font-weight: 600; color: var(--crm-ink-muted); margin-bottom: 6px; }
+.crm-label .crm-required { color: var(--crm-danger); margin-left: 2px; }
+.crm-field-error { display: block; font-size: 12px; color: var(--crm-danger); margin-top: 4px; }
+.crm-field-hint { display: block; font-size: 12px; color: var(--crm-ink-faint); margin-top: 4px; }
+
+/* Form sections — grouped fields with a heading, replacing ad hoc
+   form-group spacing that disagrees page to page. */
+.crm-form-section { margin-bottom: var(--crm-space-7); }
+.crm-form-section + .crm-form-section { padding-top: var(--crm-space-6); border-top: 1px solid var(--crm-border); }
+.crm-form-section__title { font-size: 13px; font-weight: 700; color: var(--crm-ink); margin: 0 0 var(--crm-space-1); }
+.crm-form-section__desc { font-size: 12.5px; color: var(--crm-ink-muted); margin: 0 0 var(--crm-space-4); }
+.crm-form-row { display: flex; flex-wrap: wrap; gap: var(--crm-space-4); margin-bottom: var(--crm-space-4); }
+.crm-form-row > * { flex: 1 1 220px; min-width: 0; }
+
+/* Filter bars — the row of search/select filters above a list. */
+.crm-filters { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--crm-space-3); margin-bottom: var(--crm-space-5); }
+/* .crm-input/.crm-select are width:100% by default (correct inside a
+   form-group column) — inside this flex row that makes every field
+   claim the full row width and wrap onto its own line, so it's
+   overridden back to an explicit flex-basis here instead. */
+.crm-filters .crm-input, .crm-filters .crm-select { width: auto; flex: 1 1 160px; }
+
+/* Row actions — the icon-button cluster in a table's last column. */
+.crm-row-actions { display: flex; align-items: center; gap: var(--crm-space-2); }
+.crm-row-action {
+  width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center;
+  border-radius: var(--crm-radius-sm); color: var(--crm-ink-muted); background: transparent;
+  border: none; cursor: pointer; transition: background-color .15s ease, color .15s ease;
+}
+.crm-row-action:hover { background: var(--crm-surface-2); color: var(--crm-ink); }
+.crm-row-action--danger:hover { background: var(--crm-danger-tint); color: var(--crm-danger); }
+
+/* =====================================================================
+   Page header — resources/views/include/page-header.blade.php renders
+   this markup. Fraunces is scoped to .crm-header__title only: the
+   product's typographic signature lives on the page title, nowhere
+   else in this component.
+   ===================================================================== */
+.crm-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--crm-space-4);
+  flex-wrap: wrap;
+  background: var(--crm-surface);
+  border: 1px solid var(--crm-border);
+  border-radius: var(--crm-radius-md);
+  padding: var(--crm-space-5) var(--crm-space-6);
+  box-shadow: var(--crm-shadow-sm);
+  margin-bottom: var(--crm-space-6);
+}
+.crm-header__main { display: flex; align-items: flex-start; gap: var(--crm-space-4); min-width: 0; }
+.crm-header__icon {
+  width: 40px; height: 40px; flex-shrink: 0; border-radius: var(--crm-radius-md);
+  background: var(--crm-accent-tint); color: var(--crm-accent);
+  display: flex; align-items: center; justify-content: center; font-size: 17px;
+}
+.crm-header__text { min-width: 0; }
+.crm-header__breadcrumb { font-family: var(--crm-font-sans); font-size: 11.5px; color: var(--crm-ink-faint); margin-bottom: 2px; }
+.crm-header__title {
+  font-family: var(--crm-font-display);
+  font-weight: 600;
+  font-size: 22px;
+  line-height: 1.2;
+  color: var(--crm-ink);
+  margin: 0 0 3px;
+}
+.crm-header__subtitle { font-family: var(--crm-font-sans); font-size: 13px; color: var(--crm-ink-muted); margin: 0; }
+.crm-header__actions { display: flex; align-items: center; gap: var(--crm-space-2); flex-wrap: wrap; }
+.crm-header__secondary { display: flex; align-items: center; gap: var(--crm-space-2); margin-top: var(--crm-space-2); }
+
+/* =====================================================================
+   Card — named .crm-card per the V2 migration brief. V1 shipped this as
+   .crm-panel specifically to avoid colliding with ~20 legacy pages'
+   own ad hoc ".crm-card" (drifting radius/padding values, never
+   actually shared). Renamed here, at the start of V2, before any page
+   had adopted the V1 name — zero-risk at the time of the rename.
+   Migrated pages should have their own local .crm-card definition
+   removed so this becomes the only one; a few out-of-scope pages
+   (whatsapp/campaigns, email_campaigns, email_templates) also use the
+   class name locally and will incidentally pick up this styling too —
+   flagged in the V2 report rather than hidden, since their own version
+   was already visually converging on the same idea (rounded white
+   card, soft shadow) anyway.
+   ===================================================================== */
+.crm-card {
+  background: var(--crm-surface);
+  border: 1px solid var(--crm-border);
+  border-radius: var(--crm-radius-md);
+  padding: var(--crm-space-5);
+  box-shadow: var(--crm-shadow-sm);
+}
+.crm-card__title { font-size: 14px; font-weight: 700; color: var(--crm-ink); margin: 0 0 var(--crm-space-3); }
+
+/* =====================================================================
+   Badges / status — one component, five semantic variants. Success/
+   warning/danger/info/neutral are the only colors this uses — they
+   represent real state and are never repurposed decoratively.
+   Fed by public/js/crm-status.js's renderStatusBadge() so Lead/Deal/
+   Order/Task/Payment status can eventually share one mapping.
+   ===================================================================== */
+.crm-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--crm-font-sans);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: .01em;
+  padding: 3px 10px;
+  border-radius: var(--crm-radius-pill);
+  white-space: nowrap;
+}
+.crm-badge__dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+.crm-badge--success { background: var(--crm-success-tint); color: var(--crm-success); }
+.crm-badge--success .crm-badge__dot { background: var(--crm-success); }
+.crm-badge--warning { background: var(--crm-warning-tint); color: var(--crm-warning); }
+.crm-badge--warning .crm-badge__dot { background: var(--crm-warning); }
+.crm-badge--danger { background: var(--crm-danger-tint); color: var(--crm-danger); }
+.crm-badge--danger .crm-badge__dot { background: var(--crm-danger); }
+.crm-badge--info { background: var(--crm-info-tint); color: var(--crm-info); }
+.crm-badge--info .crm-badge__dot { background: var(--crm-info); }
+.crm-badge--neutral { background: var(--crm-neutral-tint); color: var(--crm-neutral); }
+.crm-badge--neutral .crm-badge__dot { background: var(--crm-neutral); }
+
+/* =====================================================================
+   Table — named .crm-table per the V2 migration brief (same rename
+   reasoning as .crm-card above: V1 shipped .crm-datatable to avoid a
+   day-one collision, renamed here before any page had adopted it).
+   Sticky header, hairline dividers, tabular numerals, a loading
+   skeleton and an empty state. Does not replace DataTables or any
+   AJAX/pagination logic already in place; this is a CSS shell meant
+   to wrap the same <table> markup pages already render.
+   ===================================================================== */
+.crm-table-wrap { border: 1px solid var(--crm-border); border-radius: var(--crm-radius-md); overflow: auto; background: var(--crm-surface); }
+.crm-table { width: 100%; border-collapse: collapse; font-family: var(--crm-font-sans); font-size: 13px; }
+.crm-table thead th {
+  position: sticky; top: 0; z-index: 1;
+  background: var(--crm-surface-2);
+  text-align: left;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--crm-ink-faint);
+  font-weight: 600;
+  padding: 10px var(--crm-space-4);
+  border-bottom: 1px solid var(--crm-border-strong);
+  white-space: nowrap;
+}
+.crm-table tbody td {
+  height: var(--crm-row-h);
+  padding: 0 var(--crm-space-4);
+  color: var(--crm-ink);
+  border-bottom: 1px solid var(--crm-border);
+  vertical-align: middle;
+}
+.crm-table tbody tr { transition: background-color .1s ease; }
+.crm-table tbody tr:hover { background: var(--crm-surface-2); }
+.crm-table tbody tr.is-selected { background: var(--crm-accent-tint); box-shadow: inset 3px 0 0 var(--crm-accent); }
+.crm-table .crm-col-num { text-align: right; font-family: var(--crm-font-mono); font-variant-numeric: tabular-nums; }
+
+/* Loading skeleton — replaces raw "Loading…" text. Applied to a <tr>
+   or a block; shimmer respects prefers-reduced-motion. */
+.crm-skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--crm-surface-2);
+  border-radius: var(--crm-radius-sm);
+}
+.crm-skeleton::after {
+  content: "";
+  position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--crm-surface) 60%, transparent), transparent);
+  animation: crm-skeleton-shimmer 1.4s ease-in-out infinite;
+}
+.crm-skeleton-row td { height: var(--crm-row-h); padding: 0 var(--crm-space-4); }
+.crm-skeleton-row .crm-skeleton { height: 14px; width: 70%; }
+@keyframes crm-skeleton-shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .crm-skeleton::after { animation: none; }
+}
+
+/* Empty state — resources/views/include/empty-state.blade.php renders
+   this markup. Replaces raw "Loading…" / "No data found" text. */
+.crm-empty { text-align: center; padding: var(--crm-space-8) var(--crm-space-5); color: var(--crm-ink-muted); }
+.crm-empty__icon {
+  width: 44px; height: 44px; margin: 0 auto var(--crm-space-4);
+  border-radius: 50%; background: var(--crm-surface-2); color: var(--crm-ink-faint);
+  display: flex; align-items: center; justify-content: center; font-size: 18px;
+}
+.crm-empty__title { font-size: 14px; font-weight: 700; color: var(--crm-ink); margin: 0 0 4px; }
+.crm-empty__desc { font-size: 13px; margin: 0 0 var(--crm-space-4); max-width: 40ch; margin-inline: auto; }
+
+/* =====================================================================
+   Tabs — underline style, for page-section navigation. The existing
+   pill-toggle (Leads' Active/Converted filter) is a distinct, separate
+   pattern reserved for binary filters so the two never compete.
+   ===================================================================== */
+.crm-tabs { display: flex; gap: var(--crm-space-5); border-bottom: 1px solid var(--crm-border); margin-bottom: var(--crm-space-5); }
+.crm-tab {
+  position: relative;
+  padding: var(--crm-space-3) 2px;
+  font-family: var(--crm-font-sans);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--crm-ink-muted);
+  background: none; border: none; cursor: pointer;
+}
+.crm-tab:hover { color: var(--crm-ink); }
+.crm-tab.is-active { color: var(--crm-accent); }
+.crm-tab.is-active::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: var(--crm-accent);
+}
+
+/* =====================================================================
+   Modals — generalizes the existing .assign-modal icon-badge pattern
+   (public/css/vertical-layout-light/style.css, Leads/Deals only) into
+   one reusable component. .crm-confirm-modal is the dedicated variant
+   meant to replace native confirm() calls app-wide.
+   ===================================================================== */
+.crm-modal .modal-content {
+  border: none;
+  border-radius: var(--crm-radius-md);
+  box-shadow: var(--crm-shadow-lg);
+  overflow: hidden;
+  background: var(--crm-surface);
+}
+.crm-modal .modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: var(--crm-space-4);
+  padding: var(--crm-space-5) calc(var(--crm-space-6) + 34px) var(--crm-space-5) var(--crm-space-6);
+  border-bottom: 1px solid var(--crm-border);
+  position: relative;
+}
+.crm-modal__icon {
+  width: 40px; height: 40px; flex-shrink: 0; border-radius: var(--crm-radius-md);
+  background: var(--crm-accent-tint); color: var(--crm-accent);
+  display: flex; align-items: center; justify-content: center; font-size: 17px;
+}
+.crm-modal__heading { flex: 1; min-width: 0; }
+.crm-modal .modal-title { font-family: var(--crm-font-sans); font-size: 16px; font-weight: 700; color: var(--crm-ink); margin: 0 0 3px; }
+.crm-modal__subtitle { font-size: 12.5px; color: var(--crm-ink-muted); margin: 0; line-height: 1.4; }
+.crm-modal .close { position: absolute; top: var(--crm-space-4); right: var(--crm-space-4); color: var(--crm-ink-faint); }
+.crm-modal .modal-body { padding: var(--crm-space-6); color: var(--crm-ink); }
+.crm-modal .modal-footer { padding: var(--crm-space-4) var(--crm-space-6); border-top: 1px solid var(--crm-border); gap: var(--crm-space-2); }
+.crm-modal .modal-footer.is-loading { opacity: .6; pointer-events: none; }
+
+/* Select2 dropdown trigger, sized/matched to .crm-input/.crm-select —
+   ported from the vendor .assign-modal rules (vertical-layout-light/
+   style.css) as Leads/Deals migrate their assign modals onto .crm-modal
+   in V2. .select2-dropdown/.select2-results__option--highlighted etc.
+   are global vendor rules already, not scoped, so nothing to port there. */
+.crm-modal .select2-container { width: 100% !important; }
+.crm-modal .select2-container--default .select2-selection--single {
+  height: 40px; border-radius: var(--crm-radius-sm); border-color: var(--crm-border-strong);
+  display: flex; align-items: center;
+}
+.crm-modal .select2-container--default .select2-selection--single .select2-selection__rendered {
+  padding-left: var(--crm-space-3); line-height: 38px; color: var(--crm-ink);
+}
+.crm-modal .select2-container--default .select2-selection--single .select2-selection__arrow { height: 38px; }
+.crm-modal .select2-container--default.select2-container--open .select2-selection--single {
+  border-color: var(--crm-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--crm-accent) 22%, transparent);
+}
+[data-theme="dark"] .crm-modal .select2-container--default .select2-selection--single {
+  background: var(--crm-surface-2); border-color: var(--crm-border-strong);
+}
+[data-theme="dark"] .crm-modal .select2-container--default .select2-selection--single .select2-selection__rendered {
+  color: var(--crm-ink);
+}
+
+/* Confirm-modal variant: icon tinted by intent (danger by default —
+   this is where destructive color belongs, not on the trigger). */
+.crm-confirm-modal .crm-modal__icon { background: var(--crm-danger-tint); color: var(--crm-danger); }
+.crm-confirm-modal.is-info .crm-modal__icon { background: var(--crm-info-tint); color: var(--crm-info); }
+.crm-confirm-modal.is-warning .crm-modal__icon { background: var(--crm-warning-tint); color: var(--crm-warning); }
+.crm-confirm-modal .modal-body { color: var(--crm-ink-muted); font-size: 13.5px; }
+
+/* =====================================================================
+   Dark mode — every rule above reads var(--crm-*), which already
+   flips via [data-theme="dark"] in crm-tokens.css. The handful of
+   overrides below exist only where a component needs something the
+   token swap alone doesn't cover (border/shadow tuning, sticky-header
+   contrast). Text, borders, inputs and buttons all stay readable
+   because they were built on tokens from the start — this is not an
+   inversion filter.
+   ===================================================================== */
+[data-theme="dark"] .crm-input:focus,
+[data-theme="dark"] .crm-select:focus {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--crm-accent) 30%, transparent);
+}
+[data-theme="dark"] .crm-table thead th { background: var(--crm-surface-2); }
+[data-theme="dark"] .crm-skeleton::after {
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--crm-border-strong) 50%, transparent), transparent);
+}

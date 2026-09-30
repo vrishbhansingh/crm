@@ -421,3 +421,35 @@
     opacity: 0;
 }
 /* ------------------------------------------------------------------------- */
+
+/* ---------------------------------------------------------------------
+   Dark mode (V1 foundation) — this file previously had zero dark-mode
+   coverage (audit finding); toasts rendered as light-on-light on the
+   4 pages that load it. Reads the shared --crm-* tokens from
+   crm-tokens.css, which those same pages already load globally via
+   include/header.blade.php.
+   ------------------------------------------------------------------- */
+[data-theme="dark"] .toast--info {
+    color: var(--crm-info, #5B93C2);
+    background-color: var(--crm-info-tint, #16232E);
+    border-color: var(--crm-info, #5B93C2);
+}
+[data-theme="dark"] .toast--success {
+    color: var(--crm-success, #4CAF7D);
+    background-color: var(--crm-success-tint, #17291F);
+    border-color: var(--crm-success, #4CAF7D);
+}
+[data-theme="dark"] .toast--warning {
+    color: var(--crm-warning, #D9932E);
+    background-color: var(--crm-warning-tint, #2B2113);
+    border-color: var(--crm-warning, #D9932E);
+}
+[data-theme="dark"] .toast--error {
+    color: var(--crm-danger, #E25C53);
+    background-color: var(--crm-danger-tint, #2C1917);
+    border-color: var(--crm-danger, #E25C53);
+}
+[data-theme="dark"] .toast-progressbar--info { background-color: var(--crm-info, #5B93C2); }
+[data-theme="dark"] .toast-progressbar--success { background-color: var(--crm-success, #4CAF7D); }
+[data-theme="dark"] .toast-progressbar--warning { background-color: var(--crm-warning, #D9932E); }
+[data-theme="dark"] .toast-progressbar--error { background-color: var(--crm-danger, #E25C53); }

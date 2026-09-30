@@ -9,12 +9,17 @@
 
     <link rel="stylesheet" href="{{ asset('vendors/css/vendor.bundle.base.css') }}">
     <link rel="stylesheet" href="{{ asset('css/vertical-layout-light/style.css') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.26.25/sweetalert2.min.css">
 
     <style>
         :root {
-            --primary: #2563eb;
+            /* Was a local blue (#2563eb), unrelated to the shared CRM
+               accent — swapped so every "primary" element on this page
+               (New Lead button, active tab, today's calendar cell, link
+               icons) matches the sidebar and every other page instead of
+               being its own color. */
+            --primary: var(--crm-accent, #1f6f63);
             --border: #e5e7eb;
             --text-dark: #111827;
             --text-muted: #6b7280;
@@ -54,7 +59,7 @@
         }
         .dash-action-btn:hover { background: var(--surface); text-decoration: none; }
         .dash-action-btn.is-primary { background: var(--primary); border-color: var(--primary); color: #fff; }
-        .dash-action-btn.is-primary:hover { background: #1d4ed8; }
+        .dash-action-btn.is-primary:hover { background: var(--crm-accent-dark, #154f46); }
 
         .stat-grid {
             display: grid;
@@ -295,20 +300,34 @@
         [data-theme="dark"] .geo-bar-wrap { background: #232637; }
         [data-theme="dark"] .geo-empty { color: #9aa1b5; }
 
-        /* Sales Pipeline — a horizontal funnel: one bar per stage, in
-           pipeline order, width scaled against the largest stage's value so
-           the shape actually tapers instead of just being a plain list. */
-        .funnel-list { display: flex; flex-direction: column; gap: 10px; }
-        .funnel-stage { display: flex; flex-direction: column; gap: 4px; align-items: center; }
-        .funnel-bar {
-            min-width: 34%; max-width: 100%; height: 38px; border-radius: 8px;
-            display: flex; align-items: center; justify-content: center; gap: 8px;
-            font-weight: 700; font-size: 13px; white-space: nowrap;
-            padding: 0 16px; transition: width .3s ease;
-        }
-        .funnel-bar .funnel-count { opacity: .85; font-weight: 600; }
-        .funnel-value { font-size: 12px; font-weight: 700; color: var(--text-muted); }
+        /* Sales Pipeline — a proportional bar-list, one row per stage in
+           pipeline order. Fill width is scaled against the largest stage's
+           value so the row itself is the data (not a decorative shrinking
+           pill), with the stage's deal count and rupee value read as plain
+           aligned columns either side of it. Rows are joined by a thin
+           conversion connector — the % of this stage's deals that reached
+           the next one — so the funnel actually says something instead of
+           just tapering. */
+        .funnel-list { display: flex; flex-direction: column; }
+        .funnel-row { display: grid; grid-template-columns: 128px 1fr 96px; align-items: center; gap: 14px; padding: 7px 0; }
+        .funnel-row__label { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+        .funnel-row__name { font-weight: 700; font-size: 13px; color: var(--text-dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .funnel-row__count { font-size: 11.5px; color: var(--text-muted); }
+        .funnel-row__track { position: relative; height: 26px; border-radius: 7px; background: var(--surface); overflow: hidden; }
+        .funnel-row__fill { position: absolute; inset: 0; width: 0; border-radius: 7px; transition: width .4s ease; }
+        .funnel-row__value { text-align: right; font-family: var(--crm-font-mono, 'IBM Plex Mono', monospace); font-size: 12.5px; font-weight: 700; color: var(--text-dark); white-space: nowrap; }
+        .funnel-connector { display: flex; align-items: center; gap: 6px; padding: 3px 0 3px 128px; margin-left: 14px; font-size: 11px; color: var(--text-muted); border-left: 1px dashed var(--border); }
+        .funnel-connector i { font-size: 9px; }
+        .funnel-connector .funnel-rate { font-weight: 700; color: var(--text-dark); }
+        .funnel-connector .funnel-rate.is-strong { color: #1f7a4d; }
+        .funnel-connector .funnel-rate.is-weak { color: #b3261e; }
+        [data-theme="dark"] .funnel-connector .funnel-rate.is-strong { color: #4caf7d; }
+        [data-theme="dark"] .funnel-connector .funnel-rate.is-weak { color: #e25c53; }
         .pipeline-empty, .performer-empty, .leads-empty { text-align: center; color: var(--text-muted); padding: 30px 0; font-size: 13.5px; }
+        @media (max-width: 560px) {
+            .funnel-row { grid-template-columns: 88px 1fr 80px; gap: 10px; }
+            .funnel-connector { padding-left: 88px; }
+        }
 
         /* Top Performers */
         .performer-list { display: flex; flex-direction: column; gap: 4px; }
@@ -575,8 +594,11 @@
         // ramp stepping light→dark by position, not arbitrary per-stage
         // hues. Both ramps are validated with --ordinal: monotone
         // lightness, >=0.06 step gaps, light end still >=2:1 on its surface.
-        const FUNNEL_RAMP_LIGHT = ['#60a5fa', '#3b82f6', '#2563eb', '#172554'];
-        const FUNNEL_RAMP_DARK = ['#bfdbfe', '#93c5fd', '#60a5fa', '#2563eb'];
+        // Was an all-blue ramp, unrelated to the shared CRM accent — same
+        // "light early stage -> deep late stage" progression, now built
+        // from the brand teal instead of a leftover blue.
+        const FUNNEL_RAMP_LIGHT = ['#8fc4bb', '#5aab9d', '#1f6f63', '#123f37'];
+        const FUNNEL_RAMP_DARK = ['#294a44', '#3d7d70', '#5aab9d', '#a8ddd3'];
 
         function hexToRgb(hex) {
             const v = hex.replace('#', '');
@@ -595,14 +617,6 @@
             const scaled = (index / (total - 1)) * (ramp.length - 1);
             const lo = Math.floor(scaled), hi = Math.ceil(scaled);
             return lo === hi ? ramp[lo] : lerpHex(ramp[lo], ramp[hi], scaled - lo);
-        }
-        // A label set inside a colored fill needs its text color picked by
-        // the fill's own luminance, not a fixed white — the lightest funnel
-        // step is too pale for white text to clear contrast on.
-        function idealTextColor(hex) {
-            const { r, g, b } = hexToRgb(hex);
-            const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-            return luminance > 0.6 ? '#0f172a' : '#ffffff';
         }
 
         const STATUS_COLORS = {
@@ -673,19 +687,27 @@
             let html = '';
             stages.forEach((stage, i) => {
                 const color = funnelColor(i, stages.length);
-                const textColor = idealTextColor(color);
-                // A bar scaled below ~34% reads as a sliver and clips its own
-                // label, so the widest stage is pinned to 100% and everything
-                // else is floored — still tapers, just never unreadable.
-                const widthPct = Math.max(34, Math.round((Number(stage.value) || 0) / maxValue * 100));
+                const count = Number(stage.count) || 0;
+                const widthPct = Math.max(6, Math.round((Number(stage.value) || 0) / maxValue * 100));
                 html += `
-                    <div class="funnel-stage">
-                        <div class="funnel-bar" style="width:${widthPct}%; background:${color}; color:${textColor};">
-                            <span>${esc(stage.name)}</span>
-                            <span class="funnel-count">&middot; ${stage.count}</span>
+                    <div class="funnel-row">
+                        <div class="funnel-row__label">
+                            <span class="funnel-row__name">${esc(stage.name)}</span>
+                            <span class="funnel-row__count">${count} ${count === 1 ? 'deal' : 'deals'}</span>
                         </div>
-                        <div class="funnel-value">${fmt(stage.value, true)}</div>
+                        <div class="funnel-row__track"><div class="funnel-row__fill" style="width:${widthPct}%; background:${color};"></div></div>
+                        <div class="funnel-row__value">${fmt(stage.value, true)}</div>
                     </div>`;
+                const next = stages[i + 1];
+                if (next) {
+                    const nextCount = Number(next.count) || 0;
+                    const rate = count > 0 ? Math.round(nextCount / count * 100) : null;
+                    if (rate !== null) {
+                        const rateClass = rate >= 50 ? 'is-strong' : 'is-weak';
+                        html += `
+                            <div class="funnel-connector"><i class="fa fa-angle-down"></i> <span class="funnel-rate ${rateClass}">${rate}%</span> of ${esc(stage.name)} deals reached ${esc(next.name)}</div>`;
+                    }
+                }
             });
             $('#pipelineList').html(html);
         }
@@ -766,24 +788,54 @@
             $('#revenueChartBox').show();
             $('#revenueEmpty').hide();
 
-            // Chart.js 2.x has no real bar-radius option (the old
-            // `borderRadius: 6` here was a silent no-op) — barPercentage/
-            // categoryPercentage/maxBarThickness are the actual supported
-            // levers for the "thin bars, real breathing room" spec.
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            const success = isDark ? '#4caf7d' : '#1f7a4d';
+
+            // Two bar series sitting side by side per month read as a bar
+            // chart competing with itself — a combo instead: bars carry the
+            // absolute "booked revenue" magnitude as a recessive backdrop,
+            // and a smooth filled line rides over them for "cash collected",
+            // so the *shape* of the collection trend against bookings is the
+            // thing that's readable at a glance, not twelve similarly-sized
+            // rectangles. Chart.js 2.x mixed charts need a top-level `type`
+            // as the default (here 'bar'); the line dataset overrides it and
+            // — because it's listed second — draws on top of the bars.
             draw('revenueChart', {
                 type: 'bar',
                 data: {
                     labels: revenue.labels,
                     datasets: [
-                        { label: 'Booked revenue', data: revenue.revenue, backgroundColor: '#2563eb', maxBarThickness: 22, barPercentage: 0.7, categoryPercentage: 0.6 },
-                        { label: 'Cash collected', data: revenue.cash, backgroundColor: '#16a34a', maxBarThickness: 22, barPercentage: 0.7, categoryPercentage: 0.6 },
+                        {
+                            label: 'Booked revenue', data: revenue.revenue,
+                            backgroundColor: isDark ? 'rgba(90,171,157,.35)' : 'rgba(31,111,99,.16)',
+                            hoverBackgroundColor: isDark ? 'rgba(90,171,157,.5)' : 'rgba(31,111,99,.26)',
+                            maxBarThickness: 34, barPercentage: 0.55, categoryPercentage: 0.7,
+                        },
+                        {
+                            type: 'line', label: 'Cash collected', data: revenue.cash,
+                            borderColor: success, backgroundColor: isDark ? 'rgba(76,175,125,.18)' : 'rgba(31,122,77,.12)',
+                            fill: true, lineTension: 0.35, borderWidth: 2.5,
+                            pointBackgroundColor: success, pointBorderColor: isDark ? '#12151a' : '#ffffff', pointBorderWidth: 2,
+                            pointRadius: 4, pointHoverRadius: 6,
+                        },
                     ]
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
-                    legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } },
-                    tooltips: { mode: 'index', intersect: false },
+                    legend: {
+                        position: 'bottom', align: 'start',
+                        labels: { boxWidth: 8, usePointStyle: true, padding: 18, font: { size: 11.5 } },
+                    },
+                    tooltips: {
+                        mode: 'index', intersect: false,
+                        backgroundColor: isDark ? '#20252c' : '#171a17',
+                        titleFontColor: '#ffffff', bodyFontColor: isDark ? '#e7e9ec' : '#f5f6f3',
+                        titleFontSize: 12, bodyFontSize: 12, titleFontStyle: '600',
+                        cornerRadius: 8, padding: 10, displayColors: true,
+                        callbacks: { label: (item, data) => `${data.datasets[item.datasetIndex].label}: ₹${Number(item.yLabel).toLocaleString('en-IN')}` },
+                    },
                     scales: {
+                        xAxes: [{ gridLines: { display: false } }],
                         yAxes: [{ ticks: { beginAtZero: true, callback: v => '₹' + v.toLocaleString('en-IN') } }],
                     }
                 }

@@ -1,0 +1,148 @@
+/*
+ * CRM Design Tokens — V1 foundation
+ * ------------------------------------------------------------------
+ * Single source of truth for color, typography, spacing, radius and
+ * shadow across the tenant app. Every token is namespaced --crm-* so
+ * loading this file has ZERO visible effect on any existing page
+ * until a new component (crm-components.css) or a future-migrated
+ * page explicitly reads one of these variables. The ~50 pages that
+ * still declare their own local --primary/--text-dark/--text-muted
+ * keep rendering exactly as before — that migration is a later
+ * phase's job (see the V1 report), not this file's.
+ *
+ * Loaded once, globally, via resources/views/include/header.blade.php
+ * (included near the top of <body> on every tenant page — this app
+ * has no shared <head>, so that is the one place a single <link> here
+ * reaches all 63 pages without editing any of them).
+ *
+ * Dark values follow the app's existing [data-theme="dark"] attribute
+ * mechanism on <html> (see header.blade.php's theme toggle) — that
+ * mechanism is unchanged; only the token *source* is centralized here.
+ * These are designed dark surfaces, not an inversion filter.
+ */
+
+:root {
+  /* ---- Color: light -------------------------------------------- */
+  --crm-accent: #1F6F63;
+  --crm-accent-dark: #154F46;
+  --crm-accent-tint: #E4EFEC;
+
+  --crm-ink: #171A17;
+  --crm-ink-muted: #585F57;
+  --crm-ink-faint: #8B9187;
+
+  --crm-bg: #F5F6F3;
+  --crm-surface: #FFFFFF;
+  --crm-surface-2: #ECEEE9;
+  --crm-border: #DCDFD8;
+  --crm-border-strong: #C3C8BD;
+
+  /* Semantic state only — never reused as a decorative accent. */
+  --crm-success: #1F7A4D;
+  --crm-success-tint: #E5F3EC;
+  --crm-warning: #A6650A;
+  --crm-warning-tint: #FBF0E1;
+  --crm-danger: #B3261E;
+  --crm-danger-tint: #FAE8E7;
+  --crm-info: #2A5C8A;
+  --crm-info-tint: #E7EEF5;
+  --crm-neutral: #585F57;
+  --crm-neutral-tint: #ECEEE9;
+
+  /* ---- Typography ------------------------------------------------
+     Fraunces is the product's visual signature: page-level display
+     headings ONLY (enforced in crm-components.css's .crm-header
+     title, not applied globally). IBM Plex Sans is every other piece
+     of interface text — labels, buttons, tables, badges, navigation.
+     IBM Plex Mono is reserved for anything meant to line up in a
+     column or read as a precise value: lead/deal numbers, currency,
+     dates, IDs, code. */
+  --crm-font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --crm-font-sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --crm-font-mono: 'IBM Plex Mono', SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+
+  /* ---- Spacing (4px base) --------------------------------------- */
+  --crm-space-1: 4px;
+  --crm-space-2: 8px;
+  --crm-space-3: 12px;
+  --crm-space-4: 16px;
+  --crm-space-5: 20px;
+  --crm-space-6: 24px;
+  --crm-space-7: 32px;
+  --crm-space-8: 48px;
+  --crm-space-9: 64px;
+
+  /* ---- Radius ----------------------------------------------------
+     One radius for cards/buttons/modals, a smaller one for inputs,
+     full-round for pills — replaces the 5px–20px spread the audit
+     found across the app. */
+  --crm-radius-sm: 6px;
+  --crm-radius-md: 8px;
+  --crm-radius-pill: 999px;
+
+  /* ---- Shadow — one restrained scale ----------------------------- */
+  --crm-shadow-sm: 0 1px 2px rgba(23, 26, 23, 0.06);
+  --crm-shadow-md: 0 4px 16px rgba(23, 26, 23, 0.08);
+  --crm-shadow-lg: 0 12px 32px rgba(23, 26, 23, 0.14);
+
+  /* ---- Table density --------------------------------------------- */
+  --crm-row-h: 44px;
+
+  color-scheme: light;
+}
+
+/* ---- Color: dark ----------------------------------------------------
+   Designed surfaces, not an inverted filter — a lifted card tone on a
+   near-black-green background, and the accent brightened/desaturated
+   so it stays legible rather than glowing. */
+[data-theme="dark"] {
+  --crm-accent: #5AAB9D;
+  --crm-accent-dark: #7FC3B6;
+  --crm-accent-tint: #1C2B28;
+
+  --crm-ink: #E7E9EC;
+  --crm-ink-muted: #A2A9B3;
+  --crm-ink-faint: #767E89;
+
+  --crm-bg: #12151A;
+  --crm-surface: #1A1E24;
+  --crm-surface-2: #20252C;
+  --crm-border: #2C323B;
+  --crm-border-strong: #3A414C;
+
+  --crm-success: #4CAF7D;
+  --crm-success-tint: #17291F;
+  --crm-warning: #D9932E;
+  --crm-warning-tint: #2B2113;
+  --crm-danger: #E25C53;
+  --crm-danger-tint: #2C1917;
+  --crm-info: #5B93C2;
+  --crm-info-tint: #16232E;
+  --crm-neutral: #A2A9B3;
+  --crm-neutral-tint: #20252C;
+
+  --crm-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --crm-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --crm-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.55);
+
+  color-scheme: dark;
+}
+
+/* ---- Global typography baseline -------------------------------------
+   The vendor theme (vertical-layout-light/style.css) sets Nunito
+   explicitly on the bare `body` selector (line ~19510) — most other
+   elements inherit that rather than redeclaring their own font, so
+   overriding just this one selector changes the base font for the
+   large majority of the app's text with a single, safe rule.
+   This file loads after every page's own vendor <link> (it's included
+   near the top of <body> via header.blade.php, and each page links
+   the vendor stylesheet in its own <head>), so on this exact selector
+   — equal specificity, later source order — this rule wins.
+   A handful of narrow, low-traffic vendor selectors still hardcode
+   Nunito directly (code, .pagination, the bootstrap-datepicker widget,
+   .settings-panel) and are deliberately left alone here rather than
+   chased with higher-specificity overrides — low visual impact, and
+   removing them outright belongs to a later cleanup phase once each
+   is confirmed unused elsewhere. */
+body { font-family: var(--crm-font-sans); }
+code, kbd, pre, samp { font-family: var(--crm-font-mono); }

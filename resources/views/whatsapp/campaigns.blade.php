@@ -9,7 +9,7 @@
 
     <link rel="stylesheet" href="{{ asset('vendors/css/vendor.bundle.base.css') }}">
     <link rel="stylesheet" href="{{ asset('css/vertical-layout-light/style.css') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.26.25/sweetalert2.min.css">
 
     <style>
@@ -328,19 +328,28 @@
         $(document).on('click', '.sendCampaignBtn', function () {
             const id = $(this).data('id');
             const name = $(this).data('name');
-            if (!confirm(`Send "${name}" now? This messages everyone who matches its audience filters.`)) return;
-
-            const $btn = $(this).prop('disabled', true);
-            $.post("{{ url('whatsapp/campaigns') }}/" + id + "/send", {}, function (response) {
-                if (response.status) toastr.success(response.message); else toastr.error(response.message);
-                loadCampaigns();
-            }).fail(function (xhr) { toastr.error(xhr.responseJSON?.message || 'Send failed'); $btn.prop('disabled', false); });
+            const $btn = $(this);
+            openConfirmModal({
+                title: `Send "${name}" now?`,
+                message: 'This messages everyone who matches its audience filters.',
+                variant: 'info',
+                confirmText: 'Send',
+                onConfirm: function (done) {
+                    $btn.prop('disabled', true);
+                    $.post("{{ url('whatsapp/campaigns') }}/" + id + "/send", {}, function (response) {
+                        if (response.status) toastr.success(response.message); else toastr.error(response.message);
+                        loadCampaigns();
+                        done();
+                    }).fail(function (xhr) { toastr.error(xhr.responseJSON?.message || 'Send failed'); $btn.prop('disabled', false); done(); });
+                }
+            });
         });
 
         $(document).on('click', '.deleteCampaignBtn', function () {
-            if (!confirm('Delete this campaign?')) return;
             const id = $(this).data('id');
-            $.ajax({ url: "{{ url('whatsapp/campaigns') }}/" + id, type: 'DELETE', success: function (response) { toastr.success(response.message); loadCampaigns(); } });
+            openConfirmModal({ title: 'Delete this campaign?', message: 'This can\'t be undone.', confirmText: 'Delete', onConfirm: function (done) {
+                $.ajax({ url: "{{ url('whatsapp/campaigns') }}/" + id, type: 'DELETE', success: function (response) { toastr.success(response.message); loadCampaigns(); done(); }, error: function() { done(); } });
+            }});
         });
 
         renderAudienceFilters();

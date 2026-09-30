@@ -32,29 +32,38 @@
         left: 0;
         width: var(--sidebar-w);
         height: calc(100vh - 80px);
-        background: linear-gradient(180deg, #0c7bfe, #01bdff);
+        /* V2 design pass: was a blue gradient (light) / indigo gradient
+           (dark) — a colorful "brand rail" pattern that reads as generic
+           template chrome and didn't visually belong to the rest of the
+           app (every card/table/badge already runs off the neutral
+           --crm-* tokens). Now a plain surface, consistent with content:
+           white in light mode, the same lifted dark card tone everywhere
+           else uses in dark mode — separated from the content area by a
+           border instead of a color change. */
+        background: var(--crm-surface, #fff);
+        border-right: 1px solid var(--crm-border, #e5e7eb);
         /* Generous bottom padding, not just the top's 12px: without it the
            last nav item sits flush against the very bottom pixel row of
            the viewport — exactly where an auto-hide OS taskbar overlaps
            when it pops up, making that item unreachable/unclickable. This
            keeps it scrollable to a comfortable position clear of that. */
         padding: 12px 8px 64px;
-        font-family: 'Poppins', sans-serif;
+        font-family: var(--crm-font-sans, sans-serif);
         overflow-y: auto;
         overscroll-behavior: contain;
         /* Firefox thin scrollbar */
         scrollbar-width: thin;
-        scrollbar-color: rgba(255, 255, 255, 0.35) transparent;
+        scrollbar-color: var(--crm-border-strong, #c3c8bd) transparent;
     }
 
     /* Modern, minimal scrollbar — thin, subtle, rounded, unobtrusive. */
     .sidebar::-webkit-scrollbar { width: 5px; }
     .sidebar::-webkit-scrollbar-track { background: transparent; }
     .sidebar::-webkit-scrollbar-thumb {
-        background: rgba(255, 255, 255, 0.28);
+        background: var(--crm-border-strong, #c3c8bd);
         border-radius: 999px;
     }
-    .sidebar::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.5); }
+    .sidebar::-webkit-scrollbar-thumb:hover { background: var(--crm-ink-faint, #8b9187); }
 
     /* The collapse toggle itself now lives in include/header.blade.php,
        anchored to .crm-brand-wrapper (whose width never changes with
@@ -67,27 +76,27 @@
     }
     .sidebar-search input {
         width: 100%;
-        border: none;
+        border: 1px solid var(--crm-border, #e5e7eb);
         border-radius: 8px;
         padding: 6px 10px 6px 26px;
         font-size: 12px;
-        background: rgba(255, 255, 255, 0.14);
-        color: #fff;
+        background: var(--crm-surface-2, #f3f4f6);
+        color: var(--crm-ink, #171a17);
         line-height: 1.4;
     }
-    .sidebar-search input::placeholder { color: rgba(255,255,255,0.75); }
-    .sidebar-search input:focus { outline: none; background: rgba(255, 255, 255, 0.22); }
+    .sidebar-search input::placeholder { color: var(--crm-ink-faint, #8b9187); }
+    .sidebar-search input:focus { outline: none; border-color: var(--crm-accent, #1f6f63); background: var(--crm-surface, #fff); }
     .sidebar-search-wrap { position: relative; }
     .sidebar-search-wrap i {
         position: absolute;
         left: 10px;
         top: 50%;
         transform: translateY(-50%);
-        color: rgba(255, 255, 255, 0.8);
+        color: var(--crm-ink-faint, #8b9187);
         font-size: 11px;
         pointer-events: none;
     }
-    .sidebar-no-results { display: none; color: rgba(255,255,255,0.75); font-size: 12px; padding: 6px 10px; }
+    .sidebar-no-results { display: none; color: var(--crm-ink-faint, #8b9187); font-size: 12px; padding: 6px 10px; }
 
     .nav-section { margin-top: 16px; }
     .nav-section:first-of-type { margin-top: 2px; }
@@ -96,10 +105,10 @@
         font-weight: 700;
         letter-spacing: 0.06em;
         text-transform: uppercase;
-        color: rgba(255, 255, 255, 0.62);
+        color: var(--crm-ink-faint, #8b9187);
         padding: 0 10px 4px;
     }
-    .nav-section.has-active .nav-section-label { color: #ffffff; }
+    .nav-section.has-active .nav-section-label { color: var(--crm-accent, #1f6f63); }
 
     .nav-sidebar-menu { list-style: none; padding: 0; margin: 0; }
     .nav-sidebar-menu li { margin-bottom: 5px; }
@@ -113,23 +122,29 @@
         border-radius: 6px;
         font-size: 12px;
         line-height: 1.3;
-        color: rgba(255, 255, 255, 0.92);
+        color: var(--crm-ink-muted, #585f57);
         text-decoration: none;
-        transition: background 0.15s ease, color 0.15s ease;
+        border-left: 3px solid transparent;
+        transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
         white-space: nowrap;
     }
 
-    .nav-sidebar-menu .nav-link:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
-    .nav-sidebar-menu .nav-link:focus-visible { outline: 2px solid #fff; outline-offset: -2px; }
+    .nav-sidebar-menu .nav-link:hover { background: var(--crm-surface-2, #f3f4f6); color: var(--crm-ink, #171a17); }
+    .nav-sidebar-menu .nav-link:focus-visible { outline: 2px solid var(--crm-accent, #1f6f63); outline-offset: -2px; }
 
-    /* Modern SaaS active state: one clean flat highlight, no gradient glow. */
+    /* Active state: tinted background + accent text + a left indicator
+       bar (not just a color swap) — a clearer "you are here" signal than
+       a flat highlight alone, especially important now the sidebar no
+       longer has its own strong background color to set the active item
+       off against. */
     .nav-sidebar-menu .nav-link.active {
-        background: rgba(255, 255, 255, 0.18);
-        color: #ffffff;
+        background: var(--crm-accent-tint, #e4efec);
+        color: var(--crm-accent, #1f6f63);
+        border-left-color: var(--crm-accent, #1f6f63);
         font-weight: 600;
     }
 
-    .nav-sidebar-menu .nav-link.active i { color: #ffffff; }
+    .nav-sidebar-menu .nav-link.active i { color: var(--crm-accent, #1f6f63); }
     .nav-sidebar-menu i { font-size: 15px; width: 18px; text-align: center; flex-shrink: 0; }
     .nav-sidebar-menu .nav-link span { overflow: hidden; text-overflow: ellipsis; }
 
@@ -182,7 +197,6 @@
             height: calc(100vh - 64px);
             width: 200px;
             min-width: 200px;
-            background: linear-gradient(180deg, #0c7bfe, #01bdff);
             transition: left 0.3s ease;
             z-index: 1000;
         }
@@ -196,23 +210,11 @@
         #sidebar.sidebar { top: 56px; height: calc(100vh - 56px); }
     }
 
-    /* Dark mode: the sidebar keeps its own colorful identity (a deep
-       indigo gradient, not the flat card-gray used elsewhere) rather than
-       going plain black — same white/rgba(255,255,255,...) text already
-       used above still reads fine against it. */
-    [data-theme="dark"] #sidebar.sidebar,
-    [data-theme="dark"] .sidebar {
-        background: linear-gradient(180deg, #14172e, #1a1e3d);
-    }
-    [data-theme="dark"] .nav-sidebar-menu .nav-link.active {
-        background: rgba(147, 164, 253, 0.22);
-    }
-    [data-theme="dark"] .sidebar-search input {
-        background: rgba(255, 255, 255, 0.08);
-    }
-    [data-theme="dark"] .sidebar-search input:focus {
-        background: rgba(255, 255, 255, 0.14);
-    }
+    /* No separate dark-mode block needed anymore: every rule above reads
+       var(--crm-*), which already flips to the app's real dark surfaces
+       via crm-tokens.css's own [data-theme="dark"] block — same
+       consistent dark card tone as every other panel in the app, not a
+       separate blue-tinted identity. */
 
     /* Mobile-drawer backdrop: dims the page and gives a tap target to
        close the drawer, since it's a fixed overlay covering the content

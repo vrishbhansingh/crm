@@ -9,7 +9,7 @@
 
     <link rel="stylesheet" href="{{ asset('vendors/css/vendor.bundle.base.css') }}">
     <link rel="stylesheet" href="{{ asset('css/vertical-layout-light/style.css') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.26.25/sweetalert2.min.css">
 
     <style>
@@ -631,22 +631,29 @@
         $(document).on('click', '.deleteRoleBtn', function() {
             const id = $(this).data('id');
             const name = $(this).data('name');
-            if (!confirm(`Delete the "${name}" role? Users assigned to it must be reassigned first.`)) return;
-
-            $.ajax({
-                url: "{{ url('roles') }}/" + id,
-                type: 'POST',
-                data: { _method: 'DELETE' },
-                success: function(response) {
-                    if (response.status) {
-                        toastr.success(response.message);
-                        loadRoles();
-                    } else {
-                        toastr.error(response.message);
-                    }
-                },
-                error: function(xhr) {
-                    toastr.error(xhr.responseJSON?.message || 'Something went wrong');
+            openConfirmModal({
+                title: `Delete the "${name}" role?`,
+                message: 'Users assigned to it must be reassigned first.',
+                confirmText: 'Delete',
+                onConfirm: function(done) {
+                    $.ajax({
+                        url: "{{ url('roles') }}/" + id,
+                        type: 'POST',
+                        data: { _method: 'DELETE' },
+                        success: function(response) {
+                            done();
+                            if (response.status) {
+                                toastr.success(response.message);
+                                loadRoles();
+                            } else {
+                                toastr.error(response.message);
+                            }
+                        },
+                        error: function(xhr) {
+                            toastr.error(xhr.responseJSON?.message || 'Something went wrong');
+                            done();
+                        }
+                    });
                 }
             });
         });

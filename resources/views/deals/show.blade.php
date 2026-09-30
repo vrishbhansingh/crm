@@ -9,7 +9,7 @@
 
     <link rel="stylesheet" href="{{ asset('vendors/css/vendor.bundle.base.css') }}">
     <link rel="stylesheet" href="{{ asset('css/vertical-layout-light/style.css') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.26.25/sweetalert2.min.css">
 
     <style>
@@ -20,13 +20,11 @@
             --text-muted: #6b7280;
         }
 
-        /* Same modernization pattern as Roles & Permissions / Dashboard /
-           Leads / Deals list: bigger, roomier white header card. */
+        /* V2: background/border/radius/shadow now come from the shared
+           .crm-card class (added alongside in the markup) — bespoke
+           avatar+amount+actions layout stays local. */
         .crm-page-header {
-            background: #fff;
             padding: 24px 28px;
-            border-radius: 13px;
-            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
             margin-bottom: 18px;
         }
 
@@ -37,26 +35,13 @@
             margin: 0;
         }
 
-        .badge-pill {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 999px;
-            font-size: 11px;
-            font-weight: 600;
-            margin-right: 6px;
-            background: #eef2ff;
-            color: #4338ca;
-        }
+        /* .badge-pill/.badge-open/.badge-won/.badge-lost removed in V2 —
+           deal status now renders via the shared renderStatusBadge()
+           (public/js/crm-status.js) / .crm-badge component. */
 
-        .badge-open { background: #eef2ff; color: #4338ca; }
-        .badge-won { background: #dcfce7; color: #15803d; }
-        .badge-lost { background: #fee2e2; color: #b91c1c; }
-
+        /* Background/border/radius/shadow now come from the shared
+           .crm-card class (added alongside .card-box in the markup). */
         .card-box {
-            background: #fff;
-            border-radius: 14px;
-            box-shadow: 0 8px 22px rgba(0, 0, 0, 0.05);
-            border: 1px solid var(--border);
             padding: 20px;
             margin-bottom: 20px;
         }
@@ -131,10 +116,7 @@
             display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
             gap: 16px; margin: 18px 0 22px;
         }
-        .deal-metric-tile {
-            background: #fff; border-radius: 14px; box-shadow: 0 8px 22px rgba(0,0,0,.05);
-            border: 1px solid var(--border); padding: 16px 18px; text-align: center;
-        }
+        .deal-metric-tile { padding: 16px 18px; text-align: center; }
         .deal-metric-tile .metric-value { font-size: 24px; font-weight: 700; color: var(--text-dark); }
         .deal-metric-tile .metric-label { font-size: 12px; color: var(--text-muted); margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: .02em; }
 
@@ -150,12 +132,9 @@
             --text-dark: #eef0f6;
             --text-muted: #9aa1b5;
         }
-        [data-theme="dark"] .crm-page-header,
-        [data-theme="dark"] .card-box,
-        [data-theme="dark"] .deal-metric-tile {
-            background: #1a1d2b;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-        }
+        /* .crm-page-header/.card-box/.deal-metric-tile's background/shadow
+           now come from .crm-card, which already has its own
+           [data-theme="dark"] handling. */
         [data-theme="dark"] .timeline-icon { background: #232637; }
         [data-theme="dark"] .field-row { border-bottom-color: #2a2e40; }
         [data-theme="dark"] .timeline-item { border-bottom-color: #2a2e40; }
@@ -177,7 +156,7 @@
 
             <div class="content-wrapper">
 
-                <div class="crm-page-header d-flex justify-content-between align-items-start flex-wrap" style="gap:16px;">
+                <div class="crm-page-header crm-card d-flex justify-content-between align-items-start flex-wrap" style="gap:16px;">
                     <div class="deal-hero-top">
                         <div class="deal-detail-avatar" id="dealAvatar">?</div>
                         <div>
@@ -188,8 +167,8 @@
                             <div class="deal-subtitle" id="dealSubtitle"></div>
                             <div id="dealBadges" class="mt-2"></div>
                             <div class="deal-hero-actions">
-                                <a href="#" id="dealCallBtn" class="btn btn-success btn-sm" style="display:none;"><i class="fa fa-phone"></i> Call Lead</a>
-                                <a href="#" id="dealEmailBtn" class="btn btn-outline-secondary btn-sm" style="display:none;"><i class="fa fa-envelope"></i> Email Lead</a>
+                                <a href="#" id="dealCallBtn" class="crm-btn crm-btn--primary crm-btn--sm" style="display:none;"><i class="fa fa-phone"></i> Call Lead</a>
+                                <a href="#" id="dealEmailBtn" class="crm-btn crm-btn--secondary crm-btn--sm" style="display:none;"><i class="fa fa-envelope"></i> Email Lead</a>
                             </div>
                         </div>
                     </div>
@@ -200,15 +179,15 @@
                 </div>
 
                 <div class="deal-metric-grid">
-                    <div class="deal-metric-tile">
+                    <div class="deal-metric-tile crm-card">
                         <div class="metric-value" id="metricDaysOpen">—</div>
                         <div class="metric-label">Days Open</div>
                     </div>
-                    <div class="deal-metric-tile">
+                    <div class="deal-metric-tile crm-card">
                         <div class="metric-value" id="metricStageChanges">—</div>
                         <div class="metric-label">Stage Changes</div>
                     </div>
-                    <div class="deal-metric-tile">
+                    <div class="deal-metric-tile crm-card">
                         <div class="metric-value" id="metricDaysToClose">—</div>
                         <div class="metric-label">Days to Close</div>
                     </div>
@@ -218,11 +197,11 @@
                     <!-- MAIN COLUMN -->
                     <div class="col-md-8">
 
-                        <div class="card-box">
+                        <div class="card-box crm-card">
                             <div class="d-flex justify-content-between align-items-center">
                                 <h5 class="mb-0"><i class="fa fa-briefcase"></i> Deal Info</h5>
                                 @can('deals.edit')
-                                <button class="btn btn-outline-primary btn-sm" id="editInfoBtn"><i class="fa fa-pencil"></i> Edit</button>
+                                <button class="crm-btn crm-btn--secondary crm-btn--sm" id="editInfoBtn"><i class="fa fa-pencil"></i> Edit</button>
                                 @endcan
                             </div>
 
@@ -252,25 +231,25 @@
                                         <input type="date" name="expected_close_date" id="edit_expected_close_date" class="form-control form-control-sm">
                                     </div>
                                 </div>
-                                <button type="submit" class="btn btn-primary btn-sm"><i class="fa fa-save"></i> Save</button>
-                                <button type="button" class="btn btn-light btn-sm" id="cancelEditInfoBtn">Cancel</button>
+                                <button type="submit" class="crm-btn crm-btn--primary crm-btn--sm"><i class="fa fa-save"></i> Save</button>
+                                <button type="button" class="crm-btn crm-btn--secondary crm-btn--sm" id="cancelEditInfoBtn">Cancel</button>
                             </form>
                             @endcan
                         </div>
 
-                        <div class="card-box" id="leadCard" style="display:none;">
+                        <div class="card-box crm-card" id="leadCard" style="display:none;">
                             <h5><i class="fa fa-bullseye"></i> Linked Lead</h5>
                             <div id="leadCardBody"></div>
                         </div>
 
-                        <div class="card-box">
+                        <div class="card-box crm-card">
                             <h5><i class="fa fa-clock-o"></i> Stage Timeline</h5>
                             <div id="timelineList">
                                 <p class="text-muted">Loading…</p>
                             </div>
                         </div>
 
-                        <div class="card-box">
+                        <div class="card-box crm-card">
                             <h5><i class="fa fa-tasks"></i> Activities</h5>
                             <div id="dealActivityList">
                                 <p class="text-muted">Loading…</p>
@@ -282,7 +261,7 @@
                     <!-- SIDEBAR -->
                     <div class="col-md-4">
 
-                        <div class="card-box">
+                        <div class="card-box crm-card">
                             <h5><i class="fa fa-flag"></i> Stage</h5>
                             <div class="field-row"><span class="label">Current Stage</span><span class="value" id="currentStageName">-</span></div>
 
@@ -300,49 +279,49 @@
                                     <select id="moveWonPaymentMode" class="form-control form-control-sm mb-2"></select>
                                     <input type="date" id="moveWonPaymentDate" class="form-control form-control-sm">
                                 </div>
-                                <button class="btn btn-primary btn-sm btn-block" id="moveStageBtn">
+                                <button class="crm-btn crm-btn--primary crm-btn--sm btn-block" id="moveStageBtn">
                                     <i class="fa fa-exchange"></i> Move Stage
                                 </button>
                             </div>
                             @endcan
                         </div>
 
-                        <div class="card-box" id="orderCard" style="display:none;">
+                        <div class="card-box crm-card" id="orderCard" style="display:none;">
                             <h5><i class="fa fa-trophy"></i> Order</h5>
                             <div id="orderCardBody"></div>
                         </div>
 
                         @can('quotations.view')
-                        <div class="card-box">
+                        <div class="card-box crm-card">
                             <h5><i class="fa fa-file-text-o"></i> Quotations</h5>
                             <div id="dealQuotationsList" class="mb-2"><p class="text-muted" style="font-size:12.5px;">Loading…</p></div>
                             @can('quotations.create')
-                            <a class="btn btn-primary btn-sm btn-block" href="{{ url('/quotations/create') }}?deal_id={{ $dealId }}"><i class="fa fa-plus"></i> New Quotation</a>
+                            <a class="crm-btn crm-btn--primary crm-btn--sm btn-block" href="{{ url('/quotations/create') }}?deal_id={{ $dealId }}"><i class="fa fa-plus"></i> New Quotation</a>
                             @endcan
                         </div>
                         @endcan
 
-                        <div class="card-box">
+                        <div class="card-box crm-card">
                             <h5><i class="fa fa-sticky-note"></i> Notes</h5>
                             <textarea id="notesBody" class="form-control" rows="4"></textarea>
                             @can('deals.edit')
-                            <button class="btn btn-primary btn-sm mt-2" id="saveNotesBtn"><i class="fa fa-save"></i> Save Notes</button>
+                            <button class="crm-btn crm-btn--primary crm-btn--sm mt-2" id="saveNotesBtn"><i class="fa fa-save"></i> Save Notes</button>
                             @endcan
                         </div>
 
                         @can('tasks.create')
-                        <div class="card-box">
+                        <div class="card-box crm-card">
                             <h5><i class="fa fa-check-square-o"></i> Follow-up</h5>
                             <p class="text-muted" style="font-size:12.5px;">Add a task or reminder linked to this deal.</p>
-                            <button type="button" class="btn btn-primary btn-sm btn-block" onclick="var t=document.getElementById('dealName'); openQuickTask('deal', {{ (int) $dealId }}, t ? t.textContent : null)">
+                            <button type="button" class="crm-btn crm-btn--primary crm-btn--sm btn-block" onclick="var t=document.getElementById('dealName'); openQuickTask('deal', {{ (int) $dealId }}, t ? t.textContent : null)">
                                 <i class="fa fa-plus"></i> Add Task
                             </button>
                         </div>
                         @endcan
 
                         @can('deals.delete')
-                        <div class="card-box">
-                            <button class="btn btn-outline-danger btn-sm btn-block" id="deleteDealBtn">
+                        <div class="card-box crm-card">
+                            <button class="crm-btn crm-btn--secondary crm-btn--sm btn-block" id="deleteDealBtn">
                                 <i class="fa fa-trash"></i> Delete Deal
                             </button>
                         </div>
@@ -384,9 +363,8 @@
             return (v === null || v === undefined || v === '') ? '-' : v;
         }
 
-        function statusBadgeClass(status) {
-            return { open: 'badge-open', won: 'badge-won', lost: 'badge-lost' }[status] || 'badge-open';
-        }
+        // Deal status pill now comes from the shared renderStatusBadge()
+        // (public/js/crm-status.js) — statusBadgeClass() is gone.
 
         const DEAL_PALETTE = ['#2563eb', '#7c3aed', '#0d9488', '#ea580c', '#db2777', '#16a34a', '#4338ca', '#0891b2'];
         function dealPaletteColor(seed) {
@@ -409,7 +387,7 @@
                 $('#dealAvatar').text(dealInitials(d.name)).css('background', dealPaletteColor(d.name));
                 $('#dealSubtitle').text([d.pipeline?.name, d.stage?.name].filter(Boolean).join(' · '));
                 $('#dealAmountValue').text((d.currency ?? '') + ' ' + money(d.amount));
-                $('#dealBadges').html(`<span class="badge-pill ${statusBadgeClass(d.status)}">${esc((d.status || '').toUpperCase())}</span>`);
+                $('#dealBadges').html(renderStatusBadge('deal', d.status));
 
                 if (d.lead && d.lead.phone) { $('#dealCallBtn').attr('href', 'tel:' + d.lead.phone).show(); }
                 if (d.lead && d.lead.email) { $('#dealEmailBtn').attr('href', 'mailto:' + d.lead.email).show(); }
@@ -667,11 +645,12 @@
         });
 
         $(document).on('click', '#deleteDealBtn', function() {
-            if (!confirm('Delete this deal? This cannot be undone.')) return;
+            openConfirmModal({ title: 'Delete this deal?', message: 'This cannot be undone.', confirmText: 'Delete', onConfirm: function(done) {
             $.ajax({
                 url: "{{ url('deals') }}/" + dealId + "/delete",
                 type: 'POST',
                 success: function(response) {
+                    done();
                     if (response.status) {
                         toastr.success(response.message);
                         setTimeout(() => window.location = "{{ route('deals.list') }}", 600);
@@ -679,8 +658,10 @@
                 },
                 error: function(xhr) {
                     toastr.error(xhr.responseJSON?.message || 'Something went wrong');
+                    done();
                 }
             });
+            }});
         });
 
         $(document).ready(function() {

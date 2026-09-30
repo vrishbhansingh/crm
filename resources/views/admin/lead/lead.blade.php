@@ -8,9 +8,9 @@
     <title>CRM Admin Panel</title>
 
     <!-- plugins:css -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-    <link rel="stylesheet" href="{{asset('vendors/feather/feather.css')}}">
-    <link rel="stylesheet" href="{{asset('vendors/ti-icons/css/themify-icons.css')}}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    
+    
     <link rel="stylesheet" href="{{asset('vendors/css/vendor.bundle.base.css')}}">
 
     <!-- Plugin css -->
@@ -27,52 +27,12 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.26.25/sweetalert2.min.css">
 
     <style>
-        /* ===== User Table Wrapper — modernization pass: bigger type,
-           roomier row padding, matching Roles/Dashboard. Structure and all
-           IDs are untouched, this is a pure visual pass. ===== */
-        .user-table-wrapper {
-            background: #ffffff;
-            border-radius: 14px;
-            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
-            padding: 18px;
-        }
-
-        /* ===== Table Base ===== */
-        .user-table {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 0 12px;
-            font-size: 14.5px;
-        }
-
-        .user-table thead th {
-            background: #f8fafc;
-            color: #475569;
-            font-weight: 700;
-            font-size: 12.5px;
-            text-transform: uppercase;
-            letter-spacing: 0.03em;
-            border: none;
-            padding: 14px 16px;
-        }
-
-        .user-table tbody tr {
-            background: #ffffff;
-            transition: box-shadow 0.2s ease;
-        }
-
-        .user-table tbody tr:hover {
-            box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
-        }
-
-        .user-table tbody td {
-            padding: 16px;
-            border-top: 1px solid #eef1f6;
-            border-bottom: 1px solid #eef1f6;
-            font-size: 14px;
-            color: #374151;
-        }
-
+        /* .user-table-wrapper/.user-table/.role-badge/.role-status/
+           .status-dot removed in V2 — this list now uses the shared
+           .crm-table-wrap/.crm-table/.crm-badge components from
+           crm-components.css instead (loaded globally via
+           include/header.blade.php). .lead-name-link stays: it's a
+           link-color rule, not part of the table chrome being shared. */
         .lead-name-link {
             color: #1f2937;
             text-decoration: none;
@@ -81,40 +41,6 @@
         .lead-name-link:hover {
             color: #4b49ac;
             text-decoration: underline;
-        }
-
-        .user-table tbody td:first-child {
-            border-left: 1px solid #eef1f6;
-            border-radius: 8px 0 0 8px;
-        }
-
-        .user-table tbody td:last-child {
-            border-right: 1px solid #eef1f6;
-            border-radius: 0 8px 8px 0;
-        }
-
-        /* ===== Role Badge ===== */
-        .role-badge {
-            padding: 5px 10px;
-            font-size: 11px;
-            border-radius: 5px;
-            background: #eef2ff;
-            color: #4b49ac;
-            font-weight: 500;
-        }
-
-        .role-status {
-            padding: 5px 10px;
-            font-size: 11px;
-            border-radius: 5px;
-            font-weight: 500;
-        }
-
-        .status-dot {
-            width: 7px;
-            height: 7px;
-            border-radius: 50%;
-            background: currentColor;
         }
 
         .close-btn {
@@ -328,86 +254,6 @@
             height: 21px;
         }
 
-        /* ===============================
-   LEAD HERO HEADER (Like Track Lead)
-================================ */
-        /* Same modernization pattern as Roles & Permissions / Dashboard:
-           a white, roomy header card with a colored icon circle, rather
-           than the previous blue gradient banner — kept the same class
-           names so none of this page's JS (which targets other IDs) needed
-           to change. */
-        .lead-hero-header {
-            background: #fff;
-            padding: 20px 22px;
-            border-radius: 13px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            color: #111827;
-            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
-            flex-wrap: wrap;
-            gap: 16px;
-        }
-
-        .lead-hero-left {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .lead-hero-icon {
-            width: 46px;
-            height: 46px;
-            border-radius: 12px;
-            background: #eff6ff;
-            color: #2563eb;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 19px;
-        }
-
-        .lead-hero-header h4 {
-            font-weight: 700;
-            font-size: 18px;
-            color: #111827;
-        }
-
-        .lead-hero-header small {
-            font-size: 14px;
-            color: #6b7280;
-        }
-
-        /* Buttons */
-        .lead-hero-right .btn {
-            border-radius: 10px;
-            padding: 8px 16px;
-            font-weight: 600;
-            transition: 0.2s ease;
-        }
-
-        .lead-hero-right .btn:hover {
-            transform: translateY(-1px);
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .lead-hero-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 14px;
-            }
-
-            .lead-hero-right {
-                width: 100%;
-            }
-
-            .lead-hero-right .btn {
-                width: 100%;
-                margin-bottom: 8px;
-            }
-        }
-
         /* ===== Lead Stat Tiles ===== */
         .lead-stat-grid {
             display: grid;
@@ -416,10 +262,10 @@
             margin: 20px 0 4px;
         }
 
+        /* Background/border/radius/shadow now come from the shared
+           .crm-card class (added alongside .lead-stat-card in the
+           markup) — this rule only supplies the tile's own flex layout. */
         .lead-stat-card {
-            background: #fff;
-            border-radius: 13px;
-            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
             padding: 20px 22px;
             display: flex;
             align-items: center;
@@ -529,32 +375,22 @@
            newer pages (Dashboard, Deal/Lead detail), so every card surface
            and text color needs an explicit override here rather than a
            handful of variable redefinitions. */
-        [data-theme="dark"] .lead-hero-header,
-        [data-theme="dark"] .lead-stat-card,
-        [data-theme="dark"] .user-table-wrapper,
+        /* .lead-stat-card's background/shadow are now .crm-card's, which
+           already has its own [data-theme="dark"] handling in
+           crm-components.css — only the tile's own text colors need an
+           override here. */
         [data-theme="dark"] .lead-expand-card,
         [data-theme="dark"] .add-user-modal {
             background: #1a1d2b;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
         }
-        [data-theme="dark"] .lead-hero-header h4,
         [data-theme="dark"] .lead-stat-card .lead-stat-value,
-        [data-theme="dark"] .user-table tbody td,
         [data-theme="dark"] .lead-name-link,
         [data-theme="dark"] .add-user-modal .modal-title {
             color: #eef0f6;
         }
-        [data-theme="dark"] .lead-hero-header small,
         [data-theme="dark"] .lead-stat-card .lead-stat-label {
             color: #9aa1b5;
-        }
-        [data-theme="dark"] .user-table thead th {
-            background: #232637; color: #9aa1b5;
-        }
-        [data-theme="dark"] .user-table tbody tr,
-        [data-theme="dark"] .user-table tbody td:first-child,
-        [data-theme="dark"] .user-table tbody td:last-child {
-            background: #1a1d2b; border-color: #2a2e40;
         }
         [data-theme="dark"] .lead-expand-card { border-color: #2a2e40; }
         [data-theme="dark"] .lead-highlight { background: #232637; border-color: #2a2e40; }
@@ -596,59 +432,46 @@
             <div class="content-wrapper">
 
                 <!-- PAGE HEADER -->
-                <!-- 🔷 LEAD LIST HERO HEADER -->
-                <div class="lead-hero-header mb-4">
-
-                    <div class="lead-hero-left">
-                        <div class="lead-hero-icon">
-                            <i class="fa fa-bullseye"></i>
-                        </div>
-                        <div>
-                            <h4 class="mb-0">Lead List</h4>
-                            <small>Manage all CRM leads</small>
-                        </div>
-                    </div>
-
-                    <div class="lead-hero-right">
+                @component('include.page-header', [
+                    'icon' => 'fa fa-bullseye',
+                    'title' => 'Lead List',
+                    'subtitle' => 'Manage all CRM leads',
+                ])
+                    @slot('actions')
                         @can('leads.import')
-                        <button class="btn btn-outline-secondary mr-2"
-                            data-toggle="modal"
-                            data-target="#uploadLeadsModal">
-                            <i class="fa fa-upload mr-1"></i> Upload Leads
+                        <button class="crm-btn crm-btn--secondary" data-toggle="modal" data-target="#uploadLeadsModal">
+                            <i class="fa fa-upload"></i> Upload Leads
                         </button>
                         @endcan
-
-                        <a href="{{ route('leads.create') }}"
-                            class="btn btn-primary">
-                            <i class="fa fa-plus mr-1"></i> Add Lead
+                        <a href="{{ route('leads.create') }}" class="crm-btn crm-btn--primary">
+                            <i class="fa fa-plus"></i> Add Lead
                         </a>
-                    </div>
-
-                </div>
+                    @endslot
+                @endcomponent
 
                 <div class="lead-stat-grid" id="leadStatGrid">
-                    <div class="lead-stat-card">
+                    <div class="lead-stat-card crm-card">
                         <div>
                             <div class="lead-stat-value" id="statTotalLeads">0</div>
                             <div class="lead-stat-label">Total Leads</div>
                         </div>
                         <div class="lead-stat-icon" style="background:#eff6ff;color:#2563eb;"><i class="fa fa-bullseye"></i></div>
                     </div>
-                    <div class="lead-stat-card">
+                    <div class="lead-stat-card crm-card">
                         <div>
                             <div class="lead-stat-value" id="statNewToday">0</div>
                             <div class="lead-stat-label">New Today</div>
                         </div>
                         <div class="lead-stat-icon" style="background:#f5f3ff;color:#7c3aed;"><i class="fa fa-user-plus"></i></div>
                     </div>
-                    <div class="lead-stat-card">
+                    <div class="lead-stat-card crm-card">
                         <div>
                             <div class="lead-stat-value" id="statConversionRate">0%</div>
                             <div class="lead-stat-label">Conversion Rate</div>
                         </div>
                         <div class="lead-stat-icon" style="background:#ecfdf5;color:#16a34a;"><i class="fa fa-percent"></i></div>
                     </div>
-                    <div class="lead-stat-card">
+                    <div class="lead-stat-card crm-card">
                         <div>
                             <div class="lead-stat-value" id="statFollowUpDue">0</div>
                             <div class="lead-stat-label">Follow-up Due</div>
@@ -661,11 +484,11 @@
                     <div class="col-md-8 d-flex align-items-center gap-2">
                         <strong style="padding: 0 10px;">Assign selected leads to:</strong>
 
-                        <select id="bulkAssignedUser" class="form-control form-control-sm w-25">
+                        <select id="bulkAssignedUser" class="crm-select w-25">
                             <option value="">-- Select User --</option>
                         </select>
 
-                        <button class="btn btn-primary btn-sm" style="margin-left: 10px;" id="bulkAssignBtn">
+                        <button class="crm-btn crm-btn--primary crm-btn--sm" style="margin-left: 10px;" id="bulkAssignBtn">
                             Assign
                         </button>
                     </div>
@@ -673,8 +496,7 @@
                 <!-- LEAD TABLE -->
                 <div class="row">
                     <div class="col-12 grid-margin">
-                        <div class="card">
-                            <div class="card-body">
+                        <div class="crm-card">
 
                                 <ul class="nav nav-tabs mb-3" id="leadTabs">
                                     <li class="nav-item">
@@ -689,34 +511,24 @@
                                     </li>
                                 </ul>
 
-                                <div class="row mb-3" id="leadFilterBar">
-                                    <div class="col-md-4 mb-2">
-                                        <input type="text" id="leadSearchInput" class="form-control" placeholder="Search name, company, phone, email…">
-                                    </div>
-                                    <div class="col-md-2 mb-2">
-                                        <select id="leadFilterStatus" class="form-control" data-master-type="lead_status">
-                                            <option value="">All statuses</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-2 mb-2">
-                                        <select id="leadFilterPriority" class="form-control" data-master-type="lead_priority">
-                                            <option value="">All priorities</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-2 mb-2">
-                                        <select id="leadFilterSource" class="form-control" data-master-type="lead_source">
-                                            <option value="">All sources</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-2 mb-2">
-                                        <select id="leadFilterAssignee" class="form-control">
-                                            <option value="">All owners</option>
-                                        </select>
-                                    </div>
+                                <div class="crm-filters" id="leadFilterBar">
+                                    <input type="text" id="leadSearchInput" class="crm-input" style="flex:2 1 260px;" placeholder="Search name, company, phone, email…">
+                                    <select id="leadFilterStatus" class="crm-select" data-master-type="lead_status">
+                                        <option value="">All statuses</option>
+                                    </select>
+                                    <select id="leadFilterPriority" class="crm-select" data-master-type="lead_priority">
+                                        <option value="">All priorities</option>
+                                    </select>
+                                    <select id="leadFilterSource" class="crm-select" data-master-type="lead_source">
+                                        <option value="">All sources</option>
+                                    </select>
+                                    <select id="leadFilterAssignee" class="crm-select">
+                                        <option value="">All owners</option>
+                                    </select>
                                 </div>
 
-                                <div class="table-responsive user-table-wrapper">
-                                    <table id="userTable" class="table user-table">
+                                <div class="table-responsive crm-table-wrap">
+                                    <table id="userTable" class="table crm-table">
                                         <thead>
                                             <tr>
                                                 <th class="text-center" style="width:40px;"></th>
@@ -740,7 +552,6 @@
 
                                 <div id="leadPagination" class="mt-3"></div>
 
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -751,27 +562,26 @@
 
 
     <!-- ================= DELETE MODAL ================= -->
-    <div class="modal fade" id="deleteConfirmModal" tabindex="-1">
+    <div class="modal fade crm-modal crm-confirm-modal" id="deleteConfirmModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered modal-sm">
-            <div class="modal-content add-user-modal">
+            <div class="modal-content">
 
                 <div class="modal-header">
-                    <h5 class="modal-title text-danger">
-                        <i class="fa fa-trash"></i> Confirm Delete
-                    </h5>
-                    <button type="button" class="close-btn" data-dismiss="modal">
-                        <span>&times;</span>
-                    </button>
+                    <div class="crm-modal__icon"><i class="fa fa-trash"></i></div>
+                    <div class="crm-modal__heading">
+                        <h5 class="modal-title">Confirm Delete</h5>
+                        <p class="crm-modal__subtitle">This action cannot be undone.</p>
+                    </div>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
                 </div>
 
-                <div class="modal-body text-center">
-                    <p>Are you sure you want to delete this lead?</p>
-                    <small class="text-muted">This action cannot be undone.</small>
+                <div class="modal-body">
+                    <p class="mb-0">Are you sure you want to delete this lead?</p>
                 </div>
 
-                <div class="modal-footer justify-content-center">
-                    <button type="button" class="btn btn-light" data-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                <div class="modal-footer">
+                    <button type="button" class="crm-btn crm-btn--secondary crm-btn--sm" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="crm-btn crm-btn--danger crm-btn--sm" id="confirmDeleteBtn">
                         <i class="fa fa-trash"></i> Delete
                     </button>
                 </div>
@@ -781,36 +591,36 @@
     </div>
 
 
-    <div class="modal fade" id="changeLeadStatusModal" tabindex="-1">
+    <div class="modal fade crm-modal" id="changeLeadStatusModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered modal-sm">
-            <div class="modal-content add-user-modal">
+            <div class="modal-content">
 
                 <div class="modal-header">
-                    <h5 class="modal-title">
-                        <i class="fa fa-refresh"></i> Change Lead Status
-                    </h5>
-                    <button type="button" class="close-btn" data-dismiss="modal">
-                        <span>&times;</span>
-                    </button>
+                    <div class="crm-modal__icon"><i class="fa fa-refresh"></i></div>
+                    <div class="crm-modal__heading">
+                        <h5 class="modal-title">Change Lead Status</h5>
+                        <p class="crm-modal__subtitle">Update where this lead stands.</p>
+                    </div>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
                 </div>
 
                 <div class="modal-body">
                     <input type="hidden" id="status_lead_id">
 
-                    <label class="mb-1">Select Status</label>
-                    <select id="new_lead_status" class="form-control" data-master-type="lead_status">
+                    <label class="crm-label">Select Status</label>
+                    <select id="new_lead_status" class="crm-select" data-master-type="lead_status">
                     </select>
 
                     <div id="lostReasonWrap" style="display:none; margin-top:12px;">
-                        <label class="mb-1">Lost Reason</label>
-                        <select id="lost_reason" class="form-control" data-master-type="lost_reason">
+                        <label class="crm-label">Lost Reason</label>
+                        <select id="lost_reason" class="crm-select" data-master-type="lost_reason">
                         </select>
                     </div>
                 </div>
 
-                <div class="modal-footer justify-content-center">
-                    <button class="btn btn-light" data-dismiss="modal">Cancel</button>
-                    <button class="btn btn-primary btn-save-solid" id="saveLeadStatus">
+                <div class="modal-footer">
+                    <button class="crm-btn crm-btn--secondary crm-btn--sm" data-dismiss="modal">Cancel</button>
+                    <button class="crm-btn crm-btn--primary crm-btn--sm" id="saveLeadStatus">
                         <i class="fa fa-save"></i> Update
                     </button>
                 </div>
@@ -820,22 +630,21 @@
     </div>
 
     <!-- Upload Leads Modal -->
-    <div class="modal fade" id="uploadLeadsModal" tabindex="-1" role="dialog">
+    <div class="modal fade crm-modal" id="uploadLeadsModal" tabindex="-1" role="dialog">
         <div class="modal-dialog modal-md" role="document">
             <div class="modal-content">
 
                 <!-- Modal Header -->
                 <div class="modal-header">
-                    <h5 class="modal-title">
-                        <i class="fa fa-file-excel"></i> Upload Leads (Excel)
-                    </h5>
-                    <a href="{{route('leads.download_format')}}"
-                        class="btn btn-info btn-sm" download>
+                    <div class="crm-modal__icon"><i class="fa fa-file-excel"></i></div>
+                    <div class="crm-modal__heading">
+                        <h5 class="modal-title">Upload Leads</h5>
+                        <p class="crm-modal__subtitle">Bulk-import leads from an Excel file.</p>
+                    </div>
+                    <a href="{{route('leads.download_format')}}" class="crm-btn crm-btn--secondary crm-btn--sm" download>
                         <i class="fa fa-download"></i> Download Format
                     </a>
-                    <button type="button" class="btn btn-danger rounded-circle" style="padding: 7px 10px;" data-dismiss="modal">
-                        <span>&times;</span>
-                    </button>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
                 </div>
 
                 <!-- Modal Body -->
@@ -914,26 +723,26 @@
 
                 <!-- Modal Footer -->
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal" id="uploadCancelBtn">Cancel</button>
-                    <button type="button" class="btn btn-success btn-sm" id="uploadSubmitBtn" onclick="uploadLeads()">
+                    <button type="button" class="crm-btn crm-btn--secondary crm-btn--sm" data-dismiss="modal" id="uploadCancelBtn">Cancel</button>
+                    <button type="button" class="crm-btn crm-btn--primary crm-btn--sm" id="uploadSubmitBtn" onclick="uploadLeads()">
                         <i class="fa fa-upload"></i> Upload
                     </button>
-                    <button type="button" class="btn btn-primary btn-sm" data-dismiss="modal" id="uploadDoneBtn" style="display:none;">Done</button>
+                    <button type="button" class="crm-btn crm-btn--primary crm-btn--sm" data-dismiss="modal" id="uploadDoneBtn" style="display:none;">Done</button>
                 </div>
 
             </div>
         </div>
     </div>
 
-    <div class="modal fade assign-modal" id="assignUserModal" tabindex="-1">
+    <div class="modal fade crm-modal" id="assignUserModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
 
                 <div class="modal-header">
-                    <div class="assign-modal-icon"><i class="fa fa-user-plus"></i></div>
-                    <div class="assign-modal-heading">
+                    <div class="crm-modal__icon"><i class="fa fa-user-plus"></i></div>
+                    <div class="crm-modal__heading">
                         <h5 class="modal-title">Assign Lead</h5>
-                        <p class="assign-modal-subtitle">Choose a team member to take ownership of this lead.</p>
+                        <p class="crm-modal__subtitle">Choose a team member to take ownership of this lead.</p>
                     </div>
                     <button class="close" data-dismiss="modal">&times;</button>
                 </div>
@@ -942,16 +751,16 @@
                     <input type="hidden" id="leadId">
 
                     <div class="form-group mb-0">
-                        <label class="assign-modal-label">Assign To</label>
-                        <select id="assignedUser" class="form-control assign-modal-select">
+                        <label class="crm-label">Assign To</label>
+                        <select id="assignedUser" class="form-control">
                             <option value="">Loading...</option>
                         </select>
                     </div>
                 </div>
 
                 <div class="modal-footer">
-                    <button class="btn btn-light" data-dismiss="modal">Cancel</button>
-                    <button class="btn btn-primary" id="saveAssignedUser"><i class="fa fa-check"></i> Save</button>
+                    <button class="crm-btn crm-btn--secondary crm-btn--sm" data-dismiss="modal">Cancel</button>
+                    <button class="crm-btn crm-btn--primary crm-btn--sm" id="saveAssignedUser"><i class="fa fa-check"></i> Save</button>
                 </div>
 
             </div>
@@ -1011,21 +820,11 @@
 
         const esc = value => $('<div>').text(value ?? '').html();
 
-        const LEAD_PALETTE = ['#2563eb', '#7c3aed', '#0d9488', '#ea580c', '#db2777', '#16a34a', '#4338ca', '#0891b2'];
-        function leadPaletteColor(seed) {
-            let hash = 0;
-            String(seed || '').split('').forEach(ch => { hash = (hash * 31 + ch.charCodeAt(0)) >>> 0; });
-            return LEAD_PALETTE[hash % LEAD_PALETTE.length];
-        }
-
-        const LEAD_STATUS_COLORS = {
-            'new': '#2563eb', 'hot': '#dc2626', 'warm': '#ea580c', 'cold': '#0891b2',
-            'contacted': '#7c3aed', 'interested': '#7c3aed', 'follow_up': '#ea580c',
-            'converted': '#16a34a', 'not_interested': '#6b7280', 'closed': '#6b7280',
-        };
-        function leadStatusColor(status) {
-            return LEAD_STATUS_COLORS[String(status || '').toLowerCase()] || leadPaletteColor(status);
-        }
+        // Lead/priority status colors now come from the shared
+        // renderStatusBadge() (public/js/crm-status.js) — the per-page
+        // LEAD_STATUS_COLORS hex map this replaced is gone; that map's
+        // exact status vocabulary was carried over into
+        // CRM_STATUS_MAP.lead when this page migrated onto it (V2).
 
         function renderLeadStats(counts) {
             if (!counts) return;
@@ -1110,9 +909,7 @@
 
                                 <!-- Lead Type -->
                                 <td class="text-center">
-                                    <span class="role-badge">
-                                        ${esc(formatLeadStatus(item.lead_type))}
-                                    </span>
+                                    <span class="crm-badge crm-badge--neutral">${esc(formatLeadStatus(item.lead_type))}</span>
                                 </td>
 
                                 <!-- Contact -->
@@ -1127,24 +924,22 @@
                                     ${esc(formatLeadStatus(item.lead_source) ?? '-')}
                                 </td>
 
-                             <td class="text-center">
+                                <!-- Lead Status — shared status system (public/js/crm-status.js);
+                                     role-status class kept only as the click-target hook for the
+                                     existing "open change-status modal" handler below. -->
+                                <td class="text-center">
                                     <span
                                         id="leadStatus_${item.id}"
                                         class="role-status"
                                         data-id="${item.id}"
                                         data-status="${item.lead_status}"
-                                        style="cursor:pointer;background:${leadStatusColor(item.lead_status)}1a;color:${leadStatusColor(item.lead_status)};"
-                                    >
-                                        <span class="status-dot"></span>
-                                        ${esc(formatLeadStatus(item.lead_status))}
-                                    </span>
+                                        style="cursor:pointer;"
+                                    >${renderStatusBadge('lead', item.lead_status)}</span>
                                 </td>
 
                                 <!-- Priority -->
                                 <td class="text-center">
-                                    <span class="role-badge">
-                                        ${esc(capitalizeFirst(item.priority) ?? '-')}
-                                    </span>
+                                    ${item.priority ? renderStatusBadge('priority', item.priority) : '-'}
                                 </td>
 
                                 <!-- Follow Up -->
@@ -1292,8 +1087,12 @@
             } else {
                 tbody = `
                     <tr>
-                        <td colspan="9" class="text-center text-muted">
-                            ${activeLeadTab === 'converted' ? 'No converted leads yet' : 'No lead data found'}
+                        <td colspan="10">
+                            <div class="crm-empty">
+                                <div class="crm-empty__icon"><i class="fa fa-bullseye"></i></div>
+                                <p class="crm-empty__title">${activeLeadTab === 'converted' ? 'No converted leads yet' : 'No leads yet'}</p>
+                                <p class="crm-empty__desc">${activeLeadTab === 'converted' ? 'Leads that convert to a deal will show up here.' : 'Leads you create or import will show up here.'}</p>
+                            </div>
                         </td>
                     </tr>
                 `;

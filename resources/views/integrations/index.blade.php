@@ -9,7 +9,7 @@
 
     <link rel="stylesheet" href="{{ asset('vendors/css/vendor.bundle.base.css') }}">
     <link rel="stylesheet" href="{{ asset('css/vertical-layout-light/style.css') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.26.25/sweetalert2.min.css">
 
     <style>
@@ -500,16 +500,25 @@
         $(document).on('click', '.regenerateBtn', function (e) {
             e.preventDefault();
             const id = $(this).data('id');
-            if (!confirm('Generate a new webhook URL? The old one will stop working immediately, so you\'ll need to update it on the platform side too.')) return;
-            $.post(webhooksBaseUrl + '/' + id + '/regenerate', {}, function (response) {
-                if (response.status) {
-                    toastr.success(response.message);
-                    setTimeout(() => location.reload(), 900);
-                } else {
-                    toastr.error(response.message);
+            openConfirmModal({
+                title: 'Generate a new webhook URL?',
+                message: 'The old one will stop working immediately, so you\'ll need to update it on the platform side too.',
+                variant: 'warning',
+                confirmText: 'Regenerate',
+                onConfirm: function (done) {
+                    $.post(webhooksBaseUrl + '/' + id + '/regenerate', {}, function (response) {
+                        if (response.status) {
+                            toastr.success(response.message);
+                            setTimeout(() => location.reload(), 900);
+                        } else {
+                            toastr.error(response.message);
+                        }
+                        done();
+                    }).fail(function (xhr) {
+                        toastr.error(xhr.responseJSON?.message || 'Something went wrong');
+                        done();
+                    });
                 }
-            }).fail(function (xhr) {
-                toastr.error(xhr.responseJSON?.message || 'Something went wrong');
             });
         });
 
@@ -517,16 +526,23 @@
             e.preventDefault();
             const id = $(this).data('id');
             const label = $(this).data('label');
-            if (!confirm('Remove the "' + label + '" webhook? Its URL will stop accepting leads immediately.')) return;
-            $.ajax({
-                url: webhooksBaseUrl + '/' + id,
-                type: 'POST',
-                data: { _method: 'DELETE' },
-                success: function (response) {
-                    toastr.success(response.message);
-                    setTimeout(() => location.reload(), 700);
-                },
-                error: function () { toastr.error('Something went wrong'); }
+            openConfirmModal({
+                title: 'Remove this webhook?',
+                message: 'The "' + label + '" webhook\'s URL will stop accepting leads immediately.',
+                confirmText: 'Remove',
+                onConfirm: function (done) {
+                    $.ajax({
+                        url: webhooksBaseUrl + '/' + id,
+                        type: 'POST',
+                        data: { _method: 'DELETE' },
+                        success: function (response) {
+                            toastr.success(response.message);
+                            setTimeout(() => location.reload(), 700);
+                            done();
+                        },
+                        error: function () { toastr.error('Something went wrong'); done(); }
+                    });
+                }
             });
         });
 

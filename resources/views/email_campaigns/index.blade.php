@@ -9,7 +9,7 @@
 
     <link rel="stylesheet" href="{{ asset('vendors/css/vendor.bundle.base.css') }}">
     <link rel="stylesheet" href="{{ asset('css/vertical-layout-light/style.css') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.26.25/sweetalert2.min.css">
 
     <style>
@@ -342,41 +342,53 @@
         $(document).on('click', '.sendCampaignBtn', function() {
             const id = $(this).data('id');
             const name = $(this).data('name');
-            if (!confirm(`Send "${name}" now? This emails everyone who matches its audience filters.`)) return;
-
-            const $btn = $(this).prop('disabled', true);
-            $.post("{{ url('email-campaigns') }}/" + id + "/send", {}, function(response) {
-                if (response.status) {
-                    toastr.success(response.message);
-                } else {
-                    toastr.error(response.message);
+            const $btn = $(this);
+            openConfirmModal({
+                title: `Send "${name}" now?`,
+                message: 'This emails everyone who matches its audience filters.',
+                variant: 'info',
+                confirmText: 'Send',
+                onConfirm: function(done) {
+                    $btn.prop('disabled', true);
+                    $.post("{{ url('email-campaigns') }}/" + id + "/send", {}, function(response) {
+                        if (response.status) {
+                            toastr.success(response.message);
+                        } else {
+                            toastr.error(response.message);
+                        }
+                        loadCampaigns();
+                        done();
+                    }).fail(function(xhr) {
+                        toastr.error(xhr.responseJSON?.message || 'Send failed');
+                        $btn.prop('disabled', false);
+                        done();
+                    });
                 }
-                loadCampaigns();
-            }).fail(function(xhr) {
-                toastr.error(xhr.responseJSON?.message || 'Send failed');
-                $btn.prop('disabled', false);
             });
         });
 
         $(document).on('click', '.deleteCampaignBtn', function() {
-            if (!confirm('Delete this campaign?')) return;
             const id = $(this).data('id');
-            $.ajax({
-                url: "{{ url('email-campaigns') }}/" + id,
-                type: 'POST',
-                data: { _method: 'DELETE' },
-                success: function(response) {
-                    if (response.status) {
-                        toastr.success(response.message);
-                        loadCampaigns();
-                    } else {
-                        toastr.error(response.message);
+            openConfirmModal({ title: 'Delete this campaign?', message: 'This can\'t be undone.', confirmText: 'Delete', onConfirm: function(done) {
+                $.ajax({
+                    url: "{{ url('email-campaigns') }}/" + id,
+                    type: 'POST',
+                    data: { _method: 'DELETE' },
+                    success: function(response) {
+                        done();
+                        if (response.status) {
+                            toastr.success(response.message);
+                            loadCampaigns();
+                        } else {
+                            toastr.error(response.message);
+                        }
+                    },
+                    error: function(xhr) {
+                        toastr.error(xhr.responseJSON?.message || 'Something went wrong');
+                        done();
                     }
-                },
-                error: function(xhr) {
-                    toastr.error(xhr.responseJSON?.message || 'Something went wrong');
-                }
-            });
+                });
+            }});
         });
 
         $(document).ready(function() {

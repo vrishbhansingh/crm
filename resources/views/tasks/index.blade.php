@@ -3,16 +3,13 @@
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}"><title>Tasks & Reminders</title>
-    <link rel="stylesheet" href="{{ asset('vendors/feather/feather.css') }}"><link rel="stylesheet" href="{{ asset('vendors/ti-icons/css/themify-icons.css') }}"><link rel="stylesheet" href="{{ asset('vendors/css/vendor.bundle.base.css') }}"><link rel="stylesheet" href="{{ asset('css/vertical-layout-light/style.css') }}"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="{{ asset('vendors/css/vendor.bundle.base.css') }}"><link rel="stylesheet" href="{{ asset('css/vertical-layout-light/style.css') }}"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.css">
     <style>
         /* Same modernization pattern as the rest of this pass: bigger, roomier cards. */
-        .crm-page-header{background:#fff;padding:20px 22px;border-radius:13px;box-shadow:0 8px 24px rgba(15,23,42,.06);margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}
-        .crm-page-header h3{margin:0 0 6px;font-weight:700;font-size:18px;color:#111827}.crm-page-header p{margin:0;color:#6b7280;font-size:14px}
-        .crm-page-header .btn{border-radius:10px;padding:8px 16px;font-weight:600}
         .task-shell { background:#fff; border-radius:13px; box-shadow:0 8px 24px rgba(15,23,42,.06); overflow:hidden; }
         .task-row { display:grid; grid-template-columns:32px minmax(220px,1fr) 135px 155px 130px 100px; gap:14px; align-items:center; padding:18px 22px; border-bottom:1px solid #edf2f7; font-size:14.5px; }
         .task-row:hover { background:#f8fbff; } .task-title { font-weight:600;color:#1f2937;font-size:15px}.task-meta{font-size:13px;color:#6b7280}.priority{font-size:12px;font-weight:700;text-transform:uppercase}.overdue{color:#dc2626}.completed .task-title{text-decoration:line-through;color:#9ca3af}
-        .filter-grid { display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px }
         @media(max-width:900px){.task-row{grid-template-columns:30px 1fr}.task-cell-secondary{grid-column:2}}
         .row-actions{position:relative;display:inline-block}
         .row-actions-btn{width:32px;height:32px;border-radius:8px;border:none;background:transparent;color:#6b7280;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px}
@@ -24,9 +21,7 @@
         .row-actions-menu i{width:16px;text-align:center;color:#6b7280}
         .row-actions-menu .text-danger{color:#dc2626}.row-actions-menu .text-danger i{color:#dc2626}.row-actions-menu .text-danger:hover{background:#fef2f2}
 
-        [data-theme="dark"] .crm-page-header,[data-theme="dark"] .task-shell,[data-theme="dark"] .card{background:#1a1d2b;box-shadow:0 8px 24px rgba(0,0,0,.35)}
-        [data-theme="dark"] .crm-page-header h3{color:#eef0f6}
-        [data-theme="dark"] .crm-page-header p{color:#9aa1b5}
+        [data-theme="dark"] .task-shell,[data-theme="dark"] .card{background:#1a1d2b;box-shadow:0 8px 24px rgba(0,0,0,.35)}
         [data-theme="dark"] .task-row{border-bottom-color:#2a2e40}
         [data-theme="dark"] .task-row:hover{background:#20233a}
         [data-theme="dark"] .task-title{color:#eef0f6}
@@ -40,63 +35,111 @@
         [data-theme="dark"] .row-actions-menu .text-danger{color:#fca5a5}
         [data-theme="dark"] .row-actions-menu .text-danger i{color:#fca5a5}
         [data-theme="dark"] .row-actions-menu .text-danger:hover{background:rgba(239,68,68,.18)}
+
+        /* Flatpickr (date/time picker plugin) — the native datetime-local
+           widget's own dark-mode rendering is inconsistent (the calendar
+           grid picks up dark styling, the separate hour/minute list does
+           not — a browser limitation, not something fixable with CSS on
+           the native control), so date/time entry across this page now
+           goes through one fully-themeable plugin instead. Colors below
+           mirror the shared CRM tokens; the visible field itself reuses
+           .crm-input as-is via altInputClass. */
+        .flatpickr-calendar { background: var(--crm-surface, #fff); border: 1px solid var(--crm-border-strong, #DCDFD8); border-radius: var(--crm-radius-md, 8px); box-shadow: var(--crm-shadow-lg, 0 12px 32px rgba(0,0,0,.14)); font-family: var(--crm-font-sans, inherit); }
+        .flatpickr-calendar.arrowTop:before, .flatpickr-calendar.arrowTop:after { border-bottom-color: var(--crm-surface, #fff); }
+        .flatpickr-months, .flatpickr-month { color: var(--crm-ink, #171A17); fill: var(--crm-ink, #171A17); }
+        .flatpickr-current-month .flatpickr-monthDropdown-months, .flatpickr-current-month input.cur-year { color: var(--crm-ink, #171A17); background: transparent; }
+        .flatpickr-weekdays { background: var(--crm-surface, #fff); }
+        span.flatpickr-weekday { color: var(--crm-ink-muted, #585F57); }
+        .flatpickr-day { color: var(--crm-ink, #171A17); }
+        .flatpickr-day.flatpickr-disabled, .flatpickr-day.prevMonthDay, .flatpickr-day.nextMonthDay { color: var(--crm-ink-faint, #8B9187); }
+        .flatpickr-day:hover, .flatpickr-day:focus { background: var(--crm-accent-tint, #E4EFEC); border-color: var(--crm-accent-tint, #E4EFEC); }
+        .flatpickr-day.selected, .flatpickr-day.selected:hover, .flatpickr-day.today.selected { background: var(--crm-accent, #1F6F63); border-color: var(--crm-accent, #1F6F63); color: #fff; }
+        .flatpickr-day.today { border-color: var(--crm-accent, #1F6F63); }
+        .flatpickr-time { border-top: 1px solid var(--crm-border, #DCDFD8); }
+        .flatpickr-time input, .flatpickr-time .flatpickr-time-separator, .flatpickr-time .flatpickr-am-pm { color: var(--crm-ink, #171A17); background: transparent; }
+        .flatpickr-time input:hover, .flatpickr-time input:focus, .flatpickr-time .flatpickr-am-pm:hover, .flatpickr-time .flatpickr-am-pm:focus { background: var(--crm-accent-tint, #E4EFEC); }
+
+        [data-theme="dark"] .flatpickr-calendar { background: var(--crm-surface, #1A1E24); border-color: var(--crm-border-strong, #3A414C); }
+        [data-theme="dark"] .flatpickr-calendar.arrowTop:before, [data-theme="dark"] .flatpickr-calendar.arrowTop:after { border-bottom-color: var(--crm-surface, #1A1E24); }
+        [data-theme="dark"] .flatpickr-months, [data-theme="dark"] .flatpickr-month { color: var(--crm-ink, #E7E9EC); fill: var(--crm-ink, #E7E9EC); }
+        [data-theme="dark"] .flatpickr-current-month .flatpickr-monthDropdown-months, [data-theme="dark"] .flatpickr-current-month input.cur-year { color: var(--crm-ink, #E7E9EC); }
+        [data-theme="dark"] .flatpickr-weekdays { background: var(--crm-surface, #1A1E24); }
+        [data-theme="dark"] span.flatpickr-weekday { color: var(--crm-ink-muted, #A2A9B3); }
+        [data-theme="dark"] .flatpickr-day { color: var(--crm-ink, #E7E9EC); }
+        [data-theme="dark"] .flatpickr-day.flatpickr-disabled, [data-theme="dark"] .flatpickr-day.prevMonthDay, [data-theme="dark"] .flatpickr-day.nextMonthDay { color: var(--crm-ink-faint, #767E89); }
+        [data-theme="dark"] .flatpickr-day:hover, [data-theme="dark"] .flatpickr-day:focus { background: var(--crm-accent-tint, #1C2B28); border-color: var(--crm-accent-tint, #1C2B28); }
+        [data-theme="dark"] .flatpickr-day.selected, [data-theme="dark"] .flatpickr-day.selected:hover { background: var(--crm-accent, #5AAB9D); border-color: var(--crm-accent, #5AAB9D); color: #0f1117; }
+        [data-theme="dark"] .flatpickr-time { border-top-color: var(--crm-border, #2C323B); }
+        [data-theme="dark"] .flatpickr-time input, [data-theme="dark"] .flatpickr-time .flatpickr-time-separator, [data-theme="dark"] .flatpickr-time .flatpickr-am-pm { color: var(--crm-ink, #E7E9EC); }
+        [data-theme="dark"] .flatpickr-time input:hover, [data-theme="dark"] .flatpickr-time input:focus, [data-theme="dark"] .flatpickr-time .flatpickr-am-pm:hover { background: var(--crm-accent-tint, #1C2B28); }
     </style>
 </head>
 <body><div class="container-scroller">@include('include.header')<div class="container-fluid page-body-wrapper">@include('include.sidebar')<div class="main-panel"><div class="content-wrapper">
-    <div class="crm-page-header"><div><h3>Tasks & Reminders</h3><p>Keep every follow-up and commitment visible.</p></div><div style="display:flex;gap:10px;flex-wrap:wrap"><a href="{{ route('tasks.workload') }}" class="btn btn-light"><i class="fa fa-bar-chart"></i> Workload</a>@can('tasks.create')<button class="btn btn-light" id="bulkCreateBtn"><i class="fa fa-clone"></i> Bulk Create</button><button class="btn btn-primary" id="newTaskBtn"><i class="fa fa-plus"></i> New Task</button>@endcan</div></div>
-    <div class="card mb-3" style="border-radius:13px;box-shadow:0 8px 24px rgba(15,23,42,.06);border:none"><div class="card-body filter-grid">
-        <select id="filterStatus" class="form-control"><option value="">All statuses</option><option value="todo">To do</option><option value="in_progress">In progress</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select>
-        <select id="filterPriority" class="form-control"><option value="">All priorities</option><option value="urgent">Urgent</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select>
-        <select id="filterDue" class="form-control"><option value="">Any due date</option><option value="today">Due today</option><option value="overdue">Overdue</option><option value="upcoming">Upcoming</option></select>
-        <select id="filterAssignee" class="form-control"><option value="">All assignees</option>@foreach($users as $user)<option value="{{ $user->id }}">{{ $user->name }}</option>@endforeach</select>
-    </div></div>
+    @component('include.page-header', ['icon' => 'fa-solid fa-list-check', 'title' => 'Tasks & Reminders', 'subtitle' => 'Keep every follow-up and commitment visible.'])
+        @slot('actions')
+            <a href="{{ route('tasks.workload') }}" class="crm-btn crm-btn--secondary"><i class="fa fa-bar-chart"></i> Workload</a>
+            @can('tasks.create')
+                <button type="button" class="crm-btn crm-btn--secondary" id="bulkCreateBtn"><i class="fa fa-clone"></i> Bulk Create</button>
+                <button type="button" class="crm-btn crm-btn--primary" id="newTaskBtn"><i class="fa fa-plus"></i> New Task</button>
+            @endcan
+        @endslot
+    @endcomponent
+    <div class="crm-card mb-3">
+        <div class="crm-filters">
+            <select id="filterStatus" class="crm-select"><option value="">All statuses</option><option value="todo">To do</option><option value="in_progress">In progress</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select>
+            <select id="filterPriority" class="crm-select"><option value="">All priorities</option><option value="urgent">Urgent</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select>
+            <select id="filterDue" class="crm-select"><option value="">Any due date</option><option value="today">Due today</option><option value="overdue">Overdue</option><option value="upcoming">Upcoming</option></select>
+            <select id="filterAssignee" class="crm-select"><option value="">All assignees</option>@foreach($users as $user)<option value="{{ $user->id }}">{{ $user->name }}</option>@endforeach</select>
+        </div>
+    </div>
     <div class="task-shell" id="taskList"><div class="p-4 text-center text-muted">Loading tasks…</div></div>
 </div>@include('include.footer')</div></div></div>
 
-<div class="modal fade" id="taskModal"><div class="modal-dialog modal-lg"><form class="modal-content" id="taskForm"><div class="modal-header"><h5 id="taskModalTitle">New Task</h5><button type="button" class="close" data-dismiss="modal">&times;</button></div><div class="modal-body"><input type="hidden" id="taskId"><div class="form-row">
-    <div class="form-group col-md-8"><label>Title</label><input class="form-control" name="title" id="taskTitle" maxlength="255" required></div><div class="form-group col-md-4"><label>Assignee</label><select class="form-control" name="assigned_to" id="taskAssignee"><option value="">Unassigned</option>@foreach($users as $user)<option value="{{ $user->id }}">{{ $user->name }}</option>@endforeach</select></div>
-    <div class="form-group col-md-12"><label>Description</label><textarea class="form-control" name="description" id="taskDescription" rows="3"></textarea></div>
-    <div class="form-group col-md-3"><label>Priority</label><select class="form-control" name="priority" id="taskPriority"><option value="medium">Medium</option><option value="low">Low</option><option value="high">High</option><option value="urgent">Urgent</option></select></div>
-    <div class="form-group col-md-3"><label>Status</label><select class="form-control" name="status" id="taskStatus"><option value="todo">To do</option><option value="in_progress">In progress</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select></div>
-    <div class="form-group col-md-3"><label>Due</label><input class="form-control" type="datetime-local" name="due_at" id="taskDue"></div><div class="form-group col-md-3"><label>Remind at</label><input class="form-control" type="datetime-local" name="remind_at" id="taskRemind"></div>
-    <div class="form-group col-md-4"><label>Link type</label><select class="form-control" name="related_type" id="taskRelatedType"><option value="">No link</option><option value="lead">Lead</option><option value="deal">Deal</option><option value="company">Company</option><option value="contact">Contact</option><option value="order">Order</option></select></div><div class="form-group col-md-8"><label>Linked record</label><select class="form-control" name="related_id" id="taskRelatedId" disabled><option value="">Select a type first</option></select></div>
+<div class="modal fade crm-modal" id="taskModal"><div class="modal-dialog modal-lg"><form class="modal-content" id="taskForm"><div class="modal-header"><div class="crm-modal__icon"><i class="fa-solid fa-list-check"></i></div><div class="crm-modal__heading"><h5 class="modal-title" id="taskModalTitle">New Task</h5></div><button type="button" class="close" data-dismiss="modal">&times;</button></div><div class="modal-body"><input type="hidden" id="taskId"><div class="form-row">
+    <div class="form-group col-md-8"><label class="crm-label">Title</label><input class="crm-input" name="title" id="taskTitle" maxlength="255" required></div><div class="form-group col-md-4"><label class="crm-label">Assignee</label><select class="crm-select" name="assigned_to" id="taskAssignee"><option value="">Unassigned</option>@foreach($users as $user)<option value="{{ $user->id }}">{{ $user->name }}</option>@endforeach</select></div>
+    <div class="form-group col-md-12"><label class="crm-label">Description</label><textarea class="crm-input" name="description" id="taskDescription" rows="3"></textarea></div>
+    <div class="form-group col-md-3"><label class="crm-label">Priority</label><select class="crm-select" name="priority" id="taskPriority"><option value="medium">Medium</option><option value="low">Low</option><option value="high">High</option><option value="urgent">Urgent</option></select></div>
+    <div class="form-group col-md-3"><label class="crm-label">Status</label><select class="crm-select" name="status" id="taskStatus"><option value="todo">To do</option><option value="in_progress">In progress</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select></div>
+    <div class="form-group col-md-3"><label class="crm-label">Due</label><input class="crm-input" type="text" name="due_at" id="taskDue" autocomplete="off"></div><div class="form-group col-md-3"><label class="crm-label">Remind at</label><input class="crm-input" type="text" name="remind_at" id="taskRemind" autocomplete="off"></div>
+    <div class="form-group col-md-4"><label class="crm-label">Link type</label><select class="crm-select" name="related_type" id="taskRelatedType"><option value="">No link</option><option value="lead">Lead</option><option value="deal">Deal</option><option value="company">Company</option><option value="contact">Contact</option><option value="order">Order</option></select></div><div class="form-group col-md-8"><label class="crm-label">Linked record</label><select class="crm-select" name="related_id" id="taskRelatedId" disabled><option value="">Select a type first</option></select></div>
 
-    <div class="form-group col-md-4"><label>Activity type</label><select class="form-control" name="activity_type" id="taskActivityType"><option value="task">Task</option><option value="call">Call</option><option value="meeting">Meeting</option></select></div>
-    <div class="form-group col-md-4"><label>Depends on</label><select class="form-control" id="taskDependsOn"><option value="">No dependency</option></select></div>
+    <div class="form-group col-md-4"><label class="crm-label">Activity type</label><select class="crm-select" name="activity_type" id="taskActivityType"><option value="task">Task</option><option value="call">Call</option><option value="meeting">Meeting</option></select></div>
+    <div class="form-group col-md-4"><label class="crm-label">Depends on</label><select class="crm-select" id="taskDependsOn"><option value="">No dependency</option></select></div>
     <div class="form-group col-md-4"></div>
 
     <div id="callFields" class="col-md-12 d-none"><div class="form-row">
-        <div class="form-group col-md-3"><label>Direction</label><select class="form-control" id="callDirection"><option value="outbound">Outbound</option><option value="inbound">Inbound</option></select></div>
-        <div class="form-group col-md-3"><label>Disposition</label><select class="form-control" id="callDisposition"><option value="connected">Connected</option><option value="no_answer">No answer</option><option value="busy">Busy</option><option value="voicemail">Voicemail</option><option value="wrong_number">Wrong number</option></select></div>
-        <div class="form-group col-md-3"><label>Duration (min)</label><input type="number" min="0" class="form-control" id="callDuration"></div>
-        <div class="form-group col-md-3"><label>Recording/reference link</label><input type="url" class="form-control" id="callReferenceLink" placeholder="https://…"></div>
+        <div class="form-group col-md-3"><label class="crm-label">Direction</label><select class="crm-select" id="callDirection"><option value="outbound">Outbound</option><option value="inbound">Inbound</option></select></div>
+        <div class="form-group col-md-3"><label class="crm-label">Disposition</label><select class="crm-select" id="callDisposition"><option value="connected">Connected</option><option value="no_answer">No answer</option><option value="busy">Busy</option><option value="voicemail">Voicemail</option><option value="wrong_number">Wrong number</option></select></div>
+        <div class="form-group col-md-3"><label class="crm-label">Duration (min)</label><input type="number" min="0" class="crm-input" id="callDuration"></div>
+        <div class="form-group col-md-3"><label class="crm-label">Recording/reference link</label><input type="url" class="crm-input" id="callReferenceLink" placeholder="https://…"></div>
     </div></div>
 
     <div id="meetingFields" class="col-md-12 d-none"><div class="form-row">
-        <div class="form-group col-md-4"><label>Location</label><input class="form-control" id="meetingLocation"></div>
-        <div class="form-group col-md-4"><label>Video link</label><input type="url" class="form-control" id="meetingVideoLink" placeholder="https://…"></div>
-        <div class="form-group col-md-4"><label>Outcome</label><input class="form-control" id="meetingOutcome"></div>
-        <div class="form-group col-md-12"><label>Agenda</label><textarea class="form-control" id="meetingAgenda" rows="2"></textarea></div>
-        <div class="form-group col-md-12"><label>Attendees</label><div id="attendeeRows"></div><button type="button" class="btn btn-sm btn-light" id="addAttendeeBtn"><i class="fa fa-plus"></i> Add attendee</button></div>
+        <div class="form-group col-md-4"><label class="crm-label">Location</label><input class="crm-input" id="meetingLocation"></div>
+        <div class="form-group col-md-4"><label class="crm-label">Video link</label><input type="url" class="crm-input" id="meetingVideoLink" placeholder="https://…"></div>
+        <div class="form-group col-md-4"><label class="crm-label">Outcome</label><input class="crm-input" id="meetingOutcome"></div>
+        <div class="form-group col-md-12"><label class="crm-label">Agenda</label><textarea class="crm-input" id="meetingAgenda" rows="2"></textarea></div>
+        <div class="form-group col-md-12"><label class="crm-label">Attendees</label><div id="attendeeRows"></div><button type="button" class="crm-btn crm-btn--secondary crm-btn--sm" id="addAttendeeBtn"><i class="fa fa-plus"></i> Add attendee</button></div>
     </div></div>
 
-    <div class="form-group col-md-3"><label>Repeat</label><select class="form-control" id="taskRecurrenceRule"><option value="">Does not repeat</option><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select></div>
-    <div class="form-group col-md-2"><label>Every</label><input type="number" min="1" max="365" class="form-control" id="taskRecurrenceInterval" placeholder="1"></div>
-    <div class="form-group col-md-3"><label>Repeat until</label><input type="date" class="form-control" id="taskRecurrenceEnd"></div>
+    <div class="form-group col-md-3"><label class="crm-label">Repeat</label><select class="crm-select" id="taskRecurrenceRule"><option value="">Does not repeat</option><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select></div>
+    <div class="form-group col-md-2"><label class="crm-label">Every</label><input type="number" min="1" max="365" class="crm-input" id="taskRecurrenceInterval" placeholder="1"></div>
+    <div class="form-group col-md-3"><label class="crm-label">Repeat until</label><input type="text" class="crm-input" id="taskRecurrenceEnd" autocomplete="off"></div>
 
-    <div class="form-group col-md-12"><label>Checklist</label><div id="checklistRows"></div><button type="button" class="btn btn-sm btn-light" id="addChecklistBtn"><i class="fa fa-plus"></i> Add item</button></div>
-</div><div class="alert alert-danger d-none" id="taskError"></div></div><div class="modal-footer"><button type="button" class="btn btn-light" data-dismiss="modal">Cancel</button><button class="btn btn-primary">Save Task</button></div></form></div></div>
+    <div class="form-group col-md-12"><label class="crm-label">Checklist</label><div id="checklistRows"></div><button type="button" class="crm-btn crm-btn--secondary crm-btn--sm" id="addChecklistBtn"><i class="fa fa-plus"></i> Add item</button></div>
+</div><div class="alert alert-danger d-none" id="taskError"></div></div><div class="modal-footer"><button type="button" class="crm-btn crm-btn--secondary" data-dismiss="modal">Cancel</button><button class="crm-btn crm-btn--primary">Save Task</button></div></form></div></div>
 
-<div class="modal fade" id="bulkCreateModal"><div class="modal-dialog modal-lg"><form class="modal-content" id="bulkCreateForm"><div class="modal-header"><h5>Bulk Create Tasks</h5><button type="button" class="close" data-dismiss="modal">&times;</button></div><div class="modal-body"><div class="form-row">
-    <div class="form-group col-md-4"><label>Record type</label><select class="form-control" name="related_type" id="bulkRelatedType" required><option value="lead">Lead</option><option value="deal">Deal</option><option value="company">Company</option><option value="contact">Contact</option><option value="order">Order</option></select></div>
-    <div class="form-group col-md-4"><label>Activity type</label><select class="form-control" name="activity_type" id="bulkActivityType"><option value="task">Task</option><option value="call">Call</option><option value="meeting">Meeting</option></select></div>
-    <div class="form-group col-md-4"><label>Assignee</label><select class="form-control" name="assigned_to" id="bulkAssignee"><option value="">Unassigned</option>@foreach($users as $user)<option value="{{ $user->id }}">{{ $user->name }}</option>@endforeach</select></div>
-    <div class="form-group col-md-12"><label>Records <span class="text-muted">(hold Ctrl/Cmd to pick several)</span></label><select class="form-control" name="related_ids[]" id="bulkRelatedIds" multiple size="6" required></select></div>
-    <div class="form-group col-md-8"><label>Title</label><input class="form-control" name="title" id="bulkTitle" maxlength="255" required></div>
-    <div class="form-group col-md-4"><label>Priority</label><select class="form-control" name="priority" id="bulkPriority"><option value="medium">Medium</option><option value="low">Low</option><option value="high">High</option><option value="urgent">Urgent</option></select></div>
-    <div class="form-group col-md-6"><label>Due</label><input class="form-control" type="datetime-local" name="due_at" id="bulkDue"></div>
-</div><div class="alert alert-danger d-none" id="bulkCreateError"></div></div><div class="modal-footer"><button type="button" class="btn btn-light" data-dismiss="modal">Cancel</button><button class="btn btn-primary">Create Tasks</button></div></form></div></div>
+<div class="modal fade crm-modal" id="bulkCreateModal"><div class="modal-dialog modal-lg"><form class="modal-content" id="bulkCreateForm"><div class="modal-header"><div class="crm-modal__icon"><i class="fa-solid fa-clone"></i></div><div class="crm-modal__heading"><h5 class="modal-title">Bulk Create Tasks</h5></div><button type="button" class="close" data-dismiss="modal">&times;</button></div><div class="modal-body"><div class="form-row">
+    <div class="form-group col-md-4"><label class="crm-label">Record type</label><select class="crm-select" name="related_type" id="bulkRelatedType" required><option value="lead">Lead</option><option value="deal">Deal</option><option value="company">Company</option><option value="contact">Contact</option><option value="order">Order</option></select></div>
+    <div class="form-group col-md-4"><label class="crm-label">Activity type</label><select class="crm-select" name="activity_type" id="bulkActivityType"><option value="task">Task</option><option value="call">Call</option><option value="meeting">Meeting</option></select></div>
+    <div class="form-group col-md-4"><label class="crm-label">Assignee</label><select class="crm-select" name="assigned_to" id="bulkAssignee"><option value="">Unassigned</option>@foreach($users as $user)<option value="{{ $user->id }}">{{ $user->name }}</option>@endforeach</select></div>
+    <div class="form-group col-md-12"><label class="crm-label">Records <span class="text-muted">(hold Ctrl/Cmd to pick several)</span></label><select class="crm-select" name="related_ids[]" id="bulkRelatedIds" multiple size="6" required></select></div>
+    <div class="form-group col-md-8"><label class="crm-label">Title</label><input class="crm-input" name="title" id="bulkTitle" maxlength="255" required></div>
+    <div class="form-group col-md-4"><label class="crm-label">Priority</label><select class="crm-select" name="priority" id="bulkPriority"><option value="medium">Medium</option><option value="low">Low</option><option value="high">High</option><option value="urgent">Urgent</option></select></div>
+    <div class="form-group col-md-6"><label class="crm-label">Due</label><input class="crm-input" type="text" name="due_at" id="bulkDue" autocomplete="off"></div>
+</div><div class="alert alert-danger d-none" id="bulkCreateError"></div></div><div class="modal-footer"><button type="button" class="crm-btn crm-btn--secondary" data-dismiss="modal">Cancel</button><button class="crm-btn crm-btn--primary">Create Tasks</button></div></form></div></div>
 <script src="{{ asset('vendors/js/vendor.bundle.base.js') }}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.js"></script>
 <script>
 (() => {
     const csrf = document.querySelector('meta[name="csrf-token"]').content;
@@ -106,6 +149,23 @@
     const esc = value => $('<div>').text(value ?? '').html();
     const localDate = value => value ? new Date(value).toLocaleString() : 'No due date';
     const inputDate = value => value ? new Date(value).toISOString().slice(0, 16) : '';
+
+    // One flatpickr instance per date/time field, replacing the native
+    // datetime-local/date inputs (their dark-mode rendering was
+    // inconsistent — see the CSS block above). dateFormat matches what
+    // inputDate()/the backend already expect, so nothing downstream of
+    // these fields' values needs to change — only how they're picked.
+    const fp = {
+        taskDue: flatpickr('#taskDue', { enableTime: true, dateFormat: 'Y-m-d\\TH:i', altInput: true, altFormat: 'd M Y, h:i K', altInputClass: 'crm-input', allowInput: true }),
+        taskRemind: flatpickr('#taskRemind', { enableTime: true, dateFormat: 'Y-m-d\\TH:i', altInput: true, altFormat: 'd M Y, h:i K', altInputClass: 'crm-input', allowInput: true }),
+        taskRecurrenceEnd: flatpickr('#taskRecurrenceEnd', { dateFormat: 'Y-m-d', altInput: true, altFormat: 'd M Y', altInputClass: 'crm-input', allowInput: true }),
+        bulkDue: flatpickr('#bulkDue', { enableTime: true, dateFormat: 'Y-m-d\\TH:i', altInput: true, altFormat: 'd M Y, h:i K', altInputClass: 'crm-input', allowInput: true }),
+    };
+    function setFP(key, value, format) {
+        if (!fp[key]) return;
+        if (value) fp[key].setDate(value, true, format || 'Y-m-d\\TH:i');
+        else fp[key].clear();
+    }
 
     function loadTasks() {
         const params = new URLSearchParams({status:$('#filterStatus').val(),priority:$('#filterPriority').val(),due:$('#filterDue').val(),assigned_to:$('#filterAssignee').val()});
@@ -142,10 +202,10 @@
     }
 
     function attendeeRow(name = '', email = '') {
-        return `<div class="form-row attendee-row mb-2"><div class="col-5"><input class="form-control form-control-sm" placeholder="Name" value="${esc(name)}"></div><div class="col-6"><input type="email" class="form-control form-control-sm" placeholder="Email" value="${esc(email)}"></div><div class="col-1"><button type="button" class="btn btn-sm btn-link text-danger removeRow"><i class="fa fa-times"></i></button></div></div>`;
+        return `<div class="form-row attendee-row mb-2"><div class="col-5"><input class="crm-input" placeholder="Name" value="${esc(name)}"></div><div class="col-6"><input type="email" class="crm-input" placeholder="Email" value="${esc(email)}"></div><div class="col-1"><button type="button" class="btn btn-sm btn-link text-danger removeRow"><i class="fa fa-times"></i></button></div></div>`;
     }
     function checklistRow(text = '', done = false) {
-        return `<div class="form-row checklist-row mb-2"><div class="col-1 d-flex align-items-center"><input type="checkbox" class="checklistDone" ${done ? 'checked' : ''}></div><div class="col-10"><input class="form-control form-control-sm checklistText" placeholder="Checklist item" value="${esc(text)}"></div><div class="col-1"><button type="button" class="btn btn-sm btn-link text-danger removeRow"><i class="fa fa-times"></i></button></div></div>`;
+        return `<div class="form-row checklist-row mb-2"><div class="col-1 d-flex align-items-center"><input type="checkbox" class="checklistDone" ${done ? 'checked' : ''}></div><div class="col-10"><input class="crm-input checklistText" placeholder="Checklist item" value="${esc(text)}"></div><div class="col-1"><button type="button" class="btn btn-sm btn-link text-danger removeRow"><i class="fa fa-times"></i></button></div></div>`;
     }
     $('#addAttendeeBtn').on('click', () => $('#attendeeRows').append(attendeeRow()));
     $('#addChecklistBtn').on('click', () => $('#checklistRows').append(checklistRow()));
@@ -183,15 +243,16 @@
 
     async function openTask(task = null) {
         $('#taskForm')[0].reset(); $('#taskError').addClass('d-none'); $('#taskId').val(task?.id || ''); $('#taskModalTitle').text(task ? 'Edit Task' : 'New Task');
+        fp.taskDue.clear(); fp.taskRemind.clear(); fp.taskRecurrenceEnd.clear();
         $('#attendeeRows').empty(); $('#checklistRows').empty();
         await loadDependsOnOptions(task?.id || '');
         if (task) {
-            $('#taskTitle').val(task.title); $('#taskDescription').val(task.description); $('#taskAssignee').val(task.assigned_to || ''); $('#taskPriority').val(task.priority); $('#taskStatus').val(task.status); $('#taskDue').val(inputDate(task.due_at)); $('#taskRemind').val(inputDate(task.remind_at)); $('#taskRelatedType').val(task.related_type || ''); loadRelated(task.related_type, task.related_id);
+            $('#taskTitle').val(task.title); $('#taskDescription').val(task.description); $('#taskAssignee').val(task.assigned_to || ''); $('#taskPriority').val(task.priority); $('#taskStatus').val(task.status); setFP('taskDue', inputDate(task.due_at)); setFP('taskRemind', inputDate(task.remind_at)); $('#taskRelatedType').val(task.related_type || ''); loadRelated(task.related_type, task.related_id);
             $('#taskActivityType').val(task.activity_type || 'task');
             $('#taskDependsOn').val(task.depends_on_task_id || '');
             $('#taskRecurrenceRule').val(task.recurrence_rule || '');
             $('#taskRecurrenceInterval').val(task.recurrence_interval || '');
-            $('#taskRecurrenceEnd').val(task.recurrence_end_date ? task.recurrence_end_date.slice(0, 10) : '');
+            setFP('taskRecurrenceEnd', task.recurrence_end_date ? task.recurrence_end_date.slice(0, 10) : '', 'Y-m-d');
             const details = task.activity_details || {};
             $('#callDirection').val(details.direction || 'outbound'); $('#callDisposition').val(details.disposition || 'connected'); $('#callDuration').val(details.duration_minutes || ''); $('#callReferenceLink').val(details.reference_link || '');
             $('#meetingLocation').val(details.location || ''); $('#meetingVideoLink').val(details.video_link || ''); $('#meetingAgenda').val(details.agenda || ''); $('#meetingOutcome').val(details.outcome || '');
@@ -205,10 +266,10 @@
     }
     $('#newTaskBtn').on('click', () => openTask());
     $('#taskRelatedType').on('change', function(){ loadRelated(this.value); });
-    $('.filter-grid select').on('change', loadTasks);
+    $('.crm-filters select').on('change', loadTasks);
     $(document).on('click', '.editTask', function(){ openTask(tasks.find(t => t.id === Number($(this).closest('.task-row').data('id')))); });
     $(document).on('click', '.completeTask', function(){ $.ajax({url:`{{ url('/tasks') }}/${$(this).closest('.task-row').data('id')}/complete`,method:'POST',headers:{'X-CSRF-TOKEN':csrf}}).done(loadTasks).fail(xhr => alert(xhr.responseJSON?.message || 'Unable to complete task.')); });
-    $(document).on('click', '.deleteTask', function(){ if(confirm('Delete this task?')) $.ajax({url:`{{ url('/tasks') }}/${$(this).closest('.task-row').data('id')}`,method:'DELETE',headers:{'X-CSRF-TOKEN':csrf}}).done(loadTasks); });
+    $(document).on('click', '.deleteTask', function(){ const id=$(this).closest('.task-row').data('id'); openConfirmModal({title:'Delete this task?',message:'This can\'t be undone.',confirmText:'Delete',onConfirm:function(done){ $.ajax({url:`{{ url('/tasks') }}/${id}`,method:'DELETE',headers:{'X-CSRF-TOKEN':csrf}}).done(() => { loadTasks(); done(); }).fail(done); }}); });
     $(document).on('click', '.row-actions-btn', function(e){ e.stopPropagation(); const menu=$(this).siblings('.row-actions-menu'); const opening=!menu.hasClass('is-open'); $('.row-actions-menu').removeClass('is-open'); if(opening){ const rect=this.getBoundingClientRect(); menu.css({position:'fixed',top:rect.bottom+4,left:'auto',right:window.innerWidth-rect.right}).addClass('is-open'); } });
     $(document).on('click', '.row-actions-menu', function(e){ e.stopPropagation(); });
     $(document).on('click', function(){ $('.row-actions-menu').removeClass('is-open'); });
@@ -232,7 +293,7 @@
 
     // Bulk create
     $('#bulkCreateBtn').on('click', async function(){
-        $('#bulkCreateForm')[0].reset(); $('#bulkCreateError').addClass('d-none'); $('#bulkRelatedIds').empty();
+        $('#bulkCreateForm')[0].reset(); fp.bulkDue.clear(); $('#bulkCreateError').addClass('d-none'); $('#bulkRelatedIds').empty();
         await loadBulkOptions($('#bulkRelatedType').val());
         $('#bulkCreateModal').modal('show');
     });

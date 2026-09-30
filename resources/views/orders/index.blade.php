@@ -14,7 +14,7 @@
 
     <!-- Font Awesome -->
     <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
     <!-- DataTables -->
     <link rel="stylesheet" href="{{ asset('vendors/datatables.net-bs4/dataTables.bootstrap4.css') }}">
@@ -28,124 +28,12 @@
             --text-muted: #6b7280;
         }
 
-        /* Same modernization pattern as the rest of this pass. */
-        .order-table-wrapper {
-            background: #fff;
-            border-radius: 14px;
-            padding: 18px;
-            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
-        }
-
-        .order-table { font-size: 14.5px; }
-
-        .order-table thead th {
-            background: #f8fafc;
-            color: #475569;
-            font-size: 12.5px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.03em;
-            text-align: center;
-            padding: 14px 12px;
-        }
-
-        .order-table tbody td {
-            font-size: 14px;
-            text-align: center;
-            vertical-align: middle;
-            padding: 14px 12px;
-        }
-
-        .status-badge {
-            padding: 5px 12px;
-            font-size: 11px;
-            border-radius: 20px;
-            display: inline-block;
-        }
-
-        .status-approved {
-            background: #e9f7ef;
-            color: #1e7e34;
-        }
-
-        .status-new {
-            background: #fff3cd;
-            color: #856404;
-        }
-
-        .payment-badge {
-            padding: 5px 10px;
-            font-size: 11px;
-            border-radius: 6px;
-            background: #eef2ff;
-            color: #4b49ac;
-        }
-
-        /* payment status colors */
-        .pay-paid    { background: #e7f7ee; color: #1f9254; }
-        .pay-partial { background: #fef3e2; color: #c77700; }
-        .pay-pending { background: #fdecec; color: #d64545; }
-
-        /* order status colors */
-        .status-in_progress { background: #eceafe; color: #6366f1; }
-        .status-on_hold     { background: #eef1f5; color: #64748b; }
-        .status-delivered   { background: #e7f7ee; color: #1f9254; }
-        .status-closed      { background: #eef1f5; color: #64748b; }
-        .status-cancelled   { background: #fdecec; color: #d64545; }
-
-        /* Same modernization pattern as the rest of this pass — plain
-           white card, no accent stripe, matching every other page. */
-        .page-header {
-            background: #ffffff;
-            padding: 20px 22px;
-            border-radius: 13px;
-            margin-bottom: 18px;
-            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 16px;
-        }
-
-        .page-header h4 {
-            font-weight: 700;
-            font-size: 18px;
-            color: var(--text-dark);
-            margin: 0 0 6px;
-        }
-
-        .page-header p {
-            font-size: 14px;
-            color: var(--text-muted);
-            margin: 0;
-        }
-
-        [data-theme="dark"] {
-            --text-dark: #eef0f6;
-            --text-muted: #9aa1b5;
-        }
-        [data-theme="dark"] .order-table-wrapper,
-        [data-theme="dark"] .page-header {
-            background: #1a1d2b;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-        }
-        [data-theme="dark"] .order-table thead th {
-            background: #232637;
-            color: #d7dbe4;
-        }
-        [data-theme="dark"] .order-table tbody td { color: #eef0f6; border-color: #2a2e40; }
-        [data-theme="dark"] .status-approved { background: rgba(74, 222, 128, 0.16); color: #4ade80; }
-        [data-theme="dark"] .status-new { background: rgba(250, 204, 21, 0.16); color: #facc15; }
-        [data-theme="dark"] .payment-badge { background: rgba(147, 164, 253, 0.16); color: #93a4fd; }
-        [data-theme="dark"] .pay-paid { background: rgba(74, 222, 128, 0.16); color: #4ade80; }
-        [data-theme="dark"] .pay-partial { background: rgba(250, 176, 5, 0.16); color: #fbbf24; }
-        [data-theme="dark"] .pay-pending { background: rgba(239, 68, 68, 0.16); color: #fca5a5; }
-        [data-theme="dark"] .status-in_progress { background: rgba(147, 164, 253, 0.16); color: #93a4fd; }
-        [data-theme="dark"] .status-on_hold { background: rgba(154, 161, 181, 0.16); color: #9aa1b5; }
-        [data-theme="dark"] .status-delivered { background: rgba(74, 222, 128, 0.16); color: #4ade80; }
-        [data-theme="dark"] .status-closed { background: rgba(154, 161, 181, 0.16); color: #9aa1b5; }
-        [data-theme="dark"] .status-cancelled { background: rgba(239, 68, 68, 0.16); color: #fca5a5; }
+        /* .order-table-wrapper/.order-table/.status-badge/.status-*/
+           .payment-badge/.pay-* removed in V2 — this list now uses the
+           shared .crm-table-wrap/.crm-table/.crm-badge/.crm-header
+           components from crm-components.css (loaded globally). Order
+           and payment status render via renderStatusBadge()
+           (public/js/crm-status.js). */
     </style>
 </head>
 
@@ -161,20 +49,19 @@
 
             <div class="content-wrapper">
 
-                <!-- Page Header -->
-                <div class="page-header">
-                    <div>
-                        <h4>Orders</h4>
-                        <p>{{ Auth::guard('web')->user()->hasElevatedAccess() ? 'Manage all customer orders' : 'Your orders' }}</p>
-                    </div>
-                </div>
+                @component('include.page-header', [
+                    'icon' => 'fa fa-shopping-cart',
+                    'title' => 'Orders',
+                    'subtitle' => Auth::guard('web')->user()->hasElevatedAccess() ? 'Manage all customer orders' : 'Your orders',
+                ])
+                @endcomponent
 
                 <!-- Order Table -->
                 <div class="row">
                     <div class="col-12">
-                        <div class="order-table-wrapper">
+                        <div class="crm-table-wrap">
                             <div class="table-responsive">
-                                <table class="table order-table" id="orderTable">
+                                <table class="table crm-table" id="orderTable">
                                     <thead>
                                         <tr>
                                             <th>#</th>
@@ -212,7 +99,10 @@
 
     <script>
         const esc = value => $('<div>').text(value ?? '').html();
-        const safeToken = value => /^[a-z0-9_-]+$/i.test(value || '') ? value : 'unknown';
+        // Order/payment status pills now come from the shared
+        // renderStatusBadge() (public/js/crm-status.js) — payClass()/
+        // safeToken() were only needed to build the old status-${token}
+        // class names.
 
         function loadOrderList() {
             $.ajax({
@@ -249,17 +139,9 @@
                             </small>
                         </td>
 
-                        <td>
-                            <span class="payment-badge ${payClass(item.payment_status)}">
-                                ${esc(pretty(item.payment_status))}
-                            </span>
-                        </td>
+                        <td>${renderStatusBadge('payment', item.payment_status)}</td>
 
-                        <td>
-                            <span class="status-badge status-${safeToken(item.order_status)}">
-                                ${esc(pretty(item.order_status))}
-                            </span>
-                        </td>
+                        <td>${renderStatusBadge('order', item.order_status)}</td>
 
                         <td>
                             ${item.action}
@@ -270,11 +152,20 @@
                     } else {
                         tbody = `
                     <tr>
-                        <td colspan="8">No orders found</td>
+                        <td colspan="8">
+                            <div class="crm-empty">
+                                <div class="crm-empty__icon"><i class="fa fa-shopping-cart"></i></div>
+                                <p class="crm-empty__title">No orders yet</p>
+                                <p class="crm-empty__desc">Orders created from won deals will show up here.</p>
+                            </div>
+                        </td>
                     </tr>`;
                     }
 
                     $('#orderTable tbody').html(tbody);
+                },
+                error: function() {
+                    toastr.error('Something went wrong while loading orders');
                 }
             });
         }
@@ -291,11 +182,6 @@
         function money(v) {
             if (v === null || v === undefined || v === '') return '0';
             return Number(v).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
-        }
-
-        function payClass(s) {
-            const map = { paid: 'pay-paid', partial: 'pay-partial', pending: 'pay-pending' };
-            return map[s] || '';
         }
 
         $(document).ready(function() {

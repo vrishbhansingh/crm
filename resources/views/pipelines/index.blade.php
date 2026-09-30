@@ -9,7 +9,7 @@
 
     <link rel="stylesheet" href="{{ asset('vendors/css/vendor.bundle.base.css') }}">
     <link rel="stylesheet" href="{{ asset('css/vertical-layout-light/style.css') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.26.25/sweetalert2.min.css">
 
     <style>
@@ -449,23 +449,26 @@
         });
 
         $(document).on('click', '.deletePipelineBtn', function() {
-            if (!confirm('Delete this pipeline?')) return;
             const id = $(this).data('id');
-            $.ajax({
-                url: "{{ url('pipelines') }}/" + id,
-                type: 'POST',
-                data: { _method: 'DELETE' },
-                success: function(response) {
-                    if (response.status) {
-                        toastr.success(response.message);
-                        activePipelineId = null;
-                        loadPipelines();
+            openConfirmModal({ title: 'Delete this pipeline?', message: 'This can\'t be undone.', confirmText: 'Delete', onConfirm: function(done) {
+                $.ajax({
+                    url: "{{ url('pipelines') }}/" + id,
+                    type: 'POST',
+                    data: { _method: 'DELETE' },
+                    success: function(response) {
+                        done();
+                        if (response.status) {
+                            toastr.success(response.message);
+                            activePipelineId = null;
+                            loadPipelines();
+                        }
+                    },
+                    error: function(xhr) {
+                        toastr.error(xhr.responseJSON?.message || 'Something went wrong');
+                        done();
                     }
-                },
-                error: function(xhr) {
-                    toastr.error(xhr.responseJSON?.message || 'Something went wrong');
-                }
-            });
+                });
+            }});
         });
 
         $(document).on('click', '#addStageBtn', function() {
@@ -523,26 +526,36 @@
 
         $(document).on('click', '.deleteStageBtn', function() {
             const dealsCount = $(this).data('deals');
-            if (dealsCount > 0) {
-                if (!confirm('This stage has deals in it — the server will reject this delete. Try anyway?')) return;
-            } else if (!confirm('Delete this stage?')) {
-                return;
-            }
             const id = $(this).data('id');
-            $.ajax({
-                url: "{{ url('stages') }}/" + id,
-                type: 'POST',
-                data: { _method: 'DELETE' },
-                success: function(response) {
-                    if (response.status) {
-                        toastr.success(response.message);
-                        loadStages(activePipelineId);
+            function doDelete(done) {
+                $.ajax({
+                    url: "{{ url('stages') }}/" + id,
+                    type: 'POST',
+                    data: { _method: 'DELETE' },
+                    success: function(response) {
+                        done();
+                        if (response.status) {
+                            toastr.success(response.message);
+                            loadStages(activePipelineId);
+                        }
+                    },
+                    error: function(xhr) {
+                        toastr.error(xhr.responseJSON?.message || 'Something went wrong');
+                        done();
                     }
-                },
-                error: function(xhr) {
-                    toastr.error(xhr.responseJSON?.message || 'Something went wrong');
-                }
-            });
+                });
+            }
+            if (dealsCount > 0) {
+                openConfirmModal({
+                    title: 'This stage has deals in it',
+                    message: 'The server will reject this delete. Try anyway?',
+                    variant: 'warning',
+                    confirmText: 'Try anyway',
+                    onConfirm: doDelete,
+                });
+            } else {
+                openConfirmModal({ title: 'Delete this stage?', message: 'This can\'t be undone.', confirmText: 'Delete', onConfirm: doDelete });
+            }
         });
 
         $(document).ready(function() {

@@ -7,7 +7,7 @@
     <title>Companies | CRM</title>
     <link rel="stylesheet" href="{{ asset('vendors/css/vendor.bundle.base.css') }}">
     <link rel="stylesheet" href="{{ asset('css/vertical-layout-light/style.css') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.26.25/sweetalert2.min.css">
     <style>
         /* Same modernization pattern as Roles & Permissions / Dashboard / Leads / Deals: bigger, roomier cards. */
@@ -57,28 +57,26 @@
             <div class="crm-header">
                 <div><h4><i class="fa fa-building-o text-primary mr-2"></i>Companies</h4><p>Customer and prospect organizations in your CRM</p></div>
                 @can('companies.create')
-                <button class="btn btn-primary btn-sm" id="newCompanyBtn"><i class="fa fa-plus"></i> New Company</button>
+                <button class="crm-btn crm-btn--primary" id="newCompanyBtn"><i class="fa fa-plus"></i> New Company</button>
                 @endcan
             </div>
             <div class="crm-card mb-3">
-                <div class="form-row">
-                    <div class="form-group col-md-8 mb-0"><input type="text" id="companySearchInput" class="form-control" placeholder="Search name, email, phone…"></div>
-                    <div class="form-group col-md-4 mb-0">
-                        <select id="companyFilterStatus" class="form-control">
-                            <option value="">All statuses</option>
-                            <option value="prospect">Prospect</option>
-                            <option value="customer">Customer</option>
-                            <option value="partner">Partner</option>
-                            <option value="inactive">Inactive</option>
-                        </select>
-                    </div>
+                <div class="crm-filters" style="margin-bottom:0;">
+                    <input type="text" id="companySearchInput" class="crm-input" style="flex:2 1 260px;" placeholder="Search name, email, phone…">
+                    <select id="companyFilterStatus" class="crm-select">
+                        <option value="">All statuses</option>
+                        <option value="prospect">Prospect</option>
+                        <option value="customer">Customer</option>
+                        <option value="partner">Partner</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
                 </div>
             </div>
             <div class="crm-card">
                 <div class="table-responsive">
                     <table class="table crm-table" id="companiesTable">
                         <thead><tr><th>Company</th><th>Contact</th><th>Location</th><th>Owner</th><th>Relationships</th><th>Status</th><th>Actions</th></tr></thead>
-                        <tbody><tr><td colspan="7" class="text-center text-muted">Loading companies…</td></tr></tbody>
+                        <tbody><tr><td colspan="7"><div class="crm-empty"><div class="crm-empty__icon"><i class="fa fa-spinner fa-spin"></i></div><p class="crm-empty__title">Loading companies…</p></div></td></tr></tbody>
                     </table>
                 </div>
                 <div id="companyPagination"></div>
@@ -88,10 +86,10 @@
     </div>
 </div>
 
-<div class="modal fade" id="companyModal" tabindex="-1">
+<div class="modal fade crm-modal" id="companyModal" tabindex="-1">
     <div class="modal-dialog modal-lg"><div class="modal-content">
         <form id="companyForm">
-            <div class="modal-header"><h5 class="modal-title">Company</h5><button type="button" class="close" data-dismiss="modal">&times;</button></div>
+            <div class="modal-header"><div class="crm-modal__icon"><i class="fa fa-building-o"></i></div><div class="crm-modal__heading"><h5 class="modal-title">Company</h5></div><button type="button" class="close" data-dismiss="modal">&times;</button></div>
             <div class="modal-body">
                 <input type="hidden" id="companyId">
                 <div class="form-row">
@@ -114,7 +112,7 @@
                     <div class="form-group col-12"><label>Notes</label><textarea class="form-control" name="notes" rows="2"></textarea></div>
                 </div>
             </div>
-            <div class="modal-footer"><button type="button" class="btn btn-light" data-dismiss="modal">Cancel</button><button class="btn btn-primary" type="submit">Save Company</button></div>
+            <div class="modal-footer"><button type="button" class="crm-btn crm-btn--secondary" data-dismiss="modal">Cancel</button><button class="crm-btn crm-btn--primary" type="submit">Save Company</button></div>
         </form>
     </div></div>
 </div>
@@ -151,7 +149,7 @@
                     <td><span class="status-pill">${esc(company.status)}</span></td><td>${actions}</td>
                 </tr>`;
             });
-            $('#companiesTable tbody').html(html || '<tr><td colspan="7" class="text-center text-muted">No companies found</td></tr>');
+            $('#companiesTable tbody').html(html || '<tr><td colspan="7"><div class="crm-empty"><div class="crm-empty__icon"><i class="fa fa-building-o"></i></div><p class="crm-empty__title">No companies yet</p><p class="crm-empty__desc">Companies you add will show up here.</p></div></td></tr>');
             renderCrmPagination('#companyPagination', response.meta, page => { companyPage = page; loadCompanies(); });
         }).fail(() => toastr.error('Could not load companies'));
     }
@@ -177,9 +175,12 @@
             .fail(xhr => toastr.error(xhr.responseJSON?.message || Object.values(xhr.responseJSON?.errors || {})[0]?.[0] || 'Could not save company'));
     });
     $(document).on('click', '.delete-company', function() {
-        if (!confirm('Delete this company?')) return;
-        $.ajax({url: "{{ url('companies') }}/" + $(this).data('id'), type:'DELETE'})
-            .done(r => { toastr.success(r.message); loadCompanies(); }).fail(xhr => toastr.error(xhr.responseJSON?.message || 'Could not delete company'));
+        const id = $(this).data('id');
+        openConfirmModal({ title: 'Delete this company?', message: 'This can\'t be undone.', confirmText: 'Delete', onConfirm: function(done) {
+            $.ajax({url: "{{ url('companies') }}/" + id, type:'DELETE'})
+                .done(r => { toastr.success(r.message); loadCompanies(); done(); })
+                .fail(xhr => { toastr.error(xhr.responseJSON?.message || 'Could not delete company'); done(); });
+        }});
     });
     $(document).on('click', '.row-actions-btn', function(e) {
         e.stopPropagation();

@@ -429,19 +429,12 @@
        form with just the headline copy (cards + footer text are too busy
        for this width). */
     @media (max-width: 900px) {
+      /* Small devices show the form only — the photo/brand panel (image,
+         headline copy, sales-metric cards) added scroll and weight
+         without helping anyone actually sign in on a small screen. */
       .auth-shell { grid-template-columns: 1fr; }
-      .auth-hero { min-height: 0; padding: clamp(22px, 5vw, 44px) clamp(20px, 5vw, 44px) clamp(26px, 6vw, 48px); }
-      .hero-cards, .hero-foot { display: none; }
-      .hero-title { font-size: clamp(24px, 6.4vw, 40px); }
-      .hero-sub { font-size: clamp(13px, 2.4vw, 16px); }
-      .hero-eyebrow { font-size: clamp(9.5px, 1.6vw, 12px); margin-bottom: 12px; }
-      .auth-photo { object-position: 50% 30%; }
-      .auth-visual::after { display: none; }
-      .auth-form-panel { padding: 32px 22px 40px; }
-    }
-    @media (max-width: 480px) {
-      .hero-sub { display: none; }
-      .hero-rule { margin-bottom: 0; }
+      .auth-visual { display: none; }
+      .auth-form-panel { padding: 32px 22px 40px; min-height: 100vh; }
     }
   </style>
 </head>
@@ -600,14 +593,12 @@
     <script src="{{ asset('js/toast-shim.js') }}?v={{ filemtime(public_path('js/toast-shim.js')) }}"></script>
 
   <script>
-    // Applied immediately (not inside DOMContentLoaded) so the page paints
-    // in the right theme on first load instead of flashing light-then-dark
-    // — same pattern used on every page after login (include/header.blade.php).
-    (function() {
-      if (localStorage.getItem('crm-theme') === 'dark') {
-        document.documentElement.setAttribute('data-theme', 'dark');
-      }
-    })();
+    // Login intentionally always renders light for now, regardless of the
+    // dark-mode preference stored from inside the app (crm-theme in
+    // localStorage) — previously this page auto-applied that stored value,
+    // so logging out of a dark-mode session left the login screen dark
+    // too, with no toggle on this page to switch it back. Disabled on
+    // request until this page gets its own theme toggle.
 
     function showToast(message, type = 'success') {
       toastr.options = {

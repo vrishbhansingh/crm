@@ -9,43 +9,16 @@
 
     <link rel="stylesheet" href="{{ asset('vendors/css/vendor.bundle.base.css') }}">
     <link rel="stylesheet" href="{{ asset('css/vertical-layout-light/style.css') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.26.25/sweetalert2.min.css">
 
     <style>
-        .card-box {
-            background: #fff;
-            border-radius: 14px;
-            box-shadow: 0 8px 22px rgba(0, 0, 0, 0.05);
-            border: 1px solid #e5e7eb;
-            padding: 22px;
-            margin-bottom: 20px;
-        }
+        /* .card-box/.page-header removed in V2 — background/border/radius/
+           shadow now come from the shared .crm-card/.crm-header
+           components (crm-components.css, loaded globally). Form is
+           capped at the shared 960px reading width. */
+        .deal-form-wrap { max-width: 960px; margin: 0 auto; }
 
-        /* Same modernization pattern as Roles & Permissions / Dashboard /
-           Leads / Deals list: bigger, roomier white header card. */
-        .page-header {
-            background: #ffffff;
-            padding: 20px 22px;
-            border-radius: 13px;
-            margin-bottom: 18px;
-            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
-        }
-
-        .page-header h4 {
-            font-weight: 700;
-            font-size: 18px;
-            margin: 0;
-        }
-
-        [data-theme="dark"] .card-box,
-        [data-theme="dark"] .page-header {
-            background: #1a1d2b;
-            border-color: #2a2e40;
-            color: #eef0f6;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-        }
-        [data-theme="dark"] .page-header h4 { color: #eef0f6; }
         [data-theme="dark"] .card-box label { color: #d7dbe4; }
     </style>
 </head>
@@ -62,31 +35,36 @@
 
             <div class="content-wrapper">
 
-                <div class="page-header">
-                    <a href="{{ route('deals.list') }}" class="text-muted" style="font-size:12px;">
-                        <i class="fa fa-arrow-left"></i> Back to Deals
-                    </a>
-                    <h4 class="mt-1">{{ isset($deal) ? 'Edit Deal' : 'New Deal' }}</h4>
-                </div>
+                @component('include.page-header', [
+                    'icon' => 'fa fa-handshake-o',
+                    'title' => isset($deal) ? 'Edit Deal' : 'New Deal',
+                ])
+                    @slot('actions')
+                        <a href="{{ route('deals.list') }}" class="crm-btn crm-btn--secondary">
+                            <i class="fa fa-arrow-left"></i> Back
+                        </a>
+                    @endslot
+                @endcomponent
 
+                <div class="deal-form-wrap">
                 @if (! isset($deal) && $pipelines->isEmpty())
-                <div class="card-box text-center py-5">
-                    <i class="fa fa-random" style="font-size:32px;color:#2563eb;margin-bottom:12px;"></i>
-                    <h5>No pipeline yet</h5>
-                    <p class="text-muted" style="font-size:13px;">A deal needs a pipeline to belong to — create one first.</p>
+                <div class="crm-card crm-empty">
+                    <div class="crm-empty__icon"><i class="fa fa-random"></i></div>
+                    <p class="crm-empty__title">No pipeline yet</p>
+                    <p class="crm-empty__desc">A deal needs a pipeline to belong to — create one first.</p>
                     @can('deals.manage-settings')
-                    <a href="{{ route('pipelines.index') }}" class="btn btn-primary btn-sm"><i class="fa fa-plus"></i> Create a Pipeline</a>
+                    <a href="{{ route('pipelines.index') }}" class="crm-btn crm-btn--primary crm-btn--sm"><i class="fa fa-plus"></i> Create a Pipeline</a>
                     @else
                     <p class="text-muted" style="font-size:12px;">Ask an admin to set up a pipeline in Settings.</p>
                     @endcan
                 </div>
                 @else
-                <div class="card-box">
+                <div class="crm-card">
                     <form id="dealForm">
                         <div class="form-row">
                             <div class="form-group col-md-6">
-                                <label>Deal Name</label>
-                                <input type="text" name="name" id="name" class="form-control" value="{{ $deal->name ?? '' }}" required>
+                                <label class="crm-label">Deal Name <span class="crm-required">*</span></label>
+                                <input type="text" name="name" id="name" class="form-control" value="{{ $deal->name ?? '' }}" required aria-required="true">
                             </div>
                             <div class="form-group col-md-3">
                                 <label>Amount</label>
@@ -104,16 +82,16 @@
 
                             @if (! isset($deal))
                             <div class="form-group col-md-6">
-                                <label>Pipeline</label>
-                                <select name="pipeline_id" id="pipeline_id" class="form-control" required>
+                                <label class="crm-label">Pipeline <span class="crm-required">*</span></label>
+                                <select name="pipeline_id" id="pipeline_id" class="form-control" required aria-required="true">
                                     @foreach ($pipelines as $p)
                                         <option value="{{ $p->id }}" {{ $p->is_default ? 'selected' : '' }}>{{ $p->name }}</option>
                                     @endforeach
                                 </select>
                             </div>
                             <div class="form-group col-md-6">
-                                <label>Stage</label>
-                                <select name="stage_id" id="stage_id" class="form-control" required></select>
+                                <label class="crm-label">Stage <span class="crm-required">*</span></label>
+                                <select name="stage_id" id="stage_id" class="form-control" required aria-required="true"></select>
                             </div>
                             @endif
 
@@ -172,13 +150,14 @@
                             </div>
                         </div>
 
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="crm-btn crm-btn--primary">
                             <i class="fa fa-save"></i> {{ isset($deal) ? 'Save Changes' : 'Create Deal' }}
                         </button>
-                        <a href="{{ route('deals.list') }}" class="btn btn-light">Cancel</a>
+                        <a href="{{ route('deals.list') }}" class="crm-btn crm-btn--secondary">Cancel</a>
                     </form>
                 </div>
                 @endif
+                </div>
 
                 @include('include.footer')
 

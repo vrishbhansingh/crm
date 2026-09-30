@@ -8,19 +8,25 @@
 
     <link rel="stylesheet" href="{{ asset('vendors/css/vendor.bundle.base.css') }}">
     <link rel="stylesheet" href="{{ asset('css/vertical-layout-light/style.css') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.26.25/sweetalert2.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
         :root{
             --ink:#101828; --muted:#667085; --faint:#98a2b3; --border:#e4e7ec; --line:#eef1f5;
-            --bg:#f5f6fa; --card:#fff; --accent:#4f46e5; --accent-soft:#eef2ff; --accent-dark:#4338ca;
+            --bg:#f5f6fa; --card:#fff;
+            /* Was an indigo accent (#4f46e5) local to this page — swapped to
+               the shared CRM accent token so the "selected" tab/list-item
+               color matches the sidebar and every other page instead of
+               being its own unrelated color. */
+            --accent:var(--crm-accent, #1f6f63); --accent-soft:var(--crm-accent-tint, #e4efec); --accent-dark:var(--crm-accent-dark, #154f46);
             --active-bg:#e7f7ef; --active-fg:#087443; --inactive-bg:#f2f4f7; --inactive-fg:#667085;
         }
         [data-theme="dark"]{
             --ink:#eef0f6; --muted:#9aa1b5; --faint:#71798f; --border:#2a2e40; --line:#252838;
-            --bg:#11131c; --card:#181b28; --accent:#818cf8; --accent-soft:#252a4a; --accent-dark:#a5b0ff;
+            --bg:#11131c; --card:#181b28;
+            --accent:var(--crm-accent, #5aab9d); --accent-soft:var(--crm-accent-tint, #1c2b28); --accent-dark:var(--crm-accent-dark, #7fc3b6);
             --active-bg:#173428; --active-fg:#5fd394; --inactive-bg:#242838; --inactive-fg:#9aa1b5;
         }
         body{font-family:"Inter",ui-sans-serif,system-ui,sans-serif;}
@@ -447,19 +453,38 @@
 
         $(document).on('click', '.toggleStatusBtn', function() {
             const id = $(this).data('id');
-            if ($(this).data('active') == '1' && !confirm('Deactivate this value? It will stop appearing in dropdowns using it elsewhere in the app.')) return;
-            $.post("{{ url('master-data/values') }}/" + id + "/toggle-status", {}, function(response) {
-                if (response.status) { toastr.success('Status updated'); loadValues(activeSelection.id); }
-            }).fail(xhr => toastr.error(xhr.responseJSON?.message || 'Something went wrong'));
+            function doToggle(done) {
+                $.post("{{ url('master-data/values') }}/" + id + "/toggle-status", {}, function(response) {
+                    if (response.status) { toastr.success('Status updated'); loadValues(activeSelection.id); }
+                    if (done) done();
+                }).fail(xhr => { toastr.error(xhr.responseJSON?.message || 'Something went wrong'); if (done) done(); });
+            }
+            if ($(this).data('active') == '1') {
+                openConfirmModal({
+                    title: 'Deactivate this value?',
+                    message: 'It will stop appearing in dropdowns using it elsewhere in the app.',
+                    variant: 'warning',
+                    confirmText: 'Deactivate',
+                    onConfirm: doToggle,
+                });
+            } else {
+                doToggle();
+            }
         });
 
         $(document).on('click', '.deleteValueBtn', function() {
-            if (!confirm('Delete this value? Existing records using it will keep the raw code, just without a friendly label.')) return;
             const id = $(this).data('id');
-            $.ajax({
-                url: "{{ url('master-data/values') }}/" + id, type: 'POST', data: { _method: 'DELETE' },
-                success: function(response) { if (response.status) { toastr.success(response.message); loadValues(activeSelection.id); } },
-                error: xhr => toastr.error(xhr.responseJSON?.message || 'Something went wrong')
+            openConfirmModal({
+                title: 'Delete this value?',
+                message: 'Existing records using it will keep the raw code, just without a friendly label.',
+                confirmText: 'Delete',
+                onConfirm: function(done) {
+                    $.ajax({
+                        url: "{{ url('master-data/values') }}/" + id, type: 'POST', data: { _method: 'DELETE' },
+                        success: function(response) { if (response.status) { toastr.success(response.message); loadValues(activeSelection.id); } done(); },
+                        error: xhr => { toastr.error(xhr.responseJSON?.message || 'Something went wrong'); done(); }
+                    });
+                }
             });
         });
 
@@ -531,19 +556,38 @@
 
         $(document).on('click', '.toggleTaxRateBtn', function() {
             const id = $(this).data('id');
-            if ($(this).data('active') == '1' && !confirm('Deactivate this tax rate? It will stop appearing in product/quotation pickers.')) return;
-            $.post("{{ url('master-data/tax-rates') }}/" + id + "/toggle-status", {}, function(response) {
-                if (response.status) { toastr.success('Status updated'); loadTaxRates(); }
-            }).fail(xhr => toastr.error(xhr.responseJSON?.message || 'Something went wrong'));
+            function doToggle(done) {
+                $.post("{{ url('master-data/tax-rates') }}/" + id + "/toggle-status", {}, function(response) {
+                    if (response.status) { toastr.success('Status updated'); loadTaxRates(); }
+                    if (done) done();
+                }).fail(xhr => { toastr.error(xhr.responseJSON?.message || 'Something went wrong'); if (done) done(); });
+            }
+            if ($(this).data('active') == '1') {
+                openConfirmModal({
+                    title: 'Deactivate this tax rate?',
+                    message: 'It will stop appearing in product/quotation pickers.',
+                    variant: 'warning',
+                    confirmText: 'Deactivate',
+                    onConfirm: doToggle,
+                });
+            } else {
+                doToggle();
+            }
         });
 
         $(document).on('click', '.deleteTaxRateBtn', function() {
-            if (!confirm('Delete this tax rate?')) return;
             const id = $(this).data('id');
-            $.ajax({
-                url: "{{ url('master-data/tax-rates') }}/" + id, type: 'POST', data: { _method: 'DELETE' },
-                success: function(response) { if (response.status) { toastr.success(response.message); loadTaxRates(); } },
-                error: xhr => toastr.error(xhr.responseJSON?.message || 'Something went wrong')
+            openConfirmModal({
+                title: 'Delete this tax rate?',
+                message: 'This can\'t be undone.',
+                confirmText: 'Delete',
+                onConfirm: function(done) {
+                    $.ajax({
+                        url: "{{ url('master-data/tax-rates') }}/" + id, type: 'POST', data: { _method: 'DELETE' },
+                        success: function(response) { if (response.status) { toastr.success(response.message); loadTaxRates(); } done(); },
+                        error: xhr => { toastr.error(xhr.responseJSON?.message || 'Something went wrong'); done(); }
+                    });
+                }
             });
         });
 

@@ -9,7 +9,7 @@
 
     <link rel="stylesheet" href="{{ asset('vendors/css/vendor.bundle.base.css') }}">
     <link rel="stylesheet" href="{{ asset('css/vertical-layout-light/style.css') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.26.25/sweetalert2.min.css">
 
     <style>
@@ -297,10 +297,16 @@
 
         $(document).on('click', '.delete-rule-btn', function () {
             const id = $(this).data('id');
-            if (!confirm('Remove this rule? Deals will fall through to the next priority level instead.')) return;
-            $.ajax({ url: `{{ url('settings/deal-assignment') }}/${id}`, method: 'DELETE' })
-                .done(res => { toastr.success(res.message); load(); })
-                .fail(x => toastr.error(x.responseJSON?.message || 'Could not delete this rule.'));
+            openConfirmModal({
+                title: 'Remove this rule?',
+                message: 'Deals will fall through to the next priority level instead.',
+                confirmText: 'Remove',
+                onConfirm: function(done) {
+                    $.ajax({ url: `{{ url('settings/deal-assignment') }}/${id}`, method: 'DELETE' })
+                        .done(res => { toastr.success(res.message); load(); done(); })
+                        .fail(x => { toastr.error(x.responseJSON?.message || 'Could not delete this rule.'); done(); });
+                }
+            });
         });
 
         $(document).on('click', '.toggle-rule-btn', function () {

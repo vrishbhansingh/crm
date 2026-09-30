@@ -33,3 +33,5 @@
 
 <script src="{{ asset('vendors/js/vendor.bundle.base.js') }}"></script>
 <script src="{{ asset('js/crm-pagination.js') }}"></script>
+<script src="{{ asset('js/crm-status.js') }}"></script>
+<script src="{{ asset('js/crm-confirm.js') }}"></script>
