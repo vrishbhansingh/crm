@@ -531,6 +531,7 @@ class LeadController extends Controller
                     ? 'Auto-assigned to '.optional(User::find($assignedTo))->name
                     : 'Assigned to '.optional(User::find($assignedTo))->name,
             ]);
+            \App\Notifications\LeadAssigned::notifyAssignee($lead, Auth::guard('web')->id(), $wasAutoAssigned ? 'auto' : 'assigned');
         }
 
         // Existing company/contact can be linked by ID instead of always
@@ -800,6 +801,7 @@ class LeadController extends Controller
                     'type' => 'assigned',
                     'description' => 'Reassigned to '.optional(User::find($lead->assigned_to))->name,
                 ]);
+                \App\Notifications\LeadAssigned::notifyAssignee($lead, Auth::guard('web')->id());
             }
         }
 
@@ -934,6 +936,7 @@ class LeadController extends Controller
         $lead->assigned_at = now();
         $result = $lead->save();
         if ($result) {
+            \App\Notifications\LeadAssigned::notifyAssignee($lead, Auth::guard('web')->id());
             return response()->json([
                 'status' => true,
                 'message' => 'Assigned User Successfully',
@@ -965,6 +968,7 @@ class LeadController extends Controller
             $lead->assigned_by = Auth::guard('web')->id();
             $lead->assigned_at = now();
             $lead->save();
+            \App\Notifications\LeadAssigned::notifyAssignee($lead, Auth::guard('web')->id());
         }
 
         return response()->json([

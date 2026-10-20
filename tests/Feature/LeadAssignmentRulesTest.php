@@ -109,6 +109,12 @@ class LeadAssignmentRulesTest extends TestCase
         $lead = Lead::where('name', 'New Lead')->first();
         $this->assertNotNull($lead);
         $this->assertSame($this->agentB->id, $lead->assigned_to);
+
+        // Speed-to-lead: the agent the lead landed on is told straight away.
+        $note = $this->agentB->notifications()->where('type', \App\Notifications\LeadAssigned::class)->first();
+        $this->assertNotNull($note);
+        $this->assertSame($lead->id, $note->data['lead_id']);
+        $this->assertSame(0, $this->admin->notifications()->count());
     }
 
     public function test_duplicate_match_values_for_the_same_rule_type_are_rejected(): void

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\DealAssignmentRule;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Deal-side counterpart to LeadAssignmentService: Pipeline rules checked
@@ -55,15 +56,20 @@ class DealAssignmentService
 
     private function nextFromRule(DealAssignmentRule $rule): ?int
     {
-        $agents = $rule->activeAgents();
-        if ($agents->isEmpty()) {
-            return null;
-        }
+        // Row lock so two leads arriving in the same instant (typical for
+        // webhook bursts) can't both read the same cursor and land on the
+        // same agent.
+        return DB::connection($rule->getConnectionName())->transaction(function () use ($rule) {
+            $fresh = DealAssignmentRule::lockForUpdate()->find($rule->id) ?? $rule;
+            $agents = $fresh->activeAgents();
+            if ($agents->isEmpty()) {
+                return null;
+            }
 
-        $index = $rule->cursor % $agents->count();
-        $agentId = $agents[$index]->id;
-        $rule->update(['cursor' => ($index + 1) % $agents->count()]);
+            $index = $fresh->cursor % $agents->count();
+            $fresh->update(['cursor' => ($index + 1) % $agents->count()]);
 
-        return $agentId;
+            return $agents[$index]->id;
+        });
     }
 }

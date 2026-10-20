@@ -12,6 +12,9 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
+        // Proof-of-life for AutomationHealth: the settings pages warn when this stops ticking.
+        $schedule->call(fn () => \App\Support\AutomationHealth::beat())->name('crm-heartbeat')->everyMinute();
+
         $schedule->command('crm:send-task-reminders')->everyMinute()->withoutOverlapping();
         $schedule->command('crm:send-lead-followup-reminders')->everyMinute()->withoutOverlapping();
         $schedule->command('crm:dispatch-scheduled-campaigns')->everyMinute()->withoutOverlapping();

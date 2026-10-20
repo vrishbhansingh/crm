@@ -54,6 +54,10 @@ class SendTaskReminders extends Command
                 try {
                     $this->sendForActiveTenant($sent);
                     $this->sendDueTodayForActiveTenant($sent, $tenant);
+                } catch (\Throwable $exception) {
+                    // e.g. a tenant database missing a newer column: skip it,
+                    // don't stop reminders for every tenant after it.
+                    report($exception);
                 } finally {
                     TenantContext::clear();
                     PermissionTeam::set(null);

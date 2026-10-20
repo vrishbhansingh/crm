@@ -136,6 +136,22 @@
         .dash-card h5 a:hover { text-decoration: underline; }
         .dash-card .dash-card-sub { font-size: 12.5px; color: var(--text-muted); margin: -14px 0 16px; }
 
+        /* "Upcoming Follow-ups & Reminders" is long enough that on a phone
+           width it wraps onto two lines inside the title's own flex row —
+           and since the "Open calendar" link shares that same row (pushed
+           right via margin-left:auto), it gets squeezed into the leftover
+           space next to the wrapped title and wraps onto two lines itself,
+           reading as cramped/broken instead of as two separate pieces of
+           text. Dropping the link onto its own full-width line below the
+           title (only past the point the title would actually wrap) keeps
+           both legible. Scoped to this one header, not every .dash-card
+           h5 — the other h5+link pairs on this page have short titles
+           that already fit on one line and don't need this. */
+        @media (max-width: 480px) {
+            .dash-card-h5--wrap { flex-wrap: wrap; }
+            .dash-card-h5--wrap a { margin-left: 28px; flex-basis: 100%; }
+        }
+
         .dash-table th { font-size: 12px; text-transform: uppercase; color: var(--text-muted); border-top: none; }
         .dash-table td { font-size: 14px; vertical-align: middle; }
 
@@ -513,7 +529,7 @@
                 <div class="row">
                     <div class="col-12">
                         <div class="dash-card">
-                            <h5><i class="fa fa-bell-o"></i> Upcoming Follow-ups &amp; Reminders @can('calendar.view')<a href="{{ route('calendar.index') }}">Open calendar</a>@endcan</h5>
+                            <h5 class="dash-card-h5--wrap"><i class="fa fa-bell-o"></i> Upcoming Follow-ups &amp; Reminders @can('calendar.view')<a href="{{ route('calendar.index') }}">Open calendar</a>@endcan</h5>
 
                             <div class="followup-layout">
                                 <div class="followup-cal-col">

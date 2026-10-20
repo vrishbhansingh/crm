@@ -41,6 +41,18 @@
            else uses in dark mode — separated from the content area by a
            border instead of a color change. */
         background: var(--crm-surface, #fff);
+        /* The vendor stylesheet's bare .sidebar rule (vertical-layout-
+           light/style.css) sets `transition: width .25s ease, background
+           .25s ease`. Our higher-specificity #sidebar.sidebar background
+           above overrides its VALUE, but transition is a separate property
+           the vendor rule still owns wherever we don't redeclare it — so
+           every theme toggle was visibly fading the sidebar's background
+           over that 250ms while every other themed surface on the page
+           (no such rule) switched instantly, reading as the sidebar
+           "lagging" or "stuck" on the old theme. Width stays animated
+           (matches .sidebar-rail's own transition, for the collapse
+           toggle); background no longer is, so theme switches instantly. */
+        transition: width 0.2s ease;
         border-right: 1px solid var(--crm-border, #e5e7eb);
         /* Generous bottom padding, not just the top's 12px: without it the
            last nav item sits flush against the very bottom pixel row of

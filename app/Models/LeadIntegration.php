@@ -19,7 +19,7 @@ use Illuminate\Support\Str;
 class LeadIntegration extends Model
 {
     protected $fillable = [
-        'tenant_id', 'platform', 'name', 'token', 'secret', 'verify_token',
+        'tenant_id', 'platform', 'name', 'token', 'secret', 'page_access_token', 'verify_token',
         'is_active', 'leads_created_count', 'last_received_at', 'created_by',
         'default_lead_type', 'default_lead_status', 'default_priority',
         'default_assigned_to', 'pipeline_id', 'field_mapping',
@@ -29,10 +29,11 @@ class LeadIntegration extends Model
         'is_active' => 'boolean',
         'last_received_at' => 'datetime',
         'secret' => 'encrypted',
+        'page_access_token' => 'encrypted',
         'field_mapping' => 'array',
     ];
 
-    protected $hidden = ['secret', 'verify_token'];
+    protected $hidden = ['secret', 'verify_token', 'page_access_token'];
 
     public static function generateToken(): string
     {

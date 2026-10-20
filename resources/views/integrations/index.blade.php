@@ -135,7 +135,8 @@
 
             <div class="content-wrapper li-wrap">
 
-                <div class="li-header">
+                @include('include.automation-status')
+        <div class="li-header">
                     <div>
                         <h1>Lead Integrations</h1>
                         <p>Connect the platforms you sell on — every enquiry becomes a lead here automatically, assigned and routed exactly the way you configure below.</p>
@@ -270,6 +271,12 @@
                             <input type="text" id="webhook_name" class="form-control" placeholder="e.g. Main website enquiry form" required>
                         </div>
 
+                        <div class="li-form-section" id="fbTokenGroup" style="display:none;">
+                            <label>Facebook Page access token</label>
+                            <input type="password" id="webhook_page_token" class="form-control" autocomplete="off" placeholder="Paste a long-lived Page token">
+                            <small class="text-muted" id="fbTokenHint">Facebook only sends a lead ID. With this token we fetch the name, phone and email automatically. Needs the leads_retrieval permission.</small>
+                        </div>
+
                         <div class="li-form-section">
                             <div class="li-form-section-label">New lead defaults</div>
                             <div class="form-row">
@@ -399,6 +406,8 @@
             $('#webhookForm')[0].reset();
             $('#webhook_id').val('');
             $('#mappingRows').empty();
+            $('#fbTokenGroup').hide();
+            $('#fbTokenHint').text('Facebook only sends a lead ID. With this token we fetch the name, phone and email automatically. Needs the leads_retrieval permission.');
         }
 
         // ---- Connect / Add webhook ----
@@ -406,6 +415,7 @@
             resetWebhookForm();
             const platform = $(this).data('platform');
             $('#webhook_platform').val(platform);
+            $('#fbTokenGroup').toggle(platform === 'facebook');
             $('#modalPlatformLabel').text($(this).data('label'));
             $('#webhookSubmitBtn').text('Create webhook');
             $('#webhookModal').modal('show');
@@ -421,6 +431,8 @@
                 const data = response.data;
                 $('#webhook_id').val(data.id);
                 $('#webhook_platform').val(data.platform);
+                $('#fbTokenGroup').toggle(data.platform === 'facebook');
+                if (data.has_page_token) $('#fbTokenHint').text('A token is saved. Leave blank to keep it, or paste a new one to replace it.');
                 $('#modalPlatformLabel').text(data.name);
                 $('#webhook_name').val(data.name);
                 $('#webhook_lead_type').val(data.default_lead_type || '');
@@ -453,6 +465,7 @@
             const payload = {
                 platform: $('#webhook_platform').val(),
                 name: $('#webhook_name').val(),
+                page_access_token: $('#webhook_page_token').val(),
                 default_lead_type: $('#webhook_lead_type').val(),
                 default_lead_status: $('#webhook_lead_status').val(),
                 default_priority: $('#webhook_priority').val(),

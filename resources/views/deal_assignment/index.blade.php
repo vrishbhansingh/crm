@@ -92,6 +92,7 @@
 
             <div class="content-wrapper">
 
+                @include('include.automation-status')
                 <div class="crm-page-header">
                     <div class="crm-header-left">
                         <div class="crm-header-icon"><i class="fa fa-share-square-o"></i></div>

@@ -23,8 +23,8 @@ class LeadFollowUpReminderNotificationTest extends TestCase
             'tenant_id' => $tenant->id, 'name' => 'Reminder Lead', 'phone' => '9000000001',
             'lead_type' => 'inquiry', 'lead_status' => 'new', 'is_converted' => 'No',
             'assigned_to' => $user->id,
-            'follow_up_date' => now()->subMinute()->toDateString(),
-            'follow_up_time' => now()->subMinute()->format('H:i:s'),
+            'follow_up_date' => now('Asia/Kolkata')->subMinute()->toDateString(),
+            'follow_up_time' => now('Asia/Kolkata')->subMinute()->format('H:i:s'),
         ]);
 
         $this->artisan('crm:send-lead-followup-reminders')->assertSuccessful();
@@ -59,6 +59,28 @@ class LeadFollowUpReminderNotificationTest extends TestCase
         $this->assertSame(0, $user->notifications()->count());
     }
 
+    public function test_follow_up_time_is_read_in_the_tenants_timezone_not_utc(): void
+    {
+        $suffix = Str::lower(Str::random(8));
+        $tenant = Tenant::create(['name' => 'Zone Tenant', 'slug' => 'zone-'.$suffix, 'status' => 'Active', 'timezone' => 'Asia/Kolkata']);
+        $user = User::create(['tenant_id' => $tenant->id, 'name' => 'Zone User', 'email' => "zone-{$suffix}@example.test", 'password' => Hash::make('password'), 'status' => 'Active', 'session_token' => 'zone-'.$suffix]);
+
+        // One hour ago on the tenant's own wall clock. Misread as UTC (IST
+        // runs 5.5h ahead) that reads as ~4.5h in the future and the
+        // reminder would fire hours late; read correctly it is due now.
+        $due = now('Asia/Kolkata')->subHour();
+        Lead::create([
+            'tenant_id' => $tenant->id, 'name' => 'Zone Lead', 'phone' => '9000000004',
+            'lead_type' => 'inquiry', 'lead_status' => 'new', 'is_converted' => 'No',
+            'assigned_to' => $user->id,
+            'follow_up_date' => $due->toDateString(),
+            'follow_up_time' => $due->format('H:i:s'),
+        ]);
+
+        $this->artisan('crm:send-lead-followup-reminders')->assertSuccessful();
+        $this->assertSame(1, $user->notifications()->count());
+    }
+
     public function test_rescheduling_a_follow_up_clears_the_previous_notified_flag(): void
     {
         $suffix = Str::lower(Str::random(8));
@@ -68,8 +90,8 @@ class LeadFollowUpReminderNotificationTest extends TestCase
             'tenant_id' => $tenant->id, 'name' => 'Reschedule Lead', 'phone' => '9000000003',
             'lead_type' => 'inquiry', 'lead_status' => 'new', 'is_converted' => 'No',
             'assigned_to' => $user->id,
-            'follow_up_date' => now()->subMinute()->toDateString(),
-            'follow_up_time' => now()->subMinute()->format('H:i:s'),
+            'follow_up_date' => now('Asia/Kolkata')->subMinute()->toDateString(),
+            'follow_up_time' => now('Asia/Kolkata')->subMinute()->format('H:i:s'),
         ]);
 
         $this->artisan('crm:send-lead-followup-reminders')->assertSuccessful();
@@ -82,8 +104,8 @@ class LeadFollowUpReminderNotificationTest extends TestCase
         // exactly like a real request would always load its own fresh
         // instance rather than holding one across an external process.
         $lead = $lead->fresh();
-        $lead->follow_up_date = now()->subMinute()->toDateString();
-        $lead->follow_up_time = now()->addMinute()->format('H:i:s');
+        $lead->follow_up_date = now('Asia/Kolkata')->subMinute()->toDateString();
+        $lead->follow_up_time = now('Asia/Kolkata')->addMinute()->format('H:i:s');
         $lead->save();
         $this->assertNull($lead->fresh()->follow_up_notified_at);
     }

@@ -19,6 +19,7 @@ use App\Support\TenantContext;
 use App\Tenancy\TenantConnectionManager;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Http;
 
 /**
  * Public, unauthenticated endpoint every configured platform posts leads
@@ -58,6 +59,20 @@ class WebhookLeadController extends Controller
 
         $payload = $request->all();
         $normalized = $normalizer->normalize($integration->platform, $payload, $integration->field_mapping ?? []);
+
+        // Native Facebook Lead Ads webhooks carry only a leadgen_id; pull the
+        // actual form answers from the Graph API when a Page token is saved.
+        if ($integration->platform === 'facebook' && empty($normalized['phone']) && empty($normalized['email'])
+            && ! empty($normalized['external_ref']) && $integration->page_access_token) {
+            try {
+                $normalized = $this->fetchFacebookLead($integration, $normalized['external_ref'], $normalizer);
+            } catch (\Throwable $exception) {
+                report($exception);
+                $this->log($integration, 'failed', $payload, $normalized['external_ref'], null, 'Could not fetch the lead from Facebook: '.$exception->getMessage());
+
+                return response()->json(['status' => 'error', 'message' => 'Could not fetch the lead from Facebook.'], 502);
+            }
+        }
 
         if (! empty($normalized['external_ref'])
             && LeadIntegrationLog::where('lead_integration_id', $integration->id)
@@ -112,6 +127,20 @@ class WebhookLeadController extends Controller
         } finally {
             $connections->deactivate();
         }
+    }
+
+    private function fetchFacebookLead(LeadIntegration $integration, string $leadgenId, LeadPayloadNormalizer $normalizer): array
+    {
+        $response = Http::timeout(10)->get('https://graph.facebook.com/'.config('services.meta.graph_version', 'v25.0').'/'.rawurlencode($leadgenId), [
+            'access_token' => $integration->page_access_token,
+            'fields' => 'field_data,created_time',
+        ]);
+
+        if (! $response->successful()) {
+            throw new \RuntimeException($response->json('error.message') ?: 'Graph API returned HTTP '.$response->status());
+        }
+
+        return $normalizer->normalize('facebook', ['field_data' => $response->json('field_data', []), 'leadgen_id' => $leadgenId], $integration->field_mapping ?? []);
     }
 
     /**
@@ -249,6 +278,7 @@ class WebhookLeadController extends Controller
                 'type' => 'assigned',
                 'description' => ($integration->default_assigned_to ? 'Assigned' : 'Auto-assigned').' to '.optional(User::find($assignedTo))->name,
             ]);
+            \App\Notifications\LeadAssigned::notifyAssignee($lead, null, $integration->default_assigned_to ? 'assigned' : 'auto');
         }
 
         return $lead;

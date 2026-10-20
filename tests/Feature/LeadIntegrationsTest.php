@@ -225,6 +225,46 @@ class LeadIntegrationsTest extends TestCase
         $this->assertSame(1, Lead::where('tenant_id', $this->tenant->id)->where('phone', '9123456780')->count());
     }
 
+    public function test_facebook_leadgen_webhook_fetches_the_lead_details_with_the_page_token(): void
+    {
+        \Illuminate\Support\Facades\Http::fake([
+            'graph.facebook.com/*' => \Illuminate\Support\Facades\Http::response(['field_data' => [
+                ['name' => 'full_name', 'values' => ['Meera Shah']],
+                ['name' => 'phone_number', 'values' => ['+919876500011']],
+                ['name' => 'email', 'values' => ['meera@example.test']],
+            ]]),
+        ]);
+
+        $integration = LeadIntegration::create([
+            'tenant_id' => $this->tenant->id, 'platform' => 'facebook', 'name' => 'FB Ads',
+            'token' => LeadIntegration::generateToken(), 'page_access_token' => 'EAAB-test-token',
+        ]);
+
+        $payload = ['entry' => [['changes' => [['field' => 'leadgen', 'value' => ['leadgen_id' => '555001']]]]]];
+        $this->postJson('/webhooks/leads/'.$integration->token, $payload)->assertJsonPath('status', 'created');
+
+        $lead = Lead::where('tenant_id', $this->tenant->id)->where('email', 'meera@example.test')->first();
+        $this->assertNotNull($lead);
+        $this->assertSame('Meera Shah', $lead->name);
+        \Illuminate\Support\Facades\Http::assertSent(fn ($request) => str_contains($request->url(), '555001') && $request['access_token'] === 'EAAB-test-token');
+    }
+
+    public function test_facebook_leadgen_webhook_logs_a_failure_when_facebook_rejects_the_token(): void
+    {
+        \Illuminate\Support\Facades\Http::fake(['graph.facebook.com/*' => \Illuminate\Support\Facades\Http::response(['error' => ['message' => 'Invalid OAuth access token.']], 400)]);
+
+        $integration = LeadIntegration::create([
+            'tenant_id' => $this->tenant->id, 'platform' => 'facebook', 'name' => 'FB Ads',
+            'token' => LeadIntegration::generateToken(), 'page_access_token' => 'bad',
+        ]);
+
+        $this->postJson('/webhooks/leads/'.$integration->token, ['leadgen_id' => '555002'])->assertStatus(502);
+
+        $log = LeadIntegrationLog::where('lead_integration_id', $integration->id)->latest('id')->first();
+        $this->assertSame('failed', $log->status);
+        $this->assertStringContainsString('Invalid OAuth access token', $log->message);
+    }
+
     public function test_webhook_ignores_a_payload_with_no_contact_method(): void
     {
         $integration = LeadIntegration::create([

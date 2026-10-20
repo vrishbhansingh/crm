@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\LeadAssignmentRule;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Rules-based lead auto-assignment: Product rules checked first, then
@@ -55,15 +56,20 @@ class LeadAssignmentService
 
     private function nextFromRule(LeadAssignmentRule $rule): ?int
     {
-        $agents = $rule->activeAgents();
-        if ($agents->isEmpty()) {
-            return null;
-        }
+        // Row lock so two leads arriving in the same instant (typical for
+        // webhook bursts) can't both read the same cursor and land on the
+        // same agent.
+        return DB::connection($rule->getConnectionName())->transaction(function () use ($rule) {
+            $fresh = LeadAssignmentRule::lockForUpdate()->find($rule->id) ?? $rule;
+            $agents = $fresh->activeAgents();
+            if ($agents->isEmpty()) {
+                return null;
+            }
 
-        $index = $rule->cursor % $agents->count();
-        $agentId = $agents[$index]->id;
-        $rule->update(['cursor' => ($index + 1) % $agents->count()]);
+            $index = $fresh->cursor % $agents->count();
+            $fresh->update(['cursor' => ($index + 1) % $agents->count()]);
 
-        return $agentId;
+            return $agents[$index]->id;
+        });
     }
 }

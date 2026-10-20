@@ -38,12 +38,23 @@ class SendLeadFollowUpReminders extends Command
             ->where('provision_status', 'ready')
             ->orderBy('id')
             ->each(function (Tenant $tenant) use ($connections, &$sent) {
-                $connections->activate($tenant);
+                // One broken tenant (unprovisioned or out-of-date database)
+                // must not stop reminders for every tenant after it.
+                try {
+                    $connections->activate($tenant);
+                } catch (\Throwable $exception) {
+                    report($exception);
+
+                    return;
+                }
+
                 TenantContext::set($tenant->id);
                 PermissionTeam::set($tenant->id);
 
                 try {
                     $this->sendForActiveTenant($sent);
+                } catch (\Throwable $exception) {
+                    report($exception);
                 } finally {
                     TenantContext::clear();
                     PermissionTeam::set(null);
@@ -66,13 +77,17 @@ class SendLeadFollowUpReminders extends Command
             ->orderBy('id')
             ->chunkById(100, function ($leads) use (&$sent) {
                 foreach ($leads as $lead) {
-                    $followUpAt = Carbon::parse($lead->follow_up_date.($lead->follow_up_time ? ' '.$lead->follow_up_time : ''));
-
-                    if ($followUpAt->isFuture()) {
+                    if (! $lead->assignedUser || $lead->assignedUser->status !== 'Active' || $lead->assignedUser->tenant?->status !== 'Active') {
                         continue;
                     }
 
-                    if (! $lead->assignedUser || $lead->assignedUser->status !== 'Active' || $lead->assignedUser->tenant?->status !== 'Active') {
+                    // Follow-up date/time are entered as the company's wall-clock
+                    // time, but the app runs in UTC — parse them in the tenant's
+                    // own timezone or a 10:00 IST follow-up fires 5.5h late.
+                    $timezone = $lead->assignedUser->tenant->timezone ?: config('app.timezone');
+                    $followUpAt = Carbon::parse($lead->follow_up_date.($lead->follow_up_time ? ' '.$lead->follow_up_time : ''), $timezone);
+
+                    if ($followUpAt->isFuture()) {
                         continue;
                     }
 

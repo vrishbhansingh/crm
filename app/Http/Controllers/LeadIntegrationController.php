@@ -146,6 +146,7 @@ class LeadIntegrationController extends Controller
             'default_priority' => $data['default_priority'] ?? null,
             'default_assigned_to' => $data['default_assigned_to'] ?? null,
             'pipeline_id' => $data['pipeline_id'] ?? null,
+            'page_access_token' => $data['platform'] === 'facebook' ? ($data['page_access_token'] ?? null) : null,
             'field_mapping' => $this->cleanMapping($request->input('field_mapping', [])),
         ]);
 
@@ -163,6 +164,10 @@ class LeadIntegrationController extends Controller
 
         if ($request->has('is_active')) {
             $update['is_active'] = $request->boolean('is_active');
+        }
+        // Blank keeps the saved token (the form never echoes it back).
+        if ($integration->platform === 'facebook' && ! empty($data['page_access_token'])) {
+            $update['page_access_token'] = $data['page_access_token'];
         }
         if ($request->has('field_mapping')) {
             $update['field_mapping'] = $this->cleanMapping($request->input('field_mapping', []));
@@ -205,7 +210,7 @@ class LeadIntegrationController extends Controller
     {
         $this->authorizeIntegration($integration);
 
-        return response()->json(['status' => true, 'data' => $integration]);
+        return response()->json(['status' => true, 'data' => $integration->toArray() + ['has_page_token' => ! empty($integration->page_access_token)]]);
     }
 
     private function validated(Request $request, int $tenantId, ?LeadIntegration $existing = null): array
@@ -213,6 +218,7 @@ class LeadIntegrationController extends Controller
         return $request->validate([
             'platform' => [$existing ? 'sometimes' : 'required', Rule::in(self::PLATFORMS)],
             'name' => ['required', 'string', 'max:150'],
+            'page_access_token' => ['nullable', 'string', 'max:2000'],
             'default_lead_type' => ['nullable', 'string', Rule::in(MasterValue::options('lead_type')->pluck('code'))],
             'default_lead_status' => ['nullable', 'string', Rule::in(MasterValue::options('lead_status')->pluck('code'))],
             'default_priority' => ['nullable', 'string', Rule::in(MasterValue::options('lead_priority')->pluck('code'))],
