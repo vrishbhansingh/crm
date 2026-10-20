@@ -83,8 +83,18 @@
        tracked --sidebar-w and visibly jumped left/right between the
        expanded (244px) and collapsed (72px) offsets. */
 
+    /* Pinned: the whole sidebar is the scroll container, so a sticky
+       search box stays at the top while the menu scrolls beneath it. The
+       negative margins + matching padding extend its opaque background over
+       the sidebar's own 12px/8px padding, so no menu item peeks through
+       around it. */
     .sidebar-search {
-        margin-bottom: 8px;
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        margin: -12px -8px 0;
+        padding: 12px 8px 8px;
+        background: var(--crm-surface, #fff);
     }
     .sidebar-search input {
         width: 100%;
