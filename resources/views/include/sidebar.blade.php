@@ -90,11 +90,16 @@
        around it. */
     .sidebar-search {
         position: sticky;
-        top: 0;
+        /* Sticky offsets are measured from the scroll box's CONTENT edge, which
+           sits 12px below the sidebar's top (its own padding). top:0 therefore
+           left a 12px strip above this box where menu items showed through.
+           -12px pins it to the true top edge, flush under the logo bar. */
+        top: -12px;
         z-index: 5;
         margin: -12px -8px 0;
-        padding: 12px 8px 8px;
+        padding: 10px 8px 8px;
         background: var(--crm-surface, #fff);
+        box-shadow: 0 1px 0 var(--crm-border, #e5e7eb);
     }
     .sidebar-search input {
         width: 100%;
