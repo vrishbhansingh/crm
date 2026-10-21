@@ -51,4 +51,5 @@ php artisan crm:verify-tenant-isolation
 - Back up the master database and every tenant database independently.
 - Put central schema changes in `database/migrations`.
 - Put CRM business-table changes in `database/migrations/tenant`, then run both the central migration and tenant migration command during deployment.
+- After every deploy run, in order: `php artisan migrate --force`, `php artisan tenants:migrate`, `php artisan crm:sync-permissions`, `php artisan optimize:clear`. The permission sync matters: pages and menu items (Lead Integrations, Pipelines, Lead/Deal Assignment, WhatsApp, …) are hidden unless the user's role holds the matching permission, and new permissions are only granted to each company's Admin role by this step. Custom roles (e.g. Agent) are never changed by it; edit those under Roles & Permissions.
 - Never delete a tenant database as part of deactivation or rejection. Retention/deletion requires a separate explicit operational policy.

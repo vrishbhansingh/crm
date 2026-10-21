@@ -42,6 +42,10 @@ class WhatsAppAccountController extends Controller
             'credentials' => $this->credentialsFrom($data, $data['channel_type']),
             'is_default' => ! WhatsappAccount::where('tenant_id', $tenantId)->exists(),
             'created_by' => Auth::guard('web')->id(),
+            'ai_bot_enabled' => (bool) ($data['ai_bot_enabled'] ?? false),
+            'ai_bot_instructions' => trim((string) ($data['ai_bot_instructions'] ?? '')) ?: null,
+            'ai_bot_max_replies' => (int) ($data['ai_bot_max_replies'] ?? 6),
+            'ai_bot_handoff_message' => trim((string) ($data['ai_bot_handoff_message'] ?? '')) ?: null,
         ]);
 
         return response()->json(['status' => true, 'message' => 'WhatsApp account connected.', 'data' => ['id' => $account->id]]);
@@ -53,6 +57,17 @@ class WhatsAppAccountController extends Controller
         $data = $this->validated($request, $account);
 
         $update = collect($data)->only(['name', 'phone_number'])->all();
+        if ($request->has('ai_bot_enabled')) {
+            $update['ai_bot_enabled'] = $request->boolean('ai_bot_enabled');
+        }
+        foreach (['ai_bot_instructions', 'ai_bot_handoff_message'] as $field) {
+            if ($request->has($field)) {
+                $update[$field] = trim((string) ($data[$field] ?? '')) ?: null;
+            }
+        }
+        if ($request->filled('ai_bot_max_replies')) {
+            $update['ai_bot_max_replies'] = (int) $data['ai_bot_max_replies'];
+        }
         $update['credentials'] = array_merge($account->credentials ?? [], $this->credentialsFrom($data, $account->channel_type, skipEmpty: true));
 
         if ($request->has('is_active')) {
@@ -123,6 +138,11 @@ class WhatsAppAccountController extends Controller
             'api_key_location' => ['nullable', Rule::in(['query', 'header', 'body'])],
             'api_key_param' => ['nullable', 'string', 'max:60'],
             'http_method' => ['nullable', Rule::in(['post', 'get'])],
+            // AI auto-reply bot (off unless explicitly enabled per account)
+            'ai_bot_enabled' => ['nullable', 'boolean'],
+            'ai_bot_instructions' => ['nullable', 'string', 'max:3000'],
+            'ai_bot_max_replies' => ['nullable', 'integer', 'min:1', 'max:15'],
+            'ai_bot_handoff_message' => ['nullable', 'string', 'max:300'],
         ]);
     }
 

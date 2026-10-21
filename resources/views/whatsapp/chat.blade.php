@@ -105,6 +105,9 @@
                             <div class="chat-messages" id="chatMessages"></div>
                             <div class="chat-compose">
                                 <form id="sendForm" class="d-flex gap-2">
+                                    @if (app(\App\Services\Ai\TextAssistant::class)->available())
+                                    <button class="btn btn-outline-secondary" type="button" id="aiSuggestBtn" title="Suggest a reply (you review and send it)">&#10024;</button>
+                                    @endif
                                     <input type="text" id="composeText" class="form-control" placeholder="Type a message...">
                                     <button class="btn btn-success" type="submit"><i class="fa fa-paper-plane"></i></button>
                                 </form>
@@ -181,14 +184,14 @@
             $.get('/whatsapp/chat/conversations/' + id + '/messages', function (res) {
                 var conv = res.data.conversation;
                 $('#threadName').text(conv.display_name);
-                $('#threadPhone').text(conv.wa_phone);
+                $('#threadPhone').text(conv.wa_phone + ({ bot: ' · AI assistant is handling this chat', needs_human: ' · AI handed this over: needs your reply' }[conv.ai_status] || ''));
                 $('#windowBanner').toggle(conv.channel_type === 'meta_cloud' && !conv.within_window);
 
                 var html = '';
                 res.data.messages.forEach(function (m) {
                     html += '<div class="msg-bubble ' + m.direction + (m.status === 'failed' ? ' failed' : '') + '">'
                         + $('<div>').text(m.body || ('[' + m.type + ']')).html()
-                        + '<div class="msg-meta">' + timeAgo(m.created_at) + (m.direction === 'out' ? ' &middot; ' + m.status : '') + '</div>'
+                        + '<div class="msg-meta">' + timeAgo(m.created_at) + (m.direction === 'out' ? ' &middot; ' + m.status : '') + (m.source === 'bot' || m.source === 'bot_handoff' ? ' &middot; AI' : '') + '</div>'
                         + (m.status === 'failed' && m.error_message ? '<div class="msg-error">' + $('<div>').text(m.error_message).html() + '</div>' : '')
                         + '</div>';
                 });
@@ -197,6 +200,16 @@
                 loadConversations();
             });
         }
+
+        // AI reply suggestion: fills the box for the agent to edit and send; never sends by itself.
+        $('#aiSuggestBtn').on('click', function () {
+            if (!activeConversationId) return;
+            var $btn = $(this).prop('disabled', true);
+            $.post('/whatsapp/chat/conversations/' + activeConversationId + '/ai/suggest')
+                .done(function (res) { $('#composeText').val(res.text || '').focus(); })
+                .fail(function (xhr) { toastr.error((xhr.responseJSON && xhr.responseJSON.message) || 'The AI helper is unavailable right now.'); })
+                .always(function () { $btn.prop('disabled', false); });
+        });
 
         $('#accountFilter, #chatSearch').on('change keyup', function () { loadConversations(); });
 

@@ -641,3 +641,5 @@
         });
     })();
 </script>
+
+@include('include.ai-assistant')

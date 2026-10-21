@@ -118,6 +118,7 @@
                             <div style="flex:1; min-width:220px;">
                                 <span class="account-badge {{ $account->channel_type }}">{{ $account->channel_type === 'meta_cloud' ? 'Meta Cloud API' : 'Unofficial Gateway' }}</span>
                                 @if($account->is_default)<span class="account-badge" style="background:#e0f2fe;color:#075985;">Default</span>@endif
+                                @if($account->ai_bot_enabled)<span class="account-badge" style="background:#ede9fe;color:#5b21b6;">AI auto-reply on</span>@endif
                                 <div class="acc-name mt-1">{{ $account->name }}</div>
                                 <small class="text-muted">{{ $account->phone_number ?: 'No sender number set' }} &middot;
                                     <span class="status-dot {{ $account->is_active ? 'on' : 'off' }}"></span>{{ $account->is_active ? 'Active' : 'Paused' }}
@@ -202,6 +203,32 @@
                             </div>
                         </div>
                     </div>
+                    <div class="modal-body" style="border-top:1px solid #e5e7eb;">
+                        <h6 class="mb-2">&#10024; AI auto-reply <span class="text-muted" style="font-weight:400;font-size:12px;">(off by default)</span></h6>
+                        <p class="text-muted" style="font-size:12.5px;">
+                            When on, an AI assistant greets new customers on this number, asks what they need, saves the lead in your CRM, and hands the chat to your team.
+                            It never quotes prices or makes promises, and it stops for good as soon as a teammate replies. Needs an Anthropic API key on the server.
+                        </p>
+                        <div class="form-check mb-2">
+                            <input type="hidden" name="ai_bot_enabled" value="0">
+                            {{-- The admin theme hides native checkboxes (form-check-input), so this one is styled inline to stay visible. --}}
+                            <label style="display:flex;align-items:center;gap:8px;margin:0;cursor:pointer;font-weight:600;"><input type="checkbox" name="ai_bot_enabled" id="accAiEnabled" value="1" style="position:static;opacity:1;appearance:auto;-webkit-appearance:checkbox;width:18px;height:18px;margin:0;"> Let AI reply to customers on this number</label>
+                        </div>
+                        <div class="form-group">
+                            <label>Business info the assistant may use</label>
+                            <textarea name="ai_bot_instructions" id="accAiInstructions" class="form-control" rows="4" maxlength="3000" placeholder="What you sell, services, working hours, location, delivery areas&hellip; It will only state facts that are written here."></textarea>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-4">
+                                <label>Max AI replies per chat</label>
+                                <input type="number" name="ai_bot_max_replies" id="accAiMax" class="form-control" min="1" max="15" value="6">
+                            </div>
+                            <div class="form-group col-md-8">
+                                <label>Message when handing over to your team</label>
+                                <input type="text" name="ai_bot_handoff_message" id="accAiHandoff" class="form-control" maxlength="300" placeholder="Thank you! Our team will get back to you shortly.">
+                            </div>
+                        </div>
+                    </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-light" data-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn-success">Save</button>
@@ -260,6 +287,10 @@
                 $('#accountId').val(d.id);
                 $('#accName').val(d.name);
                 $('#accPhone').val(d.phone_number);
+                $('#accAiEnabled').prop('checked', !!d.ai_bot_enabled);
+                $('#accAiInstructions').val(d.ai_bot_instructions || '');
+                $('#accAiMax').val(d.ai_bot_max_replies || 6);
+                $('#accAiHandoff').val(d.ai_bot_handoff_message || '');
                 toggleChannelFields(d.channel_type);
                 var c = d.credentials || {};
                 Object.keys(c).forEach(function (key) {

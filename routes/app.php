@@ -66,6 +66,24 @@ Route::middleware('admin_middle')->group(function () {
     Route::get('/search', [SearchController::class, 'search'])->name('search');
 });
 
+// One-click AI helpers. Output is shown for review only; nothing is sent to customers.
+Route::middleware(['admin_middle', 'permission:leads.view', 'throttle:10,1'])->group(function () {
+    Route::post('/leads/{id}/ai/summary', [\App\Http\Controllers\AiHelperController::class, 'summary'])->name('leads.ai.summary')->whereNumber('id');
+    Route::post('/leads/{id}/ai/draft', [\App\Http\Controllers\AiHelperController::class, 'draft'])->name('leads.ai.draft')->whereNumber('id');
+});
+Route::middleware(['admin_middle', 'permission:whatsapp.send', 'throttle:10,1'])->group(function () {
+    Route::post('/whatsapp/chat/conversations/{id}/ai/suggest', [\App\Http\Controllers\AiHelperController::class, 'suggestWhatsapp'])->name('whatsapp.chat.ai_suggest')->whereNumber('id');
+});
+
+// AI assistant: any signed-in user may chat; what it can read is decided
+// per-tool by that user's own permissions and data scope (see Services/Ai).
+Route::middleware(['admin_middle', 'throttle:20,1'])->group(function () {
+    Route::post('/assistant/message', [\App\Http\Controllers\AiAssistantController::class, 'message'])->name('assistant.message');
+    Route::post('/assistant/confirm', [\App\Http\Controllers\AiAssistantController::class, 'confirm'])->name('assistant.confirm');
+    Route::post('/assistant/cancel', [\App\Http\Controllers\AiAssistantController::class, 'cancel'])->name('assistant.cancel');
+    Route::post('/assistant/reset', [\App\Http\Controllers\AiAssistantController::class, 'reset'])->name('assistant.reset');
+});
+
 Route::middleware(['admin_middle', 'permission:tasks.view'])->group(function () {
     Route::get('/tasks', [TaskController::class, 'index'])->name('tasks.index');
     Route::get('/tasks/data', [TaskController::class, 'data'])->name('tasks.data');

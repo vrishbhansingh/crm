@@ -269,6 +269,7 @@
                                 <a href="#" id="leadCallBtn" class="crm-btn crm-btn--primary crm-btn--sm" style="display:none;"><i class="fa fa-phone"></i> Call</a>
                                 <a href="#" id="leadEmailBtn" class="crm-btn crm-btn--secondary crm-btn--sm" style="display:none;"><i class="fa fa-envelope"></i> Email</a>
                                 @can('leads.edit')<a href="{{ route('leads.edit', $leadId) }}" class="crm-btn crm-btn--secondary crm-btn--sm"><i class="fa fa-pencil"></i> Edit</a>@endcan
+                                @if (app(\App\Services\Ai\TextAssistant::class)->available())<button type="button" id="aiToggleBtn" class="crm-btn crm-btn--secondary crm-btn--sm">&#10024; AI assist</button>@endif
                             </div>
                         </div>
                     </div>
@@ -296,6 +297,28 @@
                 <div class="row">
                     <!-- MAIN COLUMN -->
                     <div class="col-md-8">
+
+                        @if (app(\App\Services\Ai\TextAssistant::class)->available())
+                        <div class="card-box crm-card" id="leadAiPanel" style="display:none;">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <strong>&#10024; AI assist</strong>
+                                <small class="text-muted">AI can make mistakes. Review before using. Nothing is sent automatically.</small>
+                            </div>
+                            <button type="button" class="crm-btn crm-btn--secondary crm-btn--sm" id="aiSummaryBtn">Summarise this lead</button>
+                            <div id="aiSummaryOut" class="mt-2" style="white-space:pre-wrap;display:none;"></div>
+                            <hr>
+                            <div class="d-flex flex-wrap gap-2 align-items-center">
+                                <select id="aiDraftChannel" class="crm-select" style="max-width:140px;">
+                                    <option value="whatsapp">WhatsApp</option>
+                                    <option value="email">Email</option>
+                                </select>
+                                <input type="text" id="aiDraftGoal" class="crm-input" style="flex:1;min-width:180px;" maxlength="300" placeholder="Goal (optional), e.g. send brochure and ask for a call time">
+                                <button type="button" class="crm-btn crm-btn--primary crm-btn--sm" id="aiDraftBtn">Draft reply</button>
+                            </div>
+                            <textarea id="aiDraftOut" class="crm-input mt-2" rows="6" style="display:none;height:auto;padding:10px 12px;"></textarea>
+                            <button type="button" class="crm-btn crm-btn--secondary crm-btn--sm mt-2" id="aiCopyBtn" style="display:none;">Copy</button>
+                        </div>
+                        @endif
 
                         <div class="card-box crm-card">
                             <h5><i class="fa fa-address-book"></i> Customer Contact</h5>
@@ -507,6 +530,33 @@
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
             }
+        });
+
+        // ---- AI assist (summary + draft reply). Output is for review only. ----
+        $('#aiToggleBtn').on('click', () => $('#leadAiPanel').slideToggle(120));
+        function aiCall(url, data, $btn, onText) {
+            const label = $btn.text();
+            $btn.prop('disabled', true).text('Thinking…');
+            $.post(url, data)
+                .done(res => onText(res.text || ''))
+                .fail(xhr => toastr.error((xhr.responseJSON && xhr.responseJSON.message) || 'The AI helper is unavailable right now.'))
+                .always(() => $btn.prop('disabled', false).text(label));
+        }
+        $('#aiSummaryBtn').on('click', function () {
+            aiCall('/leads/' + leadId + '/ai/summary', {}, $(this), text => $('#aiSummaryOut').text(text).show());
+        });
+        $('#aiDraftBtn').on('click', function () {
+            aiCall('/leads/' + leadId + '/ai/draft', { channel: $('#aiDraftChannel').val(), goal: $('#aiDraftGoal').val() }, $(this), text => {
+                $('#aiDraftOut').val(text).show();
+                $('#aiCopyBtn').show();
+            });
+        });
+        $('#aiCopyBtn').on('click', function () {
+            const text = $('#aiDraftOut').val();
+            (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject()).then(
+                () => toastr.success('Copied'),
+                () => { $('#aiDraftOut').trigger('select'); document.execCommand('copy'); toastr.success('Copied'); }
+            );
         });
 
         const LEAD_PALETTE = ['#2563eb', '#7c3aed', '#0d9488', '#ea580c', '#db2777', '#16a34a', '#4338ca', '#0891b2'];

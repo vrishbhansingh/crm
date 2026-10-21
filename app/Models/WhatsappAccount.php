@@ -22,10 +22,12 @@ class WhatsappAccount extends Model
         'tenant_id', 'channel_type', 'name', 'phone_number', 'is_active', 'is_default',
         'webhook_token', 'verify_token', 'credentials', 'messages_sent_count',
         'messages_received_count', 'last_used_at', 'created_by',
+        'ai_bot_enabled', 'ai_bot_instructions', 'ai_bot_max_replies', 'ai_bot_handoff_message',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'ai_bot_enabled' => 'boolean',
         'is_default' => 'boolean',
         'credentials' => 'encrypted:array',
         'last_used_at' => 'datetime',

@@ -71,10 +71,12 @@ class WhatsAppChatController extends Controller
                     'display_name' => $conversation->wa_name ?: $conversation->lead?->name ?: $conversation->contact?->name ?: $conversation->wa_phone,
                     'within_window' => $conversation->withinSessionWindow(),
                     'channel_type' => $account?->channel_type,
+                    'ai_status' => app(\App\Services\WhatsApp\WhatsAppBot::class)->status($conversation),
                 ],
                 'messages' => $conversation->messages->map(fn ($m) => [
                     'id' => $m->id,
                     'direction' => $m->direction,
+                    'source' => $m->source,
                     'type' => $m->type,
                     'body' => $m->body,
                     'template_name' => $m->template_name,

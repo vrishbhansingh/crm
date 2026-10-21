@@ -102,10 +102,11 @@ class WhatsAppWebhookController extends Controller
                         ?? $incoming['interactive']['button_reply']['title']
                         ?? null;
 
-                    $messages->recordInbound($account, $from, $names[$from] ?? null, [
+                    $record = $messages->recordInbound($account, $from, $names[$from] ?? null, [
                         'type' => $incoming['type'] ?? 'text',
                         'body' => $body,
                     ], $incoming['id'] ?? null);
+                    $this->triggerBot($account, $record);
                 }
 
                 foreach ($value['statuses'] ?? [] as $status) {
@@ -146,9 +147,21 @@ class WhatsAppWebhookController extends Controller
         $body = $data['body'] ?? $data['message'] ?? $data['text'] ?? null;
         $name = $data['pushname'] ?? $data['name'] ?? null;
 
-        $messages->recordInbound($account, (string) $from, $name, [
+        $record = $messages->recordInbound($account, (string) $from, $name, [
             'type' => 'text',
             'body' => $body,
         ], isset($data['id']) ? (string) $data['id'] : null);
+        $this->triggerBot($account, $record);
+    }
+
+    /**
+     * Only when the tenant switched the AI bot on for this number. Runs
+     * after the HTTP response so the provider is never kept waiting.
+     */
+    private function triggerBot(WhatsappAccount $account, \App\Models\WhatsappMessage $record): void
+    {
+        if ($account->ai_bot_enabled && filled($record->body)) {
+            \App\Jobs\RunWhatsAppBot::dispatchAfterResponse($account->id, $record->whatsapp_conversation_id, $record->id);
+        }
     }
 }
