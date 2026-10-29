@@ -22,7 +22,7 @@ class TextAssistant
 
     public function available(): bool
     {
-        return (bool) config('ai.enabled') && filled(config('ai.api_key'));
+        return (bool) config('ai.enabled') && app(AiConfigResolver::class)->hasAny(\App\Support\TenantContext::id());
     }
 
     public function summarize(User $user, Lead $lead): string

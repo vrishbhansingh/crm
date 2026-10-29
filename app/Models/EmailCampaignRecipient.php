@@ -19,10 +19,16 @@ class EmailCampaignRecipient extends Model
         'status',
         'error',
         'sent_at',
+        'opened_at',
+        'open_count',
+        'clicked_at',
+        'click_count',
     ];
 
     protected $casts = [
         'sent_at' => 'datetime',
+        'opened_at' => 'datetime',
+        'clicked_at' => 'datetime',
     ];
 
     public function campaign(): BelongsTo

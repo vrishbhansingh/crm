@@ -58,6 +58,9 @@ class AiAssistantTest extends TestCase
         PermissionTeam::set($this->tenant->id);
         TenantContext::set($this->tenant->id);
 
+        // The CRM-only gate has its own tests (AiConfigurationTest); here the scripted model plays the assistant only.
+        config(['ai.scope_guard' => false]);
+
         $lead = fn (string $name, User $owner) => Lead::create([
             'tenant_id' => $this->tenant->id, 'name' => $name, 'phone' => '9'.random_int(100000000, 999999999),
             'lead_type' => 'inquiry', 'lead_status' => 'new', 'is_converted' => 'No', 'assigned_to' => $owner->id,
@@ -400,8 +403,9 @@ class AiAssistantTest extends TestCase
         $this->actingAs($this->admin, 'web')->withSession(['session_token' => $this->admin->session_token]);
         $this->get('/dashboard')->assertOk()->assertSee('How is my team performing?', false);
 
+        // No key: an admin now gets the chat in its setup state (Configure now), never real answers.
         config(['ai.api_key' => null]);
-        $this->get('/dashboard')->assertOk()->assertDontSee('aiFab', false);
+        $this->get('/dashboard')->assertOk()->assertSee('const needsSetup = true;', false)->assertDontSee('How is my team performing?', false);
     }
 
     public function test_endpoint_is_hidden_without_an_api_key_and_answers_with_one(): void

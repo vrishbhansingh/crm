@@ -105,11 +105,13 @@
                                     <th>Status</th>
                                     <th>Recipients</th>
                                     <th>Sent</th>
+                                    <th>Opened</th>
+                                    <th>Clicked</th>
                                     <th class="text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="campaignTable">
-                                <tr><td colspan="7" class="text-center text-muted py-4">Loading…</td></tr>
+                                <tr><td colspan="9" class="text-center text-muted py-4">Loading…</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -218,6 +220,12 @@
             return status.charAt(0).toUpperCase() + status.slice(1);
         }
 
+        // "12 (40%)" — unique people who opened/clicked, out of those the email was sent to.
+        function pct(n, sent) {
+            n = n || 0;
+            return sent > 0 ? `${n} <span class="text-muted">(${Math.round(n / sent * 100)}%)</span>` : `${n}`;
+        }
+
         function loadCampaigns() {
             $.get("{{ route('campaigns.data') }}", function(response) {
                 let rows = '';
@@ -231,7 +239,10 @@
                             <td><span class="status-pill ${c.status}">${statusLabel(c.status)}</span></td>
                             <td>${c.total_recipients}</td>
                             <td>${c.sent_count}${c.failed_count ? ` <span class="text-danger">(${c.failed_count} failed)</span>` : ''}</td>
-                            <td class="text-right">
+                            <td>${pct(c.opened_count, c.sent_count)}</td>
+                            <td>${pct(c.clicked_count, c.sent_count)}</td>
+                            <td class="text-right text-nowrap">
+                                <a class="btn btn-sm btn-outline-secondary" href="{{ url('email-campaigns') }}/${c.id}/report" title="See who opened and clicked"><i class="fa fa-chart-line"></i> Report</a>
                                 @can('campaigns.send')
                                 ${canSend ? `<button class="btn btn-sm btn-outline-success sendCampaignBtn" data-id="${c.id}" data-name="${esc(c.name)}"><i class="fa fa-paper-plane"></i> Send</button>` : ''}
                                 @endcan
@@ -241,7 +252,7 @@
                             </td>
                         </tr>`;
                 });
-                $('#campaignTable').html(rows || '<tr><td colspan="7" class="text-center text-muted py-4">No campaigns yet.</td></tr>');
+                $('#campaignTable').html(rows || '<tr><td colspan="9" class="text-center text-muted py-4">No campaigns yet.</td></tr>');
             });
         }
 

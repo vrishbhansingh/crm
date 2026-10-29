@@ -31,6 +31,7 @@ class CampaignSender
         private readonly TemplateVariableResolver $variables,
         private readonly EmailLogger $emailLogger,
         private readonly TenantConnectionManager $connections,
+        private readonly CampaignTracker $tracker,
     ) {}
 
     /**
@@ -122,7 +123,8 @@ class CampaignSender
 
                     $context = $this->variables->contextFor($record, $tenant);
                     $resolvedSubject = $this->variables->resolve($subject, $context);
-                    $resolvedBody = $this->variables->resolve($body, $context);
+                    // Per-recipient open pixel + tracked links (see CampaignTracker).
+                    $resolvedBody = $this->tracker->instrument($this->variables->resolve($body, $context), $tenantId, $recipientRow->id);
 
                     $log = $this->emailLogger->queued('campaign', $tenantId, $recipientRow->email, $resolvedSubject, [
                         'campaign_id' => $campaign->id,

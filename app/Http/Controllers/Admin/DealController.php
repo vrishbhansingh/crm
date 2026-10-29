@@ -82,11 +82,26 @@ class DealController extends Controller
             $query->where('status', $request->string('status'));
         }
         if ($request->filled('search')) {
-            $term = '%'.$request->string('search').'%';
+            $term = '%'.addcslashes((string) $request->string('search'), '%_\\').'%';
             $query->where('name', 'like', $term);
         }
+        if ($request->filled('stage_id')) {
+            $query->where('stage_id', $request->integer('stage_id'));
+        }
+        if ($request->filled('owner_id') && $me->hasElevatedAccess()) {
+            $query->where('owner_id', $request->integer('owner_id'));
+        }
+        foreach (['date_from' => ['>=', 'startOfDay'], 'date_to' => ['<=', 'endOfDay']] as $field => [$operator, $edge]) {
+            if ($request->filled($field)) {
+                try {
+                    $query->where('expected_close_date', $operator, \Carbon\Carbon::parse((string) $request->string($field))->{$edge}()->toDateString());
+                } catch (\Throwable) {
+                    // an unreadable date is ignored rather than failing the whole list
+                }
+            }
+        }
 
-        $perPage = min(max((int) $request->input('per_page', 20), 5), 100);
+        $perPage = min(max((int) $request->input('per_page', 25), 5), 200);
         $paginator = $query->with(['stage', 'pipeline:id,name', 'owner:id,name', 'lead:id,name'])
             ->orderByDesc('id')
             ->paginate($perPage);
@@ -151,12 +166,16 @@ class DealController extends Controller
 
         $pipeline->load('stages');
 
-        $query = $me->hasElevatedAccess() ? Deal::query() : Deal::where('owner_id', $me->id);
-        $deals = $query->where('pipeline_id', $pipeline->id)
-            ->with(['owner:id,name', 'lead:id,name'])
-            ->get();
+        // Only the first page of cards per stage is sent (the rest load on demand via
+        // boardStage), with the REAL count and value per stage from one grouped query —
+        // sending every deal made a board with thousands of deals unusable.
+        $pageSize = $this->boardPageSize();
+        $scope = fn () => $this->boardQuery($me, $pipeline->id, $request);
+        $totals = $scope()->selectRaw('stage_id, COUNT(*) as c, COALESCE(SUM(amount), 0) as a')->groupBy('stage_id')->get()->keyBy('stage_id');
 
-        $stages = $pipeline->stages->map(function ($stage) use ($deals) {
+        $stages = $pipeline->stages->map(function ($stage) use ($scope, $totals, $pageSize) {
+            $count = (int) ($totals[$stage->id]->c ?? 0);
+
             return [
                 'id' => $stage->id,
                 'name' => $stage->name,
@@ -164,15 +183,10 @@ class DealController extends Controller
                 'is_won' => $stage->is_won,
                 'is_lost' => $stage->is_lost,
                 'color' => $stage->color,
-                'deals' => $deals->where('stage_id', $stage->id)->values()->map(fn ($deal) => [
-                    'id' => $deal->id,
-                    'name' => $deal->name,
-                    'amount' => $deal->amount,
-                    'currency' => $deal->currency,
-                    'owner_name' => $deal->owner->name ?? null,
-                    'expected_close_date' => $deal->expected_close_date,
-                    'lead_id' => $deal->lead_id,
-                ]),
+                'deal_count' => $count,
+                'total_amount' => (float) ($totals[$stage->id]->a ?? 0),
+                'has_more' => $count > $pageSize,
+                'deals' => $this->boardCards($scope()->where('stage_id', $stage->id), 0, $pageSize),
             ];
         });
 
@@ -186,6 +200,73 @@ class DealController extends Controller
                 'stages' => $stages,
             ],
         ]);
+    }
+
+    /** Stage + owner choices for the deals list filters. Owners are only offered to people who can see everyone's deals. */
+    public function filterOptions()
+    {
+        $me = Auth::guard('web')->user();
+        $pipelines = Pipeline::where('is_active', true)->with('stages:id,pipeline_id,name,sort_order')->orderBy('sort_order')->get(['id', 'name']);
+        $multiple = $pipelines->count() > 1;
+
+        return response()->json([
+            'stages' => $pipelines->flatMap(fn ($p) => $p->stages->sortBy('sort_order')->map(fn ($s) => [
+                'id' => $s->id,
+                'label' => $multiple ? $p->name.' — '.$s->name : $s->name,
+            ]))->values(),
+            'owners' => $me->hasElevatedAccess()
+                ? User::where('tenant_id', TenantContext::id())->where('status', 'Active')->orderBy('name')->get(['id', 'name'])
+                : [],
+        ]);
+    }
+
+    /** "Load more" for one board column: the next page of cards in a stage. */
+    public function boardStage(Request $request, $stageId)
+    {
+        $me = Auth::guard('web')->user();
+        $stage = \App\Models\PipelineStage::findOrFail($stageId);
+        $offset = max(0, (int) $request->query('offset', 0));
+        $pageSize = $this->boardPageSize();
+
+        $query = $this->boardQuery($me, $stage->pipeline_id, $request)->where('stage_id', $stage->id);
+        $total = (clone $query)->count();
+
+        return response()->json(['status' => true, 'data' => [
+            'deals' => $this->boardCards($query, $offset, $pageSize),
+            'has_more' => $offset + $pageSize < $total,
+            'remaining' => max(0, $total - $offset - $pageSize),
+        ]]);
+    }
+
+    private function boardPageSize(): int
+    {
+        return max(10, (int) config('crm.board_stage_page', 30));
+    }
+
+    /** Deals on one pipeline the user may see, narrowed by the board's search box. */
+    private function boardQuery($me, int $pipelineId, Request $request)
+    {
+        $query = ($me->hasElevatedAccess() ? Deal::query() : Deal::where('owner_id', $me->id))->where('pipeline_id', $pipelineId);
+
+        if ($request->filled('search')) {
+            $query->where('name', 'like', '%'.addcslashes((string) $request->string('search'), '%_\\').'%');
+        }
+
+        return $query;
+    }
+
+    private function boardCards($query, int $offset, int $limit)
+    {
+        return $query->with(['owner:id,name', 'lead:id,name'])->orderByDesc('id')->offset($offset)->limit($limit)->get()
+            ->map(fn ($deal) => [
+                'id' => $deal->id,
+                'name' => $deal->name,
+                'amount' => $deal->amount,
+                'currency' => $deal->currency,
+                'owner_name' => $deal->owner->name ?? null,
+                'expected_close_date' => $deal->expected_close_date,
+                'lead_id' => $deal->lead_id,
+            ])->values();
     }
 
     public function create()

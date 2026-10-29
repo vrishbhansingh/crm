@@ -25,6 +25,8 @@ class EmailCampaign extends Model
         'total_recipients',
         'sent_count',
         'failed_count',
+        'opened_count',
+        'clicked_count',
     ];
 
     protected $casts = [

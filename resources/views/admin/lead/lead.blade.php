@@ -258,27 +258,37 @@
         .lead-stat-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 18px;
-            margin: 20px 0 4px;
+            gap: 10px;
+            margin: 4px 0 10px;
         }
 
         /* Background/border/radius/shadow now come from the shared
            .crm-card class (added alongside .lead-stat-card in the
            markup) — this rule only supplies the tile's own flex layout. */
+        /* Compact strip: value and label on one line, no icon tiles, so the
+           lead list starts near the top of the screen. */
         .lead-stat-card {
-            padding: 20px 22px;
+            padding: 9px 16px;
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            gap: 14px;
+            gap: 10px;
         }
+        .lead-stat-card > div { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+        .lead-stat-card .lead-stat-value { font-size: 20px; font-weight: 700; color: #111827; line-height: 1.1; }
+        .lead-stat-card .lead-stat-label { font-size: 11.5px; color: #6b7280; margin-top: 0; font-weight: 600; text-transform: uppercase; letter-spacing: 0.02em; }
+        .lead-stat-card .lead-stat-icon { display: none; }
 
-        .lead-stat-card .lead-stat-value { font-size: 26px; font-weight: 700; color: #111827; line-height: 1.15; }
-        .lead-stat-card .lead-stat-label { font-size: 12.5px; color: #6b7280; margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.02em; }
-        .lead-stat-card .lead-stat-icon {
-            width: 42px; height: 42px; border-radius: 12px; flex-shrink: 0;
-            display: flex; align-items: center; justify-content: center; font-size: 17px;
-        }
+        /* ===== Filter panel (search + 10 filters, collapsible) ===== */
+        .lead-filter-panel { margin-bottom: 12px; }
+        .lfp-head { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        .lfp-head .crm-input { flex: 1 1 260px; }
+        .lfp-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px 14px; margin-top: 10px; }
+        .lfp-grid label { display: block; font-size: 12px; font-weight: 600; color: var(--crm-ink-muted, #585f57); margin: 0 0 3px; }
+        .lfp-grid .crm-select, .lfp-grid .crm-input { width: 100%; }
+        .lead-filter-panel.is-collapsed .lfp-grid { display: none; }
+        #leadFilterCount { margin-left: 4px; }
+        @media (max-width: 1199px) { .lfp-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+        @media (max-width: 767px) { .lfp-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
         /* ===== Active / Converted tab toggle — a rounded pill switch
            instead of Bootstrap's default boxy underline tabs. ===== */
@@ -455,42 +465,38 @@
                             <div class="lead-stat-value" id="statTotalLeads">0</div>
                             <div class="lead-stat-label">Total Leads</div>
                         </div>
-                        <div class="lead-stat-icon" style="background:#eff6ff;color:#2563eb;"><i class="fa fa-bullseye"></i></div>
                     </div>
                     <div class="lead-stat-card crm-card">
                         <div>
                             <div class="lead-stat-value" id="statNewToday">0</div>
                             <div class="lead-stat-label">New Today</div>
                         </div>
-                        <div class="lead-stat-icon" style="background:#f5f3ff;color:#7c3aed;"><i class="fa fa-user-plus"></i></div>
                     </div>
                     <div class="lead-stat-card crm-card">
                         <div>
                             <div class="lead-stat-value" id="statConversionRate">0%</div>
                             <div class="lead-stat-label">Conversion Rate</div>
                         </div>
-                        <div class="lead-stat-icon" style="background:#ecfdf5;color:#16a34a;"><i class="fa fa-percent"></i></div>
                     </div>
                     <div class="lead-stat-card crm-card">
                         <div>
                             <div class="lead-stat-value" id="statFollowUpDue">0</div>
                             <div class="lead-stat-label">Follow-up Due</div>
                         </div>
-                        <div class="lead-stat-icon" style="background:#fff7ed;color:#ea580c;"><i class="fa fa-exclamation-circle"></i></div>
                     </div>
                 </div>
 
-                <div class="row mb-3 d-none" id="bulkAssignBar">
-                    <div class="col-md-8 d-flex align-items-center gap-2">
-                        <strong style="padding: 0 10px;">Assign selected leads to:</strong>
-
-                        <select id="bulkAssignedUser" class="crm-select w-25">
+                <div class="row mb-2 d-none" id="bulkAssignBar">
+                    <div class="col-12 d-flex align-items-center flex-wrap" style="gap:10px;">
+                        <strong id="bulkSelectedText"></strong>
+                        <button type="button" class="btn btn-link btn-sm p-0 d-none" id="selectAllMatchingBtn"></button>
+                        <span class="text-muted">&middot;</span>
+                        <strong>Assign to:</strong>
+                        <select id="bulkAssignedUser" class="crm-select" style="max-width:220px;">
                             <option value="">-- Select User --</option>
                         </select>
-
-                        <button class="crm-btn crm-btn--primary crm-btn--sm" style="margin-left: 10px;" id="bulkAssignBtn">
-                            Assign
-                        </button>
+                        <button class="crm-btn crm-btn--primary crm-btn--sm" id="bulkAssignBtn">Assign</button>
+                        <button type="button" class="btn btn-link btn-sm" id="bulkClearBtn">Clear selection</button>
                     </div>
                 </div>
                 <!-- LEAD TABLE -->
@@ -511,20 +517,24 @@
                                     </li>
                                 </ul>
 
-                                <div class="crm-filters" id="leadFilterBar">
-                                    <input type="text" id="leadSearchInput" class="crm-input" style="flex:2 1 260px;" placeholder="Search name, company, phone, email…">
-                                    <select id="leadFilterStatus" class="crm-select" data-master-type="lead_status">
-                                        <option value="">All statuses</option>
-                                    </select>
-                                    <select id="leadFilterPriority" class="crm-select" data-master-type="lead_priority">
-                                        <option value="">All priorities</option>
-                                    </select>
-                                    <select id="leadFilterSource" class="crm-select" data-master-type="lead_source">
-                                        <option value="">All sources</option>
-                                    </select>
-                                    <select id="leadFilterAssignee" class="crm-select">
-                                        <option value="">All owners</option>
-                                    </select>
+                                <div class="lead-filter-panel" id="leadFilterBar">
+                                    <div class="lfp-head">
+                                        <input type="text" id="leadSearchInput" class="crm-input" placeholder="Search name, company, phone, email…">
+                                        <button type="button" class="crm-btn crm-btn--secondary crm-btn--sm" id="leadFilterToggle" aria-expanded="true"><i class="fa fa-sliders"></i> Filters <span class="badge badge-light" id="leadFilterCount">0</span></button>
+                                        <button type="button" class="crm-btn crm-btn--secondary crm-btn--sm d-none" id="leadFilterClear"><i class="fa fa-times"></i> Clear all</button>
+                                    </div>
+                                    <div class="lfp-grid" id="leadFilterGrid">
+                                        <div><label for="leadFilterType">Type</label><select id="leadFilterType" class="crm-select"><option value="">All types</option></select></div>
+                                        <div><label for="leadFilterStatus">Status</label><select id="leadFilterStatus" class="crm-select" data-master-type="lead_status"><option value="">All statuses</option></select></div>
+                                        <div><label for="leadFilterPriority">Priority</label><select id="leadFilterPriority" class="crm-select" data-master-type="lead_priority"><option value="">All priorities</option></select></div>
+                                        <div><label for="leadFilterSource">Source</label><select id="leadFilterSource" class="crm-select" data-master-type="lead_source"><option value="">All sources</option></select></div>
+                                        <div><label for="leadFilterProduct">Product</label><select id="leadFilterProduct" class="crm-select"><option value="">All products</option></select></div>
+                                        <div><label for="leadFilterAssignee">Assigned to</label><select id="leadFilterAssignee" class="crm-select"><option value="">All owners</option></select></div>
+                                        <div><label for="leadFilterState">State</label><select id="leadFilterState" class="crm-select"><option value="">All states</option></select></div>
+                                        <div><label for="leadFilterCity">City</label><select id="leadFilterCity" class="crm-select" disabled><option value="">Select state first</option></select></div>
+                                        <div><label for="leadFilterDateFrom">Created from</label><input type="date" id="leadFilterDateFrom" class="crm-input"></div>
+                                        <div><label for="leadFilterDateTo">Created to</label><input type="date" id="leadFilterDateTo" class="crm-input"></div>
+                                    </div>
                                 </div>
 
                                 <div class="table-responsive crm-table-wrap">
@@ -532,7 +542,7 @@
                                         <thead>
                                             <tr>
                                                 <th class="text-center" style="width:40px;"></th>
-                                                <th class="text-center">#</th>
+                                                <th class="text-center"><div class="d-flex flex-column align-items-center"><input type="checkbox" id="selectAllLeads" class="form-checkbox" title="Select every lead on this page" style="margin-bottom:2px;"><span>#</span></div></th>
                                                 <th class="text-center">Lead Type</th>
                                                 <th class="text-center">Contact</th>
                                                 <th class="text-center">Lead Source</th>
@@ -840,20 +850,42 @@
         let activeLeadTab = 'active';
         let leadCurrentPage = 1;
         let leadSearchDebounce = null;
+        let leadPerPage = parseInt(localStorage.getItem('leadPerPage'), 10) || 25;
+        let selectAllMatching = false;
+        let lastLeadMeta = null;
+
+        // One definition of "the filters currently set", used by the table
+        // request AND by "assign all matching leads", so they always agree.
+        const LEAD_FILTER_FIELDS = {
+            search: '#leadSearchInput', lead_type: '#leadFilterType', lead_status: '#leadFilterStatus', priority: '#leadFilterPriority',
+            lead_source: '#leadFilterSource', product: '#leadFilterProduct', assigned_to: '#leadFilterAssignee',
+            state: '#leadFilterState', city: '#leadFilterCity', date_from: '#leadFilterDateFrom', date_to: '#leadFilterDateTo',
+        };
+
+        function currentLeadFilters() {
+            const out = {};
+            Object.keys(LEAD_FILTER_FIELDS).forEach(key => {
+                const v = $(LEAD_FILTER_FIELDS[key]).val();
+                if (v) out[key] = v;
+            });
+            return out;
+        }
+
+        function refreshFilterChrome() {
+            const active = Object.keys(currentLeadFilters()).filter(k => k !== 'search').length;
+            $('#leadFilterCount').text(active).toggleClass('badge-light', active === 0).toggleClass('badge-success', active > 0);
+            $('#leadFilterClear').toggleClass('d-none', active === 0 && !$('#leadSearchInput').val());
+        }
 
         function loadLeadList() {
             $.ajax({
                 url: '{{route("leads.data")}}',
                 type: 'GET',
-                data: {
+                data: Object.assign({
                     converted: activeLeadTab === 'converted' ? 1 : 0,
                     page: leadCurrentPage,
-                    search: $('#leadSearchInput').val() || undefined,
-                    lead_status: $('#leadFilterStatus').val() || undefined,
-                    priority: $('#leadFilterPriority').val() || undefined,
-                    lead_source: $('#leadFilterSource').val() || undefined,
-                    assigned_to: $('#leadFilterAssignee').val() || undefined,
-                },
+                    per_page: leadPerPage,
+                }, currentLeadFilters()),
                 success: function(response) {
                     allLeadsData = (response && Array.isArray(response.data)) ? response.data : [];
 
@@ -864,9 +896,21 @@
                     }
 
                     renderLeadTab();
+                    lastLeadMeta = response.meta;
+                    selectAllMatching = false;
+                    $('#selectAllLeads').prop('checked', false);
+                    updateBulkBar();
                     renderCrmPagination('#leadPagination', response.meta, function(page) {
                         leadCurrentPage = page;
                         loadLeadList();
+                    }, {
+                        perPageOptions: [25, 50, 100, 200],
+                        onPerPage: function(n) {
+                            leadPerPage = n;
+                            localStorage.setItem('leadPerPage', n);
+                            leadCurrentPage = 1;
+                            loadLeadList();
+                        }
                     });
                 },
 
@@ -1117,10 +1161,50 @@
             }, 350);
         });
 
-        $(document).on('change', '#leadFilterStatus, #leadFilterPriority, #leadFilterSource, #leadFilterAssignee', function() {
+        $(document).on('change', '#leadFilterType, #leadFilterStatus, #leadFilterPriority, #leadFilterSource, #leadFilterProduct, #leadFilterAssignee, #leadFilterState, #leadFilterCity, #leadFilterDateFrom, #leadFilterDateTo', function() {
             leadCurrentPage = 1;
+            refreshFilterChrome();
             loadLeadList();
         });
+
+        $(document).on('input', '#leadSearchInput', refreshFilterChrome);
+
+        // State drives the City list (cities that actually exist for that state).
+        let leadCitiesByState = {};
+        function fillCityFilter() {
+            const state = $('#leadFilterState').val();
+            const cities = state ? (leadCitiesByState[state] || []) : [];
+            $('#leadFilterCity').prop('disabled', !state)
+                .html(`<option value="">${state ? 'All cities' : 'Select state first'}</option>` + cities.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join(''));
+        }
+        $(document).on('change', '#leadFilterState', fillCityFilter);
+
+        function loadLeadFilterOptions() {
+            $.get("{{ route('leads.filter_options') }}", function(opts) {
+                const fill = (sel, values) => (values || []).forEach(v => $(sel).append(`<option value="${esc(v)}">${esc(v)}</option>`));
+                fill('#leadFilterType', opts.types);
+                fill('#leadFilterProduct', opts.products);
+                fill('#leadFilterState', opts.states);
+                leadCitiesByState = opts.cities_by_state || {};
+            });
+        }
+
+        $(document).on('click', '#leadFilterClear', function() {
+            Object.values(LEAD_FILTER_FIELDS).forEach(sel => $(sel).val(''));
+            fillCityFilter();
+            leadCurrentPage = 1;
+            refreshFilterChrome();
+            loadLeadList();
+        });
+
+        // Collapsible filter panel; remembered per browser.
+        function setFilterPanel(open) {
+            $('#leadFilterBar').toggleClass('is-collapsed', !open);
+            $('#leadFilterToggle').attr('aria-expanded', open);
+            try { localStorage.setItem('leadFilterOpen', open ? '1' : '0'); } catch (e) {}
+        }
+        $(document).on('click', '#leadFilterToggle', function() { setFilterPanel($('#leadFilterBar').hasClass('is-collapsed')); });
+        try { setFilterPanel(localStorage.getItem('leadFilterOpen') !== '0'); } catch (e) {}
 
         function loadLeadAssigneeFilterOptions() {
             $.get("{{ route('leads.assignable_users') }}", function(response) {
@@ -1149,6 +1233,7 @@
             loadLeadList();
             loadMasterDropdowns();
             loadLeadAssigneeFilterOptions();
+            loadLeadFilterOptions();
         });
         $(document).on('click', '.toggle-row', function() {
 
@@ -1495,16 +1580,48 @@
             });
         });
 
-        $(document).on('change', '.lead-checkbox', function() {
+        // Selection: ticked rows on this page, or "all N leads matching the filters"
+        // (decided on the server from the same filters, so it works for thousands).
+        function updateBulkBar() {
+            const checked = $('.lead-checkbox:checked').length;
+            const total = lastLeadMeta ? lastLeadMeta.total : 0;
 
-            const checkedCount = $('.lead-checkbox:checked').length;
-
-            if (checkedCount > 0) {
-                $('#bulkAssignBar').removeClass('d-none');
-                loadBulkUsers(); // load users only when needed
-            } else {
+            if (checked === 0 && !selectAllMatching) {
                 $('#bulkAssignBar').addClass('d-none');
+                return;
             }
+
+            $('#bulkAssignBar').removeClass('d-none');
+            loadBulkUsers(); // load users only when needed
+
+            if (selectAllMatching) {
+                $('#bulkSelectedText').text(`All ${total.toLocaleString()} matching leads selected`);
+                $('#selectAllMatchingBtn').addClass('d-none');
+            } else {
+                $('#bulkSelectedText').text(`${checked} selected on this page`);
+                const showAll = total > checked && checked === $('.lead-checkbox').length;
+                $('#selectAllMatchingBtn').toggleClass('d-none', !showAll).text(`Select all ${total.toLocaleString()} matching leads`);
+            }
+        }
+
+        $(document).on('change', '.lead-checkbox', function() {
+            selectAllMatching = false;
+            $('#selectAllLeads').prop('checked', $('.lead-checkbox').length > 0 && $('.lead-checkbox:checked').length === $('.lead-checkbox').length);
+            updateBulkBar();
+        });
+
+        $(document).on('change', '#selectAllLeads', function() {
+            selectAllMatching = false;
+            $('.lead-checkbox').prop('checked', this.checked);
+            updateBulkBar();
+        });
+
+        $(document).on('click', '#selectAllMatchingBtn', function() { selectAllMatching = true; updateBulkBar(); });
+
+        $(document).on('click', '#bulkClearBtn', function() {
+            selectAllMatching = false;
+            $('.lead-checkbox, #selectAllLeads').prop('checked', false);
+            updateBulkBar();
         });
 
         function loadBulkUsers() {
@@ -1539,33 +1656,34 @@
                 return;
             }
 
-            let leadIds = [];
+            let payload = { _token: "{{ csrf_token() }}", user_id: userId };
 
-            $('.lead-checkbox:checked').each(function() {
-                leadIds.push($(this).val());
-            });
+            if (selectAllMatching) {
+                const total = lastLeadMeta ? lastLeadMeta.total : 0;
+                if (!confirm(`Assign all ${total.toLocaleString()} matching leads to ${$('#bulkAssignedUser option:selected').text()}?`)) return;
+                payload = Object.assign(payload, currentLeadFilters(), { all_matching: 1, converted: activeLeadTab === 'converted' ? 1 : 0 });
+            } else {
+                payload.lead_ids = $('.lead-checkbox:checked').map(function() { return $(this).val(); }).get();
+            }
+
+            const $btn = $('#bulkAssignBtn').prop('disabled', true).text('Assigning…');
 
             $.ajax({
                 url: "{{ route('leads.bulk_assign') }}",
                 type: "POST",
-                data: {
-                    _token: "{{ csrf_token() }}",
-                    user_id: userId,
-                    lead_ids: leadIds
-                },
+                data: payload,
                 success: function(res) {
-
                     if (res.status) {
-                        setTimeout(function() {
-                            toastr.success(res.message);
-                        }, 500);
+                        toastr.success(res.message);
+                        selectAllMatching = false;
                         $('#bulkAssignBar').addClass('d-none');
                         loadLeadList();
                     }
                 },
-                error: function() {
-                    toastr.error('Something went wrong');
+                error: function(xhr) {
+                    toastr.error((xhr.responseJSON && xhr.responseJSON.message) || 'Something went wrong');
                 },
+                complete: function() { $btn.prop('disabled', false).text('Assign'); }
             });
         });
     </script>

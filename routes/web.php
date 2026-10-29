@@ -37,6 +37,13 @@ Route::middleware('throttle:5,1')->group(function () {
 // POST is the actual lead delivery every platform uses.
 Route::middleware('throttle:30,1')->match(['get', 'post'], '/webhooks/leads/{token}', [WebhookLeadController::class, 'handle'])->name('webhooks.leads');
 
+// Email campaign open pixel + click redirect. Public; the signed token names the
+// tenant and recipient (see CampaignTracker), so no session/tenant middleware.
+Route::middleware('throttle:600,1')->group(function () {
+    Route::get('/t/o/{token}', [\App\Http\Controllers\EmailTrackingController::class, 'open'])->name('tracking.open')->where('token', '[A-Za-z0-9_.\-]+');
+    Route::get('/t/c/{token}', [\App\Http\Controllers\EmailTrackingController::class, 'click'])->name('tracking.click')->where('token', '[A-Za-z0-9_.\-]+');
+});
+
 // Public inbound WhatsApp webhook — same pattern as the lead-capture one
 // above: identified only by the account's opaque token, GET for Meta's
 // verification handshake, POST for actual messages/delivery statuses.

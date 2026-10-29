@@ -628,6 +628,35 @@
     .crm-brand-chip.has-custom-logo { max-width: 120px; }
     .crm-brand-chip.has-custom-logo img { height: 30px; }
   }
+
+  /* ---- Legacy palette bridge -------------------------------------------
+     About 15 older pages (campaigns, templates, calendar, deals, roles,
+     pipelines, integrations, profile, ...) were styled before the green
+     design tokens existed: each declares its own blue `--primary`, a blue
+     gradient on its header icon and the vendor theme's indigo buttons, so
+     they sat beside the green sidebar looking like a different app. This
+     block loads after every page's own <style> (it lives in the header
+     include, inside <body>), so it re-points all of them at the real
+     tokens in one place — and follows dark mode, since the tokens do. */
+  :root { --primary: var(--crm-accent, #1f6f63); --primary-dark: var(--crm-accent-dark, #154f46); }
+  .crm-header-icon { background: var(--crm-accent, #1f6f63) !important; color: #fff; }
+  [data-theme="dark"] .crm-header-icon { color: #12151a; }
+  .crm-page-header { border-left-color: var(--crm-accent, #1f6f63) !important; }
+  .btn-primary, .btn-primary:focus, .btn-primary:active, .btn-primary:not(:disabled):not(.disabled):active {
+    background-color: var(--crm-accent, #1f6f63) !important; border-color: var(--crm-accent, #1f6f63) !important; color: #fff !important;
+  }
+  .btn-primary:hover { background-color: var(--crm-accent-dark, #154f46) !important; border-color: var(--crm-accent-dark, #154f46) !important; }
+  [data-theme="dark"] .btn-primary, [data-theme="dark"] .btn-primary:hover { color: #12151a !important; }
+  .btn-outline-primary { color: var(--crm-accent, #1f6f63) !important; border-color: var(--crm-accent, #1f6f63) !important; background: transparent !important; }
+  .btn-outline-primary:hover { background-color: var(--crm-accent, #1f6f63) !important; color: #fff !important; }
+  [data-theme="dark"] .btn-outline-primary:hover { color: #12151a !important; }
+  .text-primary, .btn-link { color: var(--crm-accent, #1f6f63) !important; }
+  .badge-primary, .bg-primary { background-color: var(--crm-accent, #1f6f63) !important; color: #fff; }
+  .form-control:focus, .form-select:focus, select.form-control:focus {
+    border-color: var(--crm-accent, #1f6f63) !important;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--crm-accent, #1f6f63) 16%, transparent) !important;
+  }
+  .status-pill.sending { background: var(--crm-info-tint, #e7eef5) !important; color: var(--crm-info, #2a5c8a) !important; }
 </style>
 
 @php
@@ -669,6 +698,7 @@
     'lead_assignment.index' => ['Administration', 'Lead Assignment'],
     'deal_assignment.index' => ['Administration', 'Deal Assignment'],
     'settings.mail.edit' => ['Administration', 'Mail Settings'],
+    'ai.settings' => ['Administration', 'AI Assistant'],
     'profile.show' => [null, 'My Profile'],
     'security.show' => [null, 'Security'],
     'api_tokens.index' => [null, 'API Tokens'],

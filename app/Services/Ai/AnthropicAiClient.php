@@ -4,45 +4,82 @@ namespace App\Services\Ai;
 
 use Anthropic\Client;
 use Anthropic\Messages\ToolUseBlock;
+use App\Models\AiConfiguration;
+use App\Support\TenantContext;
+use Psr\Http\Client\ClientInterface;
 
 class AnthropicAiClient implements AiClient
 {
+    /** @param  ClientInterface|null  $transporter  Test seam: a PSR-18 client (e.g. Guzzle with a MockHandler). */
+    public function __construct(private readonly ?ClientInterface $transporter = null)
+    {
+    }
+
     /**
-     * Our own HTTP client so a slow or unreachable API fails in seconds
-     * instead of hanging a chat for the SDK's 10-minute default, and so
-     * HTTPS works on a WAMP PHP that ships without a CA bundle configured
-     * (cURL error 60). Verification stays ON: when PHP has no bundle of
-     * its own, we point at the Mozilla bundle WAMP already installs.
+     * Calls the model with the company's saved keys in priority order. If a
+     * key is the problem (invalid/expired, out of credit, rate limited) it is
+     * marked failing, its admins are alerted, and the next key is tried —
+     * automatically, within the same request. Anything else (network,
+     * server error) is thrown straight away: another key would fail the same.
      */
-    private function transporter(): \GuzzleHttp\Client
+    public function send(string $system, array $messages, array $tools, ?array $jsonSchema = null, ?string $model = null): array
     {
-        $verify = config('ai.ca_bundle') ?: (ini_get('curl.cainfo') || ini_get('openssl.cafile') ? true : $this->wampCaBundle() ?? true);
+        $resolver = app(AiConfigResolver::class);
+        $candidates = $resolver->candidates(TenantContext::id());
+        $last = null;
 
-        return new \GuzzleHttp\Client([
-            'timeout' => (float) config('ai.timeout'),
-            'connect_timeout' => 10,
-            'verify' => $verify,
-        ]);
+        foreach ($candidates as $i => $candidate) {
+            try {
+                $result = $this->call($candidate['key'], $model ?: $candidate['model'], $system, $messages, $tools, $jsonSchema);
+                $resolver->markSuccess($candidate['config']);
+
+                return $result;
+            } catch (\Throwable $e) {
+                if (! AiErrors::isKeyProblem($e)) {
+                    throw $e;
+                }
+
+                $last = $e;
+                if ($candidate['config']) {
+                    $resolver->markFailed($candidate['config'], $e, stillWorking: $i < count($candidates) - 1);
+                }
+            }
+        }
+
+        throw $last ?? new \RuntimeException('No AI configuration is available.');
     }
 
-    private function wampCaBundle(): ?string
+    /**
+     * The Test button: one tiny call with exactly this configuration (no
+     * failover), recording the outcome on it.
+     *
+     * @return array{ok: bool, message: string}
+     */
+    public function ping(AiConfiguration $config): array
     {
-        $bundles = glob(dirname(base_path(), 2).'/bin/php/*/extras/ssl/cacert.pem') ?: [];
-        sort($bundles);
+        try {
+            $this->call((string) $config->api_key, $config->model ?: (string) config('ai.model'), 'Reply with the single word OK.', [['role' => 'user', 'content' => 'ping']], [], null);
+            $config->forceFill(['status' => 'ok', 'last_error' => null, 'last_tested_at' => now(), 'failed_at' => null, 'notified_at' => null])->save();
 
-        return $bundles ? end($bundles) : null;
+            return ['ok' => true, 'message' => 'Working. The key was accepted.'];
+        } catch (\Throwable $e) {
+            $reason = AiErrors::reason($e);
+            $config->forceFill(['status' => 'failing', 'last_error' => $reason, 'last_tested_at' => now(), 'failed_at' => now()])->save();
+
+            return ['ok' => false, 'message' => $reason];
+        }
     }
 
-    public function send(string $system, array $messages, array $tools, ?array $jsonSchema = null): array
+    private function call(string $key, string $model, string $system, array $messages, array $tools, ?array $jsonSchema): array
     {
-        $client = new Client(apiKey: (string) config('ai.api_key'), requestOptions: [
-            'transporter' => $this->transporter(),
+        $client = new Client(apiKey: $key, requestOptions: [
+            'transporter' => $this->transporter ?? $this->defaultTransporter(),
             'timeout' => (float) config('ai.timeout'),
             'maxRetries' => 1,
         ]);
 
         $args = [
-            'model' => config('ai.model'),
+            'model' => $model,
             'maxTokens' => config('ai.max_tokens'),
             'system' => [['type' => 'text', 'text' => $system]],
             'messages' => $messages,
@@ -51,7 +88,7 @@ class AnthropicAiClient implements AiClient
         if ($jsonSchema) {
             $args['outputConfig']['format'] = ['type' => 'json_schema', 'schema' => $jsonSchema];
         }
-        if ($tools) { // tool-less calls (summaries, drafts) must not send an empty list
+        if ($tools) { // tool-less calls (summaries, drafts, checks) must not send an empty list
             $args['tools'] = $tools;
         }
 
@@ -75,5 +112,31 @@ class AnthropicAiClient implements AiClient
             // blocks must be preserved verbatim).
             'raw_content' => $response->content,
         ];
+    }
+
+    /**
+     * Our own HTTP client so a slow or unreachable API fails in seconds
+     * instead of hanging a chat for the SDK's 10-minute default, and so
+     * HTTPS works on a WAMP PHP that ships without a CA bundle configured
+     * (cURL error 60). Verification stays ON: when PHP has no bundle of
+     * its own, we point at the Mozilla bundle WAMP already installs.
+     */
+    private function defaultTransporter(): \GuzzleHttp\Client
+    {
+        $verify = config('ai.ca_bundle') ?: (ini_get('curl.cainfo') || ini_get('openssl.cafile') ? true : $this->wampCaBundle() ?? true);
+
+        return new \GuzzleHttp\Client([
+            'timeout' => (float) config('ai.timeout'),
+            'connect_timeout' => 10,
+            'verify' => $verify,
+        ]);
+    }
+
+    private function wampCaBundle(): ?string
+    {
+        $bundles = glob(dirname(base_path(), 2).'/bin/php/*/extras/ssl/cacert.pem') ?: [];
+        sort($bundles);
+
+        return $bundles ? end($bundles) : null;
     }
 }

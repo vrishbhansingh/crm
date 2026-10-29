@@ -505,6 +505,13 @@
                 </li>
                 @endcan
                 @can('company.manage-settings')
+                <li class="mb-1" data-nav-label="AI Assistant">
+                    <a class="nav-link {{ request()->routeIs('ai.settings*') ? 'active' : '' }}" href="{{ route('ai.settings') }}" title="AI Assistant">
+                        <i class="fa fa-magic"></i><span>AI Assistant</span>
+                    </a>
+                </li>
+                @endcan
+                @can('company.manage-settings')
                 <li class="mb-1" data-nav-label="Mail Settings">
                     <a class="nav-link {{ request()->routeIs('settings.mail.*') ? 'active' : '' }}" href="{{ route('settings.mail.edit') }}" title="Mail Settings">
                         <i class="fa fa-envelope"></i><span>Mail Settings</span>

@@ -53,7 +53,7 @@ class WhatsAppBot
 
     public function available(): bool
     {
-        return (bool) config('ai.enabled') && filled(config('ai.api_key'));
+        return (bool) config('ai.enabled') && app(\App\Services\Ai\AiConfigResolver::class)->hasAny(\App\Support\TenantContext::id());
     }
 
     /**

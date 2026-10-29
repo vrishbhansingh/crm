@@ -32,15 +32,23 @@
            .crm-card class (added alongside .deal-stat-card in the markup)
            — this rule only supplies the tile's own flex layout. */
         .deal-stat-card {
-            padding: 20px 22px;
+            padding: 9px 16px;
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            gap: 14px;
+            gap: 10px;
         }
+        .deal-stat-card > div { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+        .deal-stat-card .deal-stat-icon { display: none; }
 
-        .deal-stat-card .deal-stat-value { font-size: 26px; font-weight: 700; color: #111827; line-height: 1.15; }
-        .deal-stat-card .deal-stat-label { font-size: 12.5px; color: #6b7280; margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.02em; }
+        .deal-filter-panel { margin-bottom: 12px; }
+        .dfp-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px 14px; margin-top: 10px; }
+        .dfp-grid label { display: block; font-size: 12px; font-weight: 600; color: var(--crm-ink-muted, #585f57); margin: 0 0 3px; }
+        .dfp-grid .crm-select, .dfp-grid .crm-input { width: 100%; }
+        @media (max-width: 1199px) { .dfp-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+        @media (max-width: 767px) { .dfp-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+        .deal-stat-card .deal-stat-value { font-size: 20px; font-weight: 700; color: #111827; line-height: 1.1; }
+        .deal-stat-card .deal-stat-label { font-size: 12.5px; color: #6b7280; margin-top: 0; font-weight: 600; text-transform: uppercase; letter-spacing: 0.02em; }
         .deal-stat-card .deal-stat-icon {
             width: 42px; height: 42px; border-radius: 12px; flex-shrink: 0;
             display: flex; align-items: center; justify-content: center; font-size: 17px;
@@ -104,28 +112,24 @@
                             <div class="deal-stat-value" id="statTotalDeals">0</div>
                             <div class="deal-stat-label">Total Deals</div>
                         </div>
-                        <div class="deal-stat-icon" style="background:#eff6ff;color:#2563eb;"><i class="fa fa-handshake-o"></i></div>
                     </div>
                     <div class="deal-stat-card crm-card">
                         <div>
                             <div class="deal-stat-value" id="statOpenDeals">0</div>
                             <div class="deal-stat-label">Open Deals</div>
                         </div>
-                        <div class="deal-stat-icon" style="background:#eef2ff;color:#4338ca;"><i class="fa fa-folder-open-o"></i></div>
                     </div>
                     <div class="deal-stat-card crm-card">
                         <div>
                             <div class="deal-stat-value" id="statPipelineValue">₹0</div>
                             <div class="deal-stat-label">Pipeline Value</div>
                         </div>
-                        <div class="deal-stat-icon" style="background:#ecfdf5;color:#16a34a;"><i class="fa fa-inr"></i></div>
                     </div>
                     <div class="deal-stat-card crm-card">
                         <div>
                             <div class="deal-stat-value" id="statWonDeals">0</div>
                             <div class="deal-stat-label">Won Deals</div>
                         </div>
-                        <div class="deal-stat-icon" style="background:#fff7ed;color:#ea580c;"><i class="fa fa-trophy"></i></div>
                     </div>
                 </div>
 
@@ -136,14 +140,17 @@
                     </a>
                 </div>
 
-                <div class="crm-filters">
-                    <input type="text" id="dealSearchInput" class="crm-input" style="flex:2 1 260px;" placeholder="Search deal name…">
-                    <select id="dealFilterStatus" class="crm-select">
-                        <option value="">All statuses</option>
-                        <option value="open">Open</option>
-                        <option value="won">Won</option>
-                        <option value="lost">Lost</option>
-                    </select>
+                <div class="deal-filter-panel" id="dealFilterBar">
+                    <input type="text" id="dealSearchInput" class="crm-input" placeholder="Search deal name…">
+                    <div class="dfp-grid">
+                        <div><label for="dealFilterStatus">Status</label>
+                            <select id="dealFilterStatus" class="crm-select"><option value="">All statuses</option><option value="open">Open</option><option value="won">Won</option><option value="lost">Lost</option></select></div>
+                        <div><label for="dealFilterStage">Stage</label><select id="dealFilterStage" class="crm-select"><option value="">All stages</option></select></div>
+                        <div><label for="dealFilterOwner">Owner</label><select id="dealFilterOwner" class="crm-select"><option value="">All owners</option></select></div>
+                        <div><label for="dealFilterFrom">Expected close from</label><input type="date" id="dealFilterFrom" class="crm-input"></div>
+                        <div><label for="dealFilterTo">Expected close to</label><input type="date" id="dealFilterTo" class="crm-input"></div>
+                        <div class="d-flex align-items-end"><button type="button" class="crm-btn crm-btn--secondary crm-btn--sm" id="dealFilterClear"><i class="fa fa-times"></i> Clear</button></div>
+                    </div>
                 </div>
 
                 <div class="row">
@@ -273,6 +280,7 @@
 
         let dealCurrentPage = 1;
         let dealSearchDebounce = null;
+        let dealPerPage = parseInt(localStorage.getItem('dealPerPage'), 10) || 25;
 
         function loadDealList() {
             const pipelineId = getQueryParam('pipeline_id');
@@ -283,8 +291,13 @@
                 data: {
                     pipeline_id: pipelineId || undefined,
                     page: dealCurrentPage,
+                    per_page: dealPerPage,
                     search: $('#dealSearchInput').val() || undefined,
                     status: $('#dealFilterStatus').val() || undefined,
+                    stage_id: $('#dealFilterStage').val() || undefined,
+                    owner_id: $('#dealFilterOwner').val() || undefined,
+                    date_from: $('#dealFilterFrom').val() || undefined,
+                    date_to: $('#dealFilterTo').val() || undefined,
                 },
                 success: function(response) {
                     let tbody = '';
@@ -341,6 +354,14 @@
                     renderCrmPagination('#dealPagination', response.meta, function(page) {
                         dealCurrentPage = page;
                         loadDealList();
+                    }, {
+                        perPageOptions: [25, 50, 100, 200],
+                        onPerPage: function(n) {
+                            dealPerPage = n;
+                            localStorage.setItem('dealPerPage', n);
+                            dealCurrentPage = 1;
+                            loadDealList();
+                        }
                     });
                 }
             });
@@ -354,9 +375,22 @@
             }, 350);
         });
 
-        $(document).on('change', '#dealFilterStatus', function() {
+        $(document).on('change', '#dealFilterStatus, #dealFilterStage, #dealFilterOwner, #dealFilterFrom, #dealFilterTo', function() {
             dealCurrentPage = 1;
             loadDealList();
+        });
+
+        $(document).on('click', '#dealFilterClear', function() {
+            $('#dealSearchInput, #dealFilterStatus, #dealFilterStage, #dealFilterOwner, #dealFilterFrom, #dealFilterTo').val('');
+            dealCurrentPage = 1;
+            loadDealList();
+        });
+
+        // Stage and owner choices come from the company's own pipelines and team.
+        $.get("{{ route('deals.filter_options') }}", function(opts) {
+            (opts.stages || []).forEach(s => $('#dealFilterStage').append(`<option value="${s.id}">${esc(s.label)}</option>`));
+            (opts.owners || []).forEach(o => $('#dealFilterOwner').append(`<option value="${o.id}">${esc(o.name)}</option>`));
+            if (!(opts.owners || []).length) $('#dealFilterOwner').closest('div').hide();
         });
 
         $(document).on('click', '.assign-deal', function() {

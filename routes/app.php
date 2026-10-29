@@ -209,6 +209,7 @@ Route::middleware(['admin_middle', 'permission:whatsapp.manage-settings'])->grou
 Route::middleware(['admin_middle', 'permission:leads.view'])->group(function () {
     Route::get('/leads', [LeadController::class, 'lead'])->name('leads.index');
     Route::get('/leads/data', [LeadController::class, 'get_lead'])->name('leads.data');
+    Route::get('/leads/filter-options', [LeadController::class, 'filterOptions'])->name('leads.filter_options');
     Route::get('/leads/assignable-users', [LeadController::class, 'getAssignUsers'])->name('leads.assignable_users');
     Route::get('/leads/{id}/detail', [LeadDetailController::class, 'detail'])->name('leads.detail');
     Route::get('/leads/{id}/timeline', [LeadDetailController::class, 'timeline'])->name('leads.timeline');
@@ -275,6 +276,8 @@ Route::middleware(['admin_middle', 'permission:deals.view'])->group(function () 
     Route::get('/deals/list', [DealController::class, 'listView'])->name('deals.list');
     Route::get('/deals/data', [DealController::class, 'data'])->name('deals.data');
     Route::get('/deals/board-data', [DealController::class, 'boardData'])->name('deals.board_data');
+    Route::get('/deals/filter-options', [DealController::class, 'filterOptions'])->name('deals.filter_options');
+    Route::get('/deals/board-stage/{stageId}', [DealController::class, 'boardStage'])->name('deals.board_stage')->whereNumber('stageId');
     Route::get('/deals/pipeline-options', [DealController::class, 'pipelineOptions'])->name('deals.pipeline_options');
 });
 
@@ -356,6 +359,14 @@ Route::middleware(['admin_middle', 'permission:company.edit'])->group(function (
 });
 
 Route::middleware(['admin_middle', 'permission:company.manage-settings'])->group(function () {
+    // Company AI settings: several API-key configurations with automatic failover.
+    Route::get('/settings/ai', [\App\Http\Controllers\Admin\AiSettingsController::class, 'index'])->name('ai.settings');
+    Route::get('/settings/ai/data', [\App\Http\Controllers\Admin\AiSettingsController::class, 'data'])->name('ai.settings.data');
+    Route::post('/settings/ai', [\App\Http\Controllers\Admin\AiSettingsController::class, 'store'])->name('ai.settings.store');
+    Route::put('/settings/ai/{id}', [\App\Http\Controllers\Admin\AiSettingsController::class, 'update'])->name('ai.settings.update')->whereNumber('id');
+    Route::delete('/settings/ai/{id}', [\App\Http\Controllers\Admin\AiSettingsController::class, 'destroy'])->name('ai.settings.destroy')->whereNumber('id');
+    Route::post('/settings/ai/{id}/test', [\App\Http\Controllers\Admin\AiSettingsController::class, 'test'])->name('ai.settings.test')->whereNumber('id')->middleware('throttle:10,1');
+    Route::post('/settings/ai/{id}/move', [\App\Http\Controllers\Admin\AiSettingsController::class, 'move'])->name('ai.settings.move')->whereNumber('id');
     Route::get('/settings/mail', [MailSettingsController::class, 'edit'])->name('settings.mail.edit');
     Route::post('/settings/mail', [MailSettingsController::class, 'store'])->name('settings.mail.store');
     Route::put('/settings/mail/{mailSetting}', [MailSettingsController::class, 'update'])->name('settings.mail.update')->whereNumber('mailSetting');
@@ -392,6 +403,8 @@ Route::middleware(['admin_middle', 'permission:campaigns.view'])->group(function
     Route::get('/email-campaigns', [EmailCampaignController::class, 'index'])->name('campaigns.index');
     Route::get('/email-campaigns/data', [EmailCampaignController::class, 'data'])->name('campaigns.data');
     Route::get('/email-campaigns/{emailCampaign}', [EmailCampaignController::class, 'show'])->name('campaigns.show');
+    Route::get('/email-campaigns/{id}/report', [EmailCampaignController::class, 'report'])->name('campaigns.report')->whereNumber('id');
+    Route::get('/email-campaigns/{id}/report/data', [EmailCampaignController::class, 'reportData'])->name('campaigns.report.data')->whereNumber('id');
     Route::post('/email-campaigns/preview-audience', [EmailCampaignController::class, 'previewAudience'])->name('campaigns.preview_audience');
 });
 

@@ -62,26 +62,11 @@ class LeadController extends Controller
         $converted = $request->boolean('converted');
         $query = (clone $baseQuery)->{$converted ? 'whereHas' : 'whereDoesntHave'}('deal');
 
-        if ($request->filled('search')) {
-            $term = '%'.$request->string('search').'%';
-            $query->where(function ($q) use ($term) {
-                $q->where('name', 'like', $term)
-                    ->orWhere('company_name', 'like', $term)
-                    ->orWhere('phone', 'like', $term)
-                    ->orWhere('email', 'like', $term);
-            });
-        }
-        foreach (['lead_status', 'priority', 'lead_source'] as $filterField) {
-            if ($request->filled($filterField)) {
-                $query->where($filterField, $request->string($filterField));
-            }
-        }
-        if ($request->filled('assigned_to')) {
-            $query->where('assigned_to', $request->integer('assigned_to'));
-        }
+        $this->applyLeadFilters($request, $query);
 
-        $perPage = min(max((int) $request->input('per_page', 20), 5), 100);
-        $paginator = $query->with('deal:id,lead_id,name')->orderByDesc('id')->paginate($perPage);
+        // Up to 200 rows a page so a few-thousand-lead book is workable.
+        $perPage = min(max((int) $request->input('per_page', 25), 5), 200);
+        $paginator = $query->with(['deal:id,lead_id,name', 'assignedUser:id,name'])->orderByDesc('id')->paginate($perPage);
 
         $data = [];
         $sl_no = ($paginator->currentPage() - 1) * $paginator->perPage() + 1;
@@ -110,13 +95,8 @@ class LeadController extends Controller
                         </button>
                     </div>
                 </div>";
-            $user = User::find($lead->assigned_to);
-
-            if ($user) {
-                $user_name = $user->name;
-            } else {
-                $user_name = null;
-            }
+            // Eager-loaded above: a lookup per row here cost one extra query per lead on every page.
+            $user_name = $lead->assignedUser?->name;
 
             $data[] = [
 
@@ -189,6 +169,71 @@ class LeadController extends Controller
                 'per_page' => $paginator->perPage(),
             ],
             'counts' => $counts,
+        ]);
+    }
+
+    /** Leads the current user may see (everyone in the company for admins/managers, own leads otherwise). */
+    private function visibleLeads()
+    {
+        $me = Auth::guard('web')->user();
+
+        return $me->hasElevatedAccess() ? Lead::query() : Lead::where('assigned_to', $me->id);
+    }
+
+    /**
+     * The one definition of the list filters, shared by the table and by
+     * "assign all matching leads", so the two can never disagree about which
+     * leads a filter selects.
+     */
+    private function applyLeadFilters(Request $request, $query): void
+    {
+        if ($request->filled('search')) {
+            $term = '%'.addcslashes((string) $request->string('search'), '%_\\').'%';
+            $query->where(function ($q) use ($term) {
+                $q->where('name', 'like', $term)
+                    ->orWhere('company_name', 'like', $term)
+                    ->orWhere('phone', 'like', $term)
+                    ->orWhere('email', 'like', $term);
+            });
+        }
+
+        foreach (['lead_status', 'priority', 'lead_source', 'lead_type', 'product', 'state', 'city'] as $filterField) {
+            if ($request->filled($filterField)) {
+                $query->where($filterField, (string) $request->string($filterField));
+            }
+        }
+
+        if ($request->filled('assigned_to')) {
+            $query->where('assigned_to', $request->integer('assigned_to'));
+        }
+
+        // Created-date range; whole days, and range columns compared directly so the index can be used.
+        foreach (['date_from' => ['>=', 'startOfDay'], 'date_to' => ['<=', 'endOfDay']] as $field => [$operator, $edge]) {
+            if ($request->filled($field)) {
+                try {
+                    $query->where('created_at', $operator, Carbon::parse((string) $request->string($field))->{$edge}());
+                } catch (\Throwable) {
+                    // an unreadable date is ignored rather than failing the whole list
+                }
+            }
+        }
+    }
+
+    /** Values for the filter dropdowns, taken from the leads this user can actually see. */
+    public function filterOptions()
+    {
+        $visible = fn () => $this->visibleLeads();
+        $distinct = fn (string $column) => $visible()->whereNotNull($column)->where($column, '!=', '')->distinct()->orderBy($column)->pluck($column)->values();
+
+        $cities = $visible()->whereNotNull('city')->where('city', '!=', '')->select('state', 'city')->distinct()->orderBy('city')->get()
+            ->groupBy(fn ($row) => (string) $row->state)
+            ->map(fn ($rows) => $rows->pluck('city')->unique()->values());
+
+        return response()->json([
+            'states' => $distinct('state'),
+            'cities_by_state' => $cities,
+            'products' => $distinct('product'),
+            'types' => $distinct('lead_type'),
         ]);
     }
 
@@ -958,28 +1003,62 @@ class LeadController extends Controller
     {
         $request->validate([
             'user_id' => 'required|integer',
-            'lead_ids' => 'required|array',
+            'all_matching' => 'sometimes|boolean',
+            'lead_ids' => 'required_without:all_matching|array',
             'lead_ids.*' => 'integer',
         ]);
 
-        $leads = Lead::whereIn('id', $request->lead_ids)->get();
+        $actorId = Auth::guard('web')->id();
+        $user = User::where('tenant_id', TenantContext::id())->where('status', 'Active')->findOrFail($request->integer('user_id'));
+
+        // "Select all N matching": the same filters as the table, applied on the server,
+        // so thousands of leads can be assigned without ticking (or even loading) them.
+        if ($request->boolean('all_matching')) {
+            $query = $this->visibleLeads();
+            $query->{$request->boolean('converted') ? 'whereHas' : 'whereDoesntHave'}('deal');
+            $this->applyLeadFilters($request, $query);
+
+            $total = (clone $query)->count();
+            abort_if($total === 0, 422, 'No leads match the current filters.');
+            abort_if($total > $this->bulkAssignLimit(), 422, 'That is '.number_format($total).' leads. Narrow the filters to '.number_format($this->bulkAssignLimit()).' or fewer and try again.');
+
+            $now = now();
+            (clone $query)->select('id', 'tenant_id')->chunkById(500, function ($chunk) use ($user, $actorId, $now) {
+                Lead::whereIn('id', $chunk->pluck('id'))->update(['assigned_to' => $user->id, 'assigned_by' => $actorId, 'assigned_at' => $now]);
+                LeadActivity::insert($chunk->map(fn ($lead) => [
+                    'tenant_id' => $lead->tenant_id, 'lead_id' => $lead->id, 'user_id' => $actorId, 'type' => 'assigned',
+                    'description' => 'Assigned to '.$user->name.' (bulk)', 'created_at' => $now,
+                ])->all());
+            });
+
+            \App\Notifications\LeadsAssigned::notifyAssignee($user, $total, $actorId);
+
+            return response()->json(['status' => true, 'count' => $total, 'message' => number_format($total).' leads assigned to '.$user->name]);
+        }
+
+        // Only leads this person is allowed to see can be reassigned.
+        $leads = $this->visibleLeads()->whereIn('id', $request->lead_ids)->get();
         abort_if($leads->count() !== count(array_unique($request->lead_ids)), 422, 'One or more leads are invalid.');
-        $tenantIds = $leads->pluck('tenant_id')->unique();
-        abort_if($tenantIds->count() !== 1, 422, 'Leads from different tenants cannot be assigned together.');
-        $user = User::where('tenant_id', $tenantIds->first())->findOrFail($request->integer('user_id'));
 
         foreach ($leads as $lead) {
             $lead->assigned_to = $user->id;
-            $lead->assigned_by = Auth::guard('web')->id();
+            $lead->assigned_by = $actorId;
             $lead->assigned_at = now();
             $lead->save();
-            \App\Notifications\LeadAssigned::notifyAssignee($lead, Auth::guard('web')->id());
         }
+        \App\Notifications\LeadsAssigned::notifyAssignee($user, $leads->count(), $actorId, $leads->count() === 1 ? $leads->first() : null);
 
         return response()->json([
             'status' => true,
+            'count' => $leads->count(),
             'message' => 'Leads assigned successfully',
         ]);
+    }
+
+    /** Most leads "assign all matching" will touch in one go (config crm.bulk_assign_limit, default 5000). */
+    private function bulkAssignLimit(): int
+    {
+        return (int) config('crm.bulk_assign_limit', 5000);
     }
 
     private function findEditableLead(int $id): Lead

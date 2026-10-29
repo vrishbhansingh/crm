@@ -13,9 +13,9 @@ class FakeAiClient implements AiClient
     {
     }
 
-    public function send(string $system, array $messages, array $tools, ?array $jsonSchema = null): array
+    public function send(string $system, array $messages, array $tools, ?array $jsonSchema = null, ?string $model = null): array
     {
-        $this->calls[] = compact('system', 'messages', 'tools', 'jsonSchema');
+        $this->calls[] = compact('system', 'messages', 'tools', 'jsonSchema', 'model');
 
         return array_shift($this->script) ?? ['stop_reason' => 'end_turn', 'text' => 'done', 'tool_calls' => [], 'raw_content' => []];
     }

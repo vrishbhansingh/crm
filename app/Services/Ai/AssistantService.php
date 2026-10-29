@@ -23,14 +23,18 @@ class AssistantService
 
     private readonly PendingActionStore $pending;
 
-    public function __construct(private readonly AiClient $client, private readonly ToolRegistry $registry, ?PendingActionStore $pending = null)
+    private readonly ScopeGuard $guard;
+
+    public function __construct(private readonly AiClient $client, private readonly ToolRegistry $registry, ?PendingActionStore $pending = null, ?ScopeGuard $guard = null)
     {
         $this->pending = $pending ?? app(PendingActionStore::class);
+        $this->guard = $guard ?? new ScopeGuard($client);
     }
 
+    /** On, and this company has a saved AI key (or the server has a default one). */
     public function available(): bool
     {
-        return (bool) config('ai.enabled') && filled(config('ai.api_key'));
+        return (bool) config('ai.enabled') && app(AiConfigResolver::class)->hasAny(\App\Support\TenantContext::id());
     }
 
     /**
@@ -41,6 +45,11 @@ class AssistantService
     {
         if (! $this->takeQuota($user)) {
             return ['reply' => 'You have reached today\'s assistant limit. It resets tomorrow.', 'history' => $history, 'limited' => true];
+        }
+
+        // Hard CRM-only gate: out-of-scope messages never reach the assistant (or its data tools).
+        if (! $this->guard->inScope($user, $question, $history)) {
+            return ['reply' => self::REFUSAL, 'history' => $history, 'pending' => []];
         }
 
         $tools = $this->registry->for($user);

@@ -59,8 +59,8 @@
         }
         .fc .fc-button-primary:hover,
         .fc .fc-button-primary:not(:disabled).fc-button-active {
-            background-color: #1d4ed8 !important;
-            border-color: #1d4ed8 !important;
+            background-color: var(--primary-dark, #154f46) !important;
+            border-color: var(--primary-dark, #154f46) !important;
             color: #fff !important;
         }
         .fc .fc-icon { color: #fff !important; }
@@ -138,7 +138,7 @@
                     </div>
                     <div class="legend">
                         <span class="legend-item"><span class="legend-dot" style="background:#dc2626"></span> Urgent task</span>
-                        <span class="legend-item"><span class="legend-dot" style="background:#2563eb"></span> Task reminder</span>
+                        <span class="legend-item"><span class="legend-dot" style="background:#2a5c8a"></span> Task reminder</span>
                         <span class="legend-item"><span class="legend-dot" style="background:#7c3aed"></span> Lead follow-up</span>
                         <span class="legend-item"><span class="legend-dot" style="background:#16a34a"></span> Deal close date</span>
                     </div>

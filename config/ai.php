@@ -10,6 +10,11 @@ return [
     // without a deploy. "low" effort keeps chat answers fast; raise it if
     // answers to analytical questions need more depth.
     'model' => env('AI_MODEL', 'claude-opus-5-5'),
+
+    // The CRM-only gate: a cheap tool-less check that runs BEFORE the assistant and
+    // refuses anything that isn't about this CRM. Switch off only for debugging.
+    'scope_guard' => (bool) env('AI_SCOPE_GUARD', true),
+    'guard_model' => env('AI_GUARD_MODEL', 'claude-haiku-5-5'),
     'effort' => env('AI_EFFORT', 'low'),
     'max_tokens' => (int) env('AI_MAX_TOKENS', 2000),
     'timeout' => (int) env('AI_TIMEOUT', 45),           // seconds per API call

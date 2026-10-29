@@ -139,6 +139,13 @@
             min-height: 60px;
         }
 
+        .kanban-column-total { display: block; font-size: 11px; font-weight: 500; opacity: .8; margin-top: 2px; }
+        .kanban-load-more {
+            display: block; width: calc(100% - 16px); margin: 6px 8px 10px; padding: 6px 8px; font-size: 12px; font-weight: 600;
+            border: 1px dashed var(--crm-border-strong, #c3c8bd); border-radius: 8px; background: transparent; color: var(--crm-accent, #1f6f63); cursor: pointer;
+        }
+        .kanban-load-more:disabled { opacity: .6; cursor: default; }
+
         .kanban-card {
             background: #fff;
             border-radius: 10px;
@@ -431,18 +438,39 @@
                 html += `
                     <div class="kanban-column">
                         <div class="kanban-column-header ${headerClass}" ${headerStyle}>
-                            <span>${esc(stage.name)}</span>
-                            <span class="kanban-column-count">${stage.deals.length}</span>
+                            <span>${esc(stage.name)}${stage.total_amount ? `<span class="kanban-column-total">${money(stage.total_amount)}</span>` : ''}</span>
+                            <span class="kanban-column-count">${stage.deal_count ?? stage.deals.length}</span>
                         </div>
                         <div class="kanban-cards" id="stage-${stage.id}" data-stage-id="${stage.id}" data-is-won="${stage.is_won ? 1 : 0}" data-is-lost="${stage.is_lost ? 1 : 0}">
                             ${cardsHtml}
                         </div>
+                        ${stage.has_more ? `<button type="button" class="kanban-load-more" data-stage-id="${stage.id}" data-loaded="${stage.deals.length}">Load more (${(stage.deal_count - stage.deals.length).toLocaleString()} more)</button>` : ''}
                     </div>`;
             });
 
             $('#kanbanBoard').html(html);
             initSortable();
         }
+
+        // A big stage shows its newest deals first; this fetches the next page into the same column.
+        $(document).on('click', '.kanban-load-more', function() {
+            const $btn = $(this).prop('disabled', true).text('Loading…');
+            const stageId = $btn.data('stage-id');
+            const loaded = parseInt($btn.data('loaded'), 10) || 0;
+
+            $.get("{{ url('deals/board-stage') }}/" + stageId, { offset: loaded }, function(response) {
+                const deals = response.data.deals || [];
+                $('#stage-' + stageId).append(deals.map(renderCard).join(''));
+                $btn.data('loaded', loaded + deals.length);
+                if (response.data.has_more) {
+                    $btn.prop('disabled', false).text(`Load more (${response.data.remaining.toLocaleString()} more)`);
+                } else {
+                    $btn.remove();
+                }
+            }).fail(function() {
+                $btn.prop('disabled', false).text('Could not load. Try again');
+            });
+        });
 
         function loadBoard(pipelineId) {
             $.get("{{ route('deals.board_data') }}", pipelineId ? { pipeline_id: pipelineId } : {}, function(response) {

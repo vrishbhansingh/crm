@@ -56,7 +56,7 @@ class CalendarController extends Controller
                     'color' => match ($task->priority) {
                         'urgent' => '#dc2626',
                         'high' => '#ea580c',
-                        'medium' => '#2563eb',
+                        'medium' => '#2a5c8a', // the design system's info tone, not the old bright blue
                         default => '#64748b',
                     },
                     'url' => $task->related_type === 'deal'
