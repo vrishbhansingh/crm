@@ -582,6 +582,11 @@ class LeadController extends Controller
         $lead->contact_id = $contact->id;
         $customerResult = $lead->save();
 
+        // Funnel automation: into the company's default funnel (if one is set).
+        if ($result && $customerResult) {
+            app(\App\Services\LeadFunnelService::class)->enter($lead, null, 'the lead form', Auth::guard('web')->id());
+        }
+
         if ($result && $customerResult) {
             return response()->json([
                 'status' => true,

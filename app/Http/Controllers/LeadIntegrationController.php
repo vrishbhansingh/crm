@@ -223,7 +223,7 @@ class LeadIntegrationController extends Controller
             'default_lead_status' => ['nullable', 'string', Rule::in(MasterValue::options('lead_status')->pluck('code'))],
             'default_priority' => ['nullable', 'string', Rule::in(MasterValue::options('lead_priority')->pluck('code'))],
             'default_assigned_to' => ['nullable', 'integer', Rule::exists('users', 'id')->where('tenant_id', $tenantId)],
-            'pipeline_id' => ['nullable', 'integer', Rule::exists('pipelines', 'id')->where('tenant_id', $tenantId)],
+            'pipeline_id' => ['nullable', 'integer', Rule::exists((config('tenancy.mode') === 'database' ? 'tenant.' : '').'pipelines', 'id')->where('tenant_id', $tenantId)],
         ]);
     }
 

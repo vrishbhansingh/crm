@@ -131,6 +131,7 @@ Route::middleware(['admin_middle', 'permission:reports.view'])->group(function (
 Route::middleware(['admin_middle', 'permission:leads.manage-settings'])->group(function () {
     Route::get('/settings/lead-assignment', [LeadAssignmentController::class, 'index'])->name('lead_assignment.index');
     Route::get('/settings/lead-assignment/data', [LeadAssignmentController::class, 'data'])->name('lead_assignment.data');
+    Route::put('/settings/lead-assignment/funnel', [LeadAssignmentController::class, 'saveFunnel'])->name('lead_assignment.funnel');
     Route::post('/settings/lead-assignment', [LeadAssignmentController::class, 'store'])->name('lead_assignment.store');
     Route::put('/settings/lead-assignment/{id}', [LeadAssignmentController::class, 'update'])->name('lead_assignment.update')->whereNumber('id');
     Route::delete('/settings/lead-assignment/{id}', [LeadAssignmentController::class, 'destroy'])->name('lead_assignment.destroy')->whereNumber('id');

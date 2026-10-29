@@ -285,66 +285,14 @@ class WebhookLeadController extends Controller
     }
 
     /**
-     * Opt-in: an integration only gets its leads dropped straight into a
-     * sales funnel if a Pipeline was explicitly chosen for it. The starting
-     * stage is always the first non-won/non-lost stage by sort order — the
-     * same rule LeadDetailController::convertToDeal() uses for a
-     * human-triggered lead-to-deal conversion, so a webhook-sourced deal
-     * lands exactly where a manually converted one would.
+     * Funnel automation. The integration's own funnel wins; with none chosen
+     * the company's default funnel (Lead Assignment settings) applies; with
+     * neither, the lead stays a plain lead. The deal rules themselves live in
+     * LeadFunnelService, shared with every other way a lead can be created.
      */
     private function maybeCreateDeal(LeadIntegration $integration, Lead $lead): ?Deal
     {
-        if (! $integration->pipeline_id) {
-            return null;
-        }
-
-        $pipeline = Pipeline::where('tenant_id', $integration->tenant_id)->find($integration->pipeline_id);
-        if (! $pipeline) {
-            return null;
-        }
-
-        $stage = $pipeline->stages()->where('is_won', false)->where('is_lost', false)->orderBy('sort_order')->first();
-        if (! $stage) {
-            return null;
-        }
-
-        $ownerId = $lead->assigned_to
-            ?: app(\App\Services\DealAssignmentService::class)->resolve($lead->tenant_id, ['pipeline_id' => $pipeline->id, 'source' => $lead->lead_source]);
-
-        $deal = Deal::create([
-            'tenant_id' => $lead->tenant_id,
-            'pipeline_id' => $pipeline->id,
-            'stage_id' => $stage->id,
-            'lead_id' => $lead->id,
-            'company_id' => $lead->company_id,
-            'contact_id' => $lead->contact_id,
-            'source' => $lead->lead_source,
-            'owner_id' => $ownerId,
-            'name' => trim(($lead->company_name ?: $lead->name).' - Deal'),
-            'amount' => 0,
-        ]);
-
-        DealStageHistory::create([
-            'deal_id' => $deal->id,
-            'from_stage_id' => null,
-            'to_stage_id' => $stage->id,
-            'changed_by' => null,
-        ]);
-
-        $lead->is_converted = 'Yes';
-        $lead->converted_at = now();
-        $lead->conversion_value = 0;
-        $lead->save();
-
-        LeadActivity::create([
-            'tenant_id' => $lead->tenant_id,
-            'lead_id' => $lead->id,
-            'user_id' => null,
-            'type' => 'converted',
-            'description' => 'Automatically added to '.$pipeline->name.' ('.$stage->name.') via '.$integration->name.'.',
-        ]);
-
-        return $deal;
+        return app(\App\Services\LeadFunnelService::class)->enter($lead, $integration->pipeline_id ?: null, $integration->name);
     }
 
     /**

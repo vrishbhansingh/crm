@@ -1,0 +1,10 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "crm",
+      "url": "http://localhost",
+      "port": 80
+    }
+  ]
+}

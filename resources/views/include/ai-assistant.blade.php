@@ -7,6 +7,27 @@
         ? ['How is my team performing?', 'Which leads are overdue for follow-up?', 'Show the deal pipeline', 'Any unassigned leads?', 'Which deals are stalled?']
         : ['What are my follow-ups today?', 'Show my open deals', 'Which of my tasks are overdue?', 'How many new leads do I have?'];
 @endphp
+@php
+    // Enabled in config but no API key on this server: the assistant stays hidden for everyone else,
+    // but admins get a visible hint instead of a silent nothing.
+    $aiSetupHint = $aiUser && ! $aiOn && config('ai.enabled') && $aiUser->hasElevatedAccess();
+@endphp
+@if ($aiSetupHint)
+<button type="button" id="aiSetupFab" aria-label="CRM assistant setup" title="CRM assistant needs setup"
+    style="position:fixed;right:22px;bottom:22px;z-index:1040;width:52px;height:52px;border-radius:50%;border:0;cursor:pointer;background:#9ca3af;color:#fff;font-size:20px;box-shadow:0 6px 18px rgba(0,0,0,.22);">&#10024;</button>
+<div id="aiSetupPanel" style="display:none;position:fixed;right:22px;bottom:84px;z-index:1040;width:340px;max-width:calc(100vw - 24px);padding:14px 16px;background:var(--crm-surface,#fff);color:var(--crm-ink,#171a17);border:1px solid var(--crm-border,#e5e7eb);border-radius:14px;box-shadow:0 16px 40px rgba(0,0,0,.22);font-size:13px;line-height:1.5;">
+    <strong>CRM Assistant is not switched on yet</strong>
+    <p style="margin:6px 0;">Only admins see this message. On the server, add your Anthropic API key to <code>.env</code>:</p>
+    <pre style="margin:0 0 6px;padding:8px;background:var(--crm-surface-2,#f3f4f6);border-radius:8px;white-space:pre-wrap;">ANTHROPIC_API_KEY=your-key</pre>
+    <p style="margin:0;">then run <code>composer install</code> and <code>php artisan config:clear</code>. The chat button appears for everyone once the key is set.</p>
+</div>
+<script>
+    document.getElementById('aiSetupFab').addEventListener('click', function () {
+        var p = document.getElementById('aiSetupPanel');
+        p.style.display = p.style.display === 'none' ? 'block' : 'none';
+    });
+</script>
+@endif
 @if ($aiOn)
 <style>
     .ai-fab { position: fixed; right: 22px; bottom: 22px; z-index: 1040; width: 52px; height: 52px; border-radius: 50%; border: 0; cursor: pointer;

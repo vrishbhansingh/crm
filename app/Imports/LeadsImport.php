@@ -156,6 +156,7 @@ class LeadsImport implements ToCollection, WithHeadingRow
                 $lead->internal_note = $row['internal_note'] ?? null;
                 $lead->status = $row['status'] ?? 'Active';
                 LeadNumberService::saveNew($lead);
+                app(\App\Services\LeadFunnelService::class)->enter($lead, null, 'bulk upload');
 
                 // Recorded only now (not up front) — a row that fails to
                 // save must not block a later, genuinely-duplicate row

@@ -25,8 +25,28 @@ class LeadAssignmentController extends Controller
         $tenantId = TenantContext::id();
         $agents = User::where('tenant_id', $tenantId)->where('status', 'Active')->orderBy('name')->get(['id', 'name']);
         $leadSources = MasterValue::options('lead_source');
+        $pipelines = \App\Models\Pipeline::where('is_active', true)->orderBy('sort_order')->get(['id', 'name']);
+        $defaultPipelineId = \App\Models\Tenant::whereKey($tenantId)->value('default_pipeline_id');
 
-        return view('lead_assignment.index', compact('agents', 'leadSources'));
+        return view('lead_assignment.index', compact('agents', 'leadSources', 'pipelines', 'defaultPipelineId'));
+    }
+
+    /**
+     * Funnel automation: the company-wide default funnel. Every new lead that
+     * arrives without a funnel of its own (form, bulk upload, API, WhatsApp, or
+     * an integration with no funnel set) is added to it as a deal. Empty = off.
+     */
+    public function saveFunnel(Request $request)
+    {
+        $tenantId = TenantContext::id();
+        $data = $request->validate([
+            'pipeline_id' => ['nullable', 'integer', Rule::exists($this->tenantTable('pipelines'), 'id')->where('tenant_id', $tenantId)->where('is_active', true)],
+        ]);
+
+        \App\Models\Tenant::whereKey($tenantId)->update(['default_pipeline_id' => $data['pipeline_id'] ?? null]);
+        app(\App\Services\LeadFunnelService::class)->forgetCache();
+
+        return response()->json(['status' => true, 'message' => ($data['pipeline_id'] ?? null) ? 'Default funnel saved. New leads will be added to it automatically.' : 'Default funnel turned off. New leads stay as leads.']);
     }
 
     public function data()
@@ -121,6 +141,16 @@ class LeadAssignmentController extends Controller
             'agent_ids' => ['required', 'array', 'min:1'],
             'agent_ids.*' => ['integer', Rule::exists('users', 'id')->where('tenant_id', $tenantId)],
         ]);
+    }
+
+    /**
+     * Pipelines live in each company's own database, so validation rules that
+     * check them must name that connection (a plain table name looks in the
+     * central database and rejects every valid id).
+     */
+    private function tenantTable(string $table): string
+    {
+        return (config('tenancy.mode') === 'database' ? 'tenant.' : '').$table;
     }
 
     private function authorizeRule(LeadAssignmentRule $rule): void

@@ -136,17 +136,26 @@
      is a fixed dark color (near-black), so it needs a light backdrop to
      stay legible even in dark mode, same reasoning as before this pass;
      only the surrounding wrapper's color changed. */
+  /* Redesign: no more white boxed rectangle. The wordmark sits directly on
+     the header surface, and dark mode swaps to a light-text version of the
+     logo (images/logo-dark.svg) instead of needing a white backdrop. */
   .crm-brand-chip {
-    background: #ffffff;
-    border: 1px solid var(--crm-border, #e5e7eb);
-    border-radius: 8px;
-    padding: 5px 12px;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    padding: 0 4px;
     display: inline-flex;
     align-items: center;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: none;
     overflow: hidden;
     transition: width 0.2s ease, padding 0.2s ease;
   }
+  .crm-brand-wrapper img.logo-on-dark { display: none; }
+  [data-theme="dark"] .crm-brand-wrapper img.logo-on-light { display: none; }
+  [data-theme="dark"] .crm-brand-wrapper img.logo-on-dark { display: block; }
+  /* An uploaded company logo has unknown colours, so in dark mode only it
+     keeps a soft light pill behind it (rounded, not a hard rectangle). */
+  [data-theme="dark"] .crm-brand-chip.has-custom-logo { background: #ffffff; border-radius: 999px; padding: 4px 12px; }
   .crm-brand-wrapper img {
     display: block;
     height: 22px;
@@ -171,7 +180,7 @@
      both expanded and collapsed, rather than applying the same crop. */
   .crm-brand-chip.has-custom-logo {
     max-width: 200px;
-    padding: 6px 10px;
+    padding: 0 4px;
   }
   .crm-brand-chip.has-custom-logo img {
     height: 32px;
@@ -575,6 +584,50 @@
       top: 60px;
     }
   }
+
+  /* ---- Phones & small tablets (<= 768px) ------------------------------
+     Before: hamburger, theme toggle, bell and profile were all squeezed
+     into one row beside a ~200px logo, so the hamburger hid behind the
+     theme button and the profile was cut off; the content also started
+     under the 56px bar (padding was only 46px).
+     Now: [hamburger][logo] ........ [theme][bell][avatar], every control a
+     44px touch target with 8px between, and the logo shrinks to its icon
+     mark on phones. .crm-menu-wrapper/.crm-left use display:contents so
+     their children join the navbar's own flex row and can be re-ordered. */
+  @media (max-width: 768px) {
+    .page-body-wrapper { padding-top: 56px !important; }
+    .crm-navbar { padding: 0 8px; gap: 4px; }
+    .crm-menu-wrapper, .crm-left { display: contents; }
+
+    .crm-toggle {
+      order: 0;
+      display: flex !important;
+      align-items: center;
+      justify-content: center;
+      width: 44px;
+      height: 44px;
+      font-size: 20px;
+      border-radius: 12px;
+    }
+    .crm-toggle:active { background: var(--crm-surface-2, #f3f4f6); }
+
+    .crm-brand-wrapper { order: 1; width: auto; padding: 0; border-right: 0; background: transparent; flex: 0 0 auto; }
+    .crm-brand-wrapper img { height: 26px; }
+
+    .crm-right { order: 3; margin-left: auto; gap: 8px; }
+    .icon-btn { width: 44px; height: 44px; font-size: 16px; }
+    .crm-profile { padding: 0; width: 44px; height: 44px; justify-content: center; }
+    .crm-profile-avatar { width: 38px; height: 38px; }
+    .crm-profile-text { display: none; }
+  }
+
+  /* Phones: the full "icon + CRMS" wordmark is too wide beside three
+     44px buttons, so show just the icon mark (the left ~48px of the logo). */
+  @media (max-width: 575px) {
+    .crm-brand-chip:not(.has-custom-logo) { width: 48px; padding: 0; }
+    .crm-brand-chip.has-custom-logo { max-width: 120px; }
+    .crm-brand-chip.has-custom-logo img { height: 30px; }
+  }
 </style>
 
 @php
@@ -644,8 +697,13 @@
 <div class="crm-navbar-wrap">
 <div class="crm-navbar">
   <div class="crm-brand-wrapper">
-    <a href="{{ route('dashboard') }}" class="crm-brand-chip {{ $companyLogo ? 'has-custom-logo' : '' }}">
-      <img src="{{ $companyLogo ? asset($companyLogo) : asset('images/logo.svg') }}" alt="Logo">
+    <a href="{{ route('dashboard') }}" class="crm-brand-chip {{ $companyLogo ? 'has-custom-logo' : '' }}" aria-label="Go to dashboard">
+      @if ($companyLogo)
+        <img src="{{ asset($companyLogo) }}" alt="Company logo">
+      @else
+        <img class="logo-on-light" src="{{ asset('images/logo.svg') }}" alt="CRMS">
+        <img class="logo-on-dark" src="{{ asset('images/logo-dark.svg') }}" alt="" aria-hidden="true">
+      @endif
     </a>
     <button type="button" class="sidebar-collapse-btn" id="sidebarCollapseBtn" title="Collapse sidebar" aria-label="Collapse sidebar">
         <i class="fa fa-angle-left"></i>

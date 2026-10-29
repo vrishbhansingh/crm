@@ -9,6 +9,7 @@ class Tenant extends Model
 {
     protected $fillable = [
         'name',
+        'default_pipeline_id',
         'slug',
         'status',
         'approval_status',

@@ -356,6 +356,9 @@ class WhatsAppBot
             LeadAssigned::notifyAssignee($lead, null, 'auto');
         }
 
+        // Funnel automation: into the company's default funnel (if one is set).
+        app(\App\Services\LeadFunnelService::class)->enter($lead, null, 'the WhatsApp assistant');
+
         return $lead;
     }
 }

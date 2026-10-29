@@ -120,6 +120,8 @@ class CrmController extends Controller
         LeadNumberService::saveNew($lead);
         LeadActivity::create(['tenant_id' => $tenantId, 'lead_id' => $lead->id, 'user_id' => $request->user()->id, 'type' => 'created', 'description' => 'Lead created through API']);
 
+        app(\App\Services\LeadFunnelService::class)->enter($lead, null, 'the API', $request->user()->id);
+
         return response()->json(['data' => $lead], 201);
     }
 

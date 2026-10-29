@@ -103,6 +103,30 @@
                     </div>
                 </div>
 
+                <div class="la-card" style="padding:16px 18px;margin-bottom:16px;min-height:0;">
+                    <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;">
+                        <div style="flex:1;min-width:260px;">
+                            <strong><i class="fa fa-filter"></i> Default funnel for new leads</strong>
+                            <p style="margin:4px 0 0;font-size:12.5px;opacity:.8;">
+                                Every new lead &mdash; added by hand, bulk-uploaded, from the API, WhatsApp, or any integration that has no funnel of its own &mdash;
+                                is added to this funnel automatically as a deal in its first stage. Choose "Off" to keep new leads as plain leads.
+                            </p>
+                        </div>
+                        <div style="display:flex;gap:8px;align-items:center;">
+                            <select id="defaultFunnel" class="form-control" style="min-width:220px;">
+                                <option value="">Off &mdash; leads only</option>
+                                @foreach ($pipelines as $pipeline)
+                                    <option value="{{ $pipeline->id }}" @selected((int) $defaultPipelineId === (int) $pipeline->id)>{{ $pipeline->name }}</option>
+                                @endforeach
+                            </select>
+                            <button type="button" class="btn btn-primary btn-sm" id="saveFunnelBtn">Save</button>
+                        </div>
+                    </div>
+                    @if ($pipelines->isEmpty())
+                        <p style="margin:8px 0 0;font-size:12.5px;">No funnels exist yet. Create one under <a href="{{ url('pipelines') }}">Pipelines</a>, then come back here.</p>
+                    @endif
+                </div>
+
                 <div class="la-tabs" id="laTabs">
                     <button class="la-tab-btn active" data-tab="product">Product Rules</button>
                     <button class="la-tab-btn" data-tab="state">State Rules</button>
@@ -203,6 +227,14 @@
     <script src="{{ asset('js/toast-shim.js') }}?v={{ filemtime(public_path('js/toast-shim.js')) }}"></script>
     <script>
         $.ajaxSetup({ headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') } });
+
+        $('#saveFunnelBtn').on('click', function () {
+            const $btn = $(this).prop('disabled', true);
+            $.ajax({ url: `{{ url('settings/lead-assignment/funnel') }}`, method: 'PUT', data: { pipeline_id: $('#defaultFunnel').val() } })
+                .done(res => toastr.success(res.message))
+                .fail(x => toastr.error(x.responseJSON?.message || 'Could not save the default funnel.'))
+                .always(() => $btn.prop('disabled', false));
+        });
 
         const esc = v => $('<div>').text(v ?? '').html();
         const TAB_LABELS = { product: 'Product', state: 'State', source: 'Source', round_robin: 'Round Robin' };
