@@ -72,17 +72,14 @@ class AssistantService
                 break;
             }
 
-            $messages[] = ['role' => 'assistant', 'content' => $response['raw_content']];
+            // Provider-neutral turn: each driver translates it to its own wire format (see Drivers\AiDriver).
+            $messages[] = ['role' => 'assistant', 'content' => $response['text'], 'tool_calls' => $response['tool_calls'], 'raw' => $response['raw_content']];
 
             $results = [];
             foreach ($response['tool_calls'] as $call) {
-                $results[] = [
-                    'type' => 'tool_result',
-                    'toolUseID' => $call['id'],
-                    'content' => $this->runTool($tools, $user, $call['name'], $call['input']),
-                ];
+                $results[] = ['id' => $call['id'], 'content' => $this->runTool($tools, $user, $call['name'], $call['input'])];
             }
-            $messages[] = ['role' => 'user', 'content' => $results];
+            $messages[] = ['role' => 'tool_results', 'results' => $results];
         }
 
         $reply ??= 'That question needs more steps than I can do in one go. Could you narrow it down?';

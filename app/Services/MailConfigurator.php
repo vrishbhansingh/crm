@@ -13,9 +13,17 @@ use App\Models\Tenant;
  */
 class MailConfigurator
 {
-    public function configureFor(?Tenant $tenant): void
+    /** Use one specific saved SMTP of this tenant (a campaign's own choice); falls back to configureFor() if it is gone or unusable. */
+    public function configureForSetting(?Tenant $tenant, ?int $settingId): void
     {
-        $active = $tenant?->activeMailSetting();
+        $setting = $settingId && $tenant ? $tenant->mailSettings()->whereKey($settingId)->first() : null;
+
+        $this->configureFor($tenant, $setting && $setting->isUsable() ? $setting : null);
+    }
+
+    public function configureFor(?Tenant $tenant, ?\App\Models\TenantMailSetting $override = null): void
+    {
+        $active = $override ?: $tenant?->activeMailSetting();
 
         if ($active && $active->isUsable()) {
             $this->apply(

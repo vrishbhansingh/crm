@@ -9,8 +9,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class AiConfiguration extends Model
 {
     protected $fillable = [
-        'tenant_id', 'name', 'api_key', 'key_hint', 'notify_email', 'model', 'priority', 'is_active',
-        'status', 'last_error', 'last_tested_at', 'last_used_at', 'failed_at', 'notified_at', 'created_by',
+        'tenant_id', 'name', 'provider', 'api_key', 'key_hint', 'notify_email', 'model', 'priority', 'is_active',
+        'requests_count', 'input_tokens', 'output_tokens', 'status', 'last_error', 'last_tested_at', 'last_used_at', 'failed_at', 'notified_at', 'created_by',
     ];
 
     protected $casts = [

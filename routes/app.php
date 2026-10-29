@@ -406,6 +406,7 @@ Route::middleware(['admin_middle', 'permission:campaigns.view'])->group(function
     Route::get('/email-campaigns/{id}/report', [EmailCampaignController::class, 'report'])->name('campaigns.report')->whereNumber('id');
     Route::get('/email-campaigns/{id}/report/data', [EmailCampaignController::class, 'reportData'])->name('campaigns.report.data')->whereNumber('id');
     Route::post('/email-campaigns/preview-audience', [EmailCampaignController::class, 'previewAudience'])->name('campaigns.preview_audience');
+    Route::post('/email-campaigns/template-preview', [EmailCampaignController::class, 'templatePreview'])->name('campaigns.template_preview');
 });
 
 Route::middleware(['admin_middle', 'permission:campaigns.create'])->group(function () {

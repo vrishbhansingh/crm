@@ -40,7 +40,7 @@ class ScopeGuard
             [['role' => 'user', 'content' => "RECENT CONVERSATION:\n".($recent ?: '(none)')."\n\nLATEST MESSAGE:\n".mb_strimwidth($question, 0, 1000, '…')]],
             [],
             null,
-            config('ai.guard_model'),
+            AiGateway::GUARD_MODEL, // the cheap topic-check model of whichever provider answers
         );
 
         // Only a clear leading "IN" passes; "OUT", empty, or anything odd is refused.

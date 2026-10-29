@@ -17,6 +17,9 @@ class EmailCampaign extends Model
         'email_template_id',
         'name',
         'subject',
+        'mail_setting_id',
+        'cc',
+        'bcc',
         'audience_type',
         'audience_filters',
         'status',
@@ -31,6 +34,8 @@ class EmailCampaign extends Model
 
     protected $casts = [
         'audience_filters' => 'array',
+        'cc' => 'array',
+        'bcc' => 'array',
         'scheduled_at' => 'datetime',
         'sent_at' => 'datetime',
     ];

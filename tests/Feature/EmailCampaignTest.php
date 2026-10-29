@@ -114,6 +114,32 @@ class EmailCampaignTest extends TestCase
         $this->assertSame('sent', $campaign->recipients()->first()->status);
     }
 
+    public function test_cc_bcc_and_a_chosen_smtp_are_saved_used_and_validated_and_the_template_preview_resolves(): void
+    {
+        Mail::fake();
+
+        $lead = Lead::create(['tenant_id' => $this->tenant->id, 'name' => 'Asha Rao', 'assigned_to' => $this->user->id, 'email' => 'asha@example.test', 'lead_status' => 'Hot', 'status' => 'Active', 'is_converted' => 'No']);
+        $template = EmailTemplate::create(['tenant_id' => $this->tenant->id, 'name' => 'Hello', 'subject' => 'Hi {{lead.name}}', 'body' => '<p>Dear {{lead.name}}</p>']);
+        $smtp = \App\Models\TenantMailSetting::create(['tenant_id' => $this->tenant->id, 'name' => 'Sales SMTP', 'smtp_host' => 'smtp.example.test', 'smtp_port' => 587]);
+        $foreign = \App\Models\TenantMailSetting::create(['tenant_id' => Tenant::create(['name' => 'Other', 'slug' => 'oth-'.Str::lower(Str::random(8)), 'status' => 'Active'])->id, 'name' => 'Theirs', 'smtp_host' => 'x.test', 'smtp_port' => 25]);
+
+        $base = ['name' => 'Wizard', 'email_template_id' => $template->id, 'audience_type' => 'leads', 'filters' => ['lead_status' => 'Hot']];
+
+        $this->postJson(route('campaigns.store'), $base + ['cc' => ['not-an-email']])->assertStatus(422);
+        $this->postJson(route('campaigns.store'), $base + ['mail_setting_id' => $foreign->id])->assertStatus(422);
+
+        $id = $this->postJson(route('campaigns.store'), $base + ['mail_setting_id' => $smtp->id, 'cc' => ['boss@example.test'], 'bcc' => ['audit@example.test']])->assertOk()->json('data.id');
+        $campaign = EmailCampaign::findOrFail($id);
+        $this->assertSame($smtp->id, (int) $campaign->mail_setting_id);
+
+        $this->postJson(route('campaigns.send', $campaign))->assertOk()->assertJsonPath('data.sent_count', 1);
+        Mail::assertSent(CampaignMail::class, fn (CampaignMail $m) => $m->hasTo('asha@example.test') && $m->hasCc('boss@example.test') && $m->hasBcc('audit@example.test'));
+        $this->assertSame('smtp.example.test', config('mail.mailers.smtp.host'), 'the campaign used its own chosen SMTP');
+
+        $this->postJson(route('campaigns.template_preview'), ['email_template_id' => $template->id, 'audience_type' => 'leads'])
+            ->assertOk()->assertJsonPath('subject', 'Hi Asha Rao');
+    }
+
     public function test_a_template_used_by_a_campaign_cannot_be_deleted(): void
     {
         $template = EmailTemplate::create([

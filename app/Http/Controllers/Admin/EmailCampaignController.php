@@ -21,7 +21,9 @@ class EmailCampaignController extends Controller
     {
         $templates = EmailTemplate::orderBy('name')->get(['id', 'name', 'subject']);
 
-        return view('email_campaigns.index', compact('templates'));
+        $mailSettings = Auth::guard('web')->user()?->tenant?->mailSettings()->orderByDesc('is_active')->orderBy('name')->get(['id', 'name', 'is_active', 'smtp_from_address']) ?? collect();
+
+        return view('email_campaigns.index', compact('templates', 'mailSettings'));
     }
 
     public function data()
@@ -159,6 +161,47 @@ class EmailCampaignController extends Controller
         return response()->json(['status' => true, 'count' => $count]);
     }
 
+    /**
+     * The wizard's template step: the template as one real recipient of the
+     * chosen audience would receive it (variables filled from the newest
+     * matching record the user may see; unresolved if there is none yet).
+     */
+    public function templatePreview(Request $request, TenantConnectionManager $connections, \App\Services\TemplateVariableResolver $resolver)
+    {
+        $connection = $connections->connectionName();
+        $data = $request->validate([
+            'email_template_id' => "required|exists:{$connection}.email_templates,id",
+            'audience_type' => 'required|in:leads,contacts,companies',
+            'subject' => 'nullable|string|max:255',
+        ]);
+
+        $template = EmailTemplate::with('attachments')->findOrFail($data['email_template_id']);
+        $user = Auth::guard('web')->user();
+        $elevated = $user->hasElevatedAccess();
+
+        $sample = match ($data['audience_type']) {
+            'leads' => Lead::when(! $elevated, fn ($q) => $q->where('assigned_to', $user->id))->latest('id')->first(),
+            'contacts' => Contact::when(! $elevated, fn ($q) => $q->where('owner_id', $user->id))->latest('id')->first(),
+            'companies' => Company::when(! $elevated, fn ($q) => $q->where('owner_id', $user->id))->latest('id')->first(),
+        };
+
+        $subject = filled($data['subject'] ?? null) ? $data['subject'] : $template->subject;
+        $body = $template->body;
+        if ($sample) {
+            $context = $resolver->contextFor($sample, $user->tenant);
+            $subject = $resolver->resolve($subject, $context);
+            $body = $resolver->resolve($body, $context);
+        }
+
+        return response()->json([
+            'status' => true,
+            'subject' => $subject,
+            'body' => $body,
+            'attachments' => $template->attachments->pluck('original_name')->all(),
+            'note' => $sample ? 'Shown with real details from your newest matching record.' : 'No sample record yet, so variables are shown unfilled.',
+        ]);
+    }
+
     public function store(Request $request, TenantConnectionManager $connections)
     {
         // exists: checks the app's DEFAULT connection, but EmailTemplate
@@ -174,13 +217,27 @@ class EmailCampaignController extends Controller
             'audience_type' => 'required|in:leads,contacts,companies',
             'filters' => 'nullable|array',
             'scheduled_at' => 'nullable|date|after:now',
+            'mail_setting_id' => ['nullable', 'integer'],
+            'cc' => 'nullable|array|max:10',
+            'cc.*' => 'email|max:190',
+            'bcc' => 'nullable|array|max:10',
+            'bcc.*' => 'email|max:190',
         ]);
+
+        $mailSettingId = null;
+        if (filled($data['mail_setting_id'] ?? null)) {
+            $mailSettingId = Auth::guard('web')->user()->tenant->mailSettings()->whereKey($data['mail_setting_id'])->value('id');
+            abort_if($mailSettingId === null, 422, 'That SMTP configuration does not exist.');
+        }
 
         $campaign = EmailCampaign::create([
             'created_by' => Auth::guard('web')->id(),
             'email_template_id' => $data['email_template_id'],
             'name' => $data['name'],
             'subject' => $data['subject'] ?? null,
+            'mail_setting_id' => $mailSettingId,
+            'cc' => array_values(array_unique($data['cc'] ?? [])),
+            'bcc' => array_values(array_unique($data['bcc'] ?? [])),
             'audience_type' => $data['audience_type'],
             'audience_filters' => $data['filters'] ?? [],
             'status' => filled($data['scheduled_at'] ?? null) ? 'scheduled' : 'draft',

@@ -2,26 +2,32 @@
 
 namespace App\Services\Ai;
 
-use Anthropic\Client;
-use Anthropic\Messages\ToolUseBlock;
 use App\Models\AiConfiguration;
+use App\Services\Ai\Drivers\AiDriver;
+use App\Services\Ai\Drivers\AnthropicDriver;
+use App\Services\Ai\Drivers\OpenAiCompatibleDriver;
 use App\Support\TenantContext;
 use Psr\Http\Client\ClientInterface;
 
-class AnthropicAiClient implements AiClient
+/**
+ * The one AI client the app uses. It calls the company's saved configurations
+ * in priority order, each through the right driver for its provider (Claude,
+ * OpenAI, Gemini, Groq, ...). If a key is the problem (invalid/expired, out of
+ * credit, rate limited, wrong model) it is marked failing, its admins are
+ * alerted, and the next configuration is tried — automatically, even if that
+ * one belongs to a different provider. Anything else (network, server error)
+ * is thrown straight away: another key would fail the same way.
+ */
+class AiGateway implements AiClient
 {
+    /** Sent as $model to mean "the cheap topic-check model of whichever provider answers". */
+    public const GUARD_MODEL = '@guard';
+
     /** @param  ClientInterface|null  $transporter  Test seam: a PSR-18 client (e.g. Guzzle with a MockHandler). */
     public function __construct(private readonly ?ClientInterface $transporter = null)
     {
     }
 
-    /**
-     * Calls the model with the company's saved keys in priority order. If a
-     * key is the problem (invalid/expired, out of credit, rate limited) it is
-     * marked failing, its admins are alerted, and the next key is tried —
-     * automatically, within the same request. Anything else (network,
-     * server error) is thrown straight away: another key would fail the same.
-     */
     public function send(string $system, array $messages, array $tools, ?array $jsonSchema = null, ?string $model = null): array
     {
         $resolver = app(AiConfigResolver::class);
@@ -30,8 +36,10 @@ class AnthropicAiClient implements AiClient
 
         foreach ($candidates as $i => $candidate) {
             try {
-                $result = $this->call($candidate['key'], $model ?: $candidate['model'], $system, $messages, $tools, $jsonSchema);
-                $resolver->markSuccess($candidate['config']);
+                $result = $this->driverFor($candidate['provider'])->call(
+                    $candidate['key'], $this->modelFor($candidate, $model), $system, $messages, $tools, $jsonSchema,
+                );
+                $resolver->markSuccess($candidate['config'], $result['usage']['input'] ?? 0, $result['usage']['output'] ?? 0);
 
                 return $result;
             } catch (\Throwable $e) {
@@ -50,16 +58,20 @@ class AnthropicAiClient implements AiClient
     }
 
     /**
-     * The Test button: one tiny call with exactly this configuration (no
+     * The Test button: one tiny real call with exactly this configuration (no
      * failover), recording the outcome on it.
      *
      * @return array{ok: bool, message: string}
      */
     public function ping(AiConfiguration $config): array
     {
+        $provider = $config->provider ?: 'anthropic';
+        $model = $config->model ?: ($provider === 'anthropic' ? (string) config('ai.model') : AiProviders::defaultModel($provider));
+
         try {
-            $this->call((string) $config->api_key, $config->model ?: (string) config('ai.model'), 'Reply with the single word OK.', [['role' => 'user', 'content' => 'ping']], [], null);
+            $result = $this->driverFor($provider)->call((string) $config->api_key, $model, 'Reply with the single word OK.', [['role' => 'user', 'content' => 'ping']], [], null);
             $config->forceFill(['status' => 'ok', 'last_error' => null, 'last_tested_at' => now(), 'failed_at' => null, 'notified_at' => null])->save();
+            app(AiConfigResolver::class)->recordUsage($config, $result['usage']['input'] ?? 0, $result['usage']['output'] ?? 0);
 
             return ['ok' => true, 'message' => 'Working. The key was accepted.'];
         } catch (\Throwable $e) {
@@ -70,48 +82,23 @@ class AnthropicAiClient implements AiClient
         }
     }
 
-    private function call(string $key, string $model, string $system, array $messages, array $tools, ?array $jsonSchema): array
+    private function modelFor(array $candidate, ?string $override): string
     {
-        $client = new Client(apiKey: $key, requestOptions: [
-            'transporter' => $this->transporter ?? $this->defaultTransporter(),
-            'timeout' => (float) config('ai.timeout'),
-            'maxRetries' => 1,
-        ]);
-
-        $args = [
-            'model' => $model,
-            'maxTokens' => config('ai.max_tokens'),
-            'system' => [['type' => 'text', 'text' => $system]],
-            'messages' => $messages,
-            'outputConfig' => ['effort' => config('ai.effort')],
-        ];
-        if ($jsonSchema) {
-            $args['outputConfig']['format'] = ['type' => 'json_schema', 'schema' => $jsonSchema];
-        }
-        if ($tools) { // tool-less calls (summaries, drafts, checks) must not send an empty list
-            $args['tools'] = $tools;
+        if ($override === self::GUARD_MODEL) {
+            return AiProviders::guardModel($candidate['provider'], (string) config('ai.guard_model')) ?: $candidate['model'];
         }
 
-        $response = $client->messages->create(...$args);
+        return $override ?: $candidate['model'];
+    }
 
-        $text = '';
-        $toolCalls = [];
-        foreach ($response->content as $block) {
-            if ($block->type === 'text') {
-                $text .= $block->text;
-            } elseif ($block instanceof ToolUseBlock) {
-                $toolCalls[] = ['id' => $block->id, 'name' => $block->name, 'input' => (array) $block->input];
-            }
-        }
+    private function driverFor(string $provider): AiDriver
+    {
+        $info = AiProviders::get($provider) ?? AiProviders::get('anthropic');
+        $http = $this->transporter ?? $this->defaultTransporter();
 
-        return [
-            'stop_reason' => $response->stopReason,
-            'text' => trim($text),
-            'tool_calls' => $toolCalls,
-            // Echoed back untouched on the next turn of a tool loop (thinking
-            // blocks must be preserved verbatim).
-            'raw_content' => $response->content,
-        ];
+        return ($info['driver'] ?? 'anthropic') === 'anthropic'
+            ? new AnthropicDriver($http)
+            : new OpenAiCompatibleDriver($http, $info, $provider);
     }
 
     /**

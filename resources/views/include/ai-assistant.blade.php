@@ -38,6 +38,10 @@
     .ai-form input:focus { outline: none; border-color: var(--crm-accent, #1f6f63); }
     .ai-form button { border: 0; border-radius: 8px; padding: 0 14px; background: var(--crm-accent, #1f6f63); color: #fff; cursor: pointer; }
     .ai-form button:disabled { opacity: .55; cursor: default; }
+    .ai-disclaimer { padding: 7px 12px; font-size: 11px; line-height: 1.4; color: var(--crm-ink-muted, #585f57); background: var(--crm-surface, #fff); border-top: 1px solid var(--crm-border, #e5e7eb); }
+    .ai-setup { margin: auto; text-align: center; }
+    .ai-setup a { display: inline-block; padding: 11px 24px; border-radius: 999px; background: var(--crm-accent, #1f6f63); color: #fff; text-decoration: none; font-weight: 600; font-size: 14px; }
+    .ai-setup a:hover { filter: brightness(1.08); color: #fff; }
     .ai-typing { opacity: .7; font-style: italic; }
     .ai-card { align-self: stretch; border: 1px solid var(--crm-accent, #1f6f63); border-radius: 10px; padding: 10px 12px; background: var(--crm-surface, #fff); }
     .ai-card-text { margin-bottom: 8px; line-height: 1.4; }
@@ -59,10 +63,13 @@
         </div>
     </div>
     <div class="ai-body" id="aiBody"></div>
+    @unless ($aiSetup)
     <form class="ai-form" id="aiForm" autocomplete="off">
-        <input type="text" id="aiInput" maxlength="{{ config('ai.max_question_length') }}" placeholder="{{ $aiSetup ? 'Add an API key to start chatting' : 'Ask about your CRM…' }}" aria-label="Message" @disabled($aiSetup)>
-        <button type="submit" id="aiSend" @disabled($aiSetup)>Send</button>
+        <input type="text" id="aiInput" maxlength="{{ config('ai.max_question_length') }}" placeholder="Ask about your CRM…" aria-label="Message">
+        <button type="submit" id="aiSend">Send</button>
     </form>
+    @endunless
+    <div class="ai-disclaimer">AI is a third-party service and can make mistakes. Please verify important information. Your questions and the CRM data needed to answer them are sent to your AI provider.</div>
 </div>
 
 <script>
@@ -74,7 +81,7 @@
     const cancelUrl = @json(route('assistant.cancel'));
     const suggestions = @json($aiSuggestions);
     const fab = document.getElementById('aiFab'), panel = document.getElementById('aiPanel'), body = document.getElementById('aiBody');
-    const form = document.getElementById('aiForm'), input = document.getElementById('aiInput'), send = document.getElementById('aiSend');
+    const form = document.getElementById('aiForm') || document.createElement('form'), input = document.getElementById('aiInput') || document.createElement('input'), send = document.getElementById('aiSend') || document.createElement('button');
 
     function esc(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
     function render(text) {
@@ -99,10 +106,9 @@
     function welcome() {
         body.innerHTML = '';
         if (needsSetup) {
-            add('bot', "Hi! I'm your CRM assistant, but I'm not switched on yet. Add your company's AI key and I can answer questions about your leads, deals and tasks.");
-            const a = document.createElement('a'); a.href = settingsUrl; a.className = 'ai-card-ok'; a.textContent = 'Configure now';
-            a.style.cssText = 'align-self:flex-start;display:inline-block;padding:8px 16px;border-radius:999px;background:var(--crm-accent,#1f6f63);color:#fff;text-decoration:none;font-weight:600;font-size:13px;';
-            body.appendChild(a);
+            const wrap = document.createElement('div'); wrap.className = 'ai-setup';
+            const a = document.createElement('a'); a.href = settingsUrl; a.textContent = 'Configure now';
+            wrap.appendChild(a); body.appendChild(wrap);
             return;
         }
         add('bot', 'Hi! I can answer questions about your CRM data, and prepare tasks, notes and lead status updates for you to confirm. Try one of these:');

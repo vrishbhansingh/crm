@@ -33,7 +33,7 @@ class AiConfigResolver
         return filled(config('ai.api_key'));
     }
 
-    /** @return array<int, array{key: string, model: string, config: ?AiConfiguration}> */
+    /** @return array<int, array{key: string, model: string, provider: string, config: ?AiConfiguration}> */
     public function candidates(?int $tenantId): array
     {
         $configs = $tenantId
@@ -42,7 +42,7 @@ class AiConfigResolver
 
         if ($configs->isEmpty()) {
             return filled(config('ai.api_key'))
-                ? [['key' => (string) config('ai.api_key'), 'model' => (string) config('ai.model'), 'config' => null]]
+                ? [['key' => (string) config('ai.api_key'), 'model' => (string) config('ai.model'), 'provider' => 'anthropic', 'config' => null]]
                 : [];
         }
 
@@ -51,14 +51,30 @@ class AiConfigResolver
 
         return $healthy->concat($cooling)->map(fn (AiConfiguration $c) => [
             'key' => (string) $c->api_key,
-            'model' => $c->model ?: (string) config('ai.model'),
+            'provider' => $c->provider ?: 'anthropic',
+            'model' => $c->model ?: (($c->provider ?: 'anthropic') === 'anthropic' ? (string) config('ai.model') : AiProviders::defaultModel($c->provider)),
             'config' => $c,
         ])->values()->all();
     }
 
-    public function markSuccess(?AiConfiguration $config): void
+    public function markSuccess(?AiConfiguration $config, int $inputTokens = 0, int $outputTokens = 0): void
     {
         $config?->forceFill(['status' => 'ok', 'last_error' => null, 'last_used_at' => now(), 'failed_at' => null, 'notified_at' => null])->save();
+        $this->recordUsage($config, $inputTokens, $outputTokens);
+    }
+
+    /** Running totals per configuration, so a company can see what each key is costing it. */
+    public function recordUsage(?AiConfiguration $config, int $inputTokens, int $outputTokens): void
+    {
+        if (! $config) {
+            return;
+        }
+
+        AiConfiguration::whereKey($config->id)->update([
+            'requests_count' => \DB::raw('requests_count + 1'),
+            'input_tokens' => \DB::raw('input_tokens + '.max(0, $inputTokens)),
+            'output_tokens' => \DB::raw('output_tokens + '.max(0, $outputTokens)),
+        ]);
     }
 
     /** @param  bool  $stillWorking  whether another configuration remains to take over */

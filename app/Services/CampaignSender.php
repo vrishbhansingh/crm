@@ -135,6 +135,7 @@ class CampaignSender
                     $jobs[] = new SendCampaignEmailJob(
                         $tenantId, $campaign->id, $recipientRow->id, $recipientRow->email,
                         $resolvedSubject, $resolvedBody, $log->id, $attachments,
+                        $campaign->mail_setting_id, (array) $campaign->cc, (array) $campaign->bcc,
                     );
                 }
             });

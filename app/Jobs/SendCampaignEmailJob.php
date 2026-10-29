@@ -44,6 +44,9 @@ class SendCampaignEmailJob implements ShouldQueue
         private readonly string $body,
         private readonly int $emailLogId,
         private readonly array $attachments = [],
+        private readonly ?int $mailSettingId = null,
+        private readonly array $cc = [],
+        private readonly array $bcc = [],
     ) {}
 
     public function handle(TenantConnectionManager $connections, MailConfigurator $mailer): void
@@ -70,10 +73,10 @@ class SendCampaignEmailJob implements ShouldQueue
         try {
             $campaign = EmailCampaign::find($this->campaignId);
             $recipientRow = EmailCampaignRecipient::find($this->recipientId);
-            $mailer->configureFor($campaign?->tenant);
+            $mailer->configureForSetting($campaign?->tenant, $this->mailSettingId);
             $log?->update(['status' => 'sending']);
 
-            Mail::to($this->toEmail)->send(new CampaignMail($this->subject, $this->body, $this->attachments));
+            Mail::to($this->toEmail)->cc($this->cc)->bcc($this->bcc)->send(new CampaignMail($this->subject, $this->body, $this->attachments));
 
             $recipientRow?->forceFill(['status' => 'sent', 'sent_at' => now(), 'error' => null])->save();
             $campaign?->increment('sent_count');

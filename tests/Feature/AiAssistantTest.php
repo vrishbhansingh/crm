@@ -140,7 +140,7 @@ class AiAssistantTest extends TestCase
 
         $this->assertSame('Your role does not have access to that.', $result['reply']);
         // The tool result handed back to the model is the refusal, not team data.
-        $toolResult = $fake->calls[1]['messages'][2]['content'][0]['content'];
+        $toolResult = $fake->calls[1]['messages'][2]['results'][0]['content'];
         $this->assertStringContainsString('Not available for your role', $toolResult);
         $this->assertStringNotContainsString('Omar', $toolResult);
     }
