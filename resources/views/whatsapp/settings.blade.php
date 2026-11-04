@@ -112,6 +112,8 @@
                     </div>
                 </div>
 
+                <div class="crm-callout" role="note"><i class="fa fa-info-circle"></i><div><b>After you save an official (Meta) account</b>, its card below shows a <b>Webhook URL</b> and a <b>Verify Token</b>. In Meta for Developers, open your app, then WhatsApp, then Configuration, and paste them as the Callback URL and Verify Token, then subscribe to <i>messages</i>. Meta can only reach a public HTTPS address, so this will not work from localhost.</div></div>
+
                 <div id="accountsList">
                     @forelse($accounts as $account)
                         <div class="account-card" data-id="{{ $account->id }}">

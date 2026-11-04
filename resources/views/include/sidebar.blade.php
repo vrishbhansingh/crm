@@ -294,8 +294,8 @@
         </div>
         @endcan
 
-        @canany(['templates.view', 'campaigns.view', 'whatsapp.view', 'whatsapp.manage-settings'])
-        <div class="nav-section {{ request()->routeIs(['templates.*','campaigns.*','whatsapp.*']) ? 'has-active' : '' }}">
+        @canany(['templates.view', 'campaigns.view', 'whatsapp.view'])
+        <div class="nav-section {{ request()->routeIs(['templates.*','campaigns.*','whatsapp.chat*','whatsapp.campaigns*']) ? 'has-active' : '' }}">
             <div class="nav-section-label">Marketing</div>
             <ul class="nav nav-sidebar-menu">
                 @can('templates.view')
@@ -321,13 +321,6 @@
                 <li class="mb-1" data-nav-label="WhatsApp Campaigns">
                     <a class="nav-link {{ request()->routeIs('whatsapp.campaigns*') ? 'active' : '' }}" href="{{ route('whatsapp.campaigns.index') }}" title="WhatsApp Campaigns">
                         <i class="fa fa-comments"></i><span>WhatsApp Campaigns</span>
-                    </a>
-                </li>
-                @endcan
-                @can('whatsapp.manage-settings')
-                <li class="mb-1" data-nav-label="WhatsApp Settings">
-                    <a class="nav-link {{ request()->routeIs('whatsapp.settings*') ? 'active' : '' }}" href="{{ route('whatsapp.settings.index') }}" title="WhatsApp Settings">
-                        <i class="fa fa-cog"></i><span>WhatsApp Settings</span>
                     </a>
                 </li>
                 @endcan
@@ -458,8 +451,8 @@
         </div>
         @endcanany
 
-        @canany(['users.view', 'roles.view', 'company.view', 'masters.view', 'deals.manage-settings', 'company.manage-settings', 'leads.manage-settings'])
-        <div class="nav-section {{ request()->routeIs(['users.*','roles.*','company.*','pipelines.*','stages.*','settings.mail.*','lead_assignment.*','deal_assignment.*']) ? 'has-active' : '' }}">
+        @canany(['users.view', 'roles.view', 'company.view', 'masters.view', 'deals.manage-settings', 'company.manage-settings', 'leads.manage-settings', 'whatsapp.manage-settings'])
+        <div class="nav-section {{ request()->routeIs(['users.*','roles.*','company.*','pipelines.*','stages.*','settings.mail.*','lead_assignment.*','deal_assignment.*','ai.settings*','whatsapp.settings*']) ? 'has-active' : '' }}">
             <div class="nav-section-label">Administration</div>
             <ul class="nav nav-sidebar-menu">
                 @can('users.view')
@@ -515,6 +508,13 @@
                 <li class="mb-1" data-nav-label="Mail Settings">
                     <a class="nav-link {{ request()->routeIs('settings.mail.*') ? 'active' : '' }}" href="{{ route('settings.mail.edit') }}" title="Mail Settings">
                         <i class="fa fa-envelope"></i><span>Mail Settings</span>
+                    </a>
+                </li>
+                @endcan
+                @can('whatsapp.manage-settings')
+                <li class="mb-1" data-nav-label="WhatsApp Settings">
+                    <a class="nav-link {{ request()->routeIs('whatsapp.settings*') ? 'active' : '' }}" href="{{ route('whatsapp.settings.index') }}" title="WhatsApp Settings">
+                        <i class="fa fa-cog"></i><span>WhatsApp Settings</span>
                     </a>
                 </li>
                 @endcan
