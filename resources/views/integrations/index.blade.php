@@ -280,7 +280,7 @@
                         <div class="li-form-section">
                             <div class="li-form-section-label">New lead defaults</div>
                             <div class="form-row">
-                                <div class="col-md-4 mb-2">
+                                <div class="col-12 crm-form-sub">Defaults for new leads</div><div class="col-md-4 mb-2">
                                     <label>Lead type</label>
                                     <select id="webhook_lead_type" class="form-control">
                                         <option value="">Default (Inquiry)</option>

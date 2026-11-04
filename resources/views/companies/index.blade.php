@@ -93,23 +93,23 @@
             <div class="modal-body">
                 <input type="hidden" id="companyId">
                 <div class="form-row">
-                    <div class="form-group col-md-6"><label>Company Name *</label><input class="form-control" name="name" required maxlength="255"></div>
+                    <div class="col-12 crm-form-sub">Company details</div><div class="form-group col-md-6"><label>Company Name *</label><input class="form-control" name="name" required maxlength="255"></div>
                     <div class="form-group col-md-6"><label>Legal Name</label><input class="form-control" name="legal_name" maxlength="255"></div>
-                    <div class="form-group col-md-4"><label>Email</label><input type="email" class="form-control" name="email"></div>
+                    <div class="col-12 crm-form-sub">Contact</div><div class="form-group col-md-4"><label>Email</label><input type="email" class="form-control" name="email"></div>
                     <div class="form-group col-md-4"><label>Phone</label><input class="form-control" name="phone"></div>
                     <div class="form-group col-md-4"><label>Website</label><input type="url" class="form-control" name="website" placeholder="https://"></div>
                     <div class="form-group col-md-4"><label>Industry</label><input class="form-control" name="industry"></div>
                     <div class="form-group col-md-4"><label>Company Size</label><input class="form-control" name="company_size" placeholder="e.g. 51-200"></div>
                     <div class="form-group col-md-4"><label>Status</label><select class="form-control" name="status"><option value="prospect">Prospect</option><option value="customer">Customer</option><option value="partner">Partner</option><option value="inactive">Inactive</option></select></div>
-                    <div class="form-group col-md-6"><label>GST Number</label><input class="form-control" name="gst_number"></div>
+                    <div class="col-12 crm-form-sub">Tax details</div><div class="form-group col-md-6"><label>GST Number</label><input class="form-control" name="gst_number"></div>
                     <div class="form-group col-md-6"><label>PAN Number</label><input class="form-control" name="pan_number"></div>
-                    <div class="form-group col-md-4"><label>City</label><input class="form-control" name="city"></div>
+                    <div class="col-12 crm-form-sub">Location &amp; ownership</div><div class="form-group col-md-4"><label>City</label><input class="form-control" name="city"></div>
                     <div class="form-group col-md-4"><label>State</label><input class="form-control" name="state"></div>
                     <div class="form-group col-md-4"><label>Country</label><input class="form-control" name="country"></div>
                     <div class="form-group col-md-6"><label>Owner</label><select class="form-control" name="owner_id"><option value="">Unassigned</option>@foreach($owners as $owner)<option value="{{ $owner->id }}">{{ $owner->name }}</option>@endforeach</select></div>
                     <div class="form-group col-md-6"><label>Pincode</label><input class="form-control" name="pincode"></div>
                     <div class="form-group col-12"><label>Address</label><textarea class="form-control" name="address" rows="2"></textarea></div>
-                    <div class="form-group col-12"><label>Notes</label><textarea class="form-control" name="notes" rows="2"></textarea></div>
+                    <div class="col-12 crm-form-sub">Notes</div><div class="form-group col-12"><label>Notes</label><textarea class="form-control" name="notes" rows="2"></textarea></div>
                 </div>
             </div>
             <div class="modal-footer"><button type="button" class="crm-btn crm-btn--secondary" data-dismiss="modal">Cancel</button><button class="crm-btn crm-btn--primary" type="submit">Save Company</button></div>

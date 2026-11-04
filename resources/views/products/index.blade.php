@@ -130,7 +130,7 @@
     <div class="modal-body">
         <input type="hidden" id="productId">
         <div class="form-row">
-            <div class="form-group col-md-8"><label>Name</label><input class="form-control" name="name" id="productName" maxlength="255" required placeholder="e.g. Enterprise License"></div>
+            <div class="col-12 crm-form-sub">Product</div><div class="form-group col-md-8"><label>Name</label><input class="form-control" name="name" id="productName" maxlength="255" required placeholder="e.g. Enterprise License"></div>
             <div class="form-group col-md-4"><label>SKU</label><input class="form-control" name="sku" id="productSku" maxlength="100" placeholder="Optional"></div>
             <div class="form-group col-md-4">
                 <label>Category</label>
@@ -142,7 +142,7 @@
                 <div class="select-with-add"><select class="form-control" name="uom" id="productUom"><option value="">None</option></select><button type="button" class="btn-quick-add" data-toggle-quick="uom" title="Add new unit"><i class="fa fa-plus"></i></button></div>
                 <div class="quick-add-row d-none" id="quickAddUom"><input type="text" class="form-control form-control-sm" id="quickAddUomInput" placeholder="e.g. Roll, Bundle" maxlength="150"><button type="button" class="btn btn-sm btn-primary quick-add-save" data-quick="uom">Add</button><button type="button" class="btn btn-sm btn-light quick-add-cancel" data-quick="uom">✕</button></div>
             </div>
-            <div class="form-group col-md-4"><label>HSN / SAC</label><input class="form-control" name="hsn_sac" id="productHsnSac" maxlength="50" placeholder="Optional"></div>
+            <div class="col-12 crm-form-sub">Pricing &amp; tax</div><div class="form-group col-md-4"><label>HSN / SAC</label><input class="form-control" name="hsn_sac" id="productHsnSac" maxlength="50" placeholder="Optional"></div>
             <div class="form-group col-md-4"><label>Unit Price</label><input type="number" step="0.01" min="0" class="form-control" name="unit_price" id="productUnitPrice" required placeholder="0.00"></div>
             <div class="form-group col-md-4">
                 <label>Tax Rate</label>
@@ -150,7 +150,7 @@
                 <div class="quick-add-row d-none" id="quickAddTaxrate"><input type="number" step="0.01" min="0" max="100" class="form-control form-control-sm" id="quickAddTaxrateRate" placeholder="Rate %" style="flex:1;"><button type="button" class="btn btn-sm btn-primary quick-add-save" data-quick="taxrate">Add</button><button type="button" class="btn btn-sm btn-light quick-add-cancel" data-quick="taxrate">✕</button></div>
             </div>
             <div class="form-group col-md-4"><label>Status</label><select class="form-control" name="status" id="productStatus"><option value="Active">Active</option><option value="Inactive">Inactive</option></select></div>
-            <div class="form-group col-md-12"><label>Description</label><textarea class="form-control" name="description" id="productDescription" rows="3" placeholder="Shown on quotations when relevant"></textarea></div>
+            <div class="col-12 crm-form-sub">Details</div><div class="form-group col-md-12"><label>Description</label><textarea class="form-control" name="description" id="productDescription" rows="3" placeholder="Shown on quotations when relevant"></textarea></div>
         </div>
         <div class="alert alert-danger d-none" id="productError"></div>
     </div>

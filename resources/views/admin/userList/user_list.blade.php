@@ -497,7 +497,7 @@
                     <div class="modal-body">
 
                         <div class="form-row">
-                            <div class="form-group col-md-6">
+                            <div class="col-12 crm-form-sub">Profile</div><div class="form-group col-md-6">
                                 <label>Name</label>
                                 <input type="text" name="name" class="form-control" placeholder="Full name" autocomplete="name-off" autocomplete="off">
                             </div>
@@ -514,7 +514,7 @@
                                 <input type="text" name="phone" class="form-control" placeholder="Phone number" autocomplete="phone-off">
                             </div>
 
-                            <div class="form-group col-md-6">
+                            <div class="col-12 crm-form-sub">Access</div><div class="form-group col-md-6">
                                 <label>Role</label>
                                 <select name="role" class="form-control role-select">
                                 </select>
@@ -620,7 +620,7 @@
                     <div class="modal-body">
 
                         <div class="form-row">
-                            <div class="form-group col-md-6">
+                            <div class="col-12 crm-form-sub">Profile</div><div class="form-group col-md-6">
                                 <label>Name</label>
                                 <input type="text" name="name" id="edit_name" class="form-control">
                             </div>
@@ -637,7 +637,7 @@
                                 <input type="text" name="phone" id="edit_phone" class="form-control">
                             </div>
 
-                            <div class="form-group col-md-6">
+                            <div class="col-12 crm-form-sub">Access</div><div class="form-group col-md-6">
                                 <label>Role</label>
                                 <select name="role" id="edit_role" class="form-control role-select">
                                 </select>

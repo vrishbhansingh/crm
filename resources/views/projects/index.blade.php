@@ -252,7 +252,7 @@
                         <input type="hidden" id="edit_project_id" name="id">
 
                         <div class="row">
-                            <div class="col-md-6 form-group">
+                            <div class="col-12 crm-form-sub">Project</div><div class="col-md-6 form-group">
                                 <label>Project Name</label>
                                 <input type="text" id="edit_project_name" name="project_name" class="form-control">
                             </div>
@@ -262,7 +262,7 @@
                                 <input type="text" id="edit_tech_stack" name="tech_stack" class="form-control">
                             </div>
 
-                            <div class="col-md-4 form-group">
+                            <div class="col-12 crm-form-sub">Schedule</div><div class="col-md-4 form-group">
                                 <label>Expected Start Date</label>
                                 <input type="date" id="edit_expected_start_date" name="expected_start_date" class="form-control">
                             </div>
@@ -287,7 +287,7 @@
                                 </select>
                             </div>
 
-                            <div class="col-md-8 form-group">
+                            <div class="col-12 crm-form-sub">Details</div><div class="col-md-8 form-group">
                                 <label>Description</label>
                                 <textarea id="edit_description" name="description" class="form-control" rows="3"></textarea>
                             </div>

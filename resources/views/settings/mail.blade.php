@@ -197,12 +197,12 @@
                     @csrf
                     <div id="smtpMethodField"></div>
                     <div class="modal-body">
-                        <div class="form-group">
+                        <div class="col-12 crm-form-sub">Account</div><div class="form-group">
                             <label>Config name</label>
                             <input type="text" name="name" id="smtp_name" class="form-control" placeholder="e.g. Support inbox" required>
                         </div>
                         <div class="row">
-                            <div class="col-md-8 form-group">
+                            <div class="col-12 crm-form-sub">Server</div><div class="col-md-8 form-group">
                                 <label>SMTP Host</label>
                                 <input type="text" name="smtp_host" id="smtp_host" class="form-control" placeholder="smtp.example.com" required>
                             </div>
@@ -218,7 +218,7 @@
                                     <option value="ssl">SSL</option>
                                 </select>
                             </div>
-                            <div class="col-md-4 form-group">
+                            <div class="col-12 crm-form-sub">Login</div><div class="col-md-4 form-group">
                                 <label>Username</label>
                                 <input type="text" name="smtp_username" id="smtp_username" class="form-control">
                             </div>
@@ -226,7 +226,7 @@
                                 <label>Password</label>
                                 <input type="password" name="smtp_password" id="smtp_password" class="form-control">
                             </div>
-                            <div class="col-md-6 form-group">
+                            <div class="col-12 crm-form-sub">Sender</div><div class="col-md-6 form-group">
                                 <label>From address</label>
                                 <input type="email" name="smtp_from_address" id="smtp_from_address" class="form-control" placeholder="notifications@yourcompany.com">
                             </div>

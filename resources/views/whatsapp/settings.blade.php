@@ -148,41 +148,55 @@
     <div class="modal fade" id="connectModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
-                <form id="accountForm">
+                <form id="accountForm" autocomplete="off">
                     <div class="modal-header">
                         <h5 class="modal-title" id="accountModalTitle">Connect WhatsApp</h5>
-                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">&times;</button>
                     </div>
                     <div class="modal-body">
                         <input type="hidden" name="id" id="accountId">
                         <input type="hidden" name="channel_type" id="channelType" value="meta_cloud">
 
-                        <div class="form-group">
-                            <label>Display Name</label>
-                            <input type="text" name="name" id="accName" class="form-control" placeholder="e.g. Support Line" required>
-                        </div>
-                        <div class="form-group">
-                            <label>WhatsApp Number (for reference)</label>
-                            <input type="text" name="phone_number" id="accPhone" class="form-control" placeholder="e.g. +91 98765 43210">
-                        </div>
+                        <section class="crm-form-section">
+                            <div class="crm-form-section__head">
+                                <span class="crm-form-section__icon"><i class="fa fa-id-card"></i></span>
+                                <div><h6 class="crm-form-section__title">Account</h6><p class="crm-form-section__hint">How this number appears inside the CRM.</p></div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <label for="accName">Display name</label>
+                                    <input type="text" name="name" id="accName" class="form-control" placeholder="e.g. Support Line" required>
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label for="accPhone">WhatsApp number <small>(for reference)</small></label>
+                                    <input type="text" name="phone_number" id="accPhone" class="form-control" placeholder="e.g. +91 98765 43210">
+                                </div>
+                            </div>
+                        </section>
 
-                        <div id="metaFields">
-                            <hr>
-                            <p class="text-muted small">From your Meta App → WhatsApp → API Setup.</p>
-                            <div class="form-group"><label>Phone Number ID</label><input type="text" name="phone_number_id" class="form-control"></div>
-                            <div class="form-group"><label>Access Token</label><input type="password" name="access_token" class="form-control" autocomplete="new-password"></div>
-                            <div class="form-group"><label>App Secret <small class="text-muted">(optional, verifies inbound signatures)</small></label><input type="password" name="app_secret" class="form-control" autocomplete="new-password"></div>
-                            <div class="form-group"><label>WABA ID <small class="text-muted">(optional)</small></label><input type="text" name="waba_id" class="form-control"></div>
-                        </div>
+                        <section class="crm-form-section" id="metaFields">
+                            <div class="crm-form-section__head">
+                                <span class="crm-form-section__icon"><i class="fa fa-plug"></i></span>
+                                <div><h6 class="crm-form-section__title">Connection</h6><p class="crm-form-section__hint">Copy these from your Meta app under WhatsApp, then API Setup. Secrets are stored encrypted.</p></div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group col-md-6"><label>Phone number ID</label><input type="text" name="phone_number_id" class="form-control"></div>
+                                <div class="form-group col-md-6"><label>WABA ID <small>(optional)</small></label><input type="text" name="waba_id" class="form-control"></div>
+                            </div>
+                            <div class="form-group"><label>Access token</label><input type="password" name="access_token" class="form-control" autocomplete="new-password"></div>
+                            <div class="form-group mb-0"><label>App secret <small>(optional, checks incoming messages are really from Meta)</small></label><input type="password" name="app_secret" class="form-control" autocomplete="new-password"></div>
+                        </section>
 
-                        <div id="unofficialFields" style="display:none;">
-                            <hr>
-                            <p class="text-muted small">Your gateway provider's dashboard gives you these (Ultramsg, Green-API, WasenderAPI, etc).</p>
+                        <section class="crm-form-section" id="unofficialFields" style="display:none;">
+                            <div class="crm-form-section__head">
+                                <span class="crm-form-section__icon"><i class="fa fa-plug"></i></span>
+                                <div><h6 class="crm-form-section__title">Gateway connection</h6><p class="crm-form-section__hint">Your provider's dashboard gives you these (Ultramsg, Green-API, WasenderAPI and similar).</p></div>
+                            </div>
                             <div class="form-group"><label>API URL</label><input type="text" name="api_url" class="form-control" placeholder="https://api.example.com/instance123/messages/chat"></div>
-                            <div class="form-group"><label>API Key</label><input type="password" name="api_key" class="form-control" autocomplete="new-password"></div>
+                            <div class="form-group"><label>API key</label><input type="password" name="api_key" class="form-control" autocomplete="new-password"></div>
                             <div class="form-row">
                                 <div class="form-group col-md-4">
-                                    <label>Send Key As</label>
+                                    <label>Send key as</label>
                                     <select name="api_key_location" class="form-control">
                                         <option value="query">Query param</option>
                                         <option value="header">Header</option>
@@ -190,48 +204,50 @@
                                     </select>
                                 </div>
                                 <div class="form-group col-md-4">
-                                    <label>Key Param/Header Name</label>
+                                    <label>Key param / header name</label>
                                     <input type="text" name="api_key_param" class="form-control" value="token">
                                 </div>
                                 <div class="form-group col-md-4">
-                                    <label>HTTP Method</label>
+                                    <label>HTTP method</label>
                                     <select name="http_method" class="form-control">
                                         <option value="post">POST</option>
                                         <option value="get">GET</option>
                                     </select>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                    <div class="modal-body" style="border-top:1px solid #e5e7eb;">
-                        <h6 class="mb-2">&#10024; AI auto-reply <span class="text-muted" style="font-weight:400;font-size:12px;">(off by default)</span></h6>
-                        <p class="text-muted" style="font-size:12.5px;">
-                            When on, an AI assistant greets new customers on this number, asks what they need, saves the lead in your CRM, and hands the chat to your team.
-                            It never quotes prices or makes promises, and it stops for good as soon as a teammate replies. Needs an Anthropic API key on the server.
-                        </p>
-                        <div class="form-check mb-2">
-                            <input type="hidden" name="ai_bot_enabled" value="0">
-                            {{-- The admin theme hides native checkboxes (form-check-input), so this one is styled inline to stay visible. --}}
-                            <label style="display:flex;align-items:center;gap:8px;margin:0;cursor:pointer;font-weight:600;"><input type="checkbox" name="ai_bot_enabled" id="accAiEnabled" value="1" style="position:static;opacity:1;appearance:auto;-webkit-appearance:checkbox;width:18px;height:18px;margin:0;"> Let AI reply to customers on this number</label>
-                        </div>
-                        <div class="form-group">
-                            <label>Business info the assistant may use</label>
-                            <textarea name="ai_bot_instructions" id="accAiInstructions" class="form-control" rows="4" maxlength="3000" placeholder="What you sell, services, working hours, location, delivery areas&hellip; It will only state facts that are written here."></textarea>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group col-md-4">
-                                <label>Max AI replies per chat</label>
-                                <input type="number" name="ai_bot_max_replies" id="accAiMax" class="form-control" min="1" max="15" value="6">
+                        </section>
+
+                        <section class="crm-form-section">
+                            <div class="crm-form-section__head">
+                                <span class="crm-form-section__icon"><i class="fa fa-magic"></i></span>
+                                <div>
+                                    <h6 class="crm-form-section__title">AI auto-reply <span class="text-muted" style="font-weight:400;font-size:12px;">(off by default)</span></h6>
+                                    <p class="crm-form-section__hint">An AI assistant greets new customers on this number, asks what they need, saves the lead in your CRM and hands the chat to your team. It never quotes prices or makes promises, and it stops for good as soon as a teammate replies. It uses the AI provider set up under AI Assistant, and as with any AI, it can make mistakes.</p>
+                                </div>
                             </div>
-                            <div class="form-group col-md-8">
-                                <label>Message when handing over to your team</label>
-                                <input type="text" name="ai_bot_handoff_message" id="accAiHandoff" class="form-control" maxlength="300" placeholder="Thank you! Our team will get back to you shortly.">
+                            <div class="form-group">
+                                <input type="hidden" name="ai_bot_enabled" value="0">
+                                <label class="crm-switch"><input type="checkbox" name="ai_bot_enabled" id="accAiEnabled" value="1"><span class="track"></span> Let AI reply to customers on this number</label>
                             </div>
-                        </div>
+                            <div class="form-group">
+                                <label for="accAiInstructions">Business info the assistant may use</label>
+                                <textarea name="ai_bot_instructions" id="accAiInstructions" class="form-control" rows="4" maxlength="3000" placeholder="What you sell, services, working hours, location, delivery areas&hellip; It will only state facts that are written here."></textarea>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group col-md-4 mb-0">
+                                    <label for="accAiMax">Max AI replies per chat</label>
+                                    <input type="number" name="ai_bot_max_replies" id="accAiMax" class="form-control" min="1" max="15" value="6">
+                                </div>
+                                <div class="form-group col-md-8 mb-0">
+                                    <label for="accAiHandoff">Message when handing over to your team</label>
+                                    <input type="text" name="ai_bot_handoff_message" id="accAiHandoff" class="form-control" maxlength="300" placeholder="Thank you! Our team will get back to you shortly.">
+                                </div>
+                            </div>
+                        </section>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-light" data-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-success">Save</button>
+                        <button type="submit" class="btn btn-success"><i class="fa fa-check"></i> Save</button>
                     </div>
                 </form>
             </div>

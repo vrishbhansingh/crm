@@ -98,16 +98,16 @@
     <div class="modal-body">
         <input type="hidden" id="vendorId">
         <div class="form-row">
-            <div class="form-group col-md-6"><label>Name</label><input class="form-control" name="name" id="vendorName" maxlength="255" required placeholder="e.g. Acme Supplies Pvt Ltd"></div>
-            <div class="form-group col-md-6"><label>Contact Person</label><input class="form-control" name="contact_person" id="vendorContactPerson" maxlength="255"></div>
+            <div class="col-12 crm-form-sub">Vendor</div><div class="form-group col-md-6"><label>Name</label><input class="form-control" name="name" id="vendorName" maxlength="255" required placeholder="e.g. Acme Supplies Pvt Ltd"></div>
+            <div class="col-12 crm-form-sub">Contact</div><div class="form-group col-md-6"><label>Contact Person</label><input class="form-control" name="contact_person" id="vendorContactPerson" maxlength="255"></div>
             <div class="form-group col-md-6"><label>Email</label><input type="email" class="form-control" name="email" id="vendorEmail" maxlength="255"></div>
             <div class="form-group col-md-6"><label>Phone</label><input class="form-control" name="phone" id="vendorPhone" maxlength="50"></div>
-            <div class="form-group col-md-6"><label>GSTIN</label><input class="form-control" name="gst_number" id="vendorGstNumber" maxlength="50"></div>
+            <div class="col-12 crm-form-sub">Tax &amp; address</div><div class="form-group col-md-6"><label>GSTIN</label><input class="form-control" name="gst_number" id="vendorGstNumber" maxlength="50"></div>
             <div class="form-group col-md-6"><label>State</label><input class="form-control" name="state" id="vendorState" maxlength="255"></div>
             <div class="form-group col-md-8"><label>Address</label><input class="form-control" name="address" id="vendorAddress" maxlength="255"></div>
             <div class="form-group col-md-4"><label>City</label><input class="form-control" name="city" id="vendorCity" maxlength="255"></div>
             <div class="form-group col-md-4"><label>Pincode</label><input class="form-control" name="pincode" id="vendorPincode" maxlength="20"></div>
-            <div class="form-group col-md-4"><label>Payment Terms</label><input class="form-control" name="payment_terms" id="vendorPaymentTerms" maxlength="255" placeholder="e.g. Net 30"></div>
+            <div class="col-12 crm-form-sub">Payments</div><div class="form-group col-md-4"><label>Payment Terms</label><input class="form-control" name="payment_terms" id="vendorPaymentTerms" maxlength="255" placeholder="e.g. Net 30"></div>
             <div class="form-group col-md-4"><label>Status</label><select class="form-control" name="status" id="vendorStatus"><option value="Active">Active</option><option value="Inactive">Inactive</option></select></div>
         </div>
         <div class="alert alert-danger d-none" id="vendorError"></div>

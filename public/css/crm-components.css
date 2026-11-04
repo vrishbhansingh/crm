@@ -387,3 +387,108 @@
 [data-theme="dark"] .crm-skeleton::after {
   background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--crm-border-strong) 50%, transparent), transparent);
 }
+
+/* =====================================================================
+   Modals, phase 1: one professional look for EVERY Bootstrap modal in the
+   app (no per-page edits needed). Rounded card, quiet header, labelled
+   fields with clear focus, scrolling body with an always-visible footer,
+   soft entrance. Page-level modals that opt into .crm-modal keep their
+   own icon header; this only lifts the baseline.
+   ===================================================================== */
+.modal-backdrop.show { opacity: .5; background: #0f1412; }
+.modal .modal-dialog { margin-top: 1.5rem; margin-bottom: 1.5rem; }
+.modal.fade .modal-dialog { transform: translateY(14px) scale(.985); transition: transform .22s cubic-bezier(.2,.8,.2,1), opacity .2s ease; }
+.modal.show .modal-dialog { transform: none; }
+.modal-content {
+  border: 1px solid var(--crm-border);
+  border-radius: 16px;
+  background: var(--crm-surface);
+  color: var(--crm-ink);
+  box-shadow: 0 24px 60px rgba(15, 20, 18, .28);
+  overflow: hidden;
+}
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 18px 24px;
+  background: var(--crm-surface);
+  border-bottom: 1px solid var(--crm-border);
+}
+.modal-header .modal-title { margin: 0; font-size: 17px; font-weight: 700; color: var(--crm-ink); font-family: var(--crm-font-sans); line-height: 1.3; }
+.modal-header .close {
+  position: static; margin: 0; padding: 0; float: none; opacity: 1; text-shadow: none;
+  width: 36px; height: 36px; flex-shrink: 0; border-radius: 10px; border: 0; background: transparent;
+  color: var(--crm-ink-muted); font-size: 22px; line-height: 1; display: inline-flex; align-items: center; justify-content: center;
+  transition: background .15s ease, color .15s ease;
+}
+.modal-header .close:hover { background: var(--crm-surface-2); color: var(--crm-ink); }
+.modal-header .close:focus-visible { outline: 3px solid color-mix(in srgb, var(--crm-accent) 40%, transparent); outline-offset: 1px; }
+/* Long forms scroll inside the card so the footer buttons never fall off-screen. */
+.modal-content > form { display: flex; flex-direction: column; min-height: 0; max-height: calc(100vh - 3rem); }
+.modal-content > form > .modal-body { overflow-y: auto; flex: 1 1 auto; }
+.modal-content > .modal-body { overflow-y: auto; max-height: calc(100vh - 200px); }
+.modal-body { padding: 22px 24px; color: var(--crm-ink); }
+.modal-footer {
+  display: flex; align-items: center; justify-content: flex-end; gap: 10px;
+  padding: 14px 24px; background: var(--crm-surface-2); border-top: 1px solid var(--crm-border);
+}
+.modal-footer .btn { min-height: 40px; border-radius: 10px; font-weight: 600; font-size: 13.5px; padding: 0 20px; }
+.modal-footer .btn-light, .modal-footer .btn-secondary {
+  background: var(--crm-surface); color: var(--crm-ink); border: 1px solid var(--crm-border-strong);
+}
+.modal-footer .btn-light:hover, .modal-footer .btn-secondary:hover { background: var(--crm-surface-2); color: var(--crm-ink); }
+
+/* Fields */
+.modal-body .form-group { margin-bottom: 16px; }
+.modal-body label { display: block; margin-bottom: 6px; font-size: 12.5px; font-weight: 600; color: var(--crm-ink); }
+.modal-body label small, .modal-body label .text-muted { font-weight: 400; color: var(--crm-ink-muted); }
+.modal-body .form-control, .modal-body .custom-select {
+  min-height: 42px; border-radius: 10px; border: 1.5px solid var(--crm-border-strong);
+  background-color: var(--crm-surface); color: var(--crm-ink); font-size: 14px; padding: 8px 14px;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.modal-body textarea.form-control { min-height: 96px; line-height: 1.5; }
+.modal-body .form-control::placeholder { color: var(--crm-ink-faint); }
+.modal-body .form-control:hover { border-color: var(--crm-ink-faint); }
+.modal-body .form-control:focus, .modal-body .custom-select:focus {
+  outline: none; border-color: var(--crm-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--crm-accent) 16%, transparent);
+}
+.modal-body .form-control:disabled, .modal-body .form-control[readonly] { background: var(--crm-surface-2); color: var(--crm-ink-muted); }
+.modal-body hr { border-top: 1px solid var(--crm-border); margin: 20px 0; }
+.modal-body .select2-container--default .select2-selection--single,
+.modal-body .select2-container--default .select2-selection--multiple { min-height: 42px; border-radius: 10px; border: 1.5px solid var(--crm-border-strong); background: var(--crm-surface); }
+.modal-body .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: 39px; padding-left: 14px; color: var(--crm-ink); }
+.modal-body .select2-container--default .select2-selection--single .select2-selection__arrow { height: 40px; }
+
+/* Optional building blocks for grouped forms */
+.crm-form-section { padding: 4px 0 2px; }
+.crm-form-section + .crm-form-section { margin-top: 22px; padding-top: 22px; border-top: 1px solid var(--crm-border); }
+.crm-form-section__head { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 14px; }
+.crm-form-section__icon { width: 34px; height: 34px; flex-shrink: 0; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: var(--crm-accent-tint); color: var(--crm-accent); font-size: 14px; }
+.crm-form-section__title { margin: 0; font-size: 14px; font-weight: 700; color: var(--crm-ink); }
+.crm-form-section__hint { margin: 2px 0 0; font-size: 12.5px; color: var(--crm-ink-muted); line-height: 1.5; }
+.crm-help { font-size: 12px; color: var(--crm-ink-muted); margin-top: 5px; line-height: 1.45; }
+.crm-callout { display: flex; gap: 10px; padding: 12px 14px; border-radius: 12px; background: var(--crm-info-tint); color: var(--crm-ink); font-size: 12.5px; line-height: 1.5; margin-bottom: 16px; }
+.crm-callout i { color: var(--crm-info); margin-top: 2px; }
+.crm-callout.is-warning { background: var(--crm-warning-tint); } .crm-callout.is-warning i { color: var(--crm-warning); }
+.crm-switch { display: flex; align-items: center; gap: 12px; margin: 0 !important; cursor: pointer; font-size: 13.5px !important; font-weight: 600 !important; }
+.crm-switch input { position: absolute !important; opacity: 0 !important; width: 1px; height: 1px; }
+.crm-switch .track { width: 42px; height: 24px; border-radius: 999px; background: var(--crm-border-strong); position: relative; flex-shrink: 0; transition: background .15s ease; }
+.crm-switch .track::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25); transition: transform .15s ease; }
+.crm-switch input:checked + .track { background: var(--crm-accent); }
+.crm-switch input:checked + .track::after { transform: translateX(18px); }
+.crm-switch input:focus-visible + .track { outline: 3px solid color-mix(in srgb, var(--crm-accent) 40%, transparent); outline-offset: 2px; }
+
+@media (max-width: 576px) {
+  .modal-header, .modal-body, .modal-footer { padding-left: 16px; padding-right: 16px; }
+  .modal-footer .btn { flex: 1; }
+}
+@media (prefers-reduced-motion: reduce) { .modal.fade .modal-dialog { transition: none; transform: none; } }
+
+/* Sub-heading inside a form-row/row: groups related fields without restructuring the markup. */
+.crm-form-sub {
+  flex: 0 0 100%; max-width: 100%; padding: 0 5px; margin: 6px 0 12px;
+  font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--crm-ink-muted);
+  display: flex; align-items: center; gap: 12px;
+}
+.crm-form-sub::after { content: ''; flex: 1; height: 1px; background: var(--crm-border); }
+.modal-body > .crm-form-sub:first-child, .form-row > .crm-form-sub:first-child, .row > .crm-form-sub:first-child { margin-top: 0; }
