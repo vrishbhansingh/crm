@@ -470,9 +470,9 @@
 .crm-callout { display: flex; gap: 10px; padding: 12px 14px; border-radius: 12px; background: var(--crm-info-tint); color: var(--crm-ink); font-size: 12.5px; line-height: 1.5; margin-bottom: 16px; }
 .crm-callout i { color: var(--crm-info); margin-top: 2px; }
 .crm-callout.is-warning { background: var(--crm-warning-tint); } .crm-callout.is-warning i { color: var(--crm-warning); }
-.crm-switch { display: flex; align-items: center; gap: 12px; margin: 0 !important; cursor: pointer; font-size: 13.5px !important; font-weight: 600 !important; }
+.crm-switch, .modal-body label.crm-switch { display: flex !important; align-items: center; gap: 12px; margin: 0 !important; cursor: pointer; font-size: 13.5px !important; font-weight: 600 !important; }
 .crm-switch input { position: absolute !important; opacity: 0 !important; width: 1px; height: 1px; }
-.crm-switch .track { width: 42px; height: 24px; border-radius: 999px; background: var(--crm-border-strong); position: relative; flex-shrink: 0; transition: background .15s ease; }
+.crm-switch .track { display: inline-block; width: 42px; height: 24px; border-radius: 999px; background: var(--crm-border-strong); position: relative; flex-shrink: 0; transition: background .15s ease; }
 .crm-switch .track::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25); transition: transform .15s ease; }
 .crm-switch input:checked + .track { background: var(--crm-accent); }
 .crm-switch input:checked + .track::after { transform: translateX(18px); }
