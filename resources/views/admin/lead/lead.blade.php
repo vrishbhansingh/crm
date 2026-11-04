@@ -459,33 +459,6 @@
                     @endslot
                 @endcomponent
 
-                <div class="lead-stat-grid" id="leadStatGrid">
-                    <div class="lead-stat-card crm-card">
-                        <div>
-                            <div class="lead-stat-value" id="statTotalLeads">0</div>
-                            <div class="lead-stat-label">Total Leads</div>
-                        </div>
-                    </div>
-                    <div class="lead-stat-card crm-card">
-                        <div>
-                            <div class="lead-stat-value" id="statNewToday">0</div>
-                            <div class="lead-stat-label">New Today</div>
-                        </div>
-                    </div>
-                    <div class="lead-stat-card crm-card">
-                        <div>
-                            <div class="lead-stat-value" id="statConversionRate">0%</div>
-                            <div class="lead-stat-label">Conversion Rate</div>
-                        </div>
-                    </div>
-                    <div class="lead-stat-card crm-card">
-                        <div>
-                            <div class="lead-stat-value" id="statFollowUpDue">0</div>
-                            <div class="lead-stat-label">Follow-up Due</div>
-                        </div>
-                    </div>
-                </div>
-
                 <div class="row mb-2 d-none" id="bulkAssignBar">
                     <div class="col-12 d-flex align-items-center flex-wrap" style="gap:10px;">
                         <strong id="bulkSelectedText"></strong>

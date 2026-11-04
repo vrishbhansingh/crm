@@ -106,33 +106,6 @@
                     @endslot
                 @endcomponent
 
-                <div class="deal-stat-grid" id="dealStatGrid">
-                    <div class="deal-stat-card crm-card">
-                        <div>
-                            <div class="deal-stat-value" id="statTotalDeals">0</div>
-                            <div class="deal-stat-label">Total Deals</div>
-                        </div>
-                    </div>
-                    <div class="deal-stat-card crm-card">
-                        <div>
-                            <div class="deal-stat-value" id="statOpenDeals">0</div>
-                            <div class="deal-stat-label">Open Deals</div>
-                        </div>
-                    </div>
-                    <div class="deal-stat-card crm-card">
-                        <div>
-                            <div class="deal-stat-value" id="statPipelineValue">₹0</div>
-                            <div class="deal-stat-label">Pipeline Value</div>
-                        </div>
-                    </div>
-                    <div class="deal-stat-card crm-card">
-                        <div>
-                            <div class="deal-stat-value" id="statWonDeals">0</div>
-                            <div class="deal-stat-label">Won Deals</div>
-                        </div>
-                    </div>
-                </div>
-
                 <div id="pipelineFilterBanner" class="alert alert-info d-none justify-content-between align-items-center" style="font-size:13px;">
                     <span>Showing deals in pipeline: <strong id="pipelineFilterName"></strong></span>
                     <a href="{{ route('deals.list') }}" class="btn btn-sm btn-outline-secondary">
