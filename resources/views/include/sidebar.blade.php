@@ -294,7 +294,7 @@
         </div>
         @endcan
 
-        @canany(['templates.view', 'campaigns.view', 'whatsapp.view'])
+        @canany(['templates.view', 'campaigns.view', 'whatsapp.view', 'whatsapp_campaigns.view'])
         <div class="nav-section {{ request()->routeIs(['templates.*','campaigns.*','whatsapp.chat*','whatsapp.campaigns*']) ? 'has-active' : '' }}">
             <div class="nav-section-label">Marketing</div>
             <ul class="nav nav-sidebar-menu">
@@ -318,6 +318,8 @@
                         <i class="fa fa-whatsapp"></i><span>WhatsApp Chat</span>
                     </a>
                 </li>
+                @endcan
+                @can('whatsapp_campaigns.view')
                 <li class="mb-1" data-nav-label="WhatsApp Campaigns">
                     <a class="nav-link {{ request()->routeIs('whatsapp.campaigns*') ? 'active' : '' }}" href="{{ route('whatsapp.campaigns.index') }}" title="WhatsApp Campaigns">
                         <i class="fa fa-comments"></i><span>WhatsApp Campaigns</span>
@@ -451,7 +453,7 @@
         </div>
         @endcanany
 
-        @canany(['users.view', 'roles.view', 'company.view', 'masters.view', 'deals.manage-settings', 'company.manage-settings', 'leads.manage-settings', 'whatsapp.manage-settings'])
+        @canany(['users.view', 'roles.view', 'company.view', 'masters.view', 'deals.manage-settings', 'company.manage-settings', 'leads.manage-settings', 'whatsapp.manage-settings', 'pipelines.manage-settings', 'ai.manage-settings', 'mail.manage-settings'])
         <div class="nav-section {{ request()->routeIs(['users.*','roles.*','company.*','pipelines.*','stages.*','settings.mail.*','lead_assignment.*','deal_assignment.*','ai.settings*','whatsapp.settings*']) ? 'has-active' : '' }}">
             <div class="nav-section-label">Administration</div>
             <ul class="nav nav-sidebar-menu">
@@ -476,7 +478,7 @@
                     </a>
                 </li>
                 @endcan
-                @can('deals.manage-settings')
+                @can('pipelines.manage-settings')
                 <li class="mb-1" data-nav-label="Pipelines">
                     <a class="nav-link {{ request()->routeIs(['pipelines.*','stages.*']) ? 'active' : '' }}" href="{{ route('pipelines.index') }}" title="Pipelines">
                         <i class="fa fa-random"></i><span>Pipelines</span>
@@ -497,14 +499,14 @@
                     </a>
                 </li>
                 @endcan
-                @can('company.manage-settings')
+                @can('ai.manage-settings')
                 <li class="mb-1" data-nav-label="AI Assistant">
                     <a class="nav-link {{ request()->routeIs('ai.settings*') ? 'active' : '' }}" href="{{ route('ai.settings') }}" title="AI Assistant">
                         <i class="fa fa-magic"></i><span>AI Assistant</span>
                     </a>
                 </li>
                 @endcan
-                @can('company.manage-settings')
+                @can('mail.manage-settings')
                 <li class="mb-1" data-nav-label="Mail Settings">
                     <a class="nav-link {{ request()->routeIs('settings.mail.*') ? 'active' : '' }}" href="{{ route('settings.mail.edit') }}" title="Mail Settings">
                         <i class="fa fa-envelope"></i><span>Mail Settings</span>

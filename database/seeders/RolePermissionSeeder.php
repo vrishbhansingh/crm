@@ -18,6 +18,7 @@ class RolePermissionSeeder extends Seeder
         'users', 'roles', 'company', 'masters', 'deals', 'products', 'quotations',
         'vendors', 'purchase_orders', 'projects',
         'templates', 'campaigns', 'calendar', 'integrations', 'whatsapp',
+        'whatsapp_campaigns', 'pipelines', 'ai', 'mail',
     ];
 
     private array $actions = [
@@ -32,7 +33,7 @@ class RolePermissionSeeder extends Seeder
                 Permission::firstOrCreate(['name' => "{$module}.{$action}", 'guard_name' => self::GUARD]);
             }
         }
-        foreach (['platform.manage-tenants', 'users.impersonate'] as $extra) {
+        foreach (['platform.manage-tenants', 'users.impersonate', 'reports.agents', 'reports.communications', 'reports.automation'] as $extra) {
             Permission::firstOrCreate(['name' => $extra, 'guard_name' => self::GUARD]);
         }
 

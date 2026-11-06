@@ -402,6 +402,9 @@
                     if (canEdit) {
                         items += `<a class="dropdown-item manageAccessBtn" href="#" data-id="${role.id}" data-name="${esc(role.name)}" data-protected="${role.is_protected ? 1 : 0}"><i class="fa fa-lock"></i> Manage Permissions</a>`;
                     }
+                    if (canEdit && role.name === 'Agent') {
+                        items += `<a class="dropdown-item resetDefaultsBtn" href="#" data-id="${role.id}"><i class="fa fa-undo"></i> Reset to default pages</a>`;
+                    }
                     if (canDelete && !role.is_protected) {
                         items += `<a class="dropdown-item text-danger deleteRoleBtn" href="#" data-id="${role.id}" data-name="${esc(role.name)}"><i class="fa fa-trash"></i> Delete</a>`;
                     }
@@ -623,6 +626,22 @@
                 },
                 error: function(xhr) {
                     toastr.error(xhr.responseJSON?.message || 'Something went wrong');
+                }
+            });
+        });
+
+        $(document).on('click', '.resetDefaultsBtn', function(e) {
+            e.preventDefault();
+            const id = $(this).data('id');
+            openConfirmModal({
+                title: 'Reset the Agent role to its default pages?',
+                message: 'Any pages you added to or removed from Agent will be put back to the standard set.',
+                variant: 'info',
+                confirmText: 'Reset',
+                onConfirm: function(done) {
+                    $.post("{{ url('roles') }}/" + id + "/reset-defaults").done(r => { toastr.success(r.message); loadRoles(); })
+                        .fail(x => toastr.error(x.responseJSON?.message || 'Could not reset'))
+                        .always(done);
                 }
             });
         });

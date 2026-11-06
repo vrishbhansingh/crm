@@ -111,4 +111,35 @@ class ProjectsPermissionTest extends TestCase
             $this->assertContains('quotations.create', $created->permissions()->pluck('name')->all());
         });
     }
+
+    public function test_split_pages_each_have_their_own_switch(): void
+    {
+        $tenant = $this->tenant();
+        TenantContext::set($tenant->id);
+        PermissionTeam::set($tenant->id);
+
+        $cases = [
+            ['company.manage-settings', '/settings/ai', 403],
+            ['company.manage-settings', '/settings/mail', 403],
+            ['ai.manage-settings', '/settings/ai', 200],
+            ['mail.manage-settings', '/settings/mail', 200],
+            ['mail.manage-settings', '/settings/ai', 403],
+            ['deals.manage-settings', '/pipelines', 403],
+            ['pipelines.manage-settings', '/pipelines', 200],
+            ['whatsapp.view', '/whatsapp/campaigns', 403],
+            ['whatsapp_campaigns.view', '/whatsapp/campaigns', 200],
+            ['whatsapp_campaigns.view', '/whatsapp/chat', 403],
+            ['reports.view', '/reports/agents', 403],
+            ['reports.agents', '/reports/agents', 200],
+            ['reports.agents', '/reports/leads', 403],
+        ];
+        foreach ($cases as [$permission, $url, $expected]) {
+            $user = $this->userWith($tenant, [$permission]);
+            $this->actingAs($user, 'web')->withSession(['session_token' => $user->session_token]);
+            $this->get($url)->assertStatus($expected, "{$permission} -> {$url}");
+        }
+
+        TenantContext::clear();
+        PermissionTeam::set(null);
+    }
 }

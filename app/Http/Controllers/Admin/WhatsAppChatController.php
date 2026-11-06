@@ -29,7 +29,7 @@ class WhatsAppChatController extends Controller
 
     public function conversations(Request $request)
     {
-        $query = WhatsappConversation::query()->with('lead:id,name', 'contact:id,name')->orderByDesc('last_message_at');
+        $query = WhatsappConversation::query()->visibleTo(Auth::guard('web')->user())->with('lead:id,name', 'contact:id,name')->orderByDesc('last_message_at');
 
         if ($request->filled('account_id')) {
             $query->where('whatsapp_account_id', (int) $request->account_id);
@@ -57,7 +57,7 @@ class WhatsAppChatController extends Controller
 
     public function messages($id)
     {
-        $conversation = WhatsappConversation::with('messages')->findOrFail($id);
+        $conversation = WhatsappConversation::visibleTo(Auth::guard('web')->user())->with('messages')->findOrFail($id);
         $conversation->update(['unread_count' => 0]);
 
         $account = WhatsappAccount::find($conversation->whatsapp_account_id);
@@ -97,7 +97,7 @@ class WhatsAppChatController extends Controller
             'template_params' => 'nullable|array',
         ]);
 
-        $conversation = WhatsappConversation::findOrFail($id);
+        $conversation = WhatsappConversation::visibleTo(Auth::guard('web')->user())->findOrFail($id);
         $account = WhatsappAccount::find($conversation->whatsapp_account_id);
         abort_if(! $account || $account->tenant_id !== TenantContext::id(), 404);
 
@@ -131,7 +131,16 @@ class WhatsAppChatController extends Controller
         ]);
 
         $account = WhatsappAccount::where('tenant_id', $tenantId)->findOrFail($data['account_id']);
+        $user = Auth::guard('web')->user();
         $conversation = $messages->findOrCreateConversation($account, $data['phone'], $data['name'] ?? null);
+
+        if (! $user->hasElevatedAccess()) {
+            // A number that already has a chat belonging to someone else is not handed over.
+            if ($conversation->assigned_to === null && $conversation->lead_id === null && $conversation->contact_id === null) {
+                $conversation->forceFill(['assigned_to' => $user->id])->save();
+            }
+            abort_unless(WhatsappConversation::visibleTo($user)->whereKey($conversation->id)->exists(), 403, 'This number is already in a chat handled by a colleague.');
+        }
 
         return response()->json(['status' => true, 'data' => ['id' => $conversation->id]]);
     }

@@ -13,13 +13,29 @@ class WhatsappConversation extends Model
 
     protected $fillable = [
         'tenant_id', 'whatsapp_account_id', 'lead_id', 'contact_id', 'wa_phone', 'wa_name',
-        'last_message_at', 'last_message_preview', 'unread_count', 'window_expires_at',
+        'last_message_at', 'last_message_preview', 'unread_count', 'window_expires_at', 'assigned_to',
     ];
 
     protected $casts = [
         'last_message_at' => 'datetime',
         'window_expires_at' => 'datetime',
     ];
+
+    /**
+     * Admins/managers see every chat; everyone else only the chats of leads
+     * assigned to them, contacts they own, or chats they started themselves.
+     */
+    public function scopeVisibleTo($query, User $user)
+    {
+        if ($user->hasElevatedAccess()) {
+            return $query;
+        }
+
+        return $query->where(fn ($q) => $q
+            ->where('assigned_to', $user->id)
+            ->orWhereHas('lead', fn ($l) => $l->where('assigned_to', $user->id))
+            ->orWhereHas('contact', fn ($c) => $c->where('owner_id', $user->id)));
+    }
 
     public function lead(): BelongsTo
     {

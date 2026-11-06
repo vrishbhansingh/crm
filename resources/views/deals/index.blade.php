@@ -359,7 +359,7 @@
 
         let currentPipelineId = null;
         let pendingMove = null; // { dealId, toStageId, cardEl, fromColumn }
-        const canManagePipelines = {{ Auth::guard('web')->user()->can('deals.manage-settings') ? 'true' : 'false' }};
+        const canManagePipelines = {{ Auth::guard('web')->user()->can('pipelines.manage-settings') ? 'true' : 'false' }};
 
         function money(v) {
             if (v === null || v === undefined || v === '') return '0';

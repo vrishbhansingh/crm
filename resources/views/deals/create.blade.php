@@ -52,7 +52,7 @@
                     <div class="crm-empty__icon"><i class="fa fa-random"></i></div>
                     <p class="crm-empty__title">No pipeline yet</p>
                     <p class="crm-empty__desc">A deal needs a pipeline to belong to — create one first.</p>
-                    @can('deals.manage-settings')
+                    @can('pipelines.manage-settings')
                     <a href="{{ route('pipelines.index') }}" class="crm-btn crm-btn--primary crm-btn--sm"><i class="fa fa-plus"></i> Create a Pipeline</a>
                     @else
                     <p class="text-muted" style="font-size:12px;">Ask an admin to set up a pipeline in Settings.</p>

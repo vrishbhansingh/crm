@@ -44,12 +44,16 @@ class RoleController extends Controller
         'masters' => ['view', 'create', 'edit', 'delete'],
         'users' => ['view', 'create', 'edit'],
         'company' => ['view', 'edit', 'manage-settings'],
-        'reports' => ['view'],
+        'reports' => ['view', 'agents', 'communications', 'automation'],
         'audit' => ['view'],
         'roles' => ['view', 'create', 'edit', 'delete'],
         'calendar' => ['view'],
         'integrations' => ['view', 'create', 'edit', 'delete'],
-        'whatsapp' => ['view', 'create', 'send', 'manage-settings', 'delete'],
+        'whatsapp' => ['view', 'send', 'manage-settings'],
+        'whatsapp_campaigns' => ['view', 'create', 'send', 'delete'],
+        'pipelines' => ['manage-settings'],
+        'ai' => ['manage-settings'],
+        'mail' => ['manage-settings'],
         // 'users.impersonate' is deliberately excluded from every module
         // list here — it's real and route-enforced, but sensitive enough
         // that it isn't offered as a delegable checkbox at all; only the
@@ -93,7 +97,11 @@ class RoleController extends Controller
         'roles' => 'Roles & Permissions',
         'calendar' => 'Calendar',
         'integrations' => 'Lead Integrations',
-        'whatsapp' => 'WhatsApp',
+        'whatsapp' => 'WhatsApp Chat & Settings',
+        'whatsapp_campaigns' => 'WhatsApp Campaigns',
+        'pipelines' => 'Pipelines & Stages',
+        'ai' => 'AI Assistant',
+        'mail' => 'Mail Settings',
     ];
 
     public function index()
@@ -246,6 +254,22 @@ class RoleController extends Controller
         $audit->record('role.permissions_updated', $tenant, metadata: ['role' => $roleModel->name, 'permissions' => $permissions]);
 
         return response()->json(['status' => true, 'message' => 'Permissions updated']);
+    }
+
+    /**
+     * Puts the built-in Agent role back to the standard page set (see
+     * DefaultTenantRoles). Only the Agent role has a defined default.
+     */
+    public function resetToDefaults(int $role, PlatformAuditLogger $audit)
+    {
+        $tenant = $this->currentTenant();
+        $roleModel = Role::where('tenant_id', $tenant->id)->findOrFail($role);
+        abort_unless($roleModel->name === 'Agent', 422, 'Only the Agent role has default permissions.');
+
+        $roleModel->syncPermissions(Permission::whereIn('name', \App\Support\DefaultTenantRoles::agentPermissions())->where('guard_name', 'web')->get());
+        $audit->record('role.permissions_reset', $tenant, metadata: ['role' => $roleModel->name]);
+
+        return response()->json(['status' => true, 'message' => 'Agent permissions reset to the defaults.']);
     }
 
     public function destroy(int $role, PlatformAuditLogger $audit)

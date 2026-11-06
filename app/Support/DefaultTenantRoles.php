@@ -12,7 +12,7 @@ use Spatie\Permission\Models\Role;
  * roles/index.blade.php). This seeds a sensible starting role, "Agent",
  * covering the day-to-day CRM work a front-line sales rep needs on their own
  * records — leads, deals, contacts, companies, tasks, quotations (and the
- * product list to quote from), viewing orders and projects, and the calendar — without delete/assign/manage-settings or anything
+ * product list to quote from), viewing orders projects, the calendar and WhatsApp chat (only their own chats) — without delete/assign/manage-settings or anything
  * admin-level (users, roles, reports, campaigns, templates, master data,
  * org settings). It's a normal, editable role like any other the tenant
  * creates themselves — not protected like Admin — so they can rename,
@@ -35,6 +35,7 @@ class DefaultTenantRoles
         'quotations.view', 'quotations.create', 'quotations.edit',
         'products.view',
         'calendar.view',
+        'whatsapp.view', 'whatsapp.send',
     ];
 
     /** The Agent defaults as a list, for one-off upgrades of companies created before the list grew. */

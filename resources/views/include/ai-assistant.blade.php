@@ -10,7 +10,7 @@
 @php
     // Enabled, but this company has no AI key yet: admins who can manage settings still get the chat
     // button, showing a setup message with a Configure-now link. Everyone else sees nothing.
-    $aiSetup = $aiUser && ! $aiOn && config('ai.enabled') && $aiUser->can('company.manage-settings');
+    $aiSetup = $aiUser && ! $aiOn && config('ai.enabled') && $aiUser->can('ai.manage-settings');
 @endphp
 @if ($aiOn || $aiSetup)
 <style>

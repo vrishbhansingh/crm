@@ -44,7 +44,7 @@ class WhatsAppBotTest extends TestCase
         ]);
         PermissionTeam::run($this->tenant->id, function () {
             $role = Role::findOrCreate('Admin', 'web');
-            foreach (['whatsapp.view', 'whatsapp.create', 'whatsapp.send', 'whatsapp.manage-settings', 'whatsapp.delete'] as $name) {
+            foreach (['whatsapp.view', 'whatsapp.create', 'whatsapp.send', 'whatsapp.manage-settings', 'whatsapp.delete', 'whatsapp_campaigns.view', 'whatsapp_campaigns.create', 'whatsapp_campaigns.send', 'whatsapp_campaigns.delete'] as $name) {
                 $role->givePermissionTo(Permission::findOrCreate($name, 'web'));
             }
             $this->admin->assignRole($role);

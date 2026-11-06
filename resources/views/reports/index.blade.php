@@ -79,9 +79,15 @@
     <button class="report-tab-btn active" data-tab="overview"><i class="fa fa-bar-chart"></i> Overview</button>
     <button class="report-tab-btn" data-tab="leads"><i class="fa fa-bullseye"></i> Leads</button>
     <button class="report-tab-btn" data-tab="followups"><i class="fa fa-phone"></i> Follow-ups</button>
+    @can('reports.agents')
     <button class="report-tab-btn" data-tab="agents"><i class="fa fa-users"></i> Team</button>
+    @endcan
+    @can('reports.communications')
     <button class="report-tab-btn" data-tab="comms"><i class="fa fa-envelope"></i> Communications</button>
+    @endcan
+    @can('reports.automation')
     <button class="report-tab-btn" data-tab="automation"><i class="fa fa-bolt"></i> Automation</button>
+    @endcan
 </div>
 
 {{-- ============================= OVERVIEW ============================= --}}

@@ -43,7 +43,7 @@ class ReportSectionsTest extends TestCase
 
         Role::findOrCreate('Manager', 'web');
         $this->manager->assignRole('Manager');
-        $this->manager->givePermissionTo(Permission::findOrCreate('reports.view', 'web'));
+        foreach (['reports.view', 'reports.agents', 'reports.communications', 'reports.automation'] as $p) { $this->manager->givePermissionTo(Permission::findOrCreate($p, 'web')); }
         app(PermissionRegistrar::class)->forgetCachedPermissions();
         $this->actingAs($this->manager, 'web')->withSession(['session_token' => $this->manager->session_token]);
     }

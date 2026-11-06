@@ -123,8 +123,15 @@ Route::middleware(['admin_middle', 'permission:reports.view'])->group(function (
     Route::get('/reports/data', [ReportController::class, 'data'])->name('reports.data');
     Route::get('/reports/leads', [ReportController::class, 'leads'])->name('reports.leads');
     Route::get('/reports/follow-ups', [ReportController::class, 'followUps'])->name('reports.follow_ups');
+});
+// Each of these reports can be switched on or off on its own (reports.agents / .communications / .automation).
+Route::middleware(['admin_middle', 'permission:reports.agents'])->group(function () {
     Route::get('/reports/agents', [ReportController::class, 'agents'])->name('reports.agents');
+});
+Route::middleware(['admin_middle', 'permission:reports.communications'])->group(function () {
     Route::get('/reports/communications', [ReportController::class, 'communications'])->name('reports.communications');
+});
+Route::middleware(['admin_middle', 'permission:reports.automation'])->group(function () {
     Route::get('/reports/automation', [ReportController::class, 'automation'])->name('reports.automation');
 });
 
@@ -171,19 +178,23 @@ Route::middleware(['admin_middle', 'permission:whatsapp.view'])->group(function 
     Route::get('/whatsapp/chat/conversations', [WhatsAppChatController::class, 'conversations'])->name('whatsapp.chat.conversations');
     Route::get('/whatsapp/chat/conversations/{id}/messages', [WhatsAppChatController::class, 'messages'])->name('whatsapp.chat.messages')->whereNumber('id');
 
+});
+Route::middleware(['admin_middle', 'permission:whatsapp_campaigns.view'])->group(function () {
     Route::get('/whatsapp/campaigns', [WhatsAppCampaignController::class, 'index'])->name('whatsapp.campaigns.index');
     Route::get('/whatsapp/campaigns/data', [WhatsAppCampaignController::class, 'data'])->name('whatsapp.campaigns.data');
     Route::post('/whatsapp/campaigns/preview-audience', [WhatsAppCampaignController::class, 'previewAudience'])->name('whatsapp.campaigns.preview_audience');
 });
+Route::middleware(['admin_middle', 'permission:whatsapp_campaigns.send'])->group(function () {
+    Route::post('/whatsapp/campaigns/{id}/send', [WhatsAppCampaignController::class, 'send'])->name('whatsapp.campaigns.send')->whereNumber('id');
+});
 Route::middleware(['admin_middle', 'permission:whatsapp.send'])->group(function () {
     Route::post('/whatsapp/chat/conversations/{id}/send', [WhatsAppChatController::class, 'send'])->name('whatsapp.chat.send')->whereNumber('id');
     Route::post('/whatsapp/chat/start', [WhatsAppChatController::class, 'start'])->name('whatsapp.chat.start');
-    Route::post('/whatsapp/campaigns/{id}/send', [WhatsAppCampaignController::class, 'send'])->name('whatsapp.campaigns.send')->whereNumber('id');
 });
-Route::middleware(['admin_middle', 'permission:whatsapp.create'])->group(function () {
+Route::middleware(['admin_middle', 'permission:whatsapp_campaigns.create'])->group(function () {
     Route::post('/whatsapp/campaigns', [WhatsAppCampaignController::class, 'store'])->name('whatsapp.campaigns.store');
 });
-Route::middleware(['admin_middle', 'permission:whatsapp.delete'])->group(function () {
+Route::middleware(['admin_middle', 'permission:whatsapp_campaigns.delete'])->group(function () {
     Route::delete('/whatsapp/campaigns/{id}', [WhatsAppCampaignController::class, 'destroy'])->name('whatsapp.campaigns.destroy')->whereNumber('id');
 });
 
@@ -300,7 +311,7 @@ Route::middleware(['admin_middle', 'permission:deals.assign'])->group(function (
     Route::post('/deals/assign', [DealController::class, 'assign'])->name('deals.assign');
 });
 
-Route::middleware(['admin_middle', 'permission:deals.manage-settings'])->group(function () {
+Route::middleware(['admin_middle', 'permission:pipelines.manage-settings'])->group(function () {
     Route::get('/pipelines', [PipelineController::class, 'index'])->name('pipelines.index');
     Route::get('/pipelines/data', [PipelineController::class, 'data'])->name('pipelines.data');
     Route::post('/pipelines', [PipelineController::class, 'store'])->name('pipelines.store');
@@ -358,7 +369,7 @@ Route::middleware(['admin_middle', 'permission:company.edit'])->group(function (
     Route::post('/company-details', [CompanyController::class, 'edit_com_details'])->name('company.update');
 });
 
-Route::middleware(['admin_middle', 'permission:company.manage-settings'])->group(function () {
+Route::middleware(['admin_middle', 'permission:ai.manage-settings'])->group(function () {
     // Company AI settings: several API-key configurations with automatic failover.
     Route::get('/settings/ai', [\App\Http\Controllers\Admin\AiSettingsController::class, 'index'])->name('ai.settings');
     Route::get('/settings/ai/data', [\App\Http\Controllers\Admin\AiSettingsController::class, 'data'])->name('ai.settings.data');
@@ -367,6 +378,9 @@ Route::middleware(['admin_middle', 'permission:company.manage-settings'])->group
     Route::delete('/settings/ai/{id}', [\App\Http\Controllers\Admin\AiSettingsController::class, 'destroy'])->name('ai.settings.destroy')->whereNumber('id');
     Route::post('/settings/ai/{id}/test', [\App\Http\Controllers\Admin\AiSettingsController::class, 'test'])->name('ai.settings.test')->whereNumber('id')->middleware('throttle:10,1');
     Route::post('/settings/ai/{id}/move', [\App\Http\Controllers\Admin\AiSettingsController::class, 'move'])->name('ai.settings.move')->whereNumber('id');
+});
+
+Route::middleware(['admin_middle', 'permission:mail.manage-settings'])->group(function () {
     Route::get('/settings/mail', [MailSettingsController::class, 'edit'])->name('settings.mail.edit');
     Route::post('/settings/mail', [MailSettingsController::class, 'store'])->name('settings.mail.store');
     Route::put('/settings/mail/{mailSetting}', [MailSettingsController::class, 'update'])->name('settings.mail.update')->whereNumber('mailSetting');
@@ -543,6 +557,7 @@ Route::middleware(['admin_middle', 'permission:roles.create'])->post('/roles', [
 Route::middleware(['admin_middle', 'permission:roles.edit'])->group(function () {
     Route::put('/roles/{role}', [RoleController::class, 'update'])->name('roles.update')->whereNumber('role');
     Route::put('/roles/{role}/permissions', [RoleController::class, 'updatePermissions'])->name('roles.permissions.update')->whereNumber('role');
+    Route::post('/roles/{role}/reset-defaults', [RoleController::class, 'resetToDefaults'])->name('roles.reset_defaults')->whereNumber('role');
 });
 Route::middleware(['admin_middle', 'permission:roles.delete'])->delete('/roles/{role}', [RoleController::class, 'destroy'])->name('roles.destroy')->whereNumber('role');
 

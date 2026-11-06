@@ -28,7 +28,7 @@ class ReportAnalyticsTest extends TestCase
         $user = $this->user($tenant, 'manager');
         Role::findOrCreate('Manager', 'web');
         $user->assignRole('Manager');
-        $user->givePermissionTo(Permission::findOrCreate('reports.view', 'web'));
+        foreach (['reports.view', 'reports.agents', 'reports.communications', 'reports.automation'] as $p) { $user->givePermissionTo(Permission::findOrCreate($p, 'web')); }
         app(PermissionRegistrar::class)->forgetCachedPermissions();
         $this->actingAs($user, 'web')->withSession(['session_token' => $user->session_token]);
 

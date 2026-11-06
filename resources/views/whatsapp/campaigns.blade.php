@@ -76,7 +76,7 @@
                             <small class="crm-subtitle">Send a WhatsApp message to a filtered list of leads, contacts, or companies.</small>
                         </div>
                     </div>
-                    @can('whatsapp.create')
+                    @can('whatsapp_campaigns.create')
                     <button class="btn btn-success btn-sm" id="addCampaignBtn" data-toggle="modal" data-target="#campaignModal" @if($accounts->isEmpty()) disabled title="Connect a WhatsApp account first" @endif>
                         <i class="fa fa-plus"></i> New Campaign
                     </button>
@@ -226,10 +226,10 @@
                             <td>${c.total_recipients}</td>
                             <td>${c.sent_count}${c.failed_count ? ` <span class="text-danger">(${c.failed_count} failed)</span>` : ''}</td>
                             <td class="text-right">
-                                @can('whatsapp.send')
+                                @can('whatsapp_campaigns.send')
                                 ${canSend ? `<button class="btn btn-sm btn-outline-success sendCampaignBtn" data-id="${c.id}" data-name="${esc(c.name)}"><i class="fa fa-paper-plane"></i> Send</button>` : ''}
                                 @endcan
-                                @can('whatsapp.delete')
+                                @can('whatsapp_campaigns.delete')
                                 ${c.status !== 'sending' && c.status !== 'sent' ? `<button class="btn btn-sm btn-outline-danger deleteCampaignBtn" data-id="${c.id}"><i class="fa fa-trash"></i></button>` : ''}
                                 @endcan
                             </td>
