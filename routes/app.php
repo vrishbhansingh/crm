@@ -678,6 +678,18 @@ Route::middleware(['admin_middle', 'permission:purchase_orders.delete'])->group(
     Route::delete('/rfqs/{id}', [RfqController::class, 'destroy'])->name('rfqs.destroy')->whereNumber('id');
 });
 
+/*
+| Projects have their own on/off switches (projects.view / projects.edit) so a
+| role can be given Orders without Projects, or the other way round.
+*/
+Route::middleware(['admin_middle', 'permission:projects.view'])->group(function () {
+    Route::get('/projects', [ProjectDetailsController::class, 'project_details'])->name('projects.index');
+    Route::get('/projects/data', [ProjectDetailsController::class, 'get_project_details'])->name('projects.data');
+});
+Route::middleware(['admin_middle', 'permission:projects.edit'])->group(function () {
+    Route::post('/projects/update', [ProjectDetailsController::class, 'update_project_details'])->name('projects.update');
+});
+
 Route::middleware(['admin_middle', 'permission:orders.edit'])->group(function () {
     Route::post('/orders/payments', [OrderDetailController::class, 'paymentsStore'])->name('orders.payments.store');
     Route::post('/orders/{id}', [OrderDetailController::class, 'update'])->name('orders.update')->where('id', '[0-9]+');

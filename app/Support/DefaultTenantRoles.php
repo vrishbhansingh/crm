@@ -11,8 +11,8 @@ use Spatie\Permission\Models\Role;
  * the "must create a custom role" banner in platform/users.blade.php and
  * roles/index.blade.php). This seeds a sensible starting role, "Agent",
  * covering the day-to-day CRM work a front-line sales rep needs on their own
- * records — leads, deals, contacts, companies, tasks, viewing orders and the
- * calendar — without delete/assign/manage-settings or anything
+ * records — leads, deals, contacts, companies, tasks, quotations (and the
+ * product list to quote from), viewing orders and projects, and the calendar — without delete/assign/manage-settings or anything
  * admin-level (users, roles, reports, campaigns, templates, master data,
  * org settings). It's a normal, editable role like any other the tenant
  * creates themselves — not protected like Admin — so they can rename,
@@ -31,9 +31,17 @@ class DefaultTenantRoles
         'companies.view', 'companies.create', 'companies.edit',
         'contacts.view', 'contacts.create', 'contacts.edit',
         'tasks.view', 'tasks.create', 'tasks.edit',
-        'orders.view',
+        'orders.view', 'projects.view',
+        'quotations.view', 'quotations.create', 'quotations.edit',
+        'products.view',
         'calendar.view',
     ];
+
+    /** The Agent defaults as a list, for one-off upgrades of companies created before the list grew. */
+    public static function agentPermissions(): array
+    {
+        return self::AGENT_PERMISSIONS;
+    }
 
     public static function seedAgentRole(): Role
     {

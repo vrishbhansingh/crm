@@ -215,7 +215,7 @@
                                             <th>Timeline</th>
                                             <th>Priority</th>
                                             <th>Description</th>
-                                            @can('orders.edit')
+                                            @can('projects.edit')
                                             <th>Action</th>
                                             @endcan
                                         </tr>
@@ -235,7 +235,7 @@
         </div>
     </div>
 
-    @can('orders.edit')
+    @can('projects.edit')
     <div class="modal fade" id="editProjectModal" tabindex="-1">
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
@@ -366,7 +366,7 @@
                             </small>
                         </td>
 
-                        @can('orders.edit')
+                        @can('projects.edit')
                         <td>
                             ${item.action}
                         </td>

@@ -31,7 +31,7 @@ class ProjectDetailsController extends Controller
         foreach ($projects as $project) {
 
             // Action buttons (CRM standard)
-            $action = Auth::guard('web')->user()->can('orders.edit') ? '
+            $action = Auth::guard('web')->user()->can('projects.edit') ? '
                     
 
                     <button type="button"

@@ -371,7 +371,7 @@
         </div>
         @endcanany
 
-        @canany(['orders.view', 'products.view', 'quotations.view'])
+        @canany(['orders.view', 'products.view', 'quotations.view', 'projects.view'])
         <div class="nav-section {{ request()->routeIs(['orders.*','projects.*','invoice.*','products.*','quotations.*']) ? 'has-active' : '' }}">
             <div class="nav-section-label">Delivery &amp; Billing</div>
             <ul class="nav nav-sidebar-menu">
@@ -396,7 +396,7 @@
                     </a>
                 </li>
                 @endcan
-                @can('orders.view')
+                @can('projects.view')
                 <li class="mb-1" data-nav-label="Projects">
                     <a class="nav-link {{ request()->routeIs('projects.*') ? 'active' : '' }}" href="{{ route('projects.index') }}" title="Projects">
                         <i class="fa fa-check-circle"></i><span>Projects</span>
