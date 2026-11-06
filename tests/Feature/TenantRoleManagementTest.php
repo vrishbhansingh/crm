@@ -95,7 +95,8 @@ class TenantRoleManagementTest extends TestCase
         // module x action cross-product created rows for them.
         $this->assertFalse($allNames->contains('contacts.reject'));
         $this->assertFalse($allNames->contains('companies.approve'));
-        $this->assertFalse($allNames->contains(fn ($name) => str_starts_with($name, 'projects.')));
+        $this->assertTrue($allNames->contains('projects.view'), 'Projects now has its own enforced switch');
+        $this->assertFalse($allNames->contains('projects.delete'));
         $this->assertFalse($allNames->contains(fn ($name) => str_starts_with($name, 'attendance.')));
 
         // Sensitive and not delegable — no longer offered at all, not even
